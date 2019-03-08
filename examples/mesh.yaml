@@ -1,0 +1,7 @@
+apiVersion: appmesh.k8s.aws/v1alpha1
+kind: Mesh
+metadata:
+  name: example-mesh
+spec:
+  cloudMapNamespaceName: example-mesh-namespace
+  serviceDiscoveryType: cloudmap-http

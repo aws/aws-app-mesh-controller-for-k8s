@@ -1,0 +1,16 @@
+apiVersion: appmesh.k8s.aws/v1alpha1
+kind: VirtualNode
+metadata:
+  name: example-node-1
+spec:
+  meshName: example-mesh
+  listeners:
+    - portMapping:
+        port: 80
+        protocol: http
+  serviceDiscovery:
+    cloudMap:
+      cloudMapServiceName: example-service
+  backends:
+    - virtualService:
+        virtualServiceName: example-service-2

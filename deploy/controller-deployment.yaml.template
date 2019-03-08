@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-mesh-controller
+  labels:
+    app: app-mesh-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-mesh-controller
+  template:
+    metadata:
+      labels:
+        app: app-mesh-controller
+    spec:
+      serviceAccountName: app-mesh-sa
+      containers:
+        - name: app-mesh-controller
+          image: {{AWS_ACCOUNT}}.dkr.ecr.{{AWS_REGION}}.amazonaws.com/amazon/app-mesh-controller:latest
+          ports:
+            - containerPort: 10555
+          args:
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-mesh-sa
+  namespace: default
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: app-mesh-controller
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["*"]
+  - apiGroups: ["appmesh.k8s.aws"]
+    resources: ["meshes", "virtualnodes", "virtualservices", "meshes/status", "virtualnodes/status", "virtualservices/status"]
+    verbs: ["*"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: app-mesh-controller-binding
+subjects:
+  - kind: ServiceAccount
+    name: app-mesh-sa
+    namespace: default
+    apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: app-mesh-controller
+  apiGroup: ""
