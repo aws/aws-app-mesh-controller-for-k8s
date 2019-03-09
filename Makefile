@@ -1,19 +1,13 @@
 PKG=github.com/aws/aws-app-mesh-controller-for-k8s
-IMAGE=amazon/app-mesh-controller
-REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE)
-VERSION=0.1.0-alpha
 GIT_COMMIT?=$(shell git rev-parse HEAD)
 BUILD_DATE?=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 LDFLAGS?="-X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT} -X main.buildDate=${BUILD_DATE} -s -w"
 GO111MODULE=on
+# Docker
+IMAGE=amazon/app-mesh-controller
+REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE)
+VERSION=0.1.0-alpha
 
-ifndef AWS_REGION
-$(error AWS_REGION is not set)
-endif
-
-ifndef AWS_ACCOUNT
-$(error AWS_ACCOUNT is not set)
-endif
 
 .PHONY: eks-appmesh-controller
 eks-appmesh-controller:
@@ -39,6 +33,13 @@ image-release:
 
 .PHONY: push
 push:
+ifeq ($(AWS_REGION),)
+	$(error AWS_REGION is not set)
+endif
+
+ifeq ($(AWS_ACCOUNT),)
+	$(error AWS_ACCOUNT is not set)
+endif
 	docker tag $(IMAGE):latest $(REPO):latest
 	docker push $(REPO):latest
 
@@ -50,3 +51,7 @@ push-release:
 .PHONY: kube-deploy
 kube-deploy:
 	./hack/deploy.sh
+
+.PHONY: example
+example:
+	./hack/example.sh
