@@ -64,17 +64,19 @@ var rootCmd = &cobra.Command{
 	Use:  "app-mesh-controller",
 	Long: `app-mesh-controller is responsible for creating resources in AWS App Mesh.`,
 	Run: func(cmd *cobra.Command, args []string) {
-
+		version := NewVersion()
+		klog.Infof(version.String())
 		var stopCh chan struct{}
 
 		cfg, err := getConfig()
-
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(1)
+			klog.Fatal(err)
 		}
 
 		cloud, err := aws.NewCloud(cfg.aws)
+		if err != nil {
+			klog.Fatal(err)
+		}
 
 		// creates the connection
 		config, err := clientcmd.BuildConfigFromFlags(cfg.client.Master, cfg.client.Kubeconfig)
@@ -115,7 +117,9 @@ var rootCmd = &cobra.Command{
 
 		threadiness := 1
 
-		c.Run(threadiness, stopCh)
+		if err := c.Run(threadiness, stopCh); err != nil {
+			klog.Fatal(err)
+		}
 	},
 }
 
