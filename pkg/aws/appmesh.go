@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"k8s.io/klog"
 	"time"
 
 	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
@@ -150,13 +151,18 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1alpha1.Vi
 	}
 
 	if vnode.Spec.ServiceDiscovery != nil {
-		serviceDiscovery := &appmesh.ServiceDiscovery{
-			Dns: &appmesh.DnsServiceDiscovery{
-				// TODO(nic) change to CloudMap Service Discovery when SDK supports it
-				Hostname: aws.String(vnode.Name),
-			},
+		if vnode.Spec.ServiceDiscovery.Dns != nil {
+			serviceDiscovery := &appmesh.ServiceDiscovery{
+				Dns: &appmesh.DnsServiceDiscovery{
+					Hostname: aws.String(vnode.Spec.ServiceDiscovery.Dns.HostName),
+				},
+			}
+			input.Spec.SetServiceDiscovery(serviceDiscovery)
+		} else if vnode.Spec.ServiceDiscovery.CloudMap != nil {
+			// TODO(nic) add CloudMap Service Discovery when SDK supports it
+		} else {
+			klog.Warning("No service discovery set for virtual node %s", vnode.Name)
 		}
-		input.Spec.SetServiceDiscovery(serviceDiscovery)
 	}
 
 	output, err := c.appmesh.CreateVirtualNodeWithContext(ctx, input)
@@ -296,7 +302,7 @@ func (c *Cloud) GetRoute(ctx context.Context, name string, routerName string, me
 
 	input := &appmesh.DescribeRouteInput{
 		MeshName:          aws.String(meshName),
-		VirtualRouterName: aws.String(name),
+		VirtualRouterName: aws.String(routerName),
 		RouteName:         aws.String(name),
 	}
 
