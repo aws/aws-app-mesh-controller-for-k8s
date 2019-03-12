@@ -236,7 +236,7 @@ func (c *Controller) meshAdded(obj interface{}) {
 		} else {
 			continue
 		}
-		klog.Info("Processed VirtualNode %s due to new mesh.", vnode.Name)
+		klog.Infof("Processed VirtualNode %s due to new mesh.", vnode.Name)
 	}
 }
 
@@ -257,7 +257,7 @@ func (c *Controller) meshDeleted(obj interface{}) {
 }
 
 func (c *Controller) virtualNodeAdded(obj interface{}) {
-	klog.Info("Mesh Node Added")
+	klog.Info("Virtual Node Added")
 	key, err := cache.MetaNamespaceKeyFunc(obj)
 	if err == nil {
 		c.nq.Add(key)
@@ -265,7 +265,7 @@ func (c *Controller) virtualNodeAdded(obj interface{}) {
 }
 
 func (c *Controller) virtualNodeUpdated(old interface{}, new interface{}) {
-	klog.Info("Mesh Node Updated")
+	klog.Info("Virtual Node Updated")
 	key, err := cache.MetaNamespaceKeyFunc(new)
 	if err == nil {
 		c.nq.Add(key)
@@ -273,7 +273,7 @@ func (c *Controller) virtualNodeUpdated(old interface{}, new interface{}) {
 }
 
 func (c *Controller) virtualNodeDeleted(obj interface{}) {
-	klog.Info("Mesh Node Deleted")
+	klog.Info("Virtual Node Deleted")
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err == nil {
 		c.nq.Add(key)
@@ -281,7 +281,7 @@ func (c *Controller) virtualNodeDeleted(obj interface{}) {
 }
 
 func (c *Controller) virtualServiceAdded(obj interface{}) {
-	klog.Info("Mesh Service Added")
+	klog.Info("Virtual Service Added")
 	key, err := cache.MetaNamespaceKeyFunc(obj)
 	if err == nil {
 		c.sq.Add(key)
@@ -289,7 +289,7 @@ func (c *Controller) virtualServiceAdded(obj interface{}) {
 }
 
 func (c *Controller) virtualServiceUpdated(old interface{}, new interface{}) {
-	klog.Info("Mesh Service Updated")
+	klog.Info("Virtual Service Updated")
 	key, err := cache.MetaNamespaceKeyFunc(new)
 	if err == nil {
 		c.sq.Add(key)
@@ -297,7 +297,7 @@ func (c *Controller) virtualServiceUpdated(old interface{}, new interface{}) {
 }
 
 func (c *Controller) virtualServiceDeleted(obj interface{}) {
-	klog.Info("Mesh Service Deleted")
+	klog.Info("Virtual Service Deleted")
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err == nil {
 		c.sq.Add(key)

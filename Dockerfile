@@ -16,6 +16,6 @@ RUN make
 
 FROM amazonlinux:2
 RUN yum install -y ca-certificates
-COPY --from=builder /go/src/github.com/aws/aws-app-mesh-controller-for-k8s/bin/app-mesh-controller /bin/app-mesh-controller
+COPY --from=builder /go/src/github.com/aws/aws-app-mesh-controller-for-k8s/_output/bin/app-mesh-controller /bin/app-mesh-controller
 
 ENTRYPOINT ["/bin/app-mesh-controller"]

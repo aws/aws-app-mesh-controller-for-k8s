@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
+	set "github.com/deckarep/golang-set"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,6 +71,15 @@ func (c *Controller) handleVNode(key string) error {
 		klog.Infof("Created virtual node %s", vnode.Name)
 	} else {
 		klog.Infof("Discovered virtual node %s", vnode.Name)
+		if vnodeNeedsUpdate(vnode, targetNode) {
+			// Update virtual node
+			klog.Infof("Attempting to update virtual node: %s", vnode.Name)
+			targetNode, err = c.cloud.UpdateVirtualNode(ctx, vnode)
+			if err != nil {
+				return fmt.Errorf("error updating virtual node: %s", err)
+			}
+			klog.Infof("Updated virtual node %s", vnode.Name)
+		}
 	}
 
 	return nil
@@ -129,4 +140,54 @@ func getVNodeCondition(conditionType appmeshv1alpha1.VirtualNodeConditionType, s
 		}
 	}
 	return nil
+}
+
+// vnodeNeedsUpdate compares the App Mesh API result (target) with the desired spec (desired) and
+// determines if there is any drift that requires an update.
+func vnodeNeedsUpdate(desired *appmeshv1alpha1.VirtualNode, target *aws.VirtualNode) bool {
+	if desired.Spec.ServiceDiscovery != nil &&
+		desired.Spec.ServiceDiscovery.Dns != nil {
+		// If Service discovery is desired, verify target is equal
+		if desired.Spec.ServiceDiscovery.Dns.HostName != target.HostName() {
+			return true
+		}
+	} else {
+		// If no desired Service Discovery, verify target is not set
+		if target.HostName() != "" {
+			return true
+		}
+	}
+
+	if desired.Spec.Listeners != nil {
+		desiredSet := set.NewSet()
+		for i := range desired.Spec.Listeners {
+			desiredSet.Add(desired.Spec.Listeners[i])
+		}
+		currSet := target.ListenersSet()
+		if !desiredSet.Equal(currSet) {
+			return true
+		}
+	} else {
+		// If the spec doesn't have any listeners, make sure target is not set
+		if len(target.Listeners()) != 0 {
+			return true
+		}
+	}
+
+	if desired.Spec.Backends != nil {
+		desiredSet := set.NewSet()
+		for i := range desired.Spec.Backends {
+			desiredSet.Add(desired.Spec.Backends[i])
+		}
+		currSet := target.BackendsSet()
+		if !desiredSet.Equal(currSet) {
+			return true
+		}
+	} else {
+		// If the spec doesn't have any backends, make sure target is not set
+		if len(target.Backends()) != 0 {
+			return true
+		}
+	}
+	return false
 }
