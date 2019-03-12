@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
 	"github.com/aws/aws-sdk-go/aws"
@@ -46,7 +47,15 @@ func (c *Controller) handleVService(key string) error {
 		return fmt.Errorf("'MeshName' is a required field")
 	}
 
-	mesh, err := c.meshLister.Meshes(namespace).Get(meshName)
+	// Extract namespace from Mesh name
+	meshNamespace := namespace
+	meshParts := strings.Split(meshName, ".")
+	if len(meshParts) > 1 {
+		meshNamespace = strings.Join(meshParts[1:], ".")
+		meshName = meshParts[0]
+	}
+
+	mesh, err := c.meshLister.Meshes(meshNamespace).Get(meshName)
 	if errors.IsNotFound(err) {
 		return fmt.Errorf("mesh %s for virtual service %s does not exist", meshName, name)
 	}
