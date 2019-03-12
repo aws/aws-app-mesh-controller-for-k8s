@@ -8,16 +8,15 @@ IMAGE=amazon/app-mesh-controller
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE)
 VERSION=0.1.0-alpha
 
-
 .PHONY: eks-appmesh-controller
 eks-appmesh-controller:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -ldflags ${LDFLAGS} -o bin/app-mesh-controller ./cmd/app-mesh-controller
+	CGO_ENABLED=0 GOOS=linux go build -ldflags ${LDFLAGS} -o _output/bin/app-mesh-controller ./cmd/app-mesh-controller
 
 .PHONY: darwin
 darwin:
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=darwin go build -ldflags ${LDFLAGS} -o bin/app-mesh-controller-osx ./cmd/app-mesh-controller
+	CGO_ENABLED=0 GOOS=darwin go build -ldflags ${LDFLAGS} -o _output/bin/app-mesh-controller-osx ./cmd/app-mesh-controller
 
 .PHONY: code-gen
 code-gen:
@@ -55,3 +54,7 @@ kube-deploy:
 .PHONY: example
 example:
 	./hack/example.sh
+
+.PHONY: clean
+clean:
+	rm -rf ./_output

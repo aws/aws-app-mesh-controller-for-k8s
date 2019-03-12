@@ -3,6 +3,7 @@ module github.com/aws/aws-app-mesh-controller-for-k8s
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/aws/aws-sdk-go v1.17.13
+	github.com/deckarep/golang-set v1.7.1
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
@@ -31,8 +32,6 @@ require (
 	k8s.io/api v0.0.0-20181128191700-6db15a15d2d3
 	k8s.io/apimachinery v0.0.0-20181128191346-49ce2735e507
 	k8s.io/client-go v9.0.0+incompatible
-	k8s.io/code-generator v0.0.0-20190307154513-f8e8c596cb01 // indirect
-	k8s.io/gengo v0.0.0-20190306031000-7a1b7fb0289f // indirect
 	k8s.io/klog v0.2.0
 	k8s.io/kube-openapi v0.0.0-20190222203931-aa8624f5a2df // indirect
 )

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
-	"github.com/aws/aws-sdk-go/aws"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,9 +68,9 @@ func (c *Controller) handleVService(key string) error {
 		if err != nil {
 			return fmt.Errorf("error creating virtual router: %s", err)
 		}
-		klog.Infof("Created virtual router %s", aws.StringValue(targetRouter.Data.VirtualRouterName))
+		klog.Infof("Created virtual router %s", targetRouter.Name())
 	} else {
-		klog.Infof("Discovered virtual router %s", aws.StringValue(targetRouter.Data.VirtualRouterName))
+		klog.Infof("Discovered virtual router %s", targetRouter.Name())
 	}
 
 	// Check if virtual service already exists
@@ -86,9 +85,9 @@ func (c *Controller) handleVService(key string) error {
 		if err != nil {
 			return fmt.Errorf("error creating virtual service: %s", err)
 		}
-		klog.Infof("Created virtual service %s", aws.StringValue(targetService.Data.VirtualServiceName))
+		klog.Infof("Created virtual service %s", targetService.Name())
 	} else {
-		klog.Infof("Discovered virtual service %s", aws.StringValue(targetService.Data.VirtualServiceName))
+		klog.Infof("Discovered virtual service %s", targetService.Name())
 	}
 
 	routes := getRoutes(vservice)
@@ -105,9 +104,9 @@ func (c *Controller) handleVService(key string) error {
 			if err != nil {
 				return fmt.Errorf("error creating route: %s", err)
 			}
-			klog.Infof("Created route %s", aws.StringValue(targetRoute.Data.RouteName))
+			klog.Infof("Created route %s", targetRoute.Name())
 		} else {
-			klog.Infof("Discovered route %s", aws.StringValue(targetRoute.Data.RouteName))
+			klog.Infof("Discovered route %s", targetRoute.Name())
 		}
 	}
 
