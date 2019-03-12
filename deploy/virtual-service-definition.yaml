@@ -35,29 +35,31 @@ spec:
                   type: string
             routes:
               type: array
-              items:
-                type: object
-                properties:
-                  http:
-                    type: object
-                    properties:
-                      match:
-                        type: object
-                        properties:
-                          prefix:
-                            type: string
-                      action:
-                        type: object
-                        properties:
-                          weightedTargets:
-                            type: array
-                            items:
-                              type: object
+              properties:
+                items:
+                  type: object
+                  properties:
+                    http:
+                      type: object
+                      properties:
+                        match:
+                          type: object
+                          properties:
+                            prefix:
+                              type: string
+                        action:
+                          type: object
+                          properties:
+                            weightedTargets:
+                              type: array
                               properties:
-                                virtualNodeName:
-                                  type: string
-                                weight:
-                                  type: integer
+                                items:
+                                  type: object
+                                  properties:
+                                    virtualNodeName:
+                                      type: string
+                                    weight:
+                                      type: integer
         status:
           properties:
             virtualServiceArn:
@@ -70,24 +72,25 @@ spec:
                 type: string
             conditions:
               type: array
-              items:
-                type: object
-                required:
-                  - type
-                properties:
-                  type:
-                    type: string
-                    enum:
-                      - Active
-                  status:
-                    type: string
-                    enum:
-                      - True
-                      - False
-                      - Unknown
-                  lastTransitionTime:
-                    type: string
-                  reason:
-                    type: string
-                  message:
-                    type: string
+              properties:
+                items:
+                  type: object
+                  required:
+                    - type
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - Active
+                    status:
+                      type: string
+                      enum:
+                        - True
+                        - False
+                        - Unknown
+                    lastTransitionTime:
+                      type: string
+                    reason:
+                      type: string
+                    message:
+                      type: string

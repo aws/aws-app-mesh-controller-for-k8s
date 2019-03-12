@@ -32,21 +32,22 @@ spec:
               type: string
             listeners:
               type: array
-              items:
-                type: object
-                properties:
-                  portMapping:
-                    properties:
-                      port:
-                        type: integer
-                      protocol:
-                        type: string
-                        enum:
-                          - tcp
-                          - http
-                          - grpc
-                          - http2
-                          - https
+              properties:
+                items:
+                  type: object
+                  properties:
+                    portMapping:
+                      properties:
+                        port:
+                          type: integer
+                        protocol:
+                          type: string
+                          enum:
+                            - tcp
+                            - http
+                            - grpc
+                            - http2
+                            - https
             serviceDiscovery:
               type: object
               properties:
@@ -62,15 +63,16 @@ spec:
                       type: string
             backends:
               type: array
-              items:
-                oneOf:
-                  - type: object
-                    properties:
-                      backendService:
-                        type: object
-                        properties:
-                          name:
-                            type: string
+              properties:
+                items:
+                  oneOf:
+                    - type: object
+                      properties:
+                        backendService:
+                          type: object
+                          properties:
+                            name:
+                              type: string
         status:
           properties:
             meshArn:
@@ -83,24 +85,25 @@ spec:
               type: string
             conditions:
               type: array
-              items:
-                type: object
-                required:
-                  - type
-                properties:
-                  type:
-                    type: string
-                    enum:
-                      - Active
-                  status:
-                    type: string
-                    enum:
-                      - True
-                      - False
-                      - Unknown
-                  lastTransitionTime:
-                    type: string
-                  reason:
-                    type: string
-                  message:
-                    type: string
+              properties:
+                items:
+                  type: object
+                  required:
+                    - type
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - Active
+                    status:
+                      type: string
+                      enum:
+                        - True
+                        - False
+                        - Unknown
+                    lastTransitionTime:
+                      type: string
+                    reason:
+                      type: string
+                    message:
+                      type: string

@@ -42,24 +42,25 @@ spec:
               type: string
             conditions:
               type: array
-              items:
-                type: object
-                required:
-                  - type
-                properties:
-                  type:
-                    type: string
-                    enum:
-                      - Active
-                  status:
-                    type: string
-                    enum:
-                      - True
-                      - False
-                      - Unknown
-                  lastTransitionTime:
-                    type: string
-                  reason:
-                    type: string
-                  message:
-                    type: string
+              properties:
+                items:
+                  type: object
+                  required:
+                    - type
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - Active
+                    status:
+                      type: string
+                      enum:
+                        - True
+                        - False
+                        - Unknown
+                    lastTransitionTime:
+                      type: string
+                    reason:
+                      type: string
+                    message:
+                      type: string
