@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	"os"
@@ -43,6 +44,7 @@ func init() {
 }
 
 func main() {
+	flag.CommandLine.Parse([]string{})
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
