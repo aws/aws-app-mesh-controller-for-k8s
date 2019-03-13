@@ -52,6 +52,7 @@ func (c *Controller) handleVService(key string) error {
 	if len(meshParts) > 1 {
 		meshNamespace = strings.Join(meshParts[1:], ".")
 		meshName = meshParts[0]
+		vservice.Spec.MeshName = meshParts[0]
 	}
 
 	mesh, err := c.meshLister.Meshes(meshNamespace).Get(meshName)
