@@ -38,6 +38,7 @@ type AppMeshAPI interface {
 	CreateVirtualRouter(context.Context, *appmeshv1alpha1.VirtualRouter, string) (*VirtualRouter, error)
 	GetRoute(context.Context, string, string, string) (*Route, error)
 	CreateRoute(context.Context, *appmeshv1alpha1.Route, string, string) (*Route, error)
+	UpdateRoute(context.Context, *appmeshv1alpha1.Route, string, string) (*Route, error)
 }
 
 type Mesh struct {
@@ -506,15 +507,57 @@ func (c *Cloud) CreateRoute(ctx context.Context, route *appmeshv1alpha1.Route, r
 
 	targets := []*appmesh.WeightedTarget{}
 	for _, target := range route.Http.Action.WeightedTargets {
+		weight := target.Weight
 		targets = append(targets, &appmesh.WeightedTarget{
 			VirtualNode: aws.String(target.VirtualNodeName),
-			Weight:      &target.Weight,
+			Weight:      &weight,
 		})
 	}
 
 	input.Spec.HttpRoute.Action.SetWeightedTargets(targets)
 
 	output, err := c.appmesh.CreateRouteWithContext(ctx, input)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &Route{
+		Data: *output.Route,
+	}, nil
+}
+
+// UpdateRoute converts the desired virtual service spec into UpdateRouteInput and calls update route.
+func (c *Cloud) UpdateRoute(ctx context.Context, route *appmeshv1alpha1.Route, routerName string, meshName string) (*Route, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateRouteTimeout)
+	defer cancel()
+
+	input := &appmesh.UpdateRouteInput{
+		MeshName:          aws.String(meshName),
+		RouteName:         aws.String(route.Name),
+		VirtualRouterName: aws.String(routerName),
+		Spec: &appmesh.RouteSpec{
+			HttpRoute: &appmesh.HttpRoute{
+				Match: &appmesh.HttpRouteMatch{
+					Prefix: aws.String(route.Http.Match.Prefix),
+				},
+				Action: &appmesh.HttpRouteAction{},
+			},
+		},
+	}
+
+	targets := []*appmesh.WeightedTarget{}
+	for _, target := range route.Http.Action.WeightedTargets {
+		weight := target.Weight
+		targets = append(targets, &appmesh.WeightedTarget{
+			VirtualNode: aws.String(target.VirtualNodeName),
+			Weight:      &weight,
+		})
+	}
+
+	input.Spec.HttpRoute.Action.SetWeightedTargets(targets)
+
+	output, err := c.appmesh.UpdateRouteWithContext(ctx, input)
 
 	if err != nil {
 		return nil, err
