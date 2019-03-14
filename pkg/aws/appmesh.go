@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
@@ -38,6 +39,7 @@ type AppMeshAPI interface {
 	CreateVirtualRouter(context.Context, *appmeshv1alpha1.VirtualRouter, string) (*VirtualRouter, error)
 	GetRoute(context.Context, string, string, string) (*Route, error)
 	CreateRoute(context.Context, *appmeshv1alpha1.Route, string, string) (*Route, error)
+	UpdateRoute(context.Context, *appmeshv1alpha1.Route, string, string) (*Route, error)
 }
 
 type Mesh struct {
@@ -65,6 +67,9 @@ func (c *Cloud) GetMesh(ctx context.Context, name string) (*Mesh, error) {
 			return nil, err
 		}
 	}
+	if output == nil || output.Mesh == nil {
+		return nil, fmt.Errorf("mesh %s not found", name)
+	}
 	return &Mesh{
 		Data: *output.Mesh,
 	}, nil
@@ -84,7 +89,9 @@ func (c *Cloud) CreateMesh(ctx context.Context, mesh *appmeshv1alpha1.Mesh) (*Me
 	if err != nil {
 		return nil, err
 	}
-
+	if output == nil || output.Mesh == nil {
+		return nil, fmt.Errorf("mesh %s not found", mesh.Name)
+	}
 	return &Mesh{
 		Data: *output.Mesh,
 	}, nil
@@ -185,6 +192,9 @@ func (c *Cloud) GetVirtualNode(ctx context.Context, name string, meshName string
 			return nil, err
 		}
 	}
+	if output == nil || output.VirtualNode == nil {
+		return nil, fmt.Errorf("virtual node %s not found", name)
+	}
 	return &VirtualNode{
 		Data: *output.VirtualNode,
 	}, nil
@@ -247,7 +257,9 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1alpha1.Vi
 	if err != nil {
 		return nil, err
 	}
-
+	if output == nil || output.VirtualNode == nil {
+		return nil, fmt.Errorf("virtual node %s not found", vnode.Name)
+	}
 	return &VirtualNode{
 		Data: *output.VirtualNode,
 	}, nil
@@ -310,7 +322,9 @@ func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1alpha1.Vi
 	if err != nil {
 		return nil, err
 	}
-
+	if output == nil || output.VirtualNode == nil {
+		return nil, fmt.Errorf("virtual node %s not found", vnode.Name)
+	}
 	return &VirtualNode{
 		Data: *output.VirtualNode,
 	}, nil
@@ -347,6 +361,9 @@ func (c *Cloud) GetVirtualService(ctx context.Context, name string, meshName str
 			return nil, err
 		}
 	}
+	if output == nil || output.VirtualService == nil {
+		return nil, fmt.Errorf("virtual service %s not found", name)
+	}
 	return &VirtualService{
 		Data: *output.VirtualService,
 	}, nil
@@ -381,7 +398,9 @@ func (c *Cloud) CreateVirtualService(ctx context.Context, vservice *appmeshv1alp
 	if err != nil {
 		return nil, err
 	}
-
+	if output == nil || output.VirtualService == nil {
+		return nil, fmt.Errorf("virtual service %s not found", vservice.Name)
+	}
 	return &VirtualService{
 		Data: *output.VirtualService,
 	}, nil
@@ -418,6 +437,9 @@ func (c *Cloud) GetVirtualRouter(ctx context.Context, name string, meshName stri
 			return nil, err
 		}
 	}
+	if output == nil || output.VirtualRouter == nil {
+		return nil, fmt.Errorf("virtual router %s not found", name)
+	}
 	return &VirtualRouter{
 		Data: *output.VirtualRouter,
 	}, nil
@@ -442,7 +464,9 @@ func (c *Cloud) CreateVirtualRouter(ctx context.Context, vrouter *appmeshv1alpha
 	if err != nil {
 		return nil, err
 	}
-
+	if output == nil || output.VirtualRouter == nil {
+		return nil, fmt.Errorf("virtual router %s not found", vrouter.Name)
+	}
 	return &VirtualRouter{
 		Data: *output.VirtualRouter,
 	}, nil
@@ -480,6 +504,9 @@ func (c *Cloud) GetRoute(ctx context.Context, name string, routerName string, me
 			return nil, err
 		}
 	}
+	if output == nil || output.Route == nil {
+		return nil, fmt.Errorf("route %s not found", name)
+	}
 	return &Route{
 		Data: *output.Route,
 	}, nil
@@ -506,9 +533,10 @@ func (c *Cloud) CreateRoute(ctx context.Context, route *appmeshv1alpha1.Route, r
 
 	targets := []*appmesh.WeightedTarget{}
 	for _, target := range route.Http.Action.WeightedTargets {
+		weight := target.Weight
 		targets = append(targets, &appmesh.WeightedTarget{
 			VirtualNode: aws.String(target.VirtualNodeName),
-			Weight:      &target.Weight,
+			Weight:      &weight,
 		})
 	}
 
@@ -519,7 +547,52 @@ func (c *Cloud) CreateRoute(ctx context.Context, route *appmeshv1alpha1.Route, r
 	if err != nil {
 		return nil, err
 	}
+	if output == nil || output.Route == nil {
+		return nil, fmt.Errorf("route %s not found", route.Name)
+	}
+	return &Route{
+		Data: *output.Route,
+	}, nil
+}
 
+// UpdateRoute converts the desired virtual service spec into UpdateRouteInput and calls update route.
+func (c *Cloud) UpdateRoute(ctx context.Context, route *appmeshv1alpha1.Route, routerName string, meshName string) (*Route, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateRouteTimeout)
+	defer cancel()
+
+	input := &appmesh.UpdateRouteInput{
+		MeshName:          aws.String(meshName),
+		RouteName:         aws.String(route.Name),
+		VirtualRouterName: aws.String(routerName),
+		Spec: &appmesh.RouteSpec{
+			HttpRoute: &appmesh.HttpRoute{
+				Match: &appmesh.HttpRouteMatch{
+					Prefix: aws.String(route.Http.Match.Prefix),
+				},
+				Action: &appmesh.HttpRouteAction{},
+			},
+		},
+	}
+
+	targets := []*appmesh.WeightedTarget{}
+	for _, target := range route.Http.Action.WeightedTargets {
+		weight := target.Weight
+		targets = append(targets, &appmesh.WeightedTarget{
+			VirtualNode: aws.String(target.VirtualNodeName),
+			Weight:      &weight,
+		})
+	}
+
+	input.Spec.HttpRoute.Action.SetWeightedTargets(targets)
+
+	output, err := c.appmesh.UpdateRouteWithContext(ctx, input)
+
+	if err != nil {
+		return nil, err
+	}
+	if output == nil || output.Route == nil {
+		return nil, fmt.Errorf("route %s not found", route.Name)
+	}
 	return &Route{
 		Data: *output.Route,
 	}, nil

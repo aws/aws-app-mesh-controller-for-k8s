@@ -3,14 +3,14 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog"
+	"strings"
 )
 
 func (c *Controller) handleVService(key string) error {
@@ -52,6 +52,7 @@ func (c *Controller) handleVService(key string) error {
 	if len(meshParts) > 1 {
 		meshNamespace = strings.Join(meshParts[1:], ".")
 		meshName = meshParts[0]
+		vservice.Spec.MeshName = meshParts[0]
 	}
 
 	mesh, err := c.meshLister.Meshes(meshNamespace).Get(meshName)
@@ -115,11 +116,43 @@ func (c *Controller) handleVService(key string) error {
 			}
 			klog.Infof("Created route %s", targetRoute.Name())
 		} else {
-			klog.Infof("Discovered route %s", targetRoute.Name())
+			// Update route
+			if routeNeedsUpdate(route, targetRoute) {
+				_, err = c.cloud.UpdateRoute(ctx, &route, virtualRouter.Name, meshName)
+				if err != nil {
+					return fmt.Errorf("error updateing route: %s", err)
+				}
+				klog.Infof("Updated route %s", targetRoute.Name())
+			}
 		}
 	}
 
 	return nil
+}
+
+// routeNeedsUpdate compares the App Mesh API result (target) with the desired spec (desired) and
+// determines if there is any drift that requires an update.
+func routeNeedsUpdate(desired appmeshv1alpha1.Route, target *aws.Route) bool {
+	// check if prefix changed
+	if desired.Http.Match.Prefix != *target.Data.Spec.HttpRoute.Match.Prefix {
+		return true
+	}
+	// check if the number of targets changed
+	if len(desired.Http.Action.WeightedTargets) != len(target.Data.Spec.HttpRoute.Action.WeightedTargets) {
+		return true
+	}
+	// check if the weight changed for any target
+	for _, r := range target.Data.Spec.HttpRoute.Action.WeightedTargets {
+		node := *r.VirtualNode
+		weight := *r.Weight
+		for _, d := range desired.Http.Action.WeightedTargets {
+			if d.VirtualNodeName == node && d.Weight != weight {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (c *Controller) updateVServiceActive(vservice *appmeshv1alpha1.VirtualService) error {
