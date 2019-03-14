@@ -3,9 +3,9 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
 
 	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,26 +40,20 @@ func (c *Controller) handleMesh(key string) error {
 		return fmt.Errorf("error updating mesh status: %s", err)
 	}
 
-	// Check if mesh already exists
-	targetMesh, err := c.cloud.GetMesh(ctx, mesh.Name)
-
-	if err != nil {
-		return fmt.Errorf("error describing mesh: %s", err)
-	} else if targetMesh == nil {
-
-		// Create mesh if it doesn't exist
-		targetMesh, err = c.cloud.CreateMesh(ctx, mesh)
-		if err != nil {
-			return fmt.Errorf("error creating mesh: %s", err)
+	// Create mesh if it does not exist
+	if targetMesh, err := c.cloud.GetMesh(ctx, mesh.Name); err != nil {
+		if aws.IsAWSErrNotFound(err) {
+			if targetMesh, err = c.cloud.CreateMesh(ctx, mesh); err != nil {
+				return fmt.Errorf("error creating mesh: %s", err)
+			}
+			klog.Infof("Created mesh %s", targetMesh.Name())
+		} else {
+			return fmt.Errorf("error describing mesh: %s", err)
 		}
-		klog.Infof("Created mesh %s", aws.StringValue(targetMesh.Data.MeshName))
 	} else {
-		klog.Infof("Discovered mesh %s", aws.StringValue(targetMesh.Data.MeshName))
-	}
-
-	err = c.updateMeshActive(mesh)
-	if err != nil {
-		return fmt.Errorf("error updating mesh status: %s", err)
+		if err := c.updateMeshActive(mesh); err != nil {
+			return fmt.Errorf("error updating mesh status: %s", err)
+		}
 	}
 
 	// TODO: Check if cloudmap namespace exists

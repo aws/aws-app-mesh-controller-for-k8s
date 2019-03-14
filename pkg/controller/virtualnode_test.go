@@ -100,74 +100,57 @@ func newAWSVirtualNode(ports []int64, protocols []string, backends []string, hos
 	return &awsVn
 }
 
-var (
-	// defaults
-	port80       int64 = 80
-	protocolHTTP       = "http"
-	hostname           = "foo.local"
-	backend            = "bar.local"
-
-	// extras
-	port443       int64 = 443
-	protocolHTTPS       = "https"
-	backend2            = "baz.local"
-	hostname2           = "fizz.local"
-
-	// Spec with default values
-	spec1_default = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname)
-
-	// result with the same values as spec1_default
-	result1_default = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname)
-
-	// Spec with extra port
-	spec1_extraPort = newAPIVirtualNode([]int64{port80, port443}, []string{protocolHTTP, protocolHTTPS}, []string{backend}, hostname)
-
-	// Result with extra port
-	result1_extraPort = newAWSVirtualNode([]int64{port80, port443}, []string{protocolHTTP, protocolHTTPS}, []string{backend}, hostname)
-
-	// Spec with no ports
-	spec1_noPort = newAPIVirtualNode([]int64{}, []string{}, []string{backend}, hostname)
-
-	// Result with no ports
-	result1_noPort = newAWSVirtualNode([]int64{}, []string{}, []string{backend}, hostname)
-
-	// Spec with extra backend
-	spec1_extraBackend = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend, backend2}, hostname)
-
-	// Result with extra backend
-	result1_extraBackend = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend, backend2}, hostname)
-
-	// Spec with no backends
-	spec1_noBackends = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{}, hostname)
-
-	// Result with no backends
-	result1_noBackends = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{}, hostname)
-
-	result1_differentHostname = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname2)
-)
-
-var vnodetests = []struct {
-	name        string
-	spec        *appmeshv1alpha1.VirtualNode
-	aws         *aws.VirtualNode
-	needsUpdate bool
-}{
-	{"vnodes are the same", spec1_default, result1_default, false},
-	{"extra port in spec", spec1_extraPort, result1_default, true},
-	{"extra port in result", spec1_default, result1_extraPort, true},
-	{"no ports in spec", spec1_noPort, result1_default, true},
-	{"no ports in result", spec1_default, result1_noPort, true},
-	{"no ports in either", spec1_noPort, result1_noPort, false},
-	{"extra backend in spec", spec1_extraBackend, result1_default, true},
-	{"extra backend in result", spec1_default, result1_extraBackend, true},
-	{"extra backend in both", spec1_extraBackend, result1_extraBackend, false},
-	{"no backend in spec", spec1_noBackends, result1_default, true},
-	{"no backend in result", spec1_default, result1_noBackends, true},
-	{"no backend in both", spec1_noBackends, result1_noBackends, false},
-	{"different hostname in result", spec1_default, result1_differentHostname, true},
-}
-
 func TestVNodeNeedsUpdate(t *testing.T) {
+
+	var (
+		// defaults
+		port80       int64 = 80
+		protocolHTTP       = "http"
+		hostname           = "foo.local"
+		backend            = "bar.local"
+
+		// extras
+		port443       int64 = 443
+		protocolHTTPS       = "https"
+		backend2            = "baz.local"
+		hostname2           = "fizz.local"
+
+		// Spec with default values
+		defaultNodeSpec = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname)
+		// result with the same values as defaultNodeSpec
+		defaultNodeResult       = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname)
+		extraPortSpec           = newAPIVirtualNode([]int64{port80, port443}, []string{protocolHTTP, protocolHTTPS}, []string{backend}, hostname)
+		extraPortResult         = newAWSVirtualNode([]int64{port80, port443}, []string{protocolHTTP, protocolHTTPS}, []string{backend}, hostname)
+		noPortSpec              = newAPIVirtualNode([]int64{}, []string{}, []string{backend}, hostname)
+		noPortResult            = newAWSVirtualNode([]int64{}, []string{}, []string{backend}, hostname)
+		extraBackendSpec        = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend, backend2}, hostname)
+		extraBackendResult      = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend, backend2}, hostname)
+		noBackendsSpec          = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{}, hostname)
+		noBackendsResult        = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{}, hostname)
+		differentHostnameResult = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname2)
+	)
+
+	var vnodetests = []struct {
+		name        string
+		spec        *appmeshv1alpha1.VirtualNode
+		aws         *aws.VirtualNode
+		needsUpdate bool
+	}{
+		{"vnodes are the same", defaultNodeSpec, defaultNodeResult, false},
+		{"extra port in spec", extraPortSpec, defaultNodeResult, true},
+		{"extra port in result", defaultNodeSpec, extraPortResult, true},
+		{"no ports in spec", noPortSpec, defaultNodeResult, true},
+		{"no ports in result", defaultNodeSpec, noPortResult, true},
+		{"no ports in either", noPortSpec, noPortResult, false},
+		{"extra backend in spec", extraBackendSpec, defaultNodeResult, true},
+		{"extra backend in result", defaultNodeSpec, extraBackendResult, true},
+		{"extra backend in both", extraBackendSpec, extraBackendResult, false},
+		{"no backend in spec", noBackendsSpec, defaultNodeResult, true},
+		{"no backend in result", defaultNodeSpec, noBackendsResult, true},
+		{"no backend in both", noBackendsSpec, noBackendsResult, false},
+		{"different hostname in result", defaultNodeSpec, differentHostnameResult, true},
+	}
+
 	for _, tt := range vnodetests {
 		t.Run(tt.name, func(t *testing.T) {
 			if res := vnodeNeedsUpdate(tt.spec, tt.aws); res != tt.needsUpdate {

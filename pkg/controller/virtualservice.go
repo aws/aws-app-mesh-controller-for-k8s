@@ -3,14 +3,16 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
+	set "github.com/deckarep/golang-set"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog"
-	"strings"
 )
 
 func (c *Controller) handleVService(key string) error {
@@ -24,7 +26,7 @@ func (c *Controller) handleVService(key string) error {
 	if errors.IsNotFound(err) {
 		klog.V(2).Infof("Virtual service %s has been deleted", key)
 
-		// TODO(nic) cleanup VirtualNode
+		// TODO(nic) cleanup VirtualService
 
 		return nil
 	}
@@ -66,93 +68,47 @@ func (c *Controller) handleVService(key string) error {
 
 	virtualRouter := getVirtualRouter(vservice)
 
-	// Check if virtual router already exists
-	targetRouter, err := c.cloud.GetVirtualRouter(ctx, virtualRouter.Name, meshName)
-
-	if err != nil {
-		return fmt.Errorf("error describing virtual router: %s", err)
-	} else if targetRouter == nil {
-
-		// Create virtual router if it doesn't exist
-		targetRouter, err = c.cloud.CreateVirtualRouter(ctx, virtualRouter, meshName)
-		if err != nil {
-			return fmt.Errorf("error creating virtual router: %s", err)
-		}
-		klog.Infof("Created virtual router %s", targetRouter.Name())
-	} else {
-		klog.Infof("Discovered virtual router %s", targetRouter.Name())
-	}
-
-	// Check if virtual service already exists
-	targetService, err := c.cloud.GetVirtualService(ctx, vservice.Name, meshName)
-
-	if err != nil {
-		return fmt.Errorf("error describing virtual service: %s", err)
-	} else if targetService == nil {
-
-		// Create virtual service if it doesn't exist
-		targetService, err = c.cloud.CreateVirtualService(ctx, vservice)
-		if err != nil {
-			return fmt.Errorf("error creating virtual service: %s", err)
-		}
-		klog.Infof("Created virtual service %s", targetService.Name())
-	} else {
-		klog.Infof("Discovered virtual service %s", targetService.Name())
-	}
-
-	routes := getRoutes(vservice)
-	for _, route := range routes {
-		// Check if route already exists
-		targetRoute, err := c.cloud.GetRoute(ctx, route.Name, virtualRouter.Name, meshName)
-
-		if err != nil {
-			return fmt.Errorf("error describing route: %s", err)
-		} else if targetRoute == nil {
-
-			// Create route if it doesn't exist
-			targetRoute, err = c.cloud.CreateRoute(ctx, &route, virtualRouter.Name, meshName)
-			if err != nil {
-				return fmt.Errorf("error creating route: %s", err)
+	// Create virtual router if it does not exist
+	if targetRouter, err := c.cloud.GetVirtualRouter(ctx, virtualRouter.Name, meshName); err != nil {
+		if aws.IsAWSErrNotFound(err) {
+			if targetRouter, err = c.cloud.CreateVirtualRouter(ctx, virtualRouter, meshName); err != nil {
+				return fmt.Errorf("error creating virtual router: %s", err)
 			}
-			klog.Infof("Created route %s", targetRoute.Name())
+			klog.Infof("Created virtual router %s", targetRouter.Name())
 		} else {
-			// Update route
-			if routeNeedsUpdate(route, targetRoute) {
-				_, err = c.cloud.UpdateRoute(ctx, &route, virtualRouter.Name, meshName)
-				if err != nil {
-					return fmt.Errorf("error updateing route: %s", err)
-				}
-				klog.Infof("Updated route %s", targetRoute.Name())
-			}
+			return fmt.Errorf("error describing virtual router: %s", err)
 		}
 	}
+
+	desiredRoutes := getRoutes(vservice)
+	existingRoutes, err := c.cloud.GetRoutesForVirtualRouter(ctx, virtualRouter.Name, meshName)
+	if err = c.updateRoutes(ctx, meshName, virtualRouter.Name, desiredRoutes, existingRoutes); err != nil {
+		return fmt.Errorf("error updating routes for service %s: %s", vservice.Name, err)
+	}
+
+	// Create virtual service if it does not exist
+	if targetService, err := c.cloud.GetVirtualService(ctx, vservice.Name, meshName); err != nil {
+		if aws.IsAWSErrNotFound(err) {
+			if targetService, err = c.cloud.CreateVirtualService(ctx, vservice); err != nil {
+				return fmt.Errorf("error creating virtual service: %s", err)
+			}
+			klog.Infof("Created virtual service %s", targetService.Name())
+		} else {
+			return fmt.Errorf("error describing virtual service: %s", err)
+		}
+	} else {
+		if vserviceNeedsUpdate(vservice, targetService) {
+			if targetService, err = c.cloud.UpdateVirtualService(ctx, vservice); err != nil {
+				return fmt.Errorf("error updating virtual service: %s", err)
+			}
+			klog.Infof("Updated virtual service %s", vservice.Name)
+		}
+	}
+
+	// TODO(nic) Need to determine if we need to clean up the old router here.  This needs to happen if we switched
+	// routers for the service.  For now, the old router will be orphaned if the user changes a router name.
 
 	return nil
-}
-
-// routeNeedsUpdate compares the App Mesh API result (target) with the desired spec (desired) and
-// determines if there is any drift that requires an update.
-func routeNeedsUpdate(desired appmeshv1alpha1.Route, target *aws.Route) bool {
-	// check if prefix changed
-	if desired.Http.Match.Prefix != *target.Data.Spec.HttpRoute.Match.Prefix {
-		return true
-	}
-	// check if the number of targets changed
-	if len(desired.Http.Action.WeightedTargets) != len(target.Data.Spec.HttpRoute.Action.WeightedTargets) {
-		return true
-	}
-	// check if the weight changed for any target
-	for _, r := range target.Data.Spec.HttpRoute.Action.WeightedTargets {
-		node := *r.VirtualNode
-		weight := *r.Weight
-		for _, d := range desired.Http.Action.WeightedTargets {
-			if d.VirtualNodeName == node && d.Weight != weight {
-				return true
-			}
-		}
-	}
-
-	return false
 }
 
 func (c *Controller) updateVServiceActive(vservice *appmeshv1alpha1.VirtualService) error {
@@ -226,4 +182,77 @@ func getRoutes(vservice *appmeshv1alpha1.VirtualService) []appmeshv1alpha1.Route
 		return vservice.Spec.Routes
 	}
 	return []appmeshv1alpha1.Route{}
+}
+
+// vserviceNeedsUpdate compares the App Mesh API result (target) with the desired spec (desired) and
+// determines if there is any drift that requires an update.
+func vserviceNeedsUpdate(desired *appmeshv1alpha1.VirtualService, target *aws.VirtualService) bool {
+	if desired.Spec.VirtualRouter != nil {
+		// If we specify the virtual router name, verify the target is equal
+		if desired.Spec.VirtualRouter.Name != target.VirtualRouterName() {
+			return true
+		}
+	} else {
+		// If no desired virtual router name, verify target is not set
+		if target.VirtualRouterName() != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Controller) updateRoutes(ctx context.Context, meshName string, routerName string, desired []appmeshv1alpha1.Route, existing aws.Routes) error {
+	routeNamesWithErrors := []string{}
+	existingNames := existing.RouteNamesSet()
+	desiredNames := set.NewSet()
+
+	for _, d := range desired {
+		desiredNames.Add(d.Name)
+	}
+
+	for _, d := range desired {
+		if existingNames.Contains(d.Name) {
+			// There exists a route by the desired name, check if it needs to be updated
+			e := existing.RouteByName(d.Name)
+			if routeNeedsUpdate(d, e) {
+				if _, err := c.cloud.UpdateRoute(ctx, &d, routerName, meshName); err != nil {
+					routeNamesWithErrors = append(routeNamesWithErrors, d.Name)
+				}
+			}
+		} else {
+			// Create route because no existing route exists by the desired name
+			if _, err := c.cloud.CreateRoute(ctx, &d, routerName, meshName); err != nil {
+				routeNamesWithErrors = append(routeNamesWithErrors, d.Name)
+			}
+		}
+	}
+
+	for _, ex := range existing {
+		if !desiredNames.Contains(ex.Name()) {
+			if _, err := c.cloud.DeleteRoute(ctx, ex.Name(), routerName, meshName); err != nil {
+				routeNamesWithErrors = append(routeNamesWithErrors, ex.Name())
+			}
+		}
+	}
+	if len(routeNamesWithErrors) > 0 {
+		return fmt.Errorf("error updating routes: %s", strings.Join(routeNamesWithErrors, " "))
+	}
+	return nil
+}
+
+func routeNeedsUpdate(desired appmeshv1alpha1.Route, target aws.Route) bool {
+	if desired.Http.Action.WeightedTargets != nil {
+		desiredSet := set.NewSet()
+		for _, target := range desired.Http.Action.WeightedTargets {
+			desiredSet.Add(target)
+		}
+		currSet := target.WeightedTargetSet()
+		if !desiredSet.Equal(currSet) {
+			return true
+		}
+	}
+	if desired.Http.Match.Prefix != target.Prefix() {
+		return true
+	}
+	return false
 }
