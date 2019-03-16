@@ -66,26 +66,19 @@ func (c *Controller) handleVNode(key string) error {
 		return fmt.Errorf("mesh %s must be active for virtual node %s", meshName, name)
 	}
 
-	// Check if virtual node already exists
-	targetNode, err := c.cloud.GetVirtualNode(ctx, vnode.Name, meshName)
-
-	if err != nil {
-		return fmt.Errorf("error describing virtual node: %s", err)
-	} else if targetNode == nil {
-
-		// Create virtual node if it doesn't exist
-		targetNode, err = c.cloud.CreateVirtualNode(ctx, vnode)
-		if err != nil {
-			return fmt.Errorf("error creating virtual node: %s", err)
+	// Create virtual node if it does not exist
+	if targetNode, err := c.cloud.GetVirtualNode(ctx, vnode.Name, meshName); err != nil {
+		if aws.IsAWSErrNotFound(err) {
+			if targetNode, err = c.cloud.CreateVirtualNode(ctx, vnode); err != nil {
+				return fmt.Errorf("error creating virtual node: %s", err)
+			}
+			klog.Infof("Created virtual node %s", vnode.Name)
+		} else {
+			return fmt.Errorf("error describing virtual node: %s", err)
 		}
-		klog.Infof("Created virtual node %s", vnode.Name)
 	} else {
-		klog.Infof("Discovered virtual node %s", vnode.Name)
 		if vnodeNeedsUpdate(vnode, targetNode) {
-			// Update virtual node
-			klog.Infof("Attempting to update virtual node: %s", vnode.Name)
-			targetNode, err = c.cloud.UpdateVirtualNode(ctx, vnode)
-			if err != nil {
+			if targetNode, err = c.cloud.UpdateVirtualNode(ctx, vnode); err != nil {
 				return fmt.Errorf("error updating virtual node: %s", err)
 			}
 			klog.Infof("Updated virtual node %s", vnode.Name)

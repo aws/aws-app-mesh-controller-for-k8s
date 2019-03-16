@@ -85,6 +85,8 @@ spec:
               weight: 1
             - virtualNodeName: colorteller-blue-vn
               weight: 1
+            - virtualNodeName: colorteller-black-vn
+              weight: 1
 ---
 apiVersion: appmesh.k8s.aws/v1alpha1
 kind: VirtualService
