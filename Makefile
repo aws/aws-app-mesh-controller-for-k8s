@@ -5,6 +5,7 @@ LDFLAGS?="-X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT} -X main.bui
 GO111MODULE=on
 # Docker
 IMAGE=amazon/app-mesh-controller
+REGION=$(shell aws configure get region)
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE)
 VERSION=0.1.0-alpha
 
@@ -32,10 +33,6 @@ image-release:
 
 .PHONY: push
 push:
-ifeq ($(AWS_REGION),)
-	$(error AWS_REGION is not set)
-endif
-
 ifeq ($(AWS_ACCOUNT),)
 	$(error AWS_ACCOUNT is not set)
 endif
@@ -47,8 +44,8 @@ push-release:
 	docker tag $(IMAGE):$(VERSION) $(REPO):$(VERSION)
 	docker push $(REPO):$(VERSION)
 
-.PHONY: kube-deploy
-kube-deploy:
+.PHONY: deployk8s
+deployk8s:
 	./hack/deploy.sh
 
 .PHONY: example
