@@ -3,10 +3,9 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
+	"github.com/aws/aws-sdk-go/service/appmesh"
 	set "github.com/deckarep/golang-set"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -25,9 +24,6 @@ func (c *Controller) handleVNode(key string) error {
 	shared, err := c.virtualNodeLister.VirtualNodes(namespace).Get(name)
 	if errors.IsNotFound(err) {
 		klog.V(2).Infof("Virtual node %s has been deleted", key)
-
-		// TODO(nic) cleanup VirtualNode
-
 		return nil
 	}
 	if err != nil {
@@ -37,9 +33,26 @@ func (c *Controller) handleVNode(key string) error {
 	// Make copy here so we never update the shared copy
 	vnode := shared.DeepCopy()
 
-	// Initialize status if empty
-	if err = c.initVNodeStatus(vnode); err != nil {
-		return fmt.Errorf("error updating virtual node status: %s", err)
+	// Resources with finalizers are not deleted immediately,
+	// instead the deletion timestamp is set when a client deletes them.
+	if !vnode.DeletionTimestamp.IsZero() {
+		// Resource is being deleted, process finalizers
+		return c.handleVNodeDelete(ctx, vnode)
+	}
+
+	// This is not a delete, add the deletion finalizer if it doesn't exist
+	if yes, _ := containsFinalizer(vnode, virtualNodeDeletionFinalizerName); !yes {
+		if err := addFinalizer(vnode, virtualNodeDeletionFinalizerName); err != nil {
+			return fmt.Errorf("error adding finalizer %s to virtual node %s: %s", virtualNodeDeletionFinalizerName, vnode.Name, err)
+		}
+		if err := c.updateVNodeResource(vnode); err != nil {
+			return fmt.Errorf("error adding finalizer %s to virtual node %s: %s", virtualNodeDeletionFinalizerName, vnode.Name, err)
+		}
+	}
+
+	if processVNode := c.handleVNodeMeshDeleting(ctx, vnode); !processVNode {
+		klog.Infof("skipping processing virtual node %s", vnode.Name)
+		return nil
 	}
 
 	// Get Mesh for virtual node
@@ -49,13 +62,7 @@ func (c *Controller) handleVNode(key string) error {
 	}
 
 	// Extract namespace from Mesh name
-	meshNamespace := namespace
-	meshParts := strings.Split(meshName, ".")
-	if len(meshParts) > 1 {
-		meshNamespace = strings.Join(meshParts[1:], ".")
-		meshName = meshParts[0]
-		vnode.Spec.MeshName = meshParts[0]
-	}
+	meshName, meshNamespace := parseMeshName(meshName, vnode.Namespace)
 
 	mesh, err := c.meshLister.Meshes(meshNamespace).Get(meshName)
 	if errors.IsNotFound(err) {
@@ -67,7 +74,8 @@ func (c *Controller) handleVNode(key string) error {
 	}
 
 	// Create virtual node if it does not exist
-	if targetNode, err := c.cloud.GetVirtualNode(ctx, vnode.Name, meshName); err != nil {
+	targetNode, err := c.cloud.GetVirtualNode(ctx, vnode.Name, meshName)
+	if err != nil {
 		if aws.IsAWSErrNotFound(err) {
 			if targetNode, err = c.cloud.CreateVirtualNode(ctx, vnode); err != nil {
 				return fmt.Errorf("error creating virtual node: %s", err)
@@ -85,19 +93,42 @@ func (c *Controller) handleVNode(key string) error {
 		}
 	}
 
+	updated, err := c.updateVNodeStatus(vnode, targetNode)
+	if err != nil {
+		return fmt.Errorf("error updating virtual service status: %s", err)
+	} else if updated != nil {
+		vnode = updated
+	}
+
 	return nil
 }
 
-func (c *Controller) updateVNodeActive(vnode *appmeshv1alpha1.VirtualNode) error {
-	return c.updateVNodeCondition(vnode, appmeshv1alpha1.VirtualNodeActive, api.ConditionTrue)
+func (c *Controller) updateVNodeResource(vnode *appmeshv1alpha1.VirtualNode) error {
+	_, err := c.meshclientset.AppmeshV1alpha1().VirtualNodes(vnode.Namespace).Update(vnode)
+	return err
 }
 
-func (c *Controller) updateVNodeCondition(vnode *appmeshv1alpha1.VirtualNode, conditionType appmeshv1alpha1.VirtualNodeConditionType, status api.ConditionStatus) error {
+func (c *Controller) updateVNodeStatus(vnode *appmeshv1alpha1.VirtualNode, target *aws.VirtualNode) (*appmeshv1alpha1.VirtualNode, error) {
+	switch target.Status() {
+	case appmesh.VirtualNodeStatusCodeActive:
+		return c.updateVNodeActive(vnode, api.ConditionTrue)
+	case appmesh.VirtualNodeStatusCodeInactive:
+		return c.updateVNodeActive(vnode, api.ConditionFalse)
+	case appmesh.VirtualNodeStatusCodeDeleted:
+		return c.updateVNodeActive(vnode, api.ConditionFalse)
+	}
+
+	return nil, nil
+}
+
+func (c *Controller) updateVNodeActive(vnode *appmeshv1alpha1.VirtualNode, status api.ConditionStatus) (*appmeshv1alpha1.VirtualNode, error) {
+	return c.updateVNodeCondition(vnode, appmeshv1alpha1.VirtualNodeActive, status)
+}
+
+func (c *Controller) updateVNodeCondition(vnode *appmeshv1alpha1.VirtualNode, conditionType appmeshv1alpha1.VirtualNodeConditionType, status api.ConditionStatus) (*appmeshv1alpha1.VirtualNode, error) {
 	now := metav1.Now()
-
 	condition := getVNodeCondition(conditionType, vnode.Status)
-
-	if condition == nil {
+	if condition == (appmeshv1alpha1.VirtualNodeCondition{}) {
 		// condition does not exist
 		newCondition := appmeshv1alpha1.VirtualNodeCondition{
 			Type:               conditionType,
@@ -107,42 +138,24 @@ func (c *Controller) updateVNodeCondition(vnode *appmeshv1alpha1.VirtualNode, co
 		vnode.Status.Conditions = append(vnode.Status.Conditions, newCondition)
 	} else if condition.Status == status {
 		// Already is set to status
-		return nil
+		return nil, nil
 	} else {
 		// condition exists and not set to status
 		condition.Status = status
 		condition.LastTransitionTime = &now
 	}
 
-	_, err := c.meshclientset.AppmeshV1alpha1().VirtualNodes(vnode.Namespace).UpdateStatus(vnode)
-	return err
+	return c.meshclientset.AppmeshV1alpha1().VirtualNodes(vnode.Namespace).UpdateStatus(vnode)
 }
 
-func (c *Controller) initVNodeStatus(vnode *appmeshv1alpha1.VirtualNode) error {
-	if vnode.Status == nil {
-		vnode.Status = &appmeshv1alpha1.VirtualNodeStatus{
-			Conditions: []appmeshv1alpha1.VirtualNodeCondition{},
-		}
-		_, err := c.meshclientset.AppmeshV1alpha1().VirtualNodes(vnode.Namespace).UpdateStatus(vnode)
-		return err
-	}
-	return nil
-}
-
-func checkVNodeActive(vnode *appmeshv1alpha1.VirtualNode) bool {
-	condition := getVNodeCondition(appmeshv1alpha1.VirtualNodeActive, vnode.Status)
-	return condition != nil && condition.Status == api.ConditionTrue
-}
-
-func getVNodeCondition(conditionType appmeshv1alpha1.VirtualNodeConditionType, status *appmeshv1alpha1.VirtualNodeStatus) *appmeshv1alpha1.VirtualNodeCondition {
-	if status != nil {
-		for _, condition := range status.Conditions {
-			if condition.Type == conditionType {
-				return &condition
-			}
+func getVNodeCondition(conditionType appmeshv1alpha1.VirtualNodeConditionType, status appmeshv1alpha1.VirtualNodeStatus) appmeshv1alpha1.VirtualNodeCondition {
+	for _, condition := range status.Conditions {
+		if condition.Type == conditionType {
+			return condition
 		}
 	}
-	return nil
+
+	return appmeshv1alpha1.VirtualNodeCondition{}
 }
 
 // vnodeNeedsUpdate compares the App Mesh API result (target) with the desired spec (desired) and
@@ -193,4 +206,51 @@ func vnodeNeedsUpdate(desired *appmeshv1alpha1.VirtualNode, target *aws.VirtualN
 		}
 	}
 	return false
+}
+
+func (c *Controller) handleVNodeDelete(ctx context.Context, vnode *appmeshv1alpha1.VirtualNode) error {
+	if yes, _ := containsFinalizer(vnode, virtualNodeDeletionFinalizerName); yes {
+		if _, err := c.cloud.DeleteVirtualNode(ctx, vnode.Name, vnode.Spec.MeshName); err != nil {
+			if !aws.IsAWSErrNotFound(err) {
+				return fmt.Errorf("failed to clean up virtual node %s during deletion finalizer: %s", vnode.Name, err)
+			}
+		}
+		if err := removeFinalizer(vnode, virtualNodeDeletionFinalizerName); err != nil {
+			return fmt.Errorf("error removing finalizer %s to virtual node %s during deletion: %s", virtualNodeDeletionFinalizerName, vnode.Name, err)
+		}
+		if err := c.updateVNodeResource(vnode); err != nil {
+			return fmt.Errorf("error removing finalizer %s to virtual node %s during deletion: %s", virtualNodeDeletionFinalizerName, vnode.Name, err)
+		}
+	}
+	return nil
+}
+
+func (c *Controller) handleVNodeMeshDeleting(ctx context.Context, vnode *appmeshv1alpha1.VirtualNode) (processVNode bool) {
+	meshName, meshNamespace := parseMeshName(vnode.Spec.MeshName, vnode.Namespace)
+	mesh, err := c.meshLister.Meshes(meshNamespace).Get(meshName)
+
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// If mesh doesn't exist, do nothing
+			klog.Infof("mesh doesn't exist, skipping processing virtual node %s", vnode.Name)
+		} else {
+			klog.Errorf("error getting mesh: %s", err)
+		}
+		return false
+	}
+
+	// if mesh DeletionTimestamp is set, clean up virtual node via App Mesh API
+	if !mesh.DeletionTimestamp.IsZero() {
+		if _, err := c.cloud.DeleteVirtualNode(ctx, vnode.Name, vnode.Spec.MeshName); err != nil {
+			if aws.IsAWSErrNotFound(err) {
+				klog.Infof("virtual node %s not found", vnode.Name)
+			} else {
+				klog.Errorf("failed to clean up virtual node %s during mesh deletion: %s", vnode.Name, err)
+			}
+		} else {
+			klog.Infof("Deleted virtual node %s because mesh %s is being deleted", vnode.Name, vnode.Spec.MeshName)
+		}
+		return false
+	}
+	return true
 }

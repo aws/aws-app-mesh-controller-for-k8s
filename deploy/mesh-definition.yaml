@@ -26,19 +26,13 @@ spec:
       properties:
         spec:
           properties:
-            cloudMapNamespaceName:
-              type: string
             serviceDiscoveryType:
               type: string
               enum:
-                - cloudmap-http
+                - dns
         status:
           properties:
             meshArn:
-              type: string
-            cloudMapNamespaceArn:
-              type: string
-            cloudMapRoleArn:
               type: string
             conditions:
               type: array
@@ -50,12 +44,12 @@ spec:
                   type:
                     type: string
                     enum:
-                      - Active
+                      - MeshActive
                   status:
                     type: string
                     enum:
-                      - True
-                      - False
+                      - "True"
+                      - "False"
                       - Unknown
                   lastTransitionTime:
                     type: string

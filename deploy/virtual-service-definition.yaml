@@ -78,12 +78,15 @@ spec:
                   type:
                     type: string
                     enum:
-                      - Active
+                      - VirtualServiceActive
+                      - VirtualRouterActive
+                      - RoutesActive
+                      - MeshMarkedForDeletion
                   status:
                     type: string
                     enum:
-                      - True
-                      - False
+                      - "True"
+                      - "False"
                       - Unknown
                   lastTransitionTime:
                     type: string
