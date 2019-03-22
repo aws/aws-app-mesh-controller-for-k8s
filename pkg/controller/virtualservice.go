@@ -361,7 +361,7 @@ func (c *Controller) handleVServiceMeshDeleting(ctx context.Context, vservice *a
 		if err := c.deleteVServiceResources(ctx, vservice); err != nil {
 			klog.Error(err)
 		} else {
-			klog.Infof("Deleted resources for virtual service %s because mesh %s is being deleted", vservice.Name, vservice.Spec.MeshName)
+			klog.Infof("Deleted resources for virtual service %s because mesh %s is being deleted", vservice.Name, meshName)
 		}
 		return false
 	}
@@ -369,9 +369,10 @@ func (c *Controller) handleVServiceMeshDeleting(ctx context.Context, vservice *a
 }
 
 func (c *Controller) deleteVServiceResources(ctx context.Context, vservice *appmeshv1alpha1.VirtualService) error {
+	meshName, _ := parseMeshName(vservice.Spec.MeshName, vservice.Namespace)
 	// Cleanup routes
 	for _, r := range vservice.Spec.Routes {
-		if _, err := c.cloud.DeleteRoute(ctx, r.Name, vservice.Spec.VirtualRouter.Name, vservice.Spec.MeshName); err != nil {
+		if _, err := c.cloud.DeleteRoute(ctx, r.Name, vservice.Spec.VirtualRouter.Name, meshName); err != nil {
 			if !aws.IsAWSErrNotFound(err) {
 				return fmt.Errorf("failed to clean up route %s for virtual service %s during deletion: %s", r.Name, vservice.Name, err)
 			}
@@ -381,14 +382,14 @@ func (c *Controller) deleteVServiceResources(ctx context.Context, vservice *appm
 	// TODO(nic): if we support a force delete, we can delete the rest of the routes attached to the virtual router here
 
 	// Cleanup virtual service
-	if _, err := c.cloud.DeleteVirtualService(ctx, vservice.Name, vservice.Spec.MeshName); err != nil {
+	if _, err := c.cloud.DeleteVirtualService(ctx, vservice.Name, meshName); err != nil {
 		if !aws.IsAWSErrNotFound(err) {
 			return fmt.Errorf("failed to clean up virtual service %s during deletion: %s", vservice.Name, err)
 		}
 	}
 
 	// Cleanup virtual router
-	if _, err := c.cloud.DeleteVirtualRouter(ctx, vservice.Spec.VirtualRouter.Name, vservice.Spec.MeshName); err != nil {
+	if _, err := c.cloud.DeleteVirtualRouter(ctx, vservice.Spec.VirtualRouter.Name, meshName); err != nil {
 		if !aws.IsAWSErrNotFound(err) {
 			return fmt.Errorf("failed to clean up virtual router %s for virtual service %s during deletion: %s", vservice.Spec.VirtualRouter.Name, vservice.Name, err)
 		}

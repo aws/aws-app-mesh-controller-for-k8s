@@ -209,8 +209,9 @@ func vnodeNeedsUpdate(desired *appmeshv1alpha1.VirtualNode, target *aws.VirtualN
 }
 
 func (c *Controller) handleVNodeDelete(ctx context.Context, vnode *appmeshv1alpha1.VirtualNode) error {
+	meshName, _ := parseMeshName(vnode.Spec.MeshName, vnode.Namespace)
 	if yes, _ := containsFinalizer(vnode, virtualNodeDeletionFinalizerName); yes {
-		if _, err := c.cloud.DeleteVirtualNode(ctx, vnode.Name, vnode.Spec.MeshName); err != nil {
+		if _, err := c.cloud.DeleteVirtualNode(ctx, vnode.Name, meshName); err != nil {
 			if !aws.IsAWSErrNotFound(err) {
 				return fmt.Errorf("failed to clean up virtual node %s during deletion finalizer: %s", vnode.Name, err)
 			}
@@ -241,14 +242,14 @@ func (c *Controller) handleVNodeMeshDeleting(ctx context.Context, vnode *appmesh
 
 	// if mesh DeletionTimestamp is set, clean up virtual node via App Mesh API
 	if !mesh.DeletionTimestamp.IsZero() {
-		if _, err := c.cloud.DeleteVirtualNode(ctx, vnode.Name, vnode.Spec.MeshName); err != nil {
+		if _, err := c.cloud.DeleteVirtualNode(ctx, vnode.Name, meshName); err != nil {
 			if aws.IsAWSErrNotFound(err) {
 				klog.Infof("virtual node %s not found", vnode.Name)
 			} else {
 				klog.Errorf("failed to clean up virtual node %s during mesh deletion: %s", vnode.Name, err)
 			}
 		} else {
-			klog.Infof("Deleted virtual node %s because mesh %s is being deleted", vnode.Name, vnode.Spec.MeshName)
+			klog.Infof("Deleted virtual node %s because mesh %s is being deleted", vnode.Name, meshName)
 		}
 		return false
 	}
