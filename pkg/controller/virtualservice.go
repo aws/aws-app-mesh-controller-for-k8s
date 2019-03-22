@@ -98,7 +98,7 @@ func (c *Controller) handleVService(key string) error {
 	if err != nil {
 		return fmt.Errorf("error getting routes for virtual service %s: %s", vservice.Name, err)
 	}
-	if err = c.updateRoutes(ctx, meshName, virtualRouter.Name, desiredRoutes, existingRoutes); err != nil {
+	if err = c.updateRoutes(ctx, meshName, virtualRouter.Name, desiredRoutes, existingRoutes, vservice.Namespace); err != nil {
 		return fmt.Errorf("error updating routes for virtual service %s: %s", vservice.Name, err)
 	}
 
@@ -257,7 +257,7 @@ func vserviceNeedsUpdate(desired *appmeshv1alpha1.VirtualService, target *aws.Vi
 	return false
 }
 
-func (c *Controller) updateRoutes(ctx context.Context, meshName string, routerName string, desired []appmeshv1alpha1.Route, existing aws.Routes) error {
+func (c *Controller) updateRoutes(ctx context.Context, meshName string, routerName string, desired []appmeshv1alpha1.Route, existing aws.Routes, namespace string) error {
 	routeNamesWithErrors := []string{}
 	existingNames := existing.RouteNamesSet()
 	desiredNames := set.NewSet()
@@ -266,19 +266,20 @@ func (c *Controller) updateRoutes(ctx context.Context, meshName string, routerNa
 		desiredNames.Add(d.Name)
 	}
 
+	// Needs update for virtual node name convention
 	for _, d := range desired {
 		if existingNames.Contains(d.Name) {
 			// There exists a route by the desired name, check if it needs to be updated
 			e := existing.RouteByName(d.Name)
-			if routeNeedsUpdate(d, e) {
-				if _, err := c.cloud.UpdateRoute(ctx, &d, routerName, meshName); err != nil {
+			if routeNeedsUpdate(d, e, namespace) {
+				if _, err := c.cloud.UpdateRoute(ctx, &d, routerName, meshName, namespace); err != nil {
 					routeNamesWithErrors = append(routeNamesWithErrors, d.Name)
 					klog.Errorf("Error updating route %s: %s", d.Name, err)
 				}
 			}
 		} else {
 			// Create route because no existing route exists by the desired name
-			if _, err := c.cloud.CreateRoute(ctx, &d, routerName, meshName); err != nil {
+			if _, err := c.cloud.CreateRoute(ctx, &d, routerName, meshName, namespace); err != nil {
 				routeNamesWithErrors = append(routeNamesWithErrors, d.Name)
 				klog.Errorf("Error creating route %s: %s", d.Name, err)
 			}
@@ -289,7 +290,7 @@ func (c *Controller) updateRoutes(ctx context.Context, meshName string, routerNa
 		if !desiredNames.Contains(ex.Name()) {
 			if _, err := c.cloud.DeleteRoute(ctx, ex.Name(), routerName, meshName); err != nil {
 				routeNamesWithErrors = append(routeNamesWithErrors, ex.Name())
-				klog.Errorf("Error deleting route %s: %s", ex.Name, err)
+				klog.Errorf("Error deleting route %s: %s", ex.Name(), err)
 			}
 		}
 	}
@@ -309,11 +310,12 @@ func allRoutesActive(routes aws.Routes) bool {
 	return true
 }
 
-func routeNeedsUpdate(desired appmeshv1alpha1.Route, target aws.Route) bool {
+func routeNeedsUpdate(desired appmeshv1alpha1.Route, target aws.Route, namespace string) bool {
 	if desired.Http.Action.WeightedTargets != nil {
 		desiredSet := set.NewSet()
 		for _, target := range desired.Http.Action.WeightedTargets {
-			desiredSet.Add(target)
+			desiredSet.Add(appmeshv1alpha1.WeightedTarget{VirtualNodeName:aws.ConstructAppMeshVNodeNameFromCRD(target.VirtualNodeName, namespace),
+				Weight:target.Weight})
 		}
 		currSet := target.WeightedTargetSet()
 		if !desiredSet.Equal(currSet) {

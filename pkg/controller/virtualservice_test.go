@@ -12,7 +12,7 @@ import (
 // newAWSVirtualService is a helper function to generate an Kubernetes Custom Resource API object.
 func newAPIVirtualService(meshName string, virtualRouterName string, routes []appmeshv1alpha1.Route) appmeshv1alpha1.VirtualService {
 	vs := appmeshv1alpha1.VirtualService{
-		Spec: &appmeshv1alpha1.VirtualServiceSpec{
+		Spec: appmeshv1alpha1.VirtualServiceSpec{
 			MeshName: meshName,
 		},
 	}
@@ -136,22 +136,43 @@ func TestRouteNeedUpdate(t *testing.T) {
 		defaultTargets   = []appmeshv1alpha1.WeightedTarget{
 			{Weight: int64(1), VirtualNodeName: defaultNodeName},
 		}
-		extraTarget = []appmeshv1alpha1.WeightedTarget{
-			{Weight: int64(1), VirtualNodeName: defaultNodeName},
+		defaultNamespace = "dummyNamespace"
+
+		awsExtraTarget = []appmeshv1alpha1.WeightedTarget{
+			{Weight: int64(1), VirtualNodeName: defaultNodeName + "-" + defaultNamespace},
 			{Weight: int64(1), VirtualNodeName: "extra-node"},
+		}
+
+		awsdefaultTargets = []appmeshv1alpha1.WeightedTarget{
+			{Weight: int64(1), VirtualNodeName: defaultNodeName + "-" + defaultNamespace},
 		}
 
 		// Spec with default values
 		defaultRouteSpec = newAPIHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)
 
 		// result with the same values as defaultRouteSpec
-		defaultRouteResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)
+		defaultRouteResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, awsdefaultTargets)
 
-		extraTargetResult     = newAWSHttpRoute(defaultRouteName, defaultPrefix, extraTarget)
-		extraTargetSpec       = newAPIHttpRoute(defaultRouteName, defaultPrefix, extraTarget)
+		extraTargetResult     = newAWSHttpRoute(defaultRouteName, defaultPrefix, awsExtraTarget)
+		extraTargetSpec       = newAPIHttpRoute(defaultRouteName, defaultPrefix, awsExtraTarget)
 		noTargetsResult       = newAWSHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1alpha1.WeightedTarget{})
 		noTargetSpec          = newAPIHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1alpha1.WeightedTarget{})
 		differentPrefixResult = newAWSHttpRoute(defaultRouteName, "/foo", defaultTargets)
+
+		crdTargets   = []appmeshv1alpha1.WeightedTarget{
+			{Weight: int64(1), VirtualNodeName: "foo.bar"},
+			{Weight: int64(2), VirtualNodeName: "foo.bar.zoo"},
+			{Weight: int64(3), VirtualNodeName: "foo"},
+		}
+		crdRouteSpec = newAPIHttpRoute(defaultRouteName, defaultPrefix, crdTargets)
+
+		awsTargets   = []appmeshv1alpha1.WeightedTarget{
+			{Weight: int64(1), VirtualNodeName: "foo-bar"},
+			{Weight: int64(2), VirtualNodeName: "foo-bar-zoo"},
+			{Weight: int64(3), VirtualNodeName: "foo-dummyNamespace"},
+		}
+		awsRouteResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, awsTargets)
+
 	)
 
 	var routetests = []struct {
@@ -166,11 +187,12 @@ func TestRouteNeedUpdate(t *testing.T) {
 		{"no targets in result", extraTargetSpec, noTargetsResult, true},
 		{"no targets in spec", noTargetSpec, defaultRouteResult, true},
 		{"different prefix", defaultRouteSpec, differentPrefixResult, true},
+		{"routes with different weights are the same", crdRouteSpec, awsRouteResult, false},
 	}
 
 	for _, tt := range routetests {
 		t.Run(tt.name, func(t *testing.T) {
-			if res := routeNeedsUpdate(tt.spec, tt.routes); res != tt.needsUpdate {
+			if res := routeNeedsUpdate(tt.spec, tt.routes, defaultNamespace); res != tt.needsUpdate {
 				t.Errorf("got %v, want %v", res, tt.needsUpdate)
 			}
 		})

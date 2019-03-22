@@ -13,7 +13,7 @@ import (
 // Ports and protocols should be arrays of the same length.
 func newAPIVirtualNode(ports []int64, protocols []string, backends []string, hostname string) *appmeshv1alpha1.VirtualNode {
 	vn := appmeshv1alpha1.VirtualNode{
-		Spec: &appmeshv1alpha1.VirtualNodeSpec{},
+		Spec: appmeshv1alpha1.VirtualNodeSpec{},
 	}
 
 	if len(ports) != len(protocols) {

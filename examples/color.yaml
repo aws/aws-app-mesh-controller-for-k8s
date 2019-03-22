@@ -17,7 +17,7 @@ spec:
 apiVersion: appmesh.k8s.aws/v1alpha1
 kind: VirtualNode
 metadata:
-  name: colorgateway-appmesh-demo
+  name: colorgateway
   namespace: appmesh-demo
 spec:
   meshName: color-mesh
@@ -35,7 +35,7 @@ spec:
 apiVersion: appmesh.k8s.aws/v1alpha1
 kind: VirtualNode
 metadata:
-  name: colorteller-appmesh-demo
+  name: colorteller
   namespace: appmesh-demo
 spec:
   meshName: color-mesh
@@ -50,7 +50,7 @@ spec:
 apiVersion: appmesh.k8s.aws/v1alpha1
 kind: VirtualNode
 metadata:
-  name: colorteller-black-appmesh-demo
+  name: colorteller-black
   namespace: appmesh-demo
 spec:
   meshName: color-mesh
@@ -65,7 +65,7 @@ spec:
 apiVersion: appmesh.k8s.aws/v1alpha1
 kind: VirtualNode
 metadata:
-  name: colorteller-blue-appmesh-demo
+  name: colorteller-blue
   namespace: appmesh-demo
 spec:
   meshName: color-mesh
@@ -80,7 +80,7 @@ spec:
 apiVersion: appmesh.k8s.aws/v1alpha1
 kind: VirtualNode
 metadata:
-  name: colorteller-red-appmesh-demo
+  name: colorteller-red
   namespace: appmesh-demo
 spec:
   meshName: color-mesh
@@ -108,11 +108,11 @@ spec:
           prefix: /
         action:
           weightedTargets:
-            - virtualNodeName: colorteller-appmesh-demo
+            - virtualNodeName: colorteller.appmesh-demo
               weight: 1
-            - virtualNodeName: colorteller-blue-appmesh-demo
+            - virtualNodeName: colorteller-blue
               weight: 1
-            - virtualNodeName: colorteller-black-appmesh-demo
+            - virtualNodeName: colorteller-black.appmesh-demo
               weight: 1
 ---
 apiVersion: appmesh.k8s.aws/v1alpha1
@@ -131,7 +131,7 @@ spec:
           prefix: /color
         action:
           weightedTargets:
-            - virtualNodeName: colorgateway-appmesh-demo
+            - virtualNodeName: colorgateway
               weight: 1
 ---
 apiVersion: v1
