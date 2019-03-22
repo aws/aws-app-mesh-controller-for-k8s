@@ -16,14 +16,18 @@ import (
 const (
 	DescribeMeshTimeout           = 5
 	CreateMeshTimeout             = 5
+	DeleteMeshTimeout             = 5
 	DescribeVirtualNodeTimeout    = 5
 	CreateVirtualNodeTimeout      = 5
 	UpdateVirtualNodeTimeout      = 5
+	DeleteVirtualNodeTimeout      = 5
 	DescribeVirtualServiceTimeout = 5
 	CreateVirtualServiceTimeout   = 5
 	UpdateVirtualServiceTimeout   = 5
+	DeleteVirtualServiceTimeout   = 5
 	DescribeVirtualRouterTimeout  = 5
 	CreateVirtualRouterTimeout    = 5
+	DeleteVirtualRouterTimeout    = 5
 	DescribeRouteTimeout          = 5
 	CreateRouteTimeout            = 5
 	ListRoutesTimeout             = 10
@@ -34,14 +38,18 @@ const (
 type AppMeshAPI interface {
 	GetMesh(context.Context, string) (*Mesh, error)
 	CreateMesh(context.Context, *appmeshv1alpha1.Mesh) (*Mesh, error)
+	DeleteMesh(context.Context, string) (*Mesh, error)
 	GetVirtualNode(context.Context, string, string) (*VirtualNode, error)
 	CreateVirtualNode(context.Context, *appmeshv1alpha1.VirtualNode) (*VirtualNode, error)
 	UpdateVirtualNode(context.Context, *appmeshv1alpha1.VirtualNode) (*VirtualNode, error)
+	DeleteVirtualNode(context.Context, string, string) (*VirtualNode, error)
 	GetVirtualService(context.Context, string, string) (*VirtualService, error)
 	CreateVirtualService(context.Context, *appmeshv1alpha1.VirtualService) (*VirtualService, error)
 	UpdateVirtualService(context.Context, *appmeshv1alpha1.VirtualService) (*VirtualService, error)
+	DeleteVirtualService(context.Context, string, string) (*VirtualService, error)
 	GetVirtualRouter(context.Context, string, string) (*VirtualRouter, error)
 	CreateVirtualRouter(context.Context, *appmeshv1alpha1.VirtualRouter, string) (*VirtualRouter, error)
+	DeleteVirtualRouter(context.Context, string, string) (*VirtualRouter, error)
 	GetRoute(context.Context, string, string, string) (*Route, error)
 	CreateRoute(context.Context, *appmeshv1alpha1.Route, string, string) (*Route, error)
 	UpdateRoute(context.Context, *appmeshv1alpha1.Route, string, string) (*Route, error)
@@ -98,6 +106,25 @@ func (c *Cloud) CreateMesh(ctx context.Context, mesh *appmeshv1alpha1.Mesh) (*Me
 	}
 }
 
+func (c *Cloud) DeleteMesh(ctx context.Context, name string) (*Mesh, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteMeshTimeout)
+	defer cancel()
+
+	input := &appmesh.DeleteMeshInput{
+		MeshName: aws.String(name),
+	}
+
+	if output, err := c.appmesh.DeleteMeshWithContext(ctx, input); err != nil {
+		return nil, err
+	} else if output == nil || output.Mesh == nil {
+		return nil, fmt.Errorf("mesh %s not found", name)
+	} else {
+		return &Mesh{
+			Data: *output.Mesh,
+		}, nil
+	}
+}
+
 type VirtualNode struct {
 	Data appmesh.VirtualNodeData
 }
@@ -105,6 +132,15 @@ type VirtualNode struct {
 // Name returns the name or an empty string
 func (v *VirtualNode) Name() string {
 	return aws.StringValue(v.Data.VirtualNodeName)
+}
+
+// Status returns the status or an empty string
+func (v *VirtualNode) Status() string {
+	if v.Data.Status != nil &&
+		v.Data.Status.Status != nil {
+		return aws.StringValue(v.Data.Status.Status)
+	}
+	return ""
 }
 
 // HostName returns the hostname or an empty string
@@ -318,6 +354,26 @@ func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1alpha1.Vi
 	}
 }
 
+func (c *Cloud) DeleteVirtualNode(ctx context.Context, name string, meshName string) (*VirtualNode, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteVirtualNodeTimeout)
+	defer cancel()
+
+	input := &appmesh.DeleteVirtualNodeInput{
+		MeshName:        aws.String(meshName),
+		VirtualNodeName: aws.String(name),
+	}
+
+	if output, err := c.appmesh.DeleteVirtualNodeWithContext(ctx, input); err != nil {
+		return nil, err
+	} else if output == nil || output.VirtualNode == nil {
+		return nil, fmt.Errorf("virtual node %s not found", name)
+	} else {
+		return &VirtualNode{
+			Data: *output.VirtualNode,
+		}, nil
+	}
+}
+
 type VirtualService struct {
 	Data appmesh.VirtualServiceData
 }
@@ -333,6 +389,15 @@ func (v *VirtualService) VirtualRouterName() string {
 		v.Data.Spec.Provider.VirtualRouter != nil &&
 		v.Data.Spec.Provider.VirtualRouter.VirtualRouterName != nil {
 		return aws.StringValue(v.Data.Spec.Provider.VirtualRouter.VirtualRouterName)
+	}
+	return ""
+}
+
+// Status returns the status or an empty string
+func (v *VirtualService) Status() string {
+	if v.Data.Status != nil &&
+		v.Data.Status.Status != nil {
+		return aws.StringValue(v.Data.Status.Status)
 	}
 	return ""
 }
@@ -426,6 +491,26 @@ func (c *Cloud) UpdateVirtualService(ctx context.Context, vservice *appmeshv1alp
 	}
 }
 
+func (c *Cloud) DeleteVirtualService(ctx context.Context, name string, meshName string) (*VirtualService, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteVirtualServiceTimeout)
+	defer cancel()
+
+	input := &appmesh.DeleteVirtualServiceInput{
+		MeshName:           aws.String(meshName),
+		VirtualServiceName: aws.String(name),
+	}
+
+	if output, err := c.appmesh.DeleteVirtualServiceWithContext(ctx, input); err != nil {
+		return nil, err
+	} else if output == nil || output.VirtualService == nil {
+		return nil, fmt.Errorf("virtual service %s not found", name)
+	} else {
+		return &VirtualService{
+			Data: *output.VirtualService,
+		}, nil
+	}
+}
+
 type VirtualRouter struct {
 	Data appmesh.VirtualRouterData
 }
@@ -433,6 +518,15 @@ type VirtualRouter struct {
 // Name returns the name or an empty string
 func (v *VirtualRouter) Name() string {
 	return aws.StringValue(v.Data.VirtualRouterName)
+}
+
+// Status returns the name or an empty string
+func (v *VirtualRouter) Status() string {
+	if v.Data.Status != nil &&
+		v.Data.Status.Status != nil {
+		return aws.StringValue(v.Data.Status.Status)
+	}
+	return ""
 }
 
 // GetVirtualRouter calls describe virtual router.
@@ -481,6 +575,26 @@ func (c *Cloud) CreateVirtualRouter(ctx context.Context, vrouter *appmeshv1alpha
 	}
 }
 
+func (c *Cloud) DeleteVirtualRouter(ctx context.Context, name string, meshName string) (*VirtualRouter, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteVirtualRouterTimeout)
+	defer cancel()
+
+	input := &appmesh.DeleteVirtualRouterInput{
+		MeshName:          aws.String(meshName),
+		VirtualRouterName: aws.String(name),
+	}
+
+	if output, err := c.appmesh.DeleteVirtualRouterWithContext(ctx, input); err != nil {
+		return nil, err
+	} else if output == nil || output.VirtualRouter == nil {
+		return nil, fmt.Errorf("virtual router %s not found", name)
+	} else {
+		return &VirtualRouter{
+			Data: *output.VirtualRouter,
+		}, nil
+	}
+}
+
 type Route struct {
 	Data appmesh.RouteData
 }
@@ -488,6 +602,15 @@ type Route struct {
 // Name returns the name or an empty string
 func (r *Route) Name() string {
 	return aws.StringValue(r.Data.RouteName)
+}
+
+// Status returns the name or an empty string
+func (r *Route) Status() string {
+	if r.Data.Status != nil &&
+		r.Data.Status.Status != nil {
+		return aws.StringValue(r.Data.Status.Status)
+	}
+	return ""
 }
 
 // Name returns the name or an empty string

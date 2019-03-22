@@ -19,9 +19,9 @@ type Mesh struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// +optional
-	Spec *MeshSpec `json:"spec,omitempty"`
+	Spec MeshSpec `json:"spec,omitempty"`
 	// +optional
-	Status *MeshStatus `json:"status,omitempty"`
+	Status MeshStatus `json:"status,omitempty"`
 }
 
 type MeshServiceDiscoveryType string
@@ -56,7 +56,7 @@ type MeshConditionType string
 
 const (
 	// MeshActive is Active when the Appmesh Mesh has been created or found via the API
-	MeshActive MeshConditionType = "Active"
+	MeshActive MeshConditionType = "MeshActive"
 )
 
 type MeshCondition struct {
@@ -95,9 +95,9 @@ type VirtualService struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// +optional
-	Spec *VirtualServiceSpec `json:"spec,omitempty"`
+	Spec VirtualServiceSpec `json:"spec,omitempty"`
 	// +optional
-	Status *VirtualServiceStatus `json:"status,omitempty"`
+	Status VirtualServiceStatus `json:"status,omitempty"`
 }
 
 // VirtualServiceSpec is the spec for a VirtualService resource
@@ -154,7 +154,10 @@ type VirtualServiceConditionType string
 
 const (
 	// VirtualServiceActive is Active when the Appmesh Service has been created or found via the API
-	VirtualServiceActive VirtualServiceConditionType = "Active"
+	VirtualServiceActive                VirtualServiceConditionType = "VirtualServiceActive"
+	VirtualRouterActive                 VirtualServiceConditionType = "VirtualRouterActive"
+	RoutesActive                        VirtualServiceConditionType = "RoutesActive"
+	VirtualServiceMeshMarkedForDeletion VirtualServiceConditionType = "MeshMarkedForDeletion"
 )
 
 type VirtualServiceCondition struct {
@@ -193,9 +196,9 @@ type VirtualNode struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// +optional
-	Spec *VirtualNodeSpec `json:"spec,omitempty"`
+	Spec VirtualNodeSpec `json:"spec,omitempty"`
 	// +optional
-	Status *VirtualNodeStatus `json:"status,omitempty"`
+	Status VirtualNodeStatus `json:"status,omitempty"`
 }
 
 // VirtualNodeSpec is the spec for a VirtualNode resource
@@ -259,7 +262,8 @@ type VirtualNodeConditionType string
 
 const (
 	// VirtualNodeActive is Active when the Appmesh Node has been created or found via the API
-	VirtualNodeActive VirtualNodeConditionType = "Active"
+	VirtualNodeActive                VirtualNodeConditionType = "VirtualNodeActive"
+	VirtualNodeMeshMarkedForDeletion VirtualNodeConditionType = "MeshMarkedForDeletion"
 )
 
 type VirtualNodeCondition struct {

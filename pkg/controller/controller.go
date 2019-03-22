@@ -4,6 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
+	meshclientset "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned"
+	meshscheme "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/scheme"
+	meshinformers "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/informers/externalversions/appmesh/v1alpha1"
+	meshlisters "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/listers/appmesh/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -17,16 +23,14 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog"
-
-	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
-	meshclientset "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned"
-	meshscheme "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/scheme"
-	meshinformers "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/informers/externalversions/appmesh/v1alpha1"
-	meshlisters "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/listers/appmesh/v1alpha1"
 )
 
-const controllerAgentName = "app-mesh-controller"
+const (
+	controllerAgentName                 = "app-mesh-controller"
+	meshDeletionFinalizerName           = "meshDeletion.finalizers.appmesh.k8s.aws"
+	virtualNodeDeletionFinalizerName    = "virtualNodeDeletion.finalizers.appmesh.k8s.aws"
+	virtualServiceDeletionFinalizerName = "virtualServiceDeletion.finalizers.appmesh.k8s.aws"
+)
 
 type Controller struct {
 	cloud aws.CloudAPI
@@ -39,11 +43,13 @@ type Controller struct {
 	podsSynced cache.InformerSynced
 
 	meshLister           meshlisters.MeshLister
+	meshIndex            cache.Indexer
 	meshSynced           cache.InformerSynced
 	virtualNodeLister    meshlisters.VirtualNodeLister
 	virtualNodeIndex     cache.Indexer
 	virtualNodeSynced    cache.InformerSynced
 	virtualServiceLister meshlisters.VirtualServiceLister
+	virtualServiceIndex  cache.Indexer
 	virtualServiceSynced cache.InformerSynced
 
 	// workqueue is a rate limited work queue. This is used to queue work to be
@@ -112,12 +118,10 @@ func NewController(
 		DeleteFunc: controller.virtualNodeDeleted,
 	})
 
-	err := virtualNodeInformer.Informer().GetIndexer().AddIndexers(cache.Indexers{
-		"meshName": indexVNodeByMeshName,
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to add meshName index to meshNodeInformer: %s", err)
+	if err := virtualNodeInformer.Informer().GetIndexer().AddIndexers(cache.Indexers{
+		"meshName": indexVNodesByMeshName,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to add meshName index: %s", err)
 	}
 
 	controller.virtualNodeIndex = virtualNodeInformer.Informer().GetIndexer()
@@ -128,16 +132,38 @@ func NewController(
 		DeleteFunc: controller.virtualServiceDeleted,
 	})
 
+	if err := virtualServiceInformer.Informer().GetIndexer().AddIndexers(cache.Indexers{
+		"meshName": indexVServicesByMeshName,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to add meshName index: %s", err)
+	}
+
+	controller.virtualServiceIndex = virtualServiceInformer.Informer().GetIndexer()
+
+	controller.meshIndex = meshInformer.Informer().GetIndexer()
+
 	return controller, nil
 }
 
-func indexVNodeByMeshName(obj interface{}) ([]string, error) {
+func indexVNodesByMeshName(obj interface{}) ([]string, error) {
 	node, ok := obj.(*appmeshv1alpha1.VirtualNode)
 	if !ok {
 		return []string{}, nil
 	}
-	// We are only interested in active nodes with MeshName set
-	if len(node.Spec.MeshName) == 0 || !checkVNodeActive(node) {
+	// MeshName must be set
+	if len(node.Spec.MeshName) == 0 {
+		return []string{}, nil
+	}
+	return []string{node.Spec.MeshName}, nil
+}
+
+func indexVServicesByMeshName(obj interface{}) ([]string, error) {
+	node, ok := obj.(*appmeshv1alpha1.VirtualService)
+	if !ok {
+		return []string{}, nil
+	}
+	// MeshName must be set
+	if len(node.Spec.MeshName) == 0 {
 		return []string{}, nil
 	}
 	return []string{node.Spec.MeshName}, nil
@@ -214,29 +240,55 @@ func (c *Controller) meshAdded(obj interface{}) {
 		return
 	}
 
-	// for the mesh, get all MeshNodes and
 	mesh := obj.(*appmeshv1alpha1.Mesh)
 	meshName := mesh.Name
 
-	objects, err := c.virtualNodeIndex.ByIndex("meshName", meshName)
-	if err != nil {
-		utilruntime.HandleError(fmt.Errorf("meshName indexer error for %s: %s", key, err))
+	// If a mesh is created, process all objects with the meshName.
+	c.enqueueVNodesForMesh(meshName)
+	c.enqueueVServicesForMesh(meshName)
+}
+
+func (c *Controller) enqueueVNodesForMesh(name string) {
+	if objects, err := c.virtualNodeIndex.ByIndex("meshName", name); err != nil {
+		utilruntime.HandleError(fmt.Errorf("meshName index error for %s: %s", name, err))
 		return
+	} else {
+		for _, obj := range objects {
+			vnode, ok := obj.(*appmeshv1alpha1.VirtualNode)
+			if !ok {
+				continue
+			}
+
+			key, err := cache.MetaNamespaceKeyFunc(obj)
+			if err == nil {
+				c.nq.Add(key)
+			} else {
+				continue
+			}
+			klog.Infof("Processed virtual node %s due to new mesh.", vnode.Name)
+		}
 	}
+}
 
-	for _, obj := range objects {
-		vnode, ok := obj.(*appmeshv1alpha1.VirtualNode)
-		if !ok {
-			continue
-		}
+func (c *Controller) enqueueVServicesForMesh(name string) {
+	if objects, err := c.virtualServiceIndex.ByIndex("meshName", name); err != nil {
+		utilruntime.HandleError(fmt.Errorf("meshName index error for %s: %s", name, err))
+		return
+	} else {
+		for _, obj := range objects {
+			vservice, ok := obj.(*appmeshv1alpha1.VirtualService)
+			if !ok {
+				continue
+			}
 
-		key, err := cache.MetaNamespaceKeyFunc(obj)
-		if err == nil {
-			c.nq.Add(key)
-		} else {
-			continue
+			key, err := cache.MetaNamespaceKeyFunc(obj)
+			if err == nil {
+				c.nq.Add(key)
+			} else {
+				continue
+			}
+			klog.Infof("Processed virtual service %s due to new mesh.", vservice.Name)
 		}
-		klog.Infof("Processed VirtualNode %s due to new mesh.", vnode.Name)
 	}
 }
 

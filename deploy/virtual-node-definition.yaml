@@ -91,12 +91,13 @@ spec:
                   type:
                     type: string
                     enum:
-                      - Active
+                      - VirtualNodeActive
+                      - MeshMarkedForDeletion
                   status:
                     type: string
                     enum:
-                      - True
-                      - False
+                      - "True"
+                      - "False"
                       - Unknown
                   lastTransitionTime:
                     type: string

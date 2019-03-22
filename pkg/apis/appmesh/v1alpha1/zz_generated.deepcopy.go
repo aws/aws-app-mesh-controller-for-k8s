@@ -146,16 +146,8 @@ func (in *Mesh) DeepCopyInto(out *Mesh) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	if in.Spec != nil {
-		in, out := &in.Spec, &out.Spec
-		*out = new(MeshSpec)
-		(*in).DeepCopyInto(*out)
-	}
-	if in.Status != nil {
-		in, out := &in.Status, &out.Status
-		*out = new(MeshStatus)
-		(*in).DeepCopyInto(*out)
-	}
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
 	return
 }
 
@@ -368,16 +360,8 @@ func (in *VirtualNode) DeepCopyInto(out *VirtualNode) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	if in.Spec != nil {
-		in, out := &in.Spec, &out.Spec
-		*out = new(VirtualNodeSpec)
-		(*in).DeepCopyInto(*out)
-	}
-	if in.Status != nil {
-		in, out := &in.Status, &out.Status
-		*out = new(VirtualNodeStatus)
-		(*in).DeepCopyInto(*out)
-	}
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
 	return
 }
 
@@ -559,16 +543,8 @@ func (in *VirtualService) DeepCopyInto(out *VirtualService) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	if in.Spec != nil {
-		in, out := &in.Spec, &out.Spec
-		*out = new(VirtualServiceSpec)
-		(*in).DeepCopyInto(*out)
-	}
-	if in.Status != nil {
-		in, out := &in.Status, &out.Status
-		*out = new(VirtualServiceStatus)
-		(*in).DeepCopyInto(*out)
-	}
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
 	return
 }
 

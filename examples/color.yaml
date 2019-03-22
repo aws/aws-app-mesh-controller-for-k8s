@@ -12,8 +12,7 @@ metadata:
   name: color-mesh
   namespace: appmesh-demo
 spec:
-  cloudMapNamespaceName: color-namespace
-  serviceDiscoveryType: cloudmap-http
+  serviceDiscoveryType: dns
 ---
 apiVersion: appmesh.k8s.aws/v1alpha1
 kind: VirtualNode

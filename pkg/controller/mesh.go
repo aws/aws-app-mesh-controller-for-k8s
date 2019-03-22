@@ -23,9 +23,6 @@ func (c *Controller) handleMesh(key string) error {
 	shared, err := c.meshLister.Meshes(namespace).Get(name)
 	if errors.IsNotFound(err) {
 		klog.V(2).Infof("Mesh %v has been deleted", key)
-
-		// TODO: cleanup appmesh and cloudmap resources
-
 		return nil
 	}
 	if err != nil {
@@ -35,9 +32,21 @@ func (c *Controller) handleMesh(key string) error {
 	// Make copy here so we never update the shared copy
 	mesh := shared.DeepCopy()
 
-	// Initialize status if empty
-	if err = c.initMeshStatus(mesh); err != nil {
-		return fmt.Errorf("error updating mesh status: %s", err)
+	// Resources with finalizers are not deleted immediately,
+	// instead the deletion timestamp is set when a client deletes them.
+	if !mesh.DeletionTimestamp.IsZero() {
+		// Resource is being deleted, process finalizers
+		return c.handleMeshDelete(ctx, mesh)
+	}
+
+	// This is not a delete, add the deletion finalizer if it doesn't exist
+	if yes, _ := containsFinalizer(mesh, meshDeletionFinalizerName); !yes {
+		if err = addFinalizer(mesh, meshDeletionFinalizerName); err != nil {
+			return fmt.Errorf("error adding finalizer %s to mesh %s: %s", meshDeletionFinalizerName, mesh.Name, err)
+		}
+		if err := c.updateMeshResource(mesh); err != nil {
+			return fmt.Errorf("error adding finalizer %s to mesh %s: %s", meshDeletionFinalizerName, mesh.Name, err)
+		}
 	}
 
 	// Create mesh if it does not exist
@@ -61,16 +70,19 @@ func (c *Controller) handleMesh(key string) error {
 	return nil
 }
 
+func (c *Controller) updateMeshResource(mesh *appmeshv1alpha1.Mesh) error {
+	_, err := c.meshclientset.AppmeshV1alpha1().Meshes(mesh.Namespace).Update(mesh)
+	return err
+}
+
 func (c *Controller) updateMeshActive(mesh *appmeshv1alpha1.Mesh) error {
 	return c.updateMeshCondition(mesh, appmeshv1alpha1.MeshActive, api.ConditionTrue)
 }
 
 func (c *Controller) updateMeshCondition(mesh *appmeshv1alpha1.Mesh, conditionType appmeshv1alpha1.MeshConditionType, status api.ConditionStatus) error {
 	now := metav1.Now()
-
 	condition := getMeshCondition(conditionType, mesh.Status)
-
-	if condition == nil {
+	if condition == (appmeshv1alpha1.MeshCondition{}) {
 		// condition does not exist
 		newCondition := appmeshv1alpha1.MeshCondition{
 			Type:               conditionType,
@@ -91,27 +103,89 @@ func (c *Controller) updateMeshCondition(mesh *appmeshv1alpha1.Mesh, conditionTy
 	return err
 }
 
-func (c *Controller) initMeshStatus(mesh *appmeshv1alpha1.Mesh) error {
-	if mesh.Status == nil {
-		mesh.Status = &appmeshv1alpha1.MeshStatus{
-			Conditions: []appmeshv1alpha1.MeshCondition{},
+func checkMeshActive(mesh *appmeshv1alpha1.Mesh) bool {
+	condition := getMeshCondition(appmeshv1alpha1.MeshActive, mesh.Status)
+	return condition.Status == api.ConditionTrue
+}
+
+func getMeshCondition(conditionType appmeshv1alpha1.MeshConditionType, status appmeshv1alpha1.MeshStatus) appmeshv1alpha1.MeshCondition {
+
+	for _, condition := range status.Conditions {
+		if condition.Type == conditionType {
+			return condition
 		}
-		_, err := c.meshclientset.AppmeshV1alpha1().Meshes(mesh.Namespace).UpdateStatus(mesh)
-		return err
+	}
+
+	return appmeshv1alpha1.MeshCondition{}
+}
+
+func (c *Controller) handleMeshDelete(ctx context.Context, mesh *appmeshv1alpha1.Mesh) error {
+	if yes, _ := containsFinalizer(mesh, meshDeletionFinalizerName); yes {
+
+		if err := c.markResourcesForMeshDeletion(mesh.Name); err != nil {
+			// Log, but we will still attempt to delete the mesh
+			klog.Error(err)
+		}
+
+		if _, err := c.cloud.DeleteMesh(ctx, mesh.Name); err != nil {
+			if !aws.IsAWSErrNotFound(err) {
+				// Don't remove the finalizer if the mesh still exists
+				return fmt.Errorf("failed to clean up mesh %s during deletion finalizer: %s", mesh.Name, err)
+			}
+		}
+		if err := removeFinalizer(mesh, meshDeletionFinalizerName); err != nil {
+			return fmt.Errorf("error removing finalizer %s to mesh %s during deletion: %s", meshDeletionFinalizerName, mesh.Name, err)
+		}
+		if err := c.updateMeshResource(mesh); err != nil {
+			return fmt.Errorf("error removing finalizer %s to mesh %s during deletion: %s", meshDeletionFinalizerName, mesh.Name, err)
+		}
 	}
 	return nil
 }
 
-func checkMeshActive(mesh *appmeshv1alpha1.Mesh) bool {
-	condition := getMeshCondition(appmeshv1alpha1.MeshActive, mesh.Status)
-	return condition != nil && condition.Status == api.ConditionTrue
-}
+func (c *Controller) markResourcesForMeshDeletion(name string) error {
+	wasError := false
 
-func getMeshCondition(conditionType appmeshv1alpha1.MeshConditionType, status *appmeshv1alpha1.MeshStatus) *appmeshv1alpha1.MeshCondition {
-	for _, condition := range status.Conditions {
-		if condition.Type == conditionType {
-			return &condition
+	if objects, err := c.virtualNodeIndex.ByIndex("meshName", name); err != nil {
+		return fmt.Errorf("meshName index error for %s: %s", name, err)
+	} else {
+		for _, obj := range objects {
+			vnode, ok := obj.(*appmeshv1alpha1.VirtualNode)
+			if !ok {
+				continue
+			}
+
+			if _, err := c.updateVNodeCondition(vnode, appmeshv1alpha1.VirtualNodeMeshMarkedForDeletion, api.ConditionTrue); err != nil {
+				klog.Errorf("Error marking node service %s for mesh deletion: %s", vnode.Name, err)
+				wasError = true
+				continue
+			}
+			klog.Infof("Marked virtual node for mesh deletion: %s", vnode.Name)
 		}
+		klog.Infof("Marked virtual nodes for mesh deletion")
+	}
+
+	if objects, err := c.virtualServiceIndex.ByIndex("meshName", name); err != nil {
+		return fmt.Errorf("meshName index error for %s: %s", name, err)
+	} else {
+		for _, obj := range objects {
+			vservice, ok := obj.(*appmeshv1alpha1.VirtualService)
+			if !ok {
+				continue
+			}
+
+			if _, err := c.updateVServiceCondition(vservice, appmeshv1alpha1.VirtualServiceMeshMarkedForDeletion, api.ConditionTrue); err != nil {
+				klog.Errorf("Error marking virtual service %s for mesh deletion: %s", vservice.Name, err)
+				wasError = true
+				continue
+			}
+			klog.Infof("Marked virtual service for mesh deletion: %s", vservice.Name)
+		}
+		klog.Infof("Marked virtual services for mesh deletion")
+	}
+
+	if wasError {
+		return fmt.Errorf("error marking resources for mesh deletion.")
 	}
 	return nil
 }
