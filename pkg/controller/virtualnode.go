@@ -63,6 +63,7 @@ func (c *Controller) handleVNode(key string) error {
 
 	// Extract namespace from Mesh name
 	meshName, meshNamespace := parseMeshName(meshName, vnode.Namespace)
+	vnode.Spec.MeshName = meshName
 
 	mesh, err := c.meshLister.Meshes(meshNamespace).Get(meshName)
 	if errors.IsNotFound(err) {

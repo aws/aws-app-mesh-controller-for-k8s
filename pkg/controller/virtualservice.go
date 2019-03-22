@@ -65,6 +65,7 @@ func (c *Controller) handleVService(key string) error {
 
 	// Extract namespace from Mesh name
 	meshName, meshNamespace := parseMeshName(meshName, vservice.Namespace)
+	vservice.Spec.MeshName = meshName
 
 	mesh, err := c.meshLister.Meshes(meshNamespace).Get(meshName)
 	if errors.IsNotFound(err) {
