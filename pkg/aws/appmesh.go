@@ -830,8 +830,18 @@ func (c *Cloud) DeleteRoute(ctx context.Context, name string, routerName string,
 func IsAWSErrNotFound(err error) bool {
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case appmesh.ErrCodeNotFoundException:
+			if aerr.Code() == appmesh.ErrCodeNotFoundException {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func IsAWSErrResourceInUse(err error) bool {
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			if aerr.Code() == appmesh.ErrCodeResourceInUseException {
 				return true
 			}
 		}
