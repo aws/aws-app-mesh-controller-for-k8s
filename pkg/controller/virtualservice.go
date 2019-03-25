@@ -233,6 +233,13 @@ func getVirtualRouter(vservice *appmeshv1alpha1.VirtualService) *appmeshv1alpha1
 	}
 }
 
+func getVirtualRouterName(vservice *appmeshv1alpha1.VirtualService) string {
+	if vservice.Spec.VirtualRouter != nil {
+		return vservice.Spec.VirtualRouter.Name
+	}
+	return vservice.Name
+}
+
 func getRoutes(vservice *appmeshv1alpha1.VirtualService) []appmeshv1alpha1.Route {
 	if vservice.Spec.Routes != nil {
 		return vservice.Spec.Routes
@@ -373,7 +380,7 @@ func (c *Controller) deleteVServiceResources(ctx context.Context, vservice *appm
 	meshName, _ := parseMeshName(vservice.Spec.MeshName, vservice.Namespace)
 	// Cleanup routes
 	for _, r := range vservice.Spec.Routes {
-		if _, err := c.cloud.DeleteRoute(ctx, r.Name, vservice.Spec.VirtualRouter.Name, meshName); err != nil {
+		if _, err := c.cloud.DeleteRoute(ctx, r.Name, getVirtualRouterName(vservice), meshName); err != nil {
 			if !aws.IsAWSErrNotFound(err) {
 				return fmt.Errorf("failed to clean up route %s for virtual service %s during deletion: %s", r.Name, vservice.Name, err)
 			}
@@ -390,9 +397,11 @@ func (c *Controller) deleteVServiceResources(ctx context.Context, vservice *appm
 	}
 
 	// Cleanup virtual router
-	if _, err := c.cloud.DeleteVirtualRouter(ctx, vservice.Spec.VirtualRouter.Name, meshName); err != nil {
-		if !aws.IsAWSErrNotFound(err) {
-			return fmt.Errorf("failed to clean up virtual router %s for virtual service %s during deletion: %s", vservice.Spec.VirtualRouter.Name, vservice.Name, err)
+	if _, err := c.cloud.DeleteVirtualRouter(ctx, getVirtualRouterName(vservice), meshName); err != nil {
+		if aws.IsAWSErrNotFound(err) || aws.IsAWSErrResourceInUse(err) {
+			klog.Warningf("Virtual router %s was not deleted during cleanup: %s", getVirtualRouterName(vservice), err)
+		} else {
+			return fmt.Errorf("failed to clean up virtual router %s for virtual service %s during deletion: %s", getVirtualRouterName(vservice), vservice.Name, err)
 		}
 	}
 	return nil
