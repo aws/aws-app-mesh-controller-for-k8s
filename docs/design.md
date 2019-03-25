@@ -36,10 +36,10 @@ Next (though order is not enforced), you can create a VirtualService custom reso
 
 It is highly recommended, though not required, to use the controller together with aws-app-mesh-inject, a webhook which performs envoy sidecar injection, to reduce the amount of manual configuration that you have to perform. The webhook will inject the sidecar into any namespace that is labelled with `appmesh.k8s.aws/sidecarInjectorWebhook=enabled`. See the [aws-app-mesh-inject](https://github.com/aws/aws-app-mesh-inject) repository for more details.
 
-Each virtual node uses either DNS or Cloud Map service discovery.  If DNS is being used for a given virtual node, then the hostname provided must resolve.  The easiest way to configure that is to create a [service](https://kubernetes.io/docs/concepts/services-networking/service/) that corresponds to the virtual node.  
+Each virtual node currently supports DNS service discovery, although more types will be supported in the future. When DNS service discovery is being used, then the provided hostname must resolve. The easiest way to configure that is to create a [service](https://kubernetes.io/docs/concepts/services-networking/service/) that corresponds to the virtual node.  
 
 ## Virtual node naming convention
-To support the use case of using the same application as virtual node across namespaces, the controller creates the virtual node name in AppMesh backend by appending the name of the `VirtualNode` CRD with the namespace. The naming format is "VirtualNodeName-Namespace" 
+To support the use case of using the same application as virtual node across namespaces, the controller creates the virtual node name in App Mesh backend by appending the name of the `VirtualNode` custom resource with the namespace. The naming format is "VirtualNodeName-Namespace" 
 
 For example, in the VirtualNode definition below, 
 ```
@@ -49,9 +49,9 @@ metadata:
   namespace: appmesh-demo
 
 ```
-the virtual node name created in AppMesh backend will be "colorteller-black-appmesh-demo".
+the virtual node name created in App Mesh backend will be "colorteller-black-appmesh-demo".
 
-However, if the VirtualNode name in the CRD contains `.`, i.e. `foo.bar`, the controller will assume namespace is `bar` by kubernetes convention. It will replace all `.` with `-` when creating the AppMesh virtual node because `.` isn't a valid character in AppMesh name.  
+However, if the VirtualNode name in the custom resource contains `.`, i.e. `foo.bar`, the controller will assume namespace is `bar` by kubernetes convention. It will replace all `.` with `-` when creating the App Mesh virtual node because `.` isn't a valid character in App Mesh name.  
 
 For example, in the VirtualNode definition below, 
 ```
@@ -60,9 +60,9 @@ metadata:
   name: colorteller-black.appmesh-demo
   namespace: appmesh-demo
 ```
-the virtual node name created in AppMesh backend will be "colorteller-black-appmesh-demo".
+the virtual node name created in App Mesh backend will be "colorteller-black-appmesh-demo".
 
-Similarly, any references to VirtualNode name in other CRDs follow the same naming convention. 
+Similarly, any references to VirtualNode name in other custom resources follow the same naming convention. 
 
 For example, in the example below, 
 
@@ -83,6 +83,6 @@ spec:
         - virtualNodeName: colorteller-black.appmesh-demo
           weight: 3
 ```
-the corresponding virtual node names in the AppMesh backend are, `colorteller-appmesh-demo`, `colorteller-blue-appmesh-demo`, and `colorteller-black-appmesh-demo` respectively. 
+the corresponding virtual node names in the App Mesh backend are, `colorteller-appmesh-demo`, `colorteller-blue-appmesh-demo`, and `colorteller-black-appmesh-demo` respectively. 
 
 Check out the [example](docs/example.md) application for more details. 
