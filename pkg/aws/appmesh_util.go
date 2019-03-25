@@ -11,6 +11,5 @@ func ConstructAppMeshVNodeNameFromCRD(virtualNodeName string, defaultVirtualNode
 	if strings.Contains(virtualNodeName, ".") {
 		return strings.ReplaceAll(virtualNodeName, ".", "-")
 	}
-	// no "."
 	return virtualNodeName + "-" + defaultVirtualNodeNamespace
 }

@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestConstructAppMeshVirtualNodeNameFromCrdSpec(t *testing.T) {
+func TestConstructAppMeshVNodeNameFromCRD(t *testing.T) {
 	t.Run("group", func(t *testing.T) {
 		t.Run("noDot", func(t *testing.T) {
 			originalName := "foo"
