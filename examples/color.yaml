@@ -10,9 +10,6 @@ apiVersion: appmesh.k8s.aws/v1alpha1
 kind: Mesh
 metadata:
   name: color-mesh
-  namespace: appmesh-demo
-spec:
-  serviceDiscoveryType: dns
 ---
 apiVersion: appmesh.k8s.aws/v1alpha1
 kind: VirtualNode
@@ -95,12 +92,10 @@ spec:
 apiVersion: appmesh.k8s.aws/v1alpha1
 kind: VirtualService
 metadata:
-  name: colorteller
+  name: colorteller.appmesh-demo
   namespace: appmesh-demo
 spec:
   meshName: color-mesh
-  virtualRouter:
-    name: color-router-appmesh-demo
   routes:
     - name: color-route-appmesh-demo
       http:
@@ -118,12 +113,10 @@ spec:
 apiVersion: appmesh.k8s.aws/v1alpha1
 kind: VirtualService
 metadata:
-  name: colorgateway
+  name: colorgateway.appmesh-demo
   namespace: appmesh-demo
 spec:
   meshName: color-mesh
-  virtualRouter:
-    name: gateway-router-appmesh-demo
   routes:
     - name: color-route-appmesh-demo
       http:

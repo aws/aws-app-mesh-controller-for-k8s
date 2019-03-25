@@ -9,7 +9,7 @@ spec:
       served: true
       storage: true
   version: v1alpha1
-  scope: Namespaced
+  scope: Cluster
   names:
     plural: meshes
     singular: mesh
@@ -21,8 +21,6 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
-      required:
-        - spec
       properties:
         spec:
           properties:
