@@ -209,7 +209,7 @@ func (v *VirtualNode) BackendsSet() set.Set {
 }
 
 // CreateVirtualNode calls describe virtual node.
-func (c *Cloud) GetVirtualNode(ctx context.Context, name string, namespace string, meshName string) (*VirtualNode, error) { // Needs to pass in namespace
+func (c *Cloud) GetVirtualNode(ctx context.Context, name string, namespace string, meshName string) (*VirtualNode, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeVirtualNodeTimeout)
 	defer cancel()
 

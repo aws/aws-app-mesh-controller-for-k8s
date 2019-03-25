@@ -1,4 +1,4 @@
-FROM golang:1.11.5-stretch as builder
+FROM golang:1.12-stretch as builder
 WORKDIR /go/src/github.com/aws/aws-app-mesh-controller-for-k8s
 
 # Force the go compiler to use modules.
