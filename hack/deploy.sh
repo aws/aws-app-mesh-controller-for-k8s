@@ -15,12 +15,11 @@ if [[ -z "${AWS_REGION}" ]]; then
     exit 1
 fi
 
-mkdir -p _output/
-sed \
-    -e "s/{{AWS_ACCOUNT}}/${AWS_ACCOUNT}/g" \
-    -e "s/{{AWS_REGION}}/${AWS_REGION}/g" \
-    ${DIR}/deploy/controller-deployment.yaml.template \
-    > ${DIR}/_output/controller-deployment.yaml
+eval "cat <<EOF
+$(<${DIR}/deploy/controller-deployment.yaml.template)
+EOF
+" > _output/controller-deployment.yaml
+
 
 kubectl apply -f ${DIR}/deploy
 kubectl apply -f ${DIR}/_output

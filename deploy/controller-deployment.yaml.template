@@ -24,7 +24,7 @@ spec:
       serviceAccountName: app-mesh-sa
       containers:
         - name: app-mesh-controller
-          image: {{AWS_ACCOUNT}}.dkr.ecr.{{AWS_REGION}}.amazonaws.com/amazon/app-mesh-controller:latest
+          image: ${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon/app-mesh-controller:latest
           ports:
             - containerPort: 10555
 ---
