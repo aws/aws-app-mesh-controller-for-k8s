@@ -27,7 +27,7 @@ spec:
       hostName: colorgateway.appmesh-demo.svc.cluster.local
   backends:
     - virtualService:
-        virtualServiceName: colorteller
+        virtualServiceName: colorteller.appmesh-demo
 ---
 apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
@@ -167,7 +167,7 @@ spec:
             - name: "SERVER_PORT"
               value: "9080"
             - name: "COLOR_TELLER_ENDPOINT"
-              value: "colorteller:9080"
+              value: "colorteller.appmesh-demo:9080"
 ---
 apiVersion: v1
 kind: Service
