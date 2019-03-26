@@ -3,7 +3,7 @@ package controller
 import (
 	"testing"
 
-	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
+	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/appmesh"
@@ -11,9 +11,9 @@ import (
 
 // newAWSVirtualNode is a helper function to generate an Kubernetes Custom Resource API object.
 // Ports and protocols should be arrays of the same length.
-func newAPIVirtualNode(ports []int64, protocols []string, backends []string, hostname string) *appmeshv1alpha1.VirtualNode {
-	vn := appmeshv1alpha1.VirtualNode{
-		Spec: appmeshv1alpha1.VirtualNodeSpec{},
+func newAPIVirtualNode(ports []int64, protocols []string, backends []string, hostname string) *appmeshv1beta1.VirtualNode {
+	vn := appmeshv1beta1.VirtualNode{
+		Spec: appmeshv1beta1.VirtualNodeSpec{},
 	}
 
 	if len(ports) != len(protocols) {
@@ -21,10 +21,10 @@ func newAPIVirtualNode(ports []int64, protocols []string, backends []string, hos
 	}
 
 	if len(ports) > 0 {
-		listeners := []appmeshv1alpha1.Listener{}
+		listeners := []appmeshv1beta1.Listener{}
 		for i := range ports {
-			listeners = append(listeners, appmeshv1alpha1.Listener{
-				PortMapping: appmeshv1alpha1.PortMapping{
+			listeners = append(listeners, appmeshv1beta1.Listener{
+				PortMapping: appmeshv1beta1.PortMapping{
 					Port:     ports[i],
 					Protocol: protocols[i],
 				},
@@ -34,10 +34,10 @@ func newAPIVirtualNode(ports []int64, protocols []string, backends []string, hos
 	}
 
 	if len(backends) > 0 {
-		bes := []appmeshv1alpha1.Backend{}
+		bes := []appmeshv1beta1.Backend{}
 		for i := range backends {
-			bes = append(bes, appmeshv1alpha1.Backend{
-				VirtualService: appmeshv1alpha1.VirtualServiceBackend{
+			bes = append(bes, appmeshv1beta1.Backend{
+				VirtualService: appmeshv1beta1.VirtualServiceBackend{
 					VirtualServiceName: backends[i],
 				},
 			})
@@ -46,8 +46,8 @@ func newAPIVirtualNode(ports []int64, protocols []string, backends []string, hos
 	}
 
 	if hostname != "" {
-		vn.Spec.ServiceDiscovery = &appmeshv1alpha1.ServiceDiscovery{
-			Dns: &appmeshv1alpha1.DnsServiceDiscovery{
+		vn.Spec.ServiceDiscovery = &appmeshv1beta1.ServiceDiscovery{
+			Dns: &appmeshv1beta1.DnsServiceDiscovery{
 				HostName: hostname,
 			},
 		}
@@ -132,7 +132,7 @@ func TestVNodeNeedsUpdate(t *testing.T) {
 
 	var vnodetests = []struct {
 		name        string
-		spec        *appmeshv1alpha1.VirtualNode
+		spec        *appmeshv1beta1.VirtualNode
 		aws         *aws.VirtualNode
 		needsUpdate bool
 	}{

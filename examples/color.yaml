@@ -6,12 +6,12 @@ metadata:
     appmesh.k8s.aws/sidecarInjectorWebhook: enabled
   name: appmesh-demo
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: Mesh
 metadata:
   name: color-mesh
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorgateway
@@ -29,7 +29,7 @@ spec:
     - virtualService:
         virtualServiceName: colorteller
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorteller
@@ -44,7 +44,7 @@ spec:
     dns:
       hostName: colorteller.appmesh-demo.svc.cluster.local
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorteller-black
@@ -59,7 +59,7 @@ spec:
     dns:
       hostName: colorteller-black.appmesh-demo.svc.cluster.local
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorteller-blue
@@ -74,7 +74,7 @@ spec:
     dns:
       hostName: colorteller-blue.appmesh-demo.svc.cluster.local
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorteller-red
@@ -89,7 +89,7 @@ spec:
     dns:
       hostName: colorteller-red.appmesh-demo.svc.cluster.local
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualService
 metadata:
   name: colorteller.appmesh-demo
@@ -97,7 +97,7 @@ metadata:
 spec:
   meshName: color-mesh
   routes:
-    - name: color-route-appmesh-demo
+    - name: color-route
       http:
         match:
           prefix: /
@@ -110,7 +110,7 @@ spec:
             - virtualNodeName: colorteller-black.appmesh-demo
               weight: 1
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualService
 metadata:
   name: colorgateway.appmesh-demo
@@ -118,7 +118,7 @@ metadata:
 spec:
   meshName: color-mesh
   routes:
-    - name: color-route-appmesh-demo
+    - name: color-route
       http:
         match:
           prefix: /color

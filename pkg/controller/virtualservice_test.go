@@ -3,22 +3,22 @@ package controller
 import (
 	"testing"
 
-	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
+	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/appmesh"
 )
 
 // newAWSVirtualService is a helper function to generate an Kubernetes Custom Resource API object.
-func newAPIVirtualService(meshName string, virtualRouterName string, routes []appmeshv1alpha1.Route) appmeshv1alpha1.VirtualService {
-	vs := appmeshv1alpha1.VirtualService{
-		Spec: appmeshv1alpha1.VirtualServiceSpec{
+func newAPIVirtualService(meshName string, virtualRouterName string, routes []appmeshv1beta1.Route) appmeshv1beta1.VirtualService {
+	vs := appmeshv1beta1.VirtualService{
+		Spec: appmeshv1beta1.VirtualServiceSpec{
 			MeshName: meshName,
 		},
 	}
 
 	if virtualRouterName != "" {
-		vs.Spec.VirtualRouter = &appmeshv1alpha1.VirtualRouter{
+		vs.Spec.VirtualRouter = &appmeshv1beta1.VirtualRouter{
 			Name: virtualRouterName,
 		}
 	}
@@ -29,13 +29,13 @@ func newAPIVirtualService(meshName string, virtualRouterName string, routes []ap
 	return vs
 }
 
-func newAPIHttpRoute(routeName string, prefix string, targets []appmeshv1alpha1.WeightedTarget) appmeshv1alpha1.Route {
-	return appmeshv1alpha1.Route{
-		Http: appmeshv1alpha1.HttpRoute{
-			Action: appmeshv1alpha1.HttpRouteAction{
+func newAPIHttpRoute(routeName string, prefix string, targets []appmeshv1beta1.WeightedTarget) appmeshv1beta1.Route {
+	return appmeshv1beta1.Route{
+		Http: appmeshv1beta1.HttpRoute{
+			Action: appmeshv1beta1.HttpRouteAction{
 				WeightedTargets: targets,
 			},
-			Match: appmeshv1alpha1.HttpRouteMatch{
+			Match: appmeshv1beta1.HttpRouteMatch{
 				Prefix: prefix,
 			},
 		},
@@ -61,7 +61,7 @@ func newAWSVirtualService(virtualRouterName string) aws.VirtualService {
 }
 
 // newAWSHttpRoute is a helper function to generate an App Mesh API object.
-func newAWSHttpRoute(routeName string, prefix string, targets []appmeshv1alpha1.WeightedTarget) aws.Route {
+func newAWSHttpRoute(routeName string, prefix string, targets []appmeshv1beta1.WeightedTarget) aws.Route {
 	awsRoute := aws.Route{
 		Data: appmesh.RouteData{
 			Spec: &appmesh.RouteSpec{
@@ -97,10 +97,10 @@ func TestVServiceNeedsUpdate(t *testing.T) {
 		defaultRouterName = "example-router"
 		defaultRouteName  = "example-route"
 		defaultPrefix     = "/"
-		defaultTargets    = []appmeshv1alpha1.WeightedTarget{}
+		defaultTargets    = []appmeshv1beta1.WeightedTarget{}
 
 		// Spec with default values
-		defaultServiceSpec = newAPIVirtualService(defaultMeshName, defaultRouterName, []appmeshv1alpha1.Route{newAPIHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)})
+		defaultServiceSpec = newAPIVirtualService(defaultMeshName, defaultRouterName, []appmeshv1beta1.Route{newAPIHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)})
 
 		// result with the same values as spec1_default
 		defaultServiceResult              = newAWSVirtualService(defaultRouterName)
@@ -109,7 +109,7 @@ func TestVServiceNeedsUpdate(t *testing.T) {
 
 	var vservicetests = []struct {
 		name        string
-		spec        appmeshv1alpha1.VirtualService
+		spec        appmeshv1beta1.VirtualService
 		aws         aws.VirtualService
 		needsUpdate bool
 	}{
@@ -133,17 +133,17 @@ func TestRouteNeedUpdate(t *testing.T) {
 		defaultRouteName = "example-route"
 		defaultPrefix    = "/"
 		defaultNodeName  = "example-node"
-		defaultTargets   = []appmeshv1alpha1.WeightedTarget{
+		defaultTargets   = []appmeshv1beta1.WeightedTarget{
 			{Weight: int64(1), VirtualNodeName: defaultNodeName},
 		}
 		defaultNamespace = "dummyNamespace"
 
-		awsExtraTarget = []appmeshv1alpha1.WeightedTarget{
+		awsExtraTarget = []appmeshv1beta1.WeightedTarget{
 			{Weight: int64(1), VirtualNodeName: defaultNodeName + "-" + defaultNamespace},
 			{Weight: int64(1), VirtualNodeName: "extra-node"},
 		}
 
-		awsdefaultTargets = []appmeshv1alpha1.WeightedTarget{
+		awsdefaultTargets = []appmeshv1beta1.WeightedTarget{
 			{Weight: int64(1), VirtualNodeName: defaultNodeName + "-" + defaultNamespace},
 		}
 
@@ -155,18 +155,18 @@ func TestRouteNeedUpdate(t *testing.T) {
 
 		extraTargetResult     = newAWSHttpRoute(defaultRouteName, defaultPrefix, awsExtraTarget)
 		extraTargetSpec       = newAPIHttpRoute(defaultRouteName, defaultPrefix, awsExtraTarget)
-		noTargetsResult       = newAWSHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1alpha1.WeightedTarget{})
-		noTargetSpec          = newAPIHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1alpha1.WeightedTarget{})
+		noTargetsResult       = newAWSHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
+		noTargetSpec          = newAPIHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
 		differentPrefixResult = newAWSHttpRoute(defaultRouteName, "/foo", defaultTargets)
 
-		crdTargets   = []appmeshv1alpha1.WeightedTarget{
+		crdTargets   = []appmeshv1beta1.WeightedTarget{
 			{Weight: int64(1), VirtualNodeName: "foo.bar"},
 			{Weight: int64(2), VirtualNodeName: "foo.bar.zoo"},
 			{Weight: int64(3), VirtualNodeName: "foo"},
 		}
 		crdRouteSpec = newAPIHttpRoute(defaultRouteName, defaultPrefix, crdTargets)
 
-		awsTargets   = []appmeshv1alpha1.WeightedTarget{
+		awsTargets   = []appmeshv1beta1.WeightedTarget{
 			{Weight: int64(1), VirtualNodeName: "foo-bar"},
 			{Weight: int64(2), VirtualNodeName: "foo-bar-zoo"},
 			{Weight: int64(3), VirtualNodeName: "foo-dummyNamespace"},
@@ -177,7 +177,7 @@ func TestRouteNeedUpdate(t *testing.T) {
 
 	var routetests = []struct {
 		name        string
-		spec        appmeshv1alpha1.Route
+		spec        appmeshv1beta1.Route
 		routes      aws.Route
 		needsUpdate bool
 	}{
@@ -192,7 +192,7 @@ func TestRouteNeedUpdate(t *testing.T) {
 
 	for _, tt := range routetests {
 		t.Run(tt.name, func(t *testing.T) {
-			if res := routeNeedsUpdate(tt.spec, tt.routes, defaultNamespace); res != tt.needsUpdate {
+			if res := routeNeedsUpdate(tt.spec, tt.routes); res != tt.needsUpdate {
 				t.Errorf("got %v, want %v", res, tt.needsUpdate)
 			}
 		})

@@ -1,4 +1,4 @@
-package v1alpha1
+package v1beta1
 
 import (
 	api "k8s.io/api/core/v1"
@@ -10,6 +10,7 @@ import (
 // https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md
 
 // +genclient
+// +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Mesh is a specification for a Mesh resource
@@ -27,14 +28,11 @@ type Mesh struct {
 type MeshServiceDiscoveryType string
 
 const (
-	CloudMapHttp MeshServiceDiscoveryType = "CloudMapHttp"
+	Dns MeshServiceDiscoveryType = "Dns"
 )
 
 // MeshSpec is the spec for a Mesh resource
 type MeshSpec struct {
-	// CloudMapNamespaceName can be specified if it should be different than the mesh name.
-	// +optional
-	CloudMapNamespaceName *string `json:"cloudMapNamespaceName,omitempty"`
 	// +optional
 	ServiceDiscoveryType *MeshServiceDiscoveryType `json:"serviceDiscoveryType,omitempty"`
 }
@@ -44,11 +42,6 @@ type MeshStatus struct {
 	// MeshArn is the AppMesh Mesh object's Amazon Resource Name
 	// +optional
 	MeshArn *string `json:"meshArn,omitempty"`
-	// NamespaceArn is the CloudMap NameSpace object's Amazon Resource Name
-	// +optional
-	CloudMapNamespaceArn *string `json:"cloudMapNamespaceArn,omitempty"`
-	// +optional
-	CloudMapRoleArn *string         `json:"cloudMapRoleArn,omitempty"`
 	Conditions      []MeshCondition `json:"meshCondition"`
 }
 

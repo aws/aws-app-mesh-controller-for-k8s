@@ -56,12 +56,12 @@ You should see a collection of virtual services, virtual nodes and a mesh, along
 The services are required because we are using DNS based service discovery.  More methods of service discovery will be supported in the near future.  Let's take a look at a virtual node:
     kubectl -n appmesh-demo get virtualnode colorgateway-appmesh-demo
 
-    apiVersion: appmesh.k8s.aws/v1alpha1
+    apiVersion: appmesh.k8s.aws/v1beta1
     kind: VirtualNode
     metadata:
       annotations:
         kubectl.kubernetes.io/last-applied-configuration: |
-          {"apiVersion":"appmesh.k8s.aws/v1alpha1","kind":"VirtualNode","metadata":{"annotations":{},"name":"colorgateway-appmesh-demo","namespace":"appmesh-demo"},"spec":{"backends":[{"virtualService":{"virtualServiceName":"colorteller.appmesh-demo.svc.cluster.local"}}],"listeners":[{"portMapping":{"port":9080,"protocol":"http"}}],"meshName":"color-mesh","serviceDiscovery":{"dns":{"hostName":"colorgateway.appmesh-demo.svc.cluster.local"}}}}
+          {"apiVersion":"appmesh.k8s.aws/v1beta1","kind":"VirtualNode","metadata":{"annotations":{},"name":"colorgateway-appmesh-demo","namespace":"appmesh-demo"},"spec":{"backends":[{"virtualService":{"virtualServiceName":"colorteller.appmesh-demo.svc.cluster.local"}}],"listeners":[{"portMapping":{"port":9080,"protocol":"http"}}],"meshName":"color-mesh","serviceDiscovery":{"dns":{"hostName":"colorgateway.appmesh-demo.svc.cluster.local"}}}}
       creationTimestamp: 2019-03-22T16:59:51Z
       finalizers:
       - virtualNodeDeletion.finalizers.appmesh.k8s.aws
@@ -69,7 +69,7 @@ The services are required because we are using DNS based service discovery.  Mor
       name: colorgateway-appmesh-demo
       namespace: appmesh-demo
       resourceVersion: "1790196"
-      selfLink: /apis/appmesh.k8s.aws/v1alpha1/namespaces/appmesh-demo/virtualnodes/colorgateway-appmesh-demo
+      selfLink: /apis/appmesh.k8s.aws/v1beta1/namespaces/appmesh-demo/virtualnodes/colorgateway-appmesh-demo
       uid: e848ef9d-4cc3-11e9-9e27-02f4bc929ee6
     spec:
       backends:

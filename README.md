@@ -14,7 +14,7 @@ First, create a Mesh resource, which will trigger the controller to create a Mes
 
 ### Mesh
 
-    apiVersion: appmesh.k8s.aws/v1alpha1
+    apiVersion: appmesh.k8s.aws/v1beta1
     kind: Mesh
     metadata:
       name: my-mesh
@@ -22,7 +22,7 @@ First, create a Mesh resource, which will trigger the controller to create a Mes
 
 ### Virtual Node
 
-    apiVersion: appmesh.k8s.aws/v1alpha1
+    apiVersion: appmesh.k8s.aws/v1beta1
     kind: VirtualNode
     metadata:
       name: my-app-a
@@ -42,7 +42,7 @@ First, create a Mesh resource, which will trigger the controller to create a Mes
 
 ### Virtual Service
 
-    apiVersion: appmesh.k8s.aws/v1alpha1
+    apiVersion: appmesh.k8s.aws/v1beta1
     kind: VirtualService
     metadata:
       name: my-svc-a

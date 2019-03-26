@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
+	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -16,11 +16,11 @@ import (
 func (c *Controller) handleMesh(key string) error {
 	ctx := context.Background()
 
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+	_, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		return err
 	}
-	shared, err := c.meshLister.Meshes(namespace).Get(name)
+	shared, err := c.meshLister.Get(name)
 	if errors.IsNotFound(err) {
 		klog.V(2).Infof("Mesh %v has been deleted", key)
 		return nil
@@ -65,26 +65,24 @@ func (c *Controller) handleMesh(key string) error {
 		}
 	}
 
-	// TODO: Check if cloudmap namespace exists
-
 	return nil
 }
 
-func (c *Controller) updateMeshResource(mesh *appmeshv1alpha1.Mesh) error {
-	_, err := c.meshclientset.AppmeshV1alpha1().Meshes(mesh.Namespace).Update(mesh)
+func (c *Controller) updateMeshResource(mesh *appmeshv1beta1.Mesh) error {
+	_, err := c.meshclientset.AppmeshV1beta1().Meshes().Update(mesh)
 	return err
 }
 
-func (c *Controller) updateMeshActive(mesh *appmeshv1alpha1.Mesh) error {
-	return c.updateMeshCondition(mesh, appmeshv1alpha1.MeshActive, api.ConditionTrue)
+func (c *Controller) updateMeshActive(mesh *appmeshv1beta1.Mesh) error {
+	return c.updateMeshCondition(mesh, appmeshv1beta1.MeshActive, api.ConditionTrue)
 }
 
-func (c *Controller) updateMeshCondition(mesh *appmeshv1alpha1.Mesh, conditionType appmeshv1alpha1.MeshConditionType, status api.ConditionStatus) error {
+func (c *Controller) updateMeshCondition(mesh *appmeshv1beta1.Mesh, conditionType appmeshv1beta1.MeshConditionType, status api.ConditionStatus) error {
 	now := metav1.Now()
 	condition := getMeshCondition(conditionType, mesh.Status)
-	if condition == (appmeshv1alpha1.MeshCondition{}) {
+	if condition == (appmeshv1beta1.MeshCondition{}) {
 		// condition does not exist
-		newCondition := appmeshv1alpha1.MeshCondition{
+		newCondition := appmeshv1beta1.MeshCondition{
 			Type:               conditionType,
 			Status:             status,
 			LastTransitionTime: &now,
@@ -99,16 +97,16 @@ func (c *Controller) updateMeshCondition(mesh *appmeshv1alpha1.Mesh, conditionTy
 		condition.LastTransitionTime = &now
 	}
 
-	_, err := c.meshclientset.AppmeshV1alpha1().Meshes(mesh.Namespace).UpdateStatus(mesh)
+	_, err := c.meshclientset.AppmeshV1beta1().Meshes().UpdateStatus(mesh)
 	return err
 }
 
-func checkMeshActive(mesh *appmeshv1alpha1.Mesh) bool {
-	condition := getMeshCondition(appmeshv1alpha1.MeshActive, mesh.Status)
+func checkMeshActive(mesh *appmeshv1beta1.Mesh) bool {
+	condition := getMeshCondition(appmeshv1beta1.MeshActive, mesh.Status)
 	return condition.Status == api.ConditionTrue
 }
 
-func getMeshCondition(conditionType appmeshv1alpha1.MeshConditionType, status appmeshv1alpha1.MeshStatus) appmeshv1alpha1.MeshCondition {
+func getMeshCondition(conditionType appmeshv1beta1.MeshConditionType, status appmeshv1beta1.MeshStatus) appmeshv1beta1.MeshCondition {
 
 	for _, condition := range status.Conditions {
 		if condition.Type == conditionType {
@@ -116,10 +114,10 @@ func getMeshCondition(conditionType appmeshv1alpha1.MeshConditionType, status ap
 		}
 	}
 
-	return appmeshv1alpha1.MeshCondition{}
+	return appmeshv1beta1.MeshCondition{}
 }
 
-func (c *Controller) handleMeshDelete(ctx context.Context, mesh *appmeshv1alpha1.Mesh) error {
+func (c *Controller) handleMeshDelete(ctx context.Context, mesh *appmeshv1beta1.Mesh) error {
 	if yes, _ := containsFinalizer(mesh, meshDeletionFinalizerName); yes {
 
 		if err := c.markResourcesForMeshDeletion(mesh.Name); err != nil {
@@ -150,12 +148,12 @@ func (c *Controller) markResourcesForMeshDeletion(name string) error {
 		return fmt.Errorf("meshName index error for %s: %s", name, err)
 	} else {
 		for _, obj := range objects {
-			vnode, ok := obj.(*appmeshv1alpha1.VirtualNode)
+			vnode, ok := obj.(*appmeshv1beta1.VirtualNode)
 			if !ok {
 				continue
 			}
 
-			if _, err := c.updateVNodeCondition(vnode, appmeshv1alpha1.VirtualNodeMeshMarkedForDeletion, api.ConditionTrue); err != nil {
+			if _, err := c.updateVNodeCondition(vnode, appmeshv1beta1.VirtualNodeMeshMarkedForDeletion, api.ConditionTrue); err != nil {
 				klog.Errorf("Error marking node service %s for mesh deletion: %s", vnode.Name, err)
 				wasError = true
 				continue
@@ -169,12 +167,12 @@ func (c *Controller) markResourcesForMeshDeletion(name string) error {
 		return fmt.Errorf("meshName index error for %s: %s", name, err)
 	} else {
 		for _, obj := range objects {
-			vservice, ok := obj.(*appmeshv1alpha1.VirtualService)
+			vservice, ok := obj.(*appmeshv1beta1.VirtualService)
 			if !ok {
 				continue
 			}
 
-			if _, err := c.updateVServiceCondition(vservice, appmeshv1alpha1.VirtualServiceMeshMarkedForDeletion, api.ConditionTrue); err != nil {
+			if _, err := c.updateVServiceCondition(vservice, appmeshv1beta1.VirtualServiceMeshMarkedForDeletion, api.ConditionTrue); err != nil {
 				klog.Errorf("Error marking virtual service %s for mesh deletion: %s", vservice.Name, err)
 				wasError = true
 				continue
@@ -185,7 +183,7 @@ func (c *Controller) markResourcesForMeshDeletion(name string) error {
 	}
 
 	if wasError {
-		return fmt.Errorf("error marking resources for mesh deletion.")
+		return fmt.Errorf("error marking resources for mesh deletion")
 	}
 	return nil
 }

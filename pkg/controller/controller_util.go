@@ -2,9 +2,8 @@ package controller
 
 import (
 	"fmt"
-	"strings"
-
 	"k8s.io/apimachinery/pkg/api/meta"
+	"strings"
 )
 
 func containsFinalizer(obj interface{}, finalizer string) (bool, error) {
@@ -46,15 +45,20 @@ func removeFinalizer(obj interface{}, finalizer string) error {
 	return nil
 }
 
-// parseMeshName returns meshName, namespace given the meshName reference and namespace of a virtual node or virtual
-// service.  In order to support mesh references for meshes in different namespaces, we allow the format
-// meshName.meshNamespace in the meshName reference field of a virtual node or virtual service.
-func parseMeshName(meshName string, namespace string) (string, string) {
-	meshNamespace := namespace
-	meshParts := strings.Split(meshName, ".")
-	if len(meshParts) > 1 {
-		meshNamespace = strings.Join(meshParts[1:], ".")
-		meshName = meshParts[0]
+// namespacedResourceName addresses the lack of native support of namespace within AppMesh API for virtual nodes, virtual
+// routers, and routes. If the resource name doesn't contain ".", we will construct the new name by appending
+// "-defaultResourceNamespace" where defaultResourceNamespace is the namespace of the resource. If it does, the new name
+// is constructed by converting the "." to "-" since "." isn't a valid character in AppMesh virtual node, virtual router
+// or route names.
+//
+// This results in a namespaced name to send to the App Mesh API to avoid collisions if there are multiple resources
+// with the same name in different Kubernetes namespaces.
+//
+// Example 1: resourceName: "foo", defaultResourceNamespace: "bar". The App Mesh name will be "foo-bar"
+// Example 2: resourceName: "foo.dummy", defaultResourceNamespace: "bar". The App Mesh name will be "foo-dummy"
+func namespacedResourceName(resourceName string, defaultResourceNamespace string) string {
+	if strings.Contains(resourceName, ".") {
+		return strings.ReplaceAll(resourceName, ".", "-")
 	}
-	return meshName, meshNamespace
+	return resourceName + "-" + defaultResourceNamespace
 }

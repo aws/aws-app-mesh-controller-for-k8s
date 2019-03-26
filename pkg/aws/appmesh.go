@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"time"
 
-	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
+	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/appmesh"
@@ -38,22 +38,22 @@ const (
 
 type AppMeshAPI interface {
 	GetMesh(context.Context, string) (*Mesh, error)
-	CreateMesh(context.Context, *appmeshv1alpha1.Mesh) (*Mesh, error)
+	CreateMesh(context.Context, *appmeshv1beta1.Mesh) (*Mesh, error)
 	DeleteMesh(context.Context, string) (*Mesh, error)
-	GetVirtualNode(context.Context, string, string, string) (*VirtualNode, error)
-	CreateVirtualNode(context.Context, *appmeshv1alpha1.VirtualNode) (*VirtualNode, error)
-	UpdateVirtualNode(context.Context, *appmeshv1alpha1.VirtualNode) (*VirtualNode, error)
-	DeleteVirtualNode(context.Context, string, string, string) (*VirtualNode, error)
+	GetVirtualNode(context.Context, string, string) (*VirtualNode, error)
+	CreateVirtualNode(context.Context, *appmeshv1beta1.VirtualNode) (*VirtualNode, error)
+	UpdateVirtualNode(context.Context, *appmeshv1beta1.VirtualNode) (*VirtualNode, error)
+	DeleteVirtualNode(context.Context, string, string) (*VirtualNode, error)
 	GetVirtualService(context.Context, string, string) (*VirtualService, error)
-	CreateVirtualService(context.Context, *appmeshv1alpha1.VirtualService) (*VirtualService, error)
-	UpdateVirtualService(context.Context, *appmeshv1alpha1.VirtualService) (*VirtualService, error)
+	CreateVirtualService(context.Context, *appmeshv1beta1.VirtualService) (*VirtualService, error)
+	UpdateVirtualService(context.Context, *appmeshv1beta1.VirtualService) (*VirtualService, error)
 	DeleteVirtualService(context.Context, string, string) (*VirtualService, error)
 	GetVirtualRouter(context.Context, string, string) (*VirtualRouter, error)
-	CreateVirtualRouter(context.Context, *appmeshv1alpha1.VirtualRouter, string) (*VirtualRouter, error)
+	CreateVirtualRouter(context.Context, *appmeshv1beta1.VirtualRouter, string) (*VirtualRouter, error)
 	DeleteVirtualRouter(context.Context, string, string) (*VirtualRouter, error)
 	GetRoute(context.Context, string, string, string) (*Route, error)
-	CreateRoute(context.Context, *appmeshv1alpha1.Route, string, string, string) (*Route, error)
-	UpdateRoute(context.Context, *appmeshv1alpha1.Route, string, string, string) (*Route, error)
+	CreateRoute(context.Context, *appmeshv1beta1.Route, string, string) (*Route, error)
+	UpdateRoute(context.Context, *appmeshv1beta1.Route, string, string) (*Route, error)
 	GetRoutesForVirtualRouter(context.Context, string, string) (Routes, error)
 	DeleteRoute(context.Context, string, string, string) (*Route, error)
 }
@@ -88,7 +88,7 @@ func (c *Cloud) GetMesh(ctx context.Context, name string) (*Mesh, error) {
 }
 
 // CreateMesh converts the desired mesh spec into CreateMeshInput and calls create mesh.
-func (c *Cloud) CreateMesh(ctx context.Context, mesh *appmeshv1alpha1.Mesh) (*Mesh, error) {
+func (c *Cloud) CreateMesh(ctx context.Context, mesh *appmeshv1beta1.Mesh) (*Mesh, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateMeshTimeout)
 	defer cancel()
 
@@ -154,15 +154,15 @@ func (v *VirtualNode) HostName() string {
 }
 
 // Listeners converts into our API type
-func (v *VirtualNode) Listeners() []appmeshv1alpha1.Listener {
+func (v *VirtualNode) Listeners() []appmeshv1beta1.Listener {
 	if v.Data.Spec.Listeners == nil {
-		return []appmeshv1alpha1.Listener{}
+		return []appmeshv1beta1.Listener{}
 	}
 
-	var listeners = []appmeshv1alpha1.Listener{}
+	var listeners = []appmeshv1beta1.Listener{}
 	for _, l := range v.Data.Spec.Listeners {
-		listeners = append(listeners, appmeshv1alpha1.Listener{
-			PortMapping: appmeshv1alpha1.PortMapping{
+		listeners = append(listeners, appmeshv1beta1.Listener{
+			PortMapping: appmeshv1beta1.PortMapping{
 				Port:     aws.Int64Value(l.PortMapping.Port),
 				Protocol: aws.StringValue(l.PortMapping.Protocol),
 			},
@@ -182,15 +182,15 @@ func (v *VirtualNode) ListenersSet() set.Set {
 }
 
 // Backends converts into our API type
-func (v *VirtualNode) Backends() []appmeshv1alpha1.Backend {
+func (v *VirtualNode) Backends() []appmeshv1beta1.Backend {
 	if v.Data.Spec.Backends == nil {
-		return []appmeshv1alpha1.Backend{}
+		return []appmeshv1beta1.Backend{}
 	}
 
-	var backends = []appmeshv1alpha1.Backend{}
+	var backends = []appmeshv1beta1.Backend{}
 	for _, b := range v.Data.Spec.Backends {
-		backends = append(backends, appmeshv1alpha1.Backend{
-			VirtualService: appmeshv1alpha1.VirtualServiceBackend{
+		backends = append(backends, appmeshv1beta1.Backend{
+			VirtualService: appmeshv1beta1.VirtualServiceBackend{
 				VirtualServiceName: aws.StringValue(b.VirtualService.VirtualServiceName),
 			},
 		})
@@ -209,13 +209,13 @@ func (v *VirtualNode) BackendsSet() set.Set {
 }
 
 // CreateVirtualNode calls describe virtual node.
-func (c *Cloud) GetVirtualNode(ctx context.Context, name string, namespace string, meshName string) (*VirtualNode, error) {
+func (c *Cloud) GetVirtualNode(ctx context.Context, name string, meshName string) (*VirtualNode, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeVirtualNodeTimeout)
 	defer cancel()
 
 	input := &appmesh.DescribeVirtualNodeInput{
 		MeshName:        aws.String(meshName),
-		VirtualNodeName: aws.String(ConstructAppMeshVNodeNameFromCRD(name, namespace)),
+		VirtualNodeName: aws.String(name),
 	}
 
 	if output, err := c.appmesh.DescribeVirtualNodeWithContext(ctx, input); err != nil {
@@ -231,12 +231,12 @@ func (c *Cloud) GetVirtualNode(ctx context.Context, name string, namespace strin
 
 // CreateVirtualNode converts the desired virtual node spec into CreateVirtualNodeInput and calls create
 // virtual node.
-func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1alpha1.VirtualNode) (*VirtualNode, error) {
+func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.VirtualNode) (*VirtualNode, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateVirtualNodeTimeout)
 	defer cancel()
 
 	input := &appmesh.CreateVirtualNodeInput{
-		VirtualNodeName: aws.String(ConstructAppMeshVNodeNameFromCRD(vnode.Name, vnode.Namespace)),
+		VirtualNodeName: aws.String(vnode.Name),
 		MeshName:        aws.String(vnode.Spec.MeshName),
 		Spec:            &appmesh.VirtualNodeSpec{},
 	}
@@ -294,12 +294,12 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1alpha1.Vi
 
 // UpdateVirtualNode converts the desired virtual node spec into UpdateVirtualNodeInput and calls update
 // virtual node.
-func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1alpha1.VirtualNode) (*VirtualNode, error) {
+func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.VirtualNode) (*VirtualNode, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateVirtualNodeTimeout)
 	defer cancel()
 
 	input := &appmesh.UpdateVirtualNodeInput{
-		VirtualNodeName: aws.String(ConstructAppMeshVNodeNameFromCRD(vnode.Name, vnode.Namespace)),
+		VirtualNodeName: aws.String(vnode.Name),
 		MeshName:        aws.String(vnode.Spec.MeshName),
 		Spec:            &appmesh.VirtualNodeSpec{},
 	}
@@ -355,13 +355,13 @@ func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1alpha1.Vi
 	}
 }
 
-func (c *Cloud) DeleteVirtualNode(ctx context.Context, name string, namespace string, meshName string) (*VirtualNode, error) {
+func (c *Cloud) DeleteVirtualNode(ctx context.Context, name string, meshName string) (*VirtualNode, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteVirtualNodeTimeout)
 	defer cancel()
 
 	input := &appmesh.DeleteVirtualNodeInput{
 		MeshName:        aws.String(meshName),
-		VirtualNodeName: aws.String(ConstructAppMeshVNodeNameFromCRD(name, namespace)),
+		VirtualNodeName: aws.String(name),
 	}
 
 	if output, err := c.appmesh.DeleteVirtualNodeWithContext(ctx, input); err != nil {
@@ -426,7 +426,7 @@ func (c *Cloud) GetVirtualService(ctx context.Context, name string, meshName str
 
 // CreateVirtualService converts the desired virtual service spec into CreateVirtualServiceInput and calls create
 // virtual service.
-func (c *Cloud) CreateVirtualService(ctx context.Context, vservice *appmeshv1alpha1.VirtualService) (*VirtualService, error) {
+func (c *Cloud) CreateVirtualService(ctx context.Context, vservice *appmeshv1beta1.VirtualService) (*VirtualService, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateVirtualServiceTimeout)
 	defer cancel()
 
@@ -459,7 +459,7 @@ func (c *Cloud) CreateVirtualService(ctx context.Context, vservice *appmeshv1alp
 	}
 }
 
-func (c *Cloud) UpdateVirtualService(ctx context.Context, vservice *appmeshv1alpha1.VirtualService) (*VirtualService, error) {
+func (c *Cloud) UpdateVirtualService(ctx context.Context, vservice *appmeshv1beta1.VirtualService) (*VirtualService, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateVirtualServiceTimeout)
 	defer cancel()
 
@@ -553,7 +553,7 @@ func (c *Cloud) GetVirtualRouter(ctx context.Context, name string, meshName stri
 
 // CreateVirtualRouter converts the desired virtual service spec into CreateVirtualServiceInput and calls create
 // virtual router.
-func (c *Cloud) CreateVirtualRouter(ctx context.Context, vrouter *appmeshv1alpha1.VirtualRouter, meshName string) (*VirtualRouter, error) {
+func (c *Cloud) CreateVirtualRouter(ctx context.Context, vrouter *appmeshv1beta1.VirtualRouter, meshName string) (*VirtualRouter, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateVirtualRouterTimeout)
 	defer cancel()
 
@@ -624,14 +624,14 @@ func (r *Route) Prefix() string {
 }
 
 // WeightedTargets converts into our API type
-func (r *Route) WeightedTargets() []appmeshv1alpha1.WeightedTarget {
+func (r *Route) WeightedTargets() []appmeshv1beta1.WeightedTarget {
 	if r.Data.Spec.HttpRoute.Action.WeightedTargets == nil {
-		return []appmeshv1alpha1.WeightedTarget{}
+		return []appmeshv1beta1.WeightedTarget{}
 	}
 
-	var targets = []appmeshv1alpha1.WeightedTarget{}
+	var targets = []appmeshv1beta1.WeightedTarget{}
 	for _, t := range r.Data.Spec.HttpRoute.Action.WeightedTargets {
-		targets = append(targets, appmeshv1alpha1.WeightedTarget{
+		targets = append(targets, appmeshv1beta1.WeightedTarget{
 			VirtualNodeName: aws.StringValue(t.VirtualNode),
 			Weight:          aws.Int64Value(t.Weight),
 		})
@@ -693,7 +693,7 @@ func (c *Cloud) GetRoute(ctx context.Context, name string, routerName string, me
 }
 
 // CreateRoute converts the desired virtual service spec into CreateVirtualServiceInput and calls create route.
-func (c *Cloud) CreateRoute(ctx context.Context, route *appmeshv1alpha1.Route, routerName string, meshName string, namespace string) (*Route, error) {
+func (c *Cloud) CreateRoute(ctx context.Context, route *appmeshv1beta1.Route, routerName string, meshName string) (*Route, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateRouteTimeout)
 	defer cancel()
 
@@ -715,7 +715,7 @@ func (c *Cloud) CreateRoute(ctx context.Context, route *appmeshv1alpha1.Route, r
 	for _, target := range route.Http.Action.WeightedTargets {
 		weight := target.Weight
 		targets = append(targets, &appmesh.WeightedTarget{
-			VirtualNode: aws.String(ConstructAppMeshVNodeNameFromCRD(target.VirtualNodeName, namespace)),
+			VirtualNode: aws.String(target.VirtualNodeName),
 			Weight:      aws.Int64(weight),
 		})
 	}
@@ -766,7 +766,7 @@ func (c *Cloud) GetRoutesForVirtualRouter(ctx context.Context, routerName string
 }
 
 // UpdateRoute converts the desired virtual service spec into UpdateRouteInput and calls update route.
-func (c *Cloud) UpdateRoute(ctx context.Context, route *appmeshv1alpha1.Route, routerName string, meshName string, namespace string) (*Route, error) {
+func (c *Cloud) UpdateRoute(ctx context.Context, route *appmeshv1beta1.Route, routerName string, meshName string) (*Route, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateRouteTimeout)
 	defer cancel()
 
@@ -788,7 +788,7 @@ func (c *Cloud) UpdateRoute(ctx context.Context, route *appmeshv1alpha1.Route, r
 	for _, target := range route.Http.Action.WeightedTargets {
 		weight := target.Weight
 		targets = append(targets, &appmesh.WeightedTarget{
-			VirtualNode: aws.String(ConstructAppMeshVNodeNameFromCRD(target.VirtualNodeName, namespace)),
+			VirtualNode: aws.String(target.VirtualNodeName),
 			Weight:      aws.Int64(weight),
 		})
 	}
