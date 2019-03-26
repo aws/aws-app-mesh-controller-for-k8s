@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
+	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	meshclientset "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned"
 	meshscheme "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/scheme"
-	meshinformers "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/informers/externalversions/appmesh/v1alpha1"
-	meshlisters "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/listers/appmesh/v1alpha1"
+	meshinformers "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/informers/externalversions/appmesh/v1beta1"
+	meshlisters "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/listers/appmesh/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -146,7 +146,7 @@ func NewController(
 }
 
 func indexVNodesByMeshName(obj interface{}) ([]string, error) {
-	node, ok := obj.(*appmeshv1alpha1.VirtualNode)
+	node, ok := obj.(*appmeshv1beta1.VirtualNode)
 	if !ok {
 		return []string{}, nil
 	}
@@ -158,7 +158,7 @@ func indexVNodesByMeshName(obj interface{}) ([]string, error) {
 }
 
 func indexVServicesByMeshName(obj interface{}) ([]string, error) {
-	node, ok := obj.(*appmeshv1alpha1.VirtualService)
+	node, ok := obj.(*appmeshv1beta1.VirtualService)
 	if !ok {
 		return []string{}, nil
 	}
@@ -226,7 +226,7 @@ func (c *Controller) podDeleted(obj interface{}) {
 }
 
 // getMeshServicesForPod finds Mesh Services with selectors that match the Pod's labels
-func (c *Controller) getMeshServicesForPod(pod *corev1.Pod) ([]*appmeshv1alpha1.VirtualService, error) {
+func (c *Controller) getMeshServicesForPod(pod *corev1.Pod) ([]*appmeshv1beta1.VirtualService, error) {
 	return nil, nil
 }
 
@@ -240,7 +240,7 @@ func (c *Controller) meshAdded(obj interface{}) {
 		return
 	}
 
-	mesh := obj.(*appmeshv1alpha1.Mesh)
+	mesh := obj.(*appmeshv1beta1.Mesh)
 	meshName := mesh.Name
 
 	// If a mesh is created, process all objects with the meshName.
@@ -254,7 +254,7 @@ func (c *Controller) enqueueVNodesForMesh(name string) {
 		return
 	} else {
 		for _, obj := range objects {
-			vnode, ok := obj.(*appmeshv1alpha1.VirtualNode)
+			vnode, ok := obj.(*appmeshv1beta1.VirtualNode)
 			if !ok {
 				continue
 			}
@@ -276,7 +276,7 @@ func (c *Controller) enqueueVServicesForMesh(name string) {
 		return
 	} else {
 		for _, obj := range objects {
-			vservice, ok := obj.(*appmeshv1alpha1.VirtualService)
+			vservice, ok := obj.(*appmeshv1beta1.VirtualService)
 			if !ok {
 				continue
 			}

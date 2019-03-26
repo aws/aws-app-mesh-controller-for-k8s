@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
+	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	"github.com/aws/aws-sdk-go/service/appmesh"
 	set "github.com/deckarep/golang-set"
@@ -34,22 +34,42 @@ func (c *Controller) handleVService(key string) error {
 
 	// Make copy here so we never update the shared copy
 	vservice := shared.DeepCopy()
+	// Make copy for updates so we don't save namespaced resource names
+	copy := shared.DeepCopy()
+
+	copy.Spec.VirtualRouter = getVirtualRouter(copy)
+
+	// Namespace resource names for use against App Mesh API
+	vservice.Spec.VirtualRouter = &appmeshv1beta1.VirtualRouter{
+		Name: getNamespacedVirtualRouterName(vservice),
+	}
+
+	for i := range vservice.Spec.Routes {
+		routeName := vservice.Spec.Routes[i].Name
+		vservice.Spec.Routes[i].Name = namespacedResourceName(routeName, vservice.Namespace)
+		for j := range vservice.Spec.Routes[i].Http.Action.WeightedTargets {
+			targetVNodeName := vservice.Spec.Routes[i].Http.Action.WeightedTargets[j].VirtualNodeName
+			vservice.Spec.Routes[i].Http.Action.WeightedTargets[j].VirtualNodeName = namespacedResourceName(targetVNodeName, vservice.Namespace)
+		}
+	}
+
+	// Add the deletion finalizer if it doesn't exist
+	if yes, _ := containsFinalizer(copy, virtualServiceDeletionFinalizerName); !yes {
+		if err := addFinalizer(copy, virtualServiceDeletionFinalizerName); err != nil {
+			return fmt.Errorf("error adding finalizer %s to virtual service %s: %s", virtualServiceDeletionFinalizerName, vservice.Name, err)
+		}
+		if updated, err := c.updateVServiceResource(copy); err != nil {
+			return fmt.Errorf("error updating resource while adding finalizer %s to virtual service %s: %s", virtualServiceDeletionFinalizerName, vservice.Name, err)
+		} else if updated != nil {
+			copy = updated
+		}
+	}
 
 	// Resources with finalizers are not deleted immediately,
 	// instead the deletion timestamp is set when a client deletes them.
 	if !vservice.DeletionTimestamp.IsZero() {
 		// Resource is being deleted, process finalizers
-		return c.handleVServiceDelete(ctx, vservice)
-	}
-
-	// This is not a delete, add the deletion finalizer if it doesn't exist
-	if yes, _ := containsFinalizer(vservice, virtualServiceDeletionFinalizerName); !yes {
-		if err := addFinalizer(vservice, virtualServiceDeletionFinalizerName); err != nil {
-			return fmt.Errorf("error adding finalizer %s to virtual service %s: %s", virtualServiceDeletionFinalizerName, vservice.Name, err)
-		}
-		if err := c.updateVServiceResource(vservice); err != nil {
-			return fmt.Errorf("error adding finalizer %s to virtual service %s: %s", virtualServiceDeletionFinalizerName, vservice.Name, err)
-		}
+		return c.handleVServiceDelete(ctx, vservice, copy)
 	}
 
 	if processVService := c.handleVServiceMeshDeleting(ctx, vservice); !processVService {
@@ -63,11 +83,7 @@ func (c *Controller) handleVService(key string) error {
 		return fmt.Errorf("'MeshName' is a required field")
 	}
 
-	// Extract namespace from Mesh name
-	meshName, meshNamespace := parseMeshName(meshName, vservice.Namespace)
-	vservice.Spec.MeshName = meshName
-
-	mesh, err := c.meshLister.Meshes(meshNamespace).Get(meshName)
+	mesh, err := c.meshLister.Get(meshName)
 	if errors.IsNotFound(err) {
 		return fmt.Errorf("mesh %s for virtual service %s does not exist", meshName, name)
 	}
@@ -88,8 +104,10 @@ func (c *Controller) handleVService(key string) error {
 		} else {
 			return fmt.Errorf("error describing virtual router: %s", err)
 		}
-		if vservice, err = c.updateVRouterStatus(vservice, targetRouter); err != nil {
-			return fmt.Errorf("error updating virtual service status: %s", err)
+		if updated, err := c.updateVRouterStatus(copy, targetRouter); err != nil {
+			return fmt.Errorf("error updating virtual service status for virtual router: %s", err)
+		} else if updated != nil {
+			copy = updated
 		}
 	}
 
@@ -98,7 +116,7 @@ func (c *Controller) handleVService(key string) error {
 	if err != nil {
 		return fmt.Errorf("error getting routes for virtual service %s: %s", vservice.Name, err)
 	}
-	if err = c.updateRoutes(ctx, meshName, virtualRouter.Name, desiredRoutes, existingRoutes, vservice.Namespace); err != nil {
+	if err = c.updateRoutes(ctx, meshName, virtualRouter.Name, desiredRoutes, existingRoutes); err != nil {
 		return fmt.Errorf("error updating routes for virtual service %s: %s", vservice.Name, err)
 	}
 
@@ -112,10 +130,10 @@ func (c *Controller) handleVService(key string) error {
 		} else {
 			status = api.ConditionFalse
 		}
-		if updated, err := c.updateRoutesActive(vservice, status); err != nil {
+		if updated, err := c.updateRoutesActive(copy, status); err != nil {
 			return fmt.Errorf("error updating routes status: %s", err)
 		} else if updated != nil {
-			vservice = updated
+			copy = updated
 		}
 	}
 
@@ -138,10 +156,10 @@ func (c *Controller) handleVService(key string) error {
 		}
 	}
 
-	if updated, err := c.updateVServiceStatus(vservice, targetService); err != nil {
+	if updated, err := c.updateVServiceStatus(copy, targetService); err != nil {
 		return fmt.Errorf("error updating virtual service status: %s", err)
 	} else if updated != nil {
-		vservice = updated
+		copy = updated
 	}
 
 	// TODO(nic) Need to determine if we need to clean up the old router here.  This needs to happen if we switched
@@ -150,12 +168,11 @@ func (c *Controller) handleVService(key string) error {
 	return nil
 }
 
-func (c *Controller) updateVServiceResource(vservice *appmeshv1alpha1.VirtualService) error {
-	_, err := c.meshclientset.AppmeshV1alpha1().VirtualServices(vservice.Namespace).Update(vservice)
-	return err
+func (c *Controller) updateVServiceResource(vservice *appmeshv1beta1.VirtualService) (*appmeshv1beta1.VirtualService, error) {
+	return c.meshclientset.AppmeshV1beta1().VirtualServices(vservice.Namespace).Update(vservice)
 }
 
-func (c *Controller) updateVServiceStatus(vservice *appmeshv1alpha1.VirtualService, target *aws.VirtualService) (*appmeshv1alpha1.VirtualService, error) {
+func (c *Controller) updateVServiceStatus(vservice *appmeshv1beta1.VirtualService, target *aws.VirtualService) (*appmeshv1beta1.VirtualService, error) {
 	switch target.Status() {
 	case appmesh.VirtualServiceStatusCodeActive:
 		return c.updateVServiceActive(vservice, api.ConditionTrue)
@@ -167,7 +184,7 @@ func (c *Controller) updateVServiceStatus(vservice *appmeshv1alpha1.VirtualServi
 	return nil, nil
 }
 
-func (c *Controller) updateVRouterStatus(vservice *appmeshv1alpha1.VirtualService, target *aws.VirtualRouter) (*appmeshv1alpha1.VirtualService, error) {
+func (c *Controller) updateVRouterStatus(vservice *appmeshv1beta1.VirtualService, target *aws.VirtualRouter) (*appmeshv1beta1.VirtualService, error) {
 	switch target.Status() {
 	case appmesh.VirtualRouterStatusCodeActive:
 		return c.updateVRouterActive(vservice, api.ConditionTrue)
@@ -179,24 +196,24 @@ func (c *Controller) updateVRouterStatus(vservice *appmeshv1alpha1.VirtualServic
 	return nil, nil
 }
 
-func (c *Controller) updateVServiceActive(vservice *appmeshv1alpha1.VirtualService, status api.ConditionStatus) (*appmeshv1alpha1.VirtualService, error) {
-	return c.updateVServiceCondition(vservice, appmeshv1alpha1.VirtualServiceActive, status)
+func (c *Controller) updateVServiceActive(vservice *appmeshv1beta1.VirtualService, status api.ConditionStatus) (*appmeshv1beta1.VirtualService, error) {
+	return c.updateVServiceCondition(vservice, appmeshv1beta1.VirtualServiceActive, status)
 }
 
-func (c *Controller) updateVRouterActive(vservice *appmeshv1alpha1.VirtualService, status api.ConditionStatus) (*appmeshv1alpha1.VirtualService, error) {
-	return c.updateVServiceCondition(vservice, appmeshv1alpha1.VirtualRouterActive, status)
+func (c *Controller) updateVRouterActive(vservice *appmeshv1beta1.VirtualService, status api.ConditionStatus) (*appmeshv1beta1.VirtualService, error) {
+	return c.updateVServiceCondition(vservice, appmeshv1beta1.VirtualRouterActive, status)
 }
 
-func (c *Controller) updateRoutesActive(vservice *appmeshv1alpha1.VirtualService, status api.ConditionStatus) (*appmeshv1alpha1.VirtualService, error) {
-	return c.updateVServiceCondition(vservice, appmeshv1alpha1.RoutesActive, status)
+func (c *Controller) updateRoutesActive(vservice *appmeshv1beta1.VirtualService, status api.ConditionStatus) (*appmeshv1beta1.VirtualService, error) {
+	return c.updateVServiceCondition(vservice, appmeshv1beta1.RoutesActive, status)
 }
 
-func (c *Controller) updateVServiceCondition(vservice *appmeshv1alpha1.VirtualService, conditionType appmeshv1alpha1.VirtualServiceConditionType, status api.ConditionStatus) (*appmeshv1alpha1.VirtualService, error) {
+func (c *Controller) updateVServiceCondition(vservice *appmeshv1beta1.VirtualService, conditionType appmeshv1beta1.VirtualServiceConditionType, status api.ConditionStatus) (*appmeshv1beta1.VirtualService, error) {
 	now := metav1.Now()
 	condition := getVServiceCondition(conditionType, vservice.Status)
-	if condition == (appmeshv1alpha1.VirtualServiceCondition{}) {
+	if condition == (appmeshv1beta1.VirtualServiceCondition{}) {
 		// condition does not exist
-		newCondition := appmeshv1alpha1.VirtualServiceCondition{
+		newCondition := appmeshv1beta1.VirtualServiceCondition{
 			Type:               conditionType,
 			Status:             status,
 			LastTransitionTime: &now,
@@ -211,38 +228,46 @@ func (c *Controller) updateVServiceCondition(vservice *appmeshv1alpha1.VirtualSe
 		condition.LastTransitionTime = &now
 	}
 
-	return c.meshclientset.AppmeshV1alpha1().VirtualServices(vservice.Namespace).UpdateStatus(vservice)
+	return c.meshclientset.AppmeshV1beta1().VirtualServices(vservice.Namespace).UpdateStatus(vservice)
 }
 
-func getVServiceCondition(conditionType appmeshv1alpha1.VirtualServiceConditionType, status appmeshv1alpha1.VirtualServiceStatus) appmeshv1alpha1.VirtualServiceCondition {
+func getVServiceCondition(conditionType appmeshv1beta1.VirtualServiceConditionType, status appmeshv1beta1.VirtualServiceStatus) appmeshv1beta1.VirtualServiceCondition {
 	for _, condition := range status.Conditions {
 		if condition.Type == conditionType {
 			return condition
 		}
 	}
 
-	return appmeshv1alpha1.VirtualServiceCondition{}
+	return appmeshv1beta1.VirtualServiceCondition{}
 }
 
-func getVirtualRouter(vservice *appmeshv1alpha1.VirtualService) *appmeshv1alpha1.VirtualRouter {
+func getVirtualRouter(vservice *appmeshv1beta1.VirtualService) *appmeshv1beta1.VirtualRouter {
 	if vservice.Spec.VirtualRouter != nil {
 		return vservice.Spec.VirtualRouter
 	}
-	return &appmeshv1alpha1.VirtualRouter{
+	return &appmeshv1beta1.VirtualRouter{
 		Name: vservice.Name,
 	}
 }
 
-func getRoutes(vservice *appmeshv1alpha1.VirtualService) []appmeshv1alpha1.Route {
+func getNamespacedVirtualRouterName(vservice *appmeshv1beta1.VirtualService) string {
+
+	if vservice.Spec.VirtualRouter != nil {
+		return namespacedResourceName(vservice.Spec.VirtualRouter.Name, vservice.Namespace)
+	}
+	return namespacedResourceName(vservice.Name, vservice.Namespace)
+}
+
+func getRoutes(vservice *appmeshv1beta1.VirtualService) []appmeshv1beta1.Route {
 	if vservice.Spec.Routes != nil {
 		return vservice.Spec.Routes
 	}
-	return []appmeshv1alpha1.Route{}
+	return []appmeshv1beta1.Route{}
 }
 
 // vserviceNeedsUpdate compares the App Mesh API result (target) with the desired spec (desired) and
 // determines if there is any drift that requires an update.
-func vserviceNeedsUpdate(desired *appmeshv1alpha1.VirtualService, target *aws.VirtualService) bool {
+func vserviceNeedsUpdate(desired *appmeshv1beta1.VirtualService, target *aws.VirtualService) bool {
 	if desired.Spec.VirtualRouter != nil {
 		// If we specify the virtual router name, verify the target is equal
 		if desired.Spec.VirtualRouter.Name != target.VirtualRouterName() {
@@ -257,7 +282,7 @@ func vserviceNeedsUpdate(desired *appmeshv1alpha1.VirtualService, target *aws.Vi
 	return false
 }
 
-func (c *Controller) updateRoutes(ctx context.Context, meshName string, routerName string, desired []appmeshv1alpha1.Route, existing aws.Routes, namespace string) error {
+func (c *Controller) updateRoutes(ctx context.Context, meshName string, routerName string, desired []appmeshv1beta1.Route, existing aws.Routes) error {
 	routeNamesWithErrors := []string{}
 	existingNames := existing.RouteNamesSet()
 	desiredNames := set.NewSet()
@@ -271,15 +296,15 @@ func (c *Controller) updateRoutes(ctx context.Context, meshName string, routerNa
 		if existingNames.Contains(d.Name) {
 			// There exists a route by the desired name, check if it needs to be updated
 			e := existing.RouteByName(d.Name)
-			if routeNeedsUpdate(d, e, namespace) {
-				if _, err := c.cloud.UpdateRoute(ctx, &d, routerName, meshName, namespace); err != nil {
+			if routeNeedsUpdate(d, e) {
+				if _, err := c.cloud.UpdateRoute(ctx, &d, routerName, meshName); err != nil {
 					routeNamesWithErrors = append(routeNamesWithErrors, d.Name)
 					klog.Errorf("Error updating route %s: %s", d.Name, err)
 				}
 			}
 		} else {
 			// Create route because no existing route exists by the desired name
-			if _, err := c.cloud.CreateRoute(ctx, &d, routerName, meshName, namespace); err != nil {
+			if _, err := c.cloud.CreateRoute(ctx, &d, routerName, meshName); err != nil {
 				routeNamesWithErrors = append(routeNamesWithErrors, d.Name)
 				klog.Errorf("Error creating route %s: %s", d.Name, err)
 			}
@@ -310,12 +335,11 @@ func allRoutesActive(routes aws.Routes) bool {
 	return true
 }
 
-func routeNeedsUpdate(desired appmeshv1alpha1.Route, target aws.Route, namespace string) bool {
+func routeNeedsUpdate(desired appmeshv1beta1.Route, target aws.Route) bool {
 	if desired.Http.Action.WeightedTargets != nil {
 		desiredSet := set.NewSet()
 		for _, target := range desired.Http.Action.WeightedTargets {
-			desiredSet.Add(appmeshv1alpha1.WeightedTarget{VirtualNodeName:aws.ConstructAppMeshVNodeNameFromCRD(target.VirtualNodeName, namespace),
-				Weight:target.Weight})
+			desiredSet.Add(appmeshv1beta1.WeightedTarget{VirtualNodeName: target.VirtualNodeName, Weight:target.Weight})
 		}
 		currSet := target.WeightedTargetSet()
 		if !desiredSet.Equal(currSet) {
@@ -328,26 +352,25 @@ func routeNeedsUpdate(desired appmeshv1alpha1.Route, target aws.Route, namespace
 	return false
 }
 
-func (c *Controller) handleVServiceDelete(ctx context.Context, vservice *appmeshv1alpha1.VirtualService) error {
+func (c *Controller) handleVServiceDelete(ctx context.Context, vservice *appmeshv1beta1.VirtualService, copy *appmeshv1beta1.VirtualService) error {
 	if yes, _ := containsFinalizer(vservice, virtualServiceDeletionFinalizerName); yes {
 
 		if err := c.deleteVServiceResources(ctx, vservice); err != nil {
 			return err
 		}
 
-		if err := removeFinalizer(vservice, virtualServiceDeletionFinalizerName); err != nil {
+		if err := removeFinalizer(copy, virtualServiceDeletionFinalizerName); err != nil {
 			return fmt.Errorf("error removing finalizer %s to virtual service %s during deletion: %s", virtualServiceDeletionFinalizerName, vservice.Name, err)
 		}
-		if err := c.updateVServiceResource(vservice); err != nil {
+		if _, err := c.updateVServiceResource(copy); err != nil {
 			return fmt.Errorf("error removing finalizer %s to virtual service %s during deletion: %s", virtualServiceDeletionFinalizerName, vservice.Name, err)
 		}
 	}
 	return nil
 }
 
-func (c *Controller) handleVServiceMeshDeleting(ctx context.Context, vservice *appmeshv1alpha1.VirtualService) (processVService bool) {
-	meshName, meshNamespace := parseMeshName(vservice.Spec.MeshName, vservice.Namespace)
-	mesh, err := c.meshLister.Meshes(meshNamespace).Get(meshName)
+func (c *Controller) handleVServiceMeshDeleting(ctx context.Context, vservice *appmeshv1beta1.VirtualService) (processVService bool) {
+	mesh, err := c.meshLister.Get(vservice.Spec.MeshName)
 
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -364,18 +387,17 @@ func (c *Controller) handleVServiceMeshDeleting(ctx context.Context, vservice *a
 		if err := c.deleteVServiceResources(ctx, vservice); err != nil {
 			klog.Error(err)
 		} else {
-			klog.Infof("Deleted resources for virtual service %s because mesh %s is being deleted", vservice.Name, meshName)
+			klog.Infof("Deleted resources for virtual service %s because mesh %s is being deleted", vservice.Name, vservice.Spec.MeshName)
 		}
 		return false
 	}
 	return true
 }
 
-func (c *Controller) deleteVServiceResources(ctx context.Context, vservice *appmeshv1alpha1.VirtualService) error {
-	meshName, _ := parseMeshName(vservice.Spec.MeshName, vservice.Namespace)
+func (c *Controller) deleteVServiceResources(ctx context.Context, vservice *appmeshv1beta1.VirtualService) error {
 	// Cleanup routes
 	for _, r := range vservice.Spec.Routes {
-		if _, err := c.cloud.DeleteRoute(ctx, r.Name, vservice.Spec.VirtualRouter.Name, meshName); err != nil {
+		if _, err := c.cloud.DeleteRoute(ctx, r.Name, vservice.Spec.VirtualRouter.Name, vservice.Spec.MeshName); err != nil {
 			if !aws.IsAWSErrNotFound(err) {
 				return fmt.Errorf("failed to clean up route %s for virtual service %s during deletion: %s", r.Name, vservice.Name, err)
 			}
@@ -385,15 +407,17 @@ func (c *Controller) deleteVServiceResources(ctx context.Context, vservice *appm
 	// TODO(nic): if we support a force delete, we can delete the rest of the routes attached to the virtual router here
 
 	// Cleanup virtual service
-	if _, err := c.cloud.DeleteVirtualService(ctx, vservice.Name, meshName); err != nil {
+	if _, err := c.cloud.DeleteVirtualService(ctx, vservice.Name, vservice.Spec.MeshName); err != nil {
 		if !aws.IsAWSErrNotFound(err) {
 			return fmt.Errorf("failed to clean up virtual service %s during deletion: %s", vservice.Name, err)
 		}
 	}
 
 	// Cleanup virtual router
-	if _, err := c.cloud.DeleteVirtualRouter(ctx, vservice.Spec.VirtualRouter.Name, meshName); err != nil {
-		if !aws.IsAWSErrNotFound(err) {
+	if _, err := c.cloud.DeleteVirtualRouter(ctx, vservice.Spec.VirtualRouter.Name, vservice.Spec.MeshName); err != nil {
+		if aws.IsAWSErrNotFound(err) || aws.IsAWSErrResourceInUse(err) {
+			klog.Warningf("Virtual router %s was not deleted during cleanup: %s", vservice.Spec.VirtualRouter.Name, err)
+		} else {
 			return fmt.Errorf("failed to clean up virtual router %s for virtual service %s during deletion: %s", vservice.Spec.VirtualRouter.Name, vservice.Name, err)
 		}
 	}

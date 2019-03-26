@@ -6,15 +6,12 @@ metadata:
     appmesh.k8s.aws/sidecarInjectorWebhook: enabled
   name: appmesh-demo
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: Mesh
 metadata:
   name: color-mesh
-  namespace: appmesh-demo
-spec:
-  serviceDiscoveryType: dns
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorgateway
@@ -30,9 +27,9 @@ spec:
       hostName: colorgateway.appmesh-demo.svc.cluster.local
   backends:
     - virtualService:
-        virtualServiceName: colorteller.appmesh-demo.svc.cluster.local
+        virtualServiceName: colorteller.appmesh-demo
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorteller
@@ -47,7 +44,7 @@ spec:
     dns:
       hostName: colorteller.appmesh-demo.svc.cluster.local
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorteller-black
@@ -62,7 +59,7 @@ spec:
     dns:
       hostName: colorteller-black.appmesh-demo.svc.cluster.local
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorteller-blue
@@ -77,7 +74,7 @@ spec:
     dns:
       hostName: colorteller-blue.appmesh-demo.svc.cluster.local
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorteller-red
@@ -92,17 +89,15 @@ spec:
     dns:
       hostName: colorteller-red.appmesh-demo.svc.cluster.local
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualService
 metadata:
-  name: colorteller.appmesh-demo.svc.cluster.local
+  name: colorteller.appmesh-demo
   namespace: appmesh-demo
 spec:
   meshName: color-mesh
-  virtualRouter:
-    name: color-router-appmesh-demo
   routes:
-    - name: color-route-appmesh-demo
+    - name: color-route
       http:
         match:
           prefix: /
@@ -115,17 +110,15 @@ spec:
             - virtualNodeName: colorteller-black.appmesh-demo
               weight: 1
 ---
-apiVersion: appmesh.k8s.aws/v1alpha1
+apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualService
 metadata:
-  name: colorgateway.appmesh-demo.svc.cluster.local
+  name: colorgateway.appmesh-demo
   namespace: appmesh-demo
 spec:
   meshName: color-mesh
-  virtualRouter:
-    name: gateway-router-appmesh-demo
   routes:
-    - name: color-route-appmesh-demo
+    - name: color-route
       http:
         match:
           prefix: /color
@@ -174,7 +167,7 @@ spec:
             - name: "SERVER_PORT"
               value: "9080"
             - name: "COLOR_TELLER_ENDPOINT"
-              value: "colorteller.appmesh-demo.svc.cluster.local:9080"
+              value: "colorteller.appmesh-demo:9080"
 ---
 apiVersion: v1
 kind: Service

@@ -16,8 +16,8 @@ package fake
 
 import (
 	clientset "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned"
-	appmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/typed/appmesh/v1alpha1"
-	fakeappmeshv1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/typed/appmesh/v1alpha1/fake"
+	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/typed/appmesh/v1beta1"
+	fakeappmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/typed/appmesh/v1beta1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -67,12 +67,12 @@ func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 
 var _ clientset.Interface = &Clientset{}
 
-// AppmeshV1alpha1 retrieves the AppmeshV1alpha1Client
-func (c *Clientset) AppmeshV1alpha1() appmeshv1alpha1.AppmeshV1alpha1Interface {
-	return &fakeappmeshv1alpha1.FakeAppmeshV1alpha1{Fake: &c.Fake}
+// AppmeshV1beta1 retrieves the AppmeshV1beta1Client
+func (c *Clientset) AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface {
+	return &fakeappmeshv1beta1.FakeAppmeshV1beta1{Fake: &c.Fake}
 }
 
-// Appmesh retrieves the AppmeshV1alpha1Client
-func (c *Clientset) Appmesh() appmeshv1alpha1.AppmeshV1alpha1Interface {
-	return &fakeappmeshv1alpha1.FakeAppmeshV1alpha1{Fake: &c.Fake}
+// Appmesh retrieves the AppmeshV1beta1Client
+func (c *Clientset) Appmesh() appmeshv1beta1.AppmeshV1beta1Interface {
+	return &fakeappmeshv1beta1.FakeAppmeshV1beta1{Fake: &c.Fake}
 }

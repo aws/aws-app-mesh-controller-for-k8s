@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	"os"
 	"time"
 
@@ -19,6 +18,7 @@ import (
 	//_ "k8s.io/kubernetes/pkg/util/reflector/prometheus" // for reflector metric registration
 	//_ "k8s.io/kubernetes/pkg/util/workqueue/prometheus" // for workqueue metric registration
 
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	meshclientset "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned"
 	meshinformers "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/informers/externalversions"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/controller"
@@ -100,9 +100,9 @@ var rootCmd = &cobra.Command{
 			kubeclientset,
 			meshclientset,
 			kubeInformerFactory.Core().V1().Pods(),
-			meshInformerFactory.Appmesh().V1alpha1().Meshes(),
-			meshInformerFactory.Appmesh().V1alpha1().VirtualNodes(),
-			meshInformerFactory.Appmesh().V1alpha1().VirtualServices(),
+			meshInformerFactory.Appmesh().V1beta1().Meshes(),
+			meshInformerFactory.Appmesh().V1beta1().VirtualNodes(),
+			meshInformerFactory.Appmesh().V1beta1().VirtualServices(),
 		)
 
 		if err != nil {

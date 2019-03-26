@@ -12,5 +12,5 @@ APIS_PKG=github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis
 ${CODEGEN_PKG}/generate-groups.sh all \
     ${CLIENT_PKG} \
     ${APIS_PKG} \
-    appmesh:v1alpha1 \
+    appmesh:v1beta1 \
     --go-header-file ${SCRIPT_ROOT}/hack/custom-boilerplate.go.txt
