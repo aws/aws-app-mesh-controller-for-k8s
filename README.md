@@ -18,7 +18,6 @@ First, create a Mesh resource, which will trigger the controller to create a Mes
     kind: Mesh
     metadata:
       name: my-mesh
-      namespace: prod
 
 ### Virtual Node
 

@@ -129,49 +129,47 @@ func TestVServiceNeedsUpdate(t *testing.T) {
 func TestRouteNeedUpdate(t *testing.T) {
 
 	var (
-		// defaults
-		defaultRouteName = "example-route"
-		defaultPrefix    = "/"
-		defaultNodeName  = "example-node"
-		defaultTargets   = []appmeshv1beta1.WeightedTarget{
+		// shared defaults
+		defaultRouteName  = "example-route"
+		defaultPrefix     = "/"
+		defaultNodeName   = "example-node"
+
+		// Targets for default custom resource spec
+		defaultTargets = []appmeshv1beta1.WeightedTarget{
 			{Weight: int64(1), VirtualNodeName: defaultNodeName},
-		}
-		defaultNamespace = "dummyNamespace"
-
-		awsExtraTarget = []appmeshv1beta1.WeightedTarget{
-			{Weight: int64(1), VirtualNodeName: defaultNodeName + "-" + defaultNamespace},
-			{Weight: int64(1), VirtualNodeName: "extra-node"},
-		}
-
-		awsdefaultTargets = []appmeshv1beta1.WeightedTarget{
-			{Weight: int64(1), VirtualNodeName: defaultNodeName + "-" + defaultNamespace},
 		}
 
 		// Spec with default values
-		defaultRouteSpec = newAPIHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)
+		defaultSpec = newAPIHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)
 
-		// result with the same values as defaultRouteSpec
-		defaultRouteResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, awsdefaultTargets)
+		// Result with the equivalent values as defaultSpec
+		defaultRouteResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)
 
-		extraTargetResult     = newAWSHttpRoute(defaultRouteName, defaultPrefix, awsExtraTarget)
-		extraTargetSpec       = newAPIHttpRoute(defaultRouteName, defaultPrefix, awsExtraTarget)
-		noTargetsResult       = newAWSHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
+		extraTarget = []appmeshv1beta1.WeightedTarget{
+			{Weight: int64(1), VirtualNodeName: defaultNodeName},
+			{Weight: int64(1), VirtualNodeName: "extra-node"},
+		}
+
+		// Extra target spec and result
+		extraTargetSpec       = newAPIHttpRoute(defaultRouteName, defaultPrefix, extraTarget)
+		extraTargetResult     = newAWSHttpRoute(defaultRouteName, defaultPrefix, extraTarget)
+
+		// No targets spec and result
 		noTargetSpec          = newAPIHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
+		noTargetsResult       = newAWSHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
+
+		// Default result with different prefix match
 		differentPrefixResult = newAWSHttpRoute(defaultRouteName, "/foo", defaultTargets)
 
-		crdTargets   = []appmeshv1beta1.WeightedTarget{
-			{Weight: int64(1), VirtualNodeName: "foo.bar"},
-			{Weight: int64(2), VirtualNodeName: "foo.bar.zoo"},
-			{Weight: int64(3), VirtualNodeName: "foo"},
-		}
-		crdRouteSpec = newAPIHttpRoute(defaultRouteName, defaultPrefix, crdTargets)
-
-		awsTargets   = []appmeshv1beta1.WeightedTarget{
+		// Varying weight targets spec and result
+		varyingWeightTargets   = []appmeshv1beta1.WeightedTarget{
 			{Weight: int64(1), VirtualNodeName: "foo-bar"},
 			{Weight: int64(2), VirtualNodeName: "foo-bar-zoo"},
 			{Weight: int64(3), VirtualNodeName: "foo-dummyNamespace"},
 		}
-		awsRouteResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, awsTargets)
+		varyingWeightSpec = newAPIHttpRoute(defaultRouteName, defaultPrefix, varyingWeightTargets)
+
+		varyingWeightResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, varyingWeightTargets)
 
 	)
 
@@ -181,13 +179,13 @@ func TestRouteNeedUpdate(t *testing.T) {
 		routes      aws.Route
 		needsUpdate bool
 	}{
-		{"routes are the same", defaultRouteSpec, defaultRouteResult, false},
-		{"extra weighted target in result", defaultRouteSpec, extraTargetResult, true},
+		{"routes are the same", defaultSpec, defaultRouteResult, false},
+		{"extra weighted target in result", defaultSpec, extraTargetResult, true},
 		{"extra weighted target in spec", extraTargetSpec, defaultRouteResult, true},
 		{"no targets in result", extraTargetSpec, noTargetsResult, true},
 		{"no targets in spec", noTargetSpec, defaultRouteResult, true},
-		{"different prefix", defaultRouteSpec, differentPrefixResult, true},
-		{"routes with different weights are the same", crdRouteSpec, awsRouteResult, false},
+		{"different prefix", defaultSpec, differentPrefixResult, true},
+		{"routes with varying weights are the same", varyingWeightSpec, varyingWeightResult, false},
 	}
 
 	for _, tt := range routetests {
