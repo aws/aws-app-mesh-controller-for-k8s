@@ -17,7 +17,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1alpha1"
+	v1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -48,13 +48,13 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=appmesh.k8s.aws, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("meshes"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1alpha1().Meshes().Informer()}, nil
-	case v1alpha1.SchemeGroupVersion.WithResource("virtualnodes"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1alpha1().VirtualNodes().Informer()}, nil
-	case v1alpha1.SchemeGroupVersion.WithResource("virtualservices"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1alpha1().VirtualServices().Informer()}, nil
+	// Group=appmesh.k8s.aws, Version=v1beta1
+	case v1beta1.SchemeGroupVersion.WithResource("meshes"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta1().Meshes().Informer()}, nil
+	case v1beta1.SchemeGroupVersion.WithResource("virtualnodes"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta1().VirtualNodes().Informer()}, nil
+	case v1beta1.SchemeGroupVersion.WithResource("virtualservices"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Appmesh().V1beta1().VirtualServices().Informer()}, nil
 
 	}
 
