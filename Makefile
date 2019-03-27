@@ -7,7 +7,7 @@ GO111MODULE=on
 IMAGE=amazon/app-mesh-controller
 REGION=$(shell aws configure get region)
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE)
-VERSION=1.0.0-alpha
+VERSION=v0.1.0
 
 .PHONY: eks-appmesh-controller
 eks-appmesh-controller:
@@ -44,9 +44,13 @@ push-release:
 	docker tag $(IMAGE):$(VERSION) $(REPO):$(VERSION)
 	docker push $(REPO):$(VERSION)
 
-.PHONY: deployk8s
-deployk8s:
+.PHONY: deploy-k8s-dev
+deploy-k8s-dev:
 	./hack/deploy.sh
+
+.PHONY: deploy-k8s-release
+deploy-k8s-release:
+	kubectl apply -f ./deploy/$(VERSION)
 
 .PHONY: example
 example:
