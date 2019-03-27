@@ -2,8 +2,9 @@
 
 Although the controller can be used independently from the aws-app-mesh-inject webhook, it is recommended that they be used together.  To Install the webhook, execute the following commands:
 
-    export MESH_NAME=<my-mesh-name>
-    curl https://raw.githubusercontent.com/aws/aws-app-mesh-inject/master/hack/install.sh | bash
+    # use `export MESH_NAME=color-mesh` to work with the example in this repository.
+    export MESH_NAME=<my-mesh-name> 
+    curl https://raw.githubusercontent.com/aws/aws-app-mesh-inject/v0.1.0/hack/install.sh | bash
 
 This will launch the webhook into the appmesh-inject namespace. Now add the correct permissions to your worker nodes (or your pod identity solution, like kube2iam):
 
@@ -43,9 +44,8 @@ Next, launch the controller:
 
     curl https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v0.1.0/deploy/v0.1.0/all.yaml | kubectl apply -f -
 
-Make sure its ready:
+Make sure it's ready:
 
-    kubectl wait $(kubectl get pods -n appmesh-system -o name) \
-        --for=condition=Ready --timeout=30s -n appmesh-system
+    kubectl rollout status deployment app-mesh-controller -n appmesh-system
 
 Now try following along with [the example](example.md) to get a feel for how it works!
