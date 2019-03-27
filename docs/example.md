@@ -2,9 +2,9 @@
 
 After following the [install instructions](install.md), you can deploy an example application with:
 
-    curl https://... | kubectl apply -f -
+    curl https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v0.1.0/examples/color.yaml | kubectl apply -f -
 
-If you have the repository checked out, you can launch the example application with:
+Alternatively, if you have the repository checked out, you can launch the example application with:
 
     make example
 
@@ -53,6 +53,45 @@ You should see a collection of virtual services, virtual nodes and a mesh, along
     virtualservice.appmesh.k8s.aws/colorgateway.appmesh-demo.svc.cluster.local   3h
     virtualservice.appmesh.k8s.aws/colorteller.appmesh-demo.svc.cluster.local    3h
 
+Verify App Mesh is working
+```
+kubectl run -n appmesh-demo -it curler --image=tutum/curl /bin/bash
+
+for i in {1..100}; do curl colorgateway:9080/color; echo; done
+# Expect to see even distribution of three colors
+# {"color":"white", "stats": {"black":0.36,"blue":0.32,"white":0.32}}
+```
+
+Next update the traffic weight towards the colorteller backends. 
+
+```bash
+    kubectl edit VirtualService colorteller.appmesh-demo -n appmesh-demo
+```
+For example, change the traffic to only forward to black.
+```bash
+spec:
+  meshName: color-mesh
+  routes:
+  - http:
+      action:
+        weightedTargets:
+        - virtualNodeName: colorteller.appmesh-demo
+          weight: 0
+        - virtualNodeName: colorteller-blue
+          weight: 0
+        - virtualNodeName: colorteller-black.appmesh-demo
+          weight: 1
+```
+
+And verify in curl the traffic move towards black.
+
+To clean up
+```bash
+kubectl delete namespace appmesh-demo && kubectl delete mesh color-mesh && kubectl delete crd meshes.appmesh.k8s.aws && kubectl delete crd virtualnodes.appmesh.k8s.aws && kubectl delete crd virtualservices.appmesh.k8s.aws && kubectl delete namespace appmesh-inject && kubectl delete namespace appmesh-system
+
+```
+
+### More about the App Mesh custom resources
 The services are required because we are using DNS based service discovery.  More methods of service discovery will be supported in the near future.  Let's take a look at a virtual node:
     kubectl -n appmesh-demo get virtualnode colorgateway-appmesh-demo
 
