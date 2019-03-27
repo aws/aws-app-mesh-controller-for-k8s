@@ -1,8 +1,9 @@
 ## Install
 
-Although the controller can be used independently from the aws-app-mesh-inject webhook, it is recommended that they be used together.  To Install the webhook, execute the following command:
+Although the controller can be used independently from the aws-app-mesh-inject webhook, it is recommended that they be used together.  To Install the webhook, execute the following commands:
 
-    curl https://s3... | bash -
+    export MESH_NAME=<my-mesh-name>
+    curl https://raw.githubusercontent.com/aws/aws-app-mesh-inject/master/hack/install.sh | bash
 
 This will launch the webhook into the appmesh-inject namespace. Now add the correct permissions to your worker nodes (or your pod identity solution, like kube2iam):
 
@@ -40,7 +41,7 @@ This will launch the webhook into the appmesh-inject namespace. Now add the corr
 
 Next, launch the controller:
 
-    curl https://s3-us-west-2.amazonaws.com/... | kubectl apply -f -
+    curl https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v0.1.0/deploy/v0.1.0/all.yaml | kubectl apply -f -
 
 Make sure its ready:
 
