@@ -33,7 +33,12 @@ This will launch the webhook into the appmesh-inject namespace. Now add the corr
                     "appmesh:ListVirtualNodes",
                     "appmesh:ListVirtualServices",
                     "appmesh:ListVirtualRouters",
-                    "appmesh:ListRoutes"
+                    "appmesh:ListRoutes",
+                    "appmesh:DeleteMesh",
+                    "appmesh:DeleteVirtualNode",
+                    "appmesh:DeleteVirtualService",
+                    "appmesh:DeleteVirtualRouter",
+                    "appmesh:DeleteRoute"
                 ],
                 "Resource": "*"
             }
