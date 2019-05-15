@@ -63,6 +63,10 @@ First, create a Mesh resource, which will trigger the controller to create a Mes
 
 * [Weaveworks Flagger](https://github.com/weaveworks/flagger)
 
+## Security disclosures
+
+If you think you’ve found a potential security issue, please do not post it in the Issues.  Instead, please follow the instructions [here](https://aws.amazon.com/security/vulnerability-reporting/) or [email AWS security directly](mailto:aws-security@amazon.com).
+
 ## Contributing
 
 Contributions welcome!  Please read our [guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md).
