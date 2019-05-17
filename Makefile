@@ -21,7 +21,7 @@ darwin:
 
 .PHONY: code-gen
 code-gen:
-	./hack/update-codegen.sh
+	./scripts/update-codegen.sh
 
 .PHONY: image
 image:
@@ -46,7 +46,7 @@ push-release:
 
 .PHONY: deploy-k8s-dev
 deploy-k8s-dev:
-	./hack/deploy.sh
+	./scripts/deploy.sh
 
 .PHONY: deploy-k8s-release
 deploy-k8s-release:
@@ -54,7 +54,7 @@ deploy-k8s-release:
 
 .PHONY: example
 example:
-	./hack/example.sh
+	./scripts/example.sh
 
 .PHONY: clean
 clean:
