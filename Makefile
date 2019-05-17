@@ -7,7 +7,7 @@ GO111MODULE=on
 IMAGE=amazon/app-mesh-controller
 REGION=$(shell aws configure get region)
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE)
-VERSION=v0.1.0
+VERSION=v0.1.1
 
 .PHONY: eks-appmesh-controller
 eks-appmesh-controller:
