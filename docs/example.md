@@ -2,7 +2,7 @@
 
 After following the [install instructions](install.md), you can deploy an example application with:
 
-    curl https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v0.1.0/examples/color.yaml | kubectl apply -f -
+    curl https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v0.1.1/examples/color.yaml | kubectl apply -f -
 
 Alternatively, if you have the repository checked out, you can launch the example application with:
 
