@@ -1,4 +1,4 @@
-#Deploy an Example Application
+# Deploy an Example Application
 
 After following the [install instructions](install.md), you can deploy an example application with:
 
