@@ -209,6 +209,23 @@ spec:
               properties:
                 name:
                   type: string
+                listeners:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      portMapping:
+                        properties:
+                          port:
+                            type: integer
+                          protocol:
+                            type: string
+                            enum:
+                              - tcp
+                              - http
+                              - grpc
+                              - http2
+                              - https
             routes:
               type: array
               items:

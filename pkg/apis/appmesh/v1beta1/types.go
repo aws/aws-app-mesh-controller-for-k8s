@@ -41,8 +41,8 @@ type MeshSpec struct {
 type MeshStatus struct {
 	// MeshArn is the AppMesh Mesh object's Amazon Resource Name
 	// +optional
-	MeshArn *string `json:"meshArn,omitempty"`
-	Conditions      []MeshCondition `json:"meshCondition"`
+	MeshArn    *string         `json:"meshArn,omitempty"`
+	Conditions []MeshCondition `json:"meshCondition"`
 }
 
 type MeshConditionType string
@@ -102,8 +102,10 @@ type VirtualServiceSpec struct {
 	Routes []Route `json:"routes,omitempty"`
 }
 
+// VirtualRouter is the spec for a VirtualRouter resource
 type VirtualRouter struct {
-	Name string `json:"name"`
+	Name      string     `json:"name"`
+	Listeners []Listener `json:"listeners,omitempty"`
 }
 
 type Route struct {

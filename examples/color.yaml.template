@@ -4,98 +4,103 @@ kind: Namespace
 metadata:
   labels:
     appmesh.k8s.aws/sidecarInjectorWebhook: enabled
-  name: appmesh-demo
+  name: ${APP_NAMESPACE}
 ---
 apiVersion: appmesh.k8s.aws/v1beta1
 kind: Mesh
 metadata:
-  name: color-mesh
+  name: ${MESH_NAME}
 ---
 apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorgateway
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
 spec:
-  meshName: color-mesh
+  meshName: ${MESH_NAME}
   listeners:
     - portMapping:
         port: 9080
         protocol: http
   serviceDiscovery:
     dns:
-      hostName: colorgateway.appmesh-demo.svc.cluster.local
+      hostName: colorgateway.${APP_NAMESPACE}.svc.cluster.local
   backends:
     - virtualService:
-        virtualServiceName: colorteller.appmesh-demo
+        virtualServiceName: colorteller.${APP_NAMESPACE}
 ---
 apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorteller
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
 spec:
-  meshName: color-mesh
+  meshName: ${MESH_NAME}
   listeners:
     - portMapping:
         port: 9080
         protocol: http
   serviceDiscovery:
     dns:
-      hostName: colorteller.appmesh-demo.svc.cluster.local
+      hostName: colorteller.${APP_NAMESPACE}.svc.cluster.local
 ---
 apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorteller-black
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
 spec:
-  meshName: color-mesh
+  meshName: ${MESH_NAME}
   listeners:
     - portMapping:
         port: 9080
         protocol: http
   serviceDiscovery:
     dns:
-      hostName: colorteller-black.appmesh-demo.svc.cluster.local
+      hostName: colorteller-black.${APP_NAMESPACE}.svc.cluster.local
 ---
 apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorteller-blue
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
 spec:
-  meshName: color-mesh
+  meshName: ${MESH_NAME}
   listeners:
     - portMapping:
         port: 9080
         protocol: http
   serviceDiscovery:
     dns:
-      hostName: colorteller-blue.appmesh-demo.svc.cluster.local
+      hostName: colorteller-blue.${APP_NAMESPACE}.svc.cluster.local
 ---
 apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
 metadata:
   name: colorteller-red
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
 spec:
-  meshName: color-mesh
+  meshName: ${MESH_NAME}
   listeners:
     - portMapping:
         port: 9080
         protocol: http
   serviceDiscovery:
     dns:
-      hostName: colorteller-red.appmesh-demo.svc.cluster.local
+      hostName: colorteller-red.${APP_NAMESPACE}.svc.cluster.local
 ---
 apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualService
 metadata:
-  name: colorteller.appmesh-demo
-  namespace: appmesh-demo
+  name: colorteller.${APP_NAMESPACE}
+  namespace: ${APP_NAMESPACE}
 spec:
-  meshName: color-mesh
+  meshName: ${MESH_NAME}
+  virtualRouter:
+    listeners:
+      - portMapping:
+          port: 9080
+          protocol: http
   routes:
     - name: color-route
       http:
@@ -103,20 +108,25 @@ spec:
           prefix: /
         action:
           weightedTargets:
-            - virtualNodeName: colorteller.appmesh-demo
+            - virtualNodeName: colorteller
               weight: 1
             - virtualNodeName: colorteller-blue
               weight: 1
-            - virtualNodeName: colorteller-black.appmesh-demo
+            - virtualNodeName: colorteller-black
               weight: 1
 ---
 apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualService
 metadata:
-  name: colorgateway.appmesh-demo
-  namespace: appmesh-demo
+  name: colorgateway.${APP_NAMESPACE}
+  namespace: ${APP_NAMESPACE}
 spec:
-  meshName: color-mesh
+  meshName: ${MESH_NAME}
+  virtualRouter:
+    listeners:
+      - portMapping:
+          port: 9080
+          protocol: http
   routes:
     - name: color-route
       http:
@@ -131,7 +141,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: colorgateway
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
   labels:
     app: colorgateway
 spec:
@@ -145,7 +155,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: colorgateway
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
 spec:
   replicas: 1
   selector:
@@ -160,20 +170,20 @@ spec:
     spec:
       containers:
         - name: colorgateway
-          image: "970805265562.dkr.ecr.us-west-2.amazonaws.com/gateway:latest"
+          image: ${COLOR_GATEWAY_IMAGE}
           ports:
             - containerPort: 9080
           env:
             - name: "SERVER_PORT"
               value: "9080"
             - name: "COLOR_TELLER_ENDPOINT"
-              value: "colorteller.appmesh-demo:9080"
+              value: "colorteller.${APP_NAMESPACE}:9080"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: colorteller
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
   labels:
     app: colorteller
 spec:
@@ -190,7 +200,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: colorteller
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
 spec:
   replicas: 1
   selector:
@@ -205,7 +215,7 @@ spec:
     spec:
       containers:
         - name: colorteller
-          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
+          image: ${COLOR_TELLER_IMAGE}
           ports:
             - containerPort: 9080
           env:
@@ -219,7 +229,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: colorteller-black
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
   labels:
     app: colorteller
     version: black
@@ -235,7 +245,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: colorteller-black
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
 spec:
   replicas: 1
   selector:
@@ -250,7 +260,7 @@ spec:
     spec:
       containers:
         - name: colorteller
-          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
+          image: ${COLOR_TELLER_IMAGE}
           ports:
             - containerPort: 9080
           env:
@@ -264,7 +274,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: colorteller-blue
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
   labels:
     app: colorteller
     version: blue
@@ -280,7 +290,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: colorteller-blue
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
 spec:
   replicas: 1
   selector:
@@ -295,7 +305,7 @@ spec:
     spec:
       containers:
         - name: colorteller
-          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
+          image: ${COLOR_TELLER_IMAGE}
           ports:
             - containerPort: 9080
           env:
@@ -309,7 +319,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: colorteller-red
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
   labels:
     app: colorteller
     version: red
@@ -325,7 +335,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: colorteller-red
-  namespace: appmesh-demo
+  namespace: ${APP_NAMESPACE}
 spec:
   replicas: 1
   selector:
@@ -340,7 +350,7 @@ spec:
     spec:
       containers:
         - name: colorteller
-          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
+          image: ${COLOR_TELLER_IMAGE}
           ports:
             - containerPort: 9080
           env:

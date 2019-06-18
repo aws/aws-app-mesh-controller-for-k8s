@@ -107,6 +107,7 @@ func (c *Cloud) CreateMesh(ctx context.Context, mesh *appmeshv1beta1.Mesh) (*Mes
 	}
 }
 
+// DeleteMesh deletes the given mesh
 func (c *Cloud) DeleteMesh(ctx context.Context, name string) (*Mesh, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteMeshTimeout)
 	defer cancel()
@@ -198,7 +199,7 @@ func (v *VirtualNode) Backends() []appmeshv1beta1.Backend {
 	return backends
 }
 
-// Backends converts into a Set of Backends
+// BackendsSet returns a set of Backends defined for virtual-node
 func (v *VirtualNode) BackendsSet() set.Set {
 	backends := v.Backends()
 	s := set.NewSet()
@@ -208,7 +209,7 @@ func (v *VirtualNode) BackendsSet() set.Set {
 	return s
 }
 
-// CreateVirtualNode calls describe virtual node.
+// GetVirtualNode calls describe virtual node.
 func (c *Cloud) GetVirtualNode(ctx context.Context, name string, meshName string) (*VirtualNode, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeVirtualNodeTimeout)
 	defer cancel()
@@ -557,11 +558,24 @@ func (c *Cloud) CreateVirtualRouter(ctx context.Context, vrouter *appmeshv1beta1
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateVirtualRouterTimeout)
 	defer cancel()
 
+	listeners := []*appmesh.VirtualRouterListener{}
+	if vrouter.Listeners != nil {
+		for _, listener := range vrouter.Listeners {
+			listeners = append(listeners, &appmesh.VirtualRouterListener{
+				PortMapping: &appmesh.PortMapping{
+					Port:     &listener.PortMapping.Port,
+					Protocol: aws.String(listener.PortMapping.Protocol),
+				},
+			})
+		}
+	}
+
+	klog.Infof("Using %d vrouter listeners to build %d input listeners", len(vrouter.Listeners), len(listeners))
 	input := &appmesh.CreateVirtualRouterInput{
 		MeshName:          aws.String(meshName),
 		VirtualRouterName: aws.String(vrouter.Name),
 		Spec: &appmesh.VirtualRouterSpec{
-			Listeners: []*appmesh.VirtualRouterListener{},
+			Listeners: listeners,
 		},
 	}
 
