@@ -71,8 +71,3 @@ var _ clientset.Interface = &Clientset{}
 func (c *Clientset) AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface {
 	return &fakeappmeshv1beta1.FakeAppmeshV1beta1{Fake: &c.Fake}
 }
-
-// Appmesh retrieves the AppmeshV1beta1Client
-func (c *Clientset) Appmesh() appmeshv1beta1.AppmeshV1beta1Interface {
-	return &fakeappmeshv1beta1.FakeAppmeshV1beta1{Fake: &c.Fake}
-}

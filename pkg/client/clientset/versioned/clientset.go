@@ -24,8 +24,6 @@ import (
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface
-	// Deprecated: please explicitly pick a version if possible.
-	Appmesh() appmeshv1beta1.AppmeshV1beta1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -37,12 +35,6 @@ type Clientset struct {
 
 // AppmeshV1beta1 retrieves the AppmeshV1beta1Client
 func (c *Clientset) AppmeshV1beta1() appmeshv1beta1.AppmeshV1beta1Interface {
-	return c.appmeshV1beta1
-}
-
-// Deprecated: Appmesh retrieves the default version of AppmeshClient.
-// Please explicitly pick a version.
-func (c *Clientset) Appmesh() appmeshv1beta1.AppmeshV1beta1Interface {
 	return c.appmeshV1beta1
 }
 

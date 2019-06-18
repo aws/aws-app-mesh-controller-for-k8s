@@ -36,12 +36,15 @@ func (c *Controller) handleVService(key string) error {
 	vservice := shared.DeepCopy()
 	// Make copy for updates so we don't save namespaced resource names
 	copy := shared.DeepCopy()
-
 	copy.Spec.VirtualRouter = getVirtualRouter(copy)
 
 	// Namespace resource names for use against App Mesh API
-	vservice.Spec.VirtualRouter = &appmeshv1beta1.VirtualRouter{
-		Name: getNamespacedVirtualRouterName(vservice),
+	if vservice.Spec.VirtualRouter == nil {
+		vservice.Spec.VirtualRouter = &appmeshv1beta1.VirtualRouter{
+			Name: getNamespacedVirtualRouterName(vservice),
+		}
+	} else {
+		vservice.Spec.VirtualRouter.Name = getNamespacedVirtualRouterName(vservice)
 	}
 
 	for i := range vservice.Spec.Routes {
@@ -251,11 +254,14 @@ func getVirtualRouter(vservice *appmeshv1beta1.VirtualService) *appmeshv1beta1.V
 }
 
 func getNamespacedVirtualRouterName(vservice *appmeshv1beta1.VirtualService) string {
-
+	var name string
 	if vservice.Spec.VirtualRouter != nil {
-		return namespacedResourceName(vservice.Spec.VirtualRouter.Name, vservice.Namespace)
+		name = strings.TrimSpace(vservice.Spec.VirtualRouter.Name)
 	}
-	return namespacedResourceName(vservice.Name, vservice.Namespace)
+	if len(name) == 0 {
+		name = vservice.Name
+	}
+	return namespacedResourceName(name, vservice.Namespace)
 }
 
 func getRoutes(vservice *appmeshv1beta1.VirtualService) []appmeshv1beta1.Route {
@@ -339,7 +345,7 @@ func routeNeedsUpdate(desired appmeshv1beta1.Route, target aws.Route) bool {
 	if desired.Http.Action.WeightedTargets != nil {
 		desiredSet := set.NewSet()
 		for _, target := range desired.Http.Action.WeightedTargets {
-			desiredSet.Add(appmeshv1beta1.WeightedTarget{VirtualNodeName: target.VirtualNodeName, Weight:target.Weight})
+			desiredSet.Add(appmeshv1beta1.WeightedTarget{VirtualNodeName: target.VirtualNodeName, Weight: target.Weight})
 		}
 		currSet := target.WeightedTargetSet()
 		if !desiredSet.Equal(currSet) {
