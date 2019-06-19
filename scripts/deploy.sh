@@ -15,11 +15,17 @@ if [[ -z "${AWS_REGION}" ]]; then
     exit 1
 fi
 
+DIR=$(cd "$(dirname "$0")"; pwd)/..
+OUT_DIR="${DIR}/_output/deploy/"
+mkdir -p ${OUT_DIR}
+
+kubectl apply -f ${DIR}/deploy/mesh-definition.yaml
+kubectl apply -f ${DIR}/deploy/virtual-service-definition.yaml
+kubectl apply -f ${DIR}/deploy/virtual-node-definition.yaml
+
 eval "cat <<EOF
 $(<${DIR}/deploy/controller-deployment.yaml.template)
 EOF
-" > _output/controller-deployment.yaml
+" > ${OUT_DIR}/controller-deployment.yaml
 
-
-kubectl apply -f ${DIR}/deploy
-kubectl apply -f ${DIR}/_output
+kubectl apply -f ${OUT_DIR}/controller-deployment.yaml

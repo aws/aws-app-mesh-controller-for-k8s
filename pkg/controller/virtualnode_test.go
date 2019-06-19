@@ -11,7 +11,7 @@ import (
 
 // newAWSVirtualNode is a helper function to generate an Kubernetes Custom Resource API object.
 // Ports and protocols should be arrays of the same length.
-func newAPIVirtualNode(ports []int64, protocols []string, backends []string, hostname string) *appmeshv1beta1.VirtualNode {
+func newAPIVirtualNode(ports []int64, protocols []string, backends []string, hostname string, fileAccessLogPath *string) *appmeshv1beta1.VirtualNode {
 	vn := appmeshv1beta1.VirtualNode{
 		Spec: appmeshv1beta1.VirtualNodeSpec{},
 	}
@@ -52,12 +52,23 @@ func newAPIVirtualNode(ports []int64, protocols []string, backends []string, hos
 			},
 		}
 	}
+
+	if fileAccessLogPath != nil {
+		vn.Spec.Logging = &appmeshv1beta1.Logging{
+			AccessLog: &appmeshv1beta1.AccessLog{
+				File: &appmeshv1beta1.FileAccessLog{
+					Path: awssdk.StringValue(fileAccessLogPath),
+				},
+			},
+		}
+	}
+
 	return &vn
 }
 
 // newAWSVirtualNode is a helper function to generate an App Mesh API object.  Ports and protocols should be arrays
 // of the same length.
-func newAWSVirtualNode(ports []int64, protocols []string, backends []string, hostname string) *aws.VirtualNode {
+func newAWSVirtualNode(ports []int64, protocols []string, backends []string, hostname string, fileAccessLogPath *string) *aws.VirtualNode {
 	awsVn := aws.VirtualNode{
 		Data: appmesh.VirtualNodeData{
 			Spec: &appmesh.VirtualNodeSpec{},
@@ -97,6 +108,15 @@ func newAWSVirtualNode(ports []int64, protocols []string, backends []string, hos
 			Hostname: awssdk.String(hostname),
 		})
 	}
+	if fileAccessLogPath != nil {
+		awsVn.Data.Spec.Logging = &appmesh.Logging{
+			AccessLog: &appmesh.AccessLog{
+				File: &appmesh.FileAccessLog{
+					Path: fileAccessLogPath,
+				},
+			},
+		}
+	}
 	return &awsVn
 }
 
@@ -104,10 +124,11 @@ func TestVNodeNeedsUpdate(t *testing.T) {
 
 	var (
 		// defaults
-		port80       int64 = 80
-		protocolHTTP       = "http"
-		hostname           = "foo.local"
-		backend            = "bar.local"
+		port80            int64 = 80
+		protocolHTTP            = "http"
+		hostname                = "foo.local"
+		backend                 = "bar.local"
+		fileAccessLogPath       = awssdk.String("/dev/stdout")
 
 		// extras
 		port443       int64 = 443
@@ -116,18 +137,22 @@ func TestVNodeNeedsUpdate(t *testing.T) {
 		hostname2           = "fizz.local"
 
 		// Spec with default values
-		defaultNodeSpec = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname)
+		defaultNodeSpec = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, fileAccessLogPath)
+
 		// result with the same values as defaultNodeSpec
-		defaultNodeResult       = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname)
-		extraPortSpec           = newAPIVirtualNode([]int64{port80, port443}, []string{protocolHTTP, protocolHTTPS}, []string{backend}, hostname)
-		extraPortResult         = newAWSVirtualNode([]int64{port80, port443}, []string{protocolHTTP, protocolHTTPS}, []string{backend}, hostname)
-		noPortSpec              = newAPIVirtualNode([]int64{}, []string{}, []string{backend}, hostname)
-		noPortResult            = newAWSVirtualNode([]int64{}, []string{}, []string{backend}, hostname)
-		extraBackendSpec        = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend, backend2}, hostname)
-		extraBackendResult      = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend, backend2}, hostname)
-		noBackendsSpec          = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{}, hostname)
-		noBackendsResult        = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{}, hostname)
-		differentHostnameResult = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname2)
+		defaultNodeResult       = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, fileAccessLogPath)
+		extraPortSpec           = newAPIVirtualNode([]int64{port80, port443}, []string{protocolHTTP, protocolHTTPS}, []string{backend}, hostname, fileAccessLogPath)
+		extraPortResult         = newAWSVirtualNode([]int64{port80, port443}, []string{protocolHTTP, protocolHTTPS}, []string{backend}, hostname, fileAccessLogPath)
+		noPortSpec              = newAPIVirtualNode([]int64{}, []string{}, []string{backend}, hostname, fileAccessLogPath)
+		noPortResult            = newAWSVirtualNode([]int64{}, []string{}, []string{backend}, hostname, fileAccessLogPath)
+		extraBackendSpec        = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend, backend2}, hostname, fileAccessLogPath)
+		extraBackendResult      = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend, backend2}, hostname, fileAccessLogPath)
+		noBackendsSpec          = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{}, hostname, fileAccessLogPath)
+		noBackendsResult        = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{}, hostname, fileAccessLogPath)
+		differentHostnameResult = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname2, fileAccessLogPath)
+		noLoggingSpec           = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, nil)
+		noLoggingResult         = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, nil)
+		differentLoggingResult  = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, awssdk.String("/dev/stdout2"))
 	)
 
 	var vnodetests = []struct {
@@ -149,6 +174,10 @@ func TestVNodeNeedsUpdate(t *testing.T) {
 		{"no backend in result", defaultNodeSpec, noBackendsResult, true},
 		{"no backend in both", noBackendsSpec, noBackendsResult, false},
 		{"different hostname in result", defaultNodeSpec, differentHostnameResult, true},
+		{"no logging in either", noLoggingSpec, noLoggingResult, false},
+		{"no logging in result", defaultNodeSpec, noLoggingResult, true},
+		{"different logging in result", defaultNodeSpec, differentLoggingResult, true},
+		{"no logging in spec", noLoggingSpec, defaultNodeResult, true},
 	}
 
 	for _, tt := range vnodetests {

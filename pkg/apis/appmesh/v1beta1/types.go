@@ -205,6 +205,8 @@ type VirtualNodeSpec struct {
 	ServiceDiscovery *ServiceDiscovery `json:"serviceDiscovery,omitempty"`
 	// +optional
 	Backends []Backend `json:"backends,omitempty"`
+	// +optional
+	Logging *Logging `json:"logging,omitempty"`
 }
 
 type Listener struct {
@@ -237,6 +239,21 @@ type Backend struct {
 
 type VirtualServiceBackend struct {
 	VirtualServiceName string `json:"virtualServiceName"`
+}
+
+// Logging refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Logging.html
+type Logging struct {
+	AccessLog *AccessLog `json:"accessLog"`
+}
+
+// AccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AccessLog.html
+type AccessLog struct {
+	File *FileAccessLog `json:"file"`
+}
+
+// FileAccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_FileAccessLog.html
+type FileAccessLog struct {
+	Path string `json:"path"`
 }
 
 // VirtualNodeStatus is the status for a VirtualNode resource

@@ -74,6 +74,17 @@ spec:
                         properties:
                           name:
                             type: string
+            logging:
+              type: object
+              properties:
+                accessLog:
+                  type: object
+                  properties:
+                    file:
+                      type: object
+                      properties:
+                        path:
+                          type: string
         status:
           properties:
             meshArn:

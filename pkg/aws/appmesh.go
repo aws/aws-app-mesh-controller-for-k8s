@@ -3,8 +3,9 @@ package aws
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"time"
+
+	"github.com/aws/aws-sdk-go/aws/awserr"
 
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 
@@ -284,6 +285,20 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 		}
 	}
 
+	if vnode.Spec.Logging != nil {
+		if vnode.Spec.Logging.AccessLog != nil {
+			if vnode.Spec.Logging.AccessLog.File != nil {
+				input.Spec.SetLogging(&appmesh.Logging{
+					AccessLog: &appmesh.AccessLog{
+						File: &appmesh.FileAccessLog{
+							Path: aws.String(vnode.Spec.Logging.AccessLog.File.Path),
+						},
+					},
+				})
+			}
+		}
+	}
+
 	if output, err := c.appmesh.CreateVirtualNodeWithContext(ctx, input); err != nil {
 		return nil, err
 	} else if output == nil || output.VirtualNode == nil {
@@ -344,6 +359,20 @@ func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 			// TODO(nic) add CloudMap Service Discovery when SDK supports it
 		} else {
 			klog.Warningf("No service discovery set for virtual node %s", vnode.Name)
+		}
+	}
+
+	if vnode.Spec.Logging != nil {
+		if vnode.Spec.Logging.AccessLog != nil {
+			if vnode.Spec.Logging.AccessLog.File != nil {
+				input.Spec.SetLogging(&appmesh.Logging{
+					AccessLog: &appmesh.AccessLog{
+						File: &appmesh.FileAccessLog{
+							Path: aws.String(vnode.Spec.Logging.AccessLog.File.Path),
+						},
+					},
+				})
+			}
 		}
 	}
 

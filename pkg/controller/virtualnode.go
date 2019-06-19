@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	awssdk "github.com/aws/aws-sdk-go/aws"
+
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	"github.com/aws/aws-sdk-go/service/appmesh"
@@ -211,6 +213,33 @@ func vnodeNeedsUpdate(desired *appmeshv1beta1.VirtualNode, target *aws.VirtualNo
 			return true
 		}
 	}
+
+	if desired.Spec.Logging != nil {
+		if target.Data.Spec.Logging == nil {
+			return true
+		}
+		if desired.Spec.Logging.AccessLog != nil {
+			if target.Data.Spec.Logging.AccessLog == nil {
+				return true
+			}
+			if desired.Spec.Logging.AccessLog.File != nil {
+				if target.Data.Spec.Logging.AccessLog.File == nil {
+					return true
+				}
+				if len(desired.Spec.Logging.AccessLog.File.Path) > 0 {
+					if target.Data.Spec.Logging.AccessLog.File.Path == nil {
+						return true
+					}
+					if desired.Spec.Logging.AccessLog.File.Path != awssdk.StringValue(target.Data.Spec.Logging.AccessLog.File.Path) {
+						return true
+					}
+				}
+			}
+		}
+	} else if target.Data.Spec.Logging != nil {
+		return true
+	}
+
 	return false
 }
 
