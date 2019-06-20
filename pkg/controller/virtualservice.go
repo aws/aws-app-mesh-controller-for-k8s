@@ -7,6 +7,7 @@ import (
 
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
+	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/appmesh"
 	set "github.com/deckarep/golang-set"
 	api "k8s.io/api/core/v1"
@@ -111,6 +112,13 @@ func (c *Controller) handleVService(key string) error {
 			return fmt.Errorf("error updating virtual service status for virtual router: %s", err)
 		} else if updated != nil {
 			copy = updated
+		}
+	} else {
+		if vrouterNeedsUpdate(virtualRouter, targetRouter) {
+			if targetRouter, err = c.cloud.UpdateVirtualRouter(ctx, virtualRouter, meshName); err != nil {
+				return fmt.Errorf("error updating virtual router: %s", err)
+			}
+			klog.Infof("Updated virtual router %s", virtualRouter.Name)
 		}
 	}
 
@@ -282,6 +290,30 @@ func vserviceNeedsUpdate(desired *appmeshv1beta1.VirtualService, target *aws.Vir
 	} else {
 		// If no desired virtual router name, verify target is not set
 		if target.VirtualRouterName() != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func vrouterNeedsUpdate(desired *appmeshv1beta1.VirtualRouter, target *aws.VirtualRouter) bool {
+	if desired.Name != target.Name() {
+		return true
+	}
+
+	if len(desired.Listeners) != len(target.Data.Spec.Listeners) {
+		return true
+	}
+
+	if len(desired.Listeners) > 0 {
+		//there should be only one listener
+		desiredListener := desired.Listeners[0]
+		targetListener := target.Data.Spec.Listeners[0]
+		if desiredListener.PortMapping.Port != awssdk.Int64Value(targetListener.PortMapping.Port) {
+			return true
+		}
+
+		if desiredListener.PortMapping.Protocol != awssdk.StringValue(targetListener.PortMapping.Protocol) {
 			return true
 		}
 	}

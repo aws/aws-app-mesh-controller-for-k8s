@@ -28,6 +28,7 @@ const (
 	DeleteVirtualServiceTimeout   = 5
 	DescribeVirtualRouterTimeout  = 5
 	CreateVirtualRouterTimeout    = 5
+	UpdateVirtualRouterTimeout    = 5
 	DeleteVirtualRouterTimeout    = 5
 	DescribeRouteTimeout          = 5
 	CreateRouteTimeout            = 5
@@ -50,6 +51,7 @@ type AppMeshAPI interface {
 	DeleteVirtualService(context.Context, string, string) (*VirtualService, error)
 	GetVirtualRouter(context.Context, string, string) (*VirtualRouter, error)
 	CreateVirtualRouter(context.Context, *appmeshv1beta1.VirtualRouter, string) (*VirtualRouter, error)
+	UpdateVirtualRouter(context.Context, *appmeshv1beta1.VirtualRouter, string) (*VirtualRouter, error)
 	DeleteVirtualRouter(context.Context, string, string) (*VirtualRouter, error)
 	GetRoute(context.Context, string, string, string) (*Route, error)
 	CreateRoute(context.Context, *appmeshv1beta1.Route, string, string) (*Route, error)
@@ -580,6 +582,43 @@ func (c *Cloud) CreateVirtualRouter(ctx context.Context, vrouter *appmeshv1beta1
 	}
 
 	if output, err := c.appmesh.CreateVirtualRouterWithContext(ctx, input); err != nil {
+		return nil, err
+	} else if output == nil || output.VirtualRouter == nil {
+		return nil, fmt.Errorf("virtual router %s not found", vrouter.Name)
+	} else {
+		return &VirtualRouter{
+			Data: *output.VirtualRouter,
+		}, nil
+	}
+}
+
+// UpdateVirtualRouter converts the desired virtual router spec into UpdateVirtualRouter calls
+func (c *Cloud) UpdateVirtualRouter(ctx context.Context, vrouter *appmeshv1beta1.VirtualRouter, meshName string) (*VirtualRouter, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateVirtualRouterTimeout)
+	defer cancel()
+
+	listeners := []*appmesh.VirtualRouterListener{}
+	if vrouter.Listeners != nil {
+		for _, listener := range vrouter.Listeners {
+			listeners = append(listeners, &appmesh.VirtualRouterListener{
+				PortMapping: &appmesh.PortMapping{
+					Port:     &listener.PortMapping.Port,
+					Protocol: aws.String(listener.PortMapping.Protocol),
+				},
+			})
+		}
+	}
+
+	klog.Infof("Using %d vrouter listeners to build %d input listeners", len(vrouter.Listeners), len(listeners))
+	input := &appmesh.UpdateVirtualRouterInput{
+		MeshName:          aws.String(meshName),
+		VirtualRouterName: aws.String(vrouter.Name),
+		Spec: &appmesh.VirtualRouterSpec{
+			Listeners: listeners,
+		},
+	}
+
+	if output, err := c.appmesh.UpdateVirtualRouterWithContext(ctx, input); err != nil {
 		return nil, err
 	} else if output == nil || output.VirtualRouter == nil {
 		return nil, fmt.Errorf("virtual router %s not found", vrouter.Name)
