@@ -10,17 +10,12 @@ import (
 )
 
 // newAWSVirtualService is a helper function to generate an Kubernetes Custom Resource API object.
-func newAPIVirtualService(meshName string, virtualRouterName string, routes []appmeshv1beta1.Route) appmeshv1beta1.VirtualService {
+func newAPIVirtualService(meshName string, virtualRouter *appmeshv1beta1.VirtualRouter, routes []appmeshv1beta1.Route) appmeshv1beta1.VirtualService {
 	vs := appmeshv1beta1.VirtualService{
 		Spec: appmeshv1beta1.VirtualServiceSpec{
-			MeshName: meshName,
+			MeshName:      meshName,
+			VirtualRouter: virtualRouter,
 		},
-	}
-
-	if virtualRouterName != "" {
-		vs.Spec.VirtualRouter = &appmeshv1beta1.VirtualRouter{
-			Name: virtualRouterName,
-		}
 	}
 
 	if routes != nil && len(routes) > 0 {
@@ -44,16 +39,16 @@ func newAPIHttpRoute(routeName string, prefix string, targets []appmeshv1beta1.W
 }
 
 // newAWSVirtualService is a helper function to generate an App Mesh API object.
-func newAWSVirtualService(virtualRouterName string) aws.VirtualService {
+func newAWSVirtualService(virtualRouter *appmesh.VirtualRouterData) aws.VirtualService {
 	awsVs := aws.VirtualService{
 		Data: appmesh.VirtualServiceData{
 			Spec: &appmesh.VirtualServiceSpec{},
 		},
 	}
-	if virtualRouterName != "" {
+	if virtualRouter != nil {
 		awsVs.Data.Spec.Provider = &appmesh.VirtualServiceProvider{
 			VirtualRouter: &appmesh.VirtualRouterServiceProvider{
-				VirtualRouterName: awssdk.String(virtualRouterName),
+				VirtualRouterName: virtualRouter.VirtualRouterName,
 			},
 		}
 	}
@@ -93,18 +88,34 @@ func TestVServiceNeedsUpdate(t *testing.T) {
 
 	var (
 		// defaults
-		defaultMeshName   = "example-mesh"
-		defaultRouterName = "example-router"
-		defaultRouteName  = "example-route"
-		defaultPrefix     = "/"
-		defaultTargets    = []appmeshv1beta1.WeightedTarget{}
+		defaultMeshName = "example-mesh"
+		defaultRouter   = &appmeshv1beta1.VirtualRouter{
+			Name: "example-router",
+		}
+		defaultRouteName = "example-route"
+		defaultPrefix    = "/"
+		defaultTargets   = []appmeshv1beta1.WeightedTarget{}
 
 		// Spec with default values
-		defaultServiceSpec = newAPIVirtualService(defaultMeshName, defaultRouterName, []appmeshv1beta1.Route{newAPIHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)})
+		defaultServiceSpec = newAPIVirtualService(defaultMeshName,
+			defaultRouter,
+			[]appmeshv1beta1.Route{
+				newAPIHttpRoute(defaultRouteName, defaultPrefix, defaultTargets),
+			},
+		)
 
 		// result with the same values as spec1_default
-		defaultServiceResult              = newAWSVirtualService(defaultRouterName)
-		serviceResult_differentRouterName = newAWSVirtualService("router2")
+		defaultServiceResult = newAWSVirtualService(&appmesh.VirtualRouterData{
+			MeshName:          awssdk.String(defaultMeshName),
+			VirtualRouterName: awssdk.String(defaultRouter.Name),
+			Spec:              &appmesh.VirtualRouterSpec{},
+		})
+
+		serviceResultDifferentRouterName = newAWSVirtualService(&appmesh.VirtualRouterData{
+			MeshName:          awssdk.String(defaultMeshName),
+			VirtualRouterName: awssdk.String(defaultRouter.Name + "-2"),
+			Spec:              &appmesh.VirtualRouterSpec{},
+		})
 	)
 
 	var vservicetests = []struct {
@@ -114,7 +125,7 @@ func TestVServiceNeedsUpdate(t *testing.T) {
 		needsUpdate bool
 	}{
 		{"vservices are the same", defaultServiceSpec, defaultServiceResult, false},
-		{"result has different router name", defaultServiceSpec, serviceResult_differentRouterName, true},
+		{"result has different router name", defaultServiceSpec, serviceResultDifferentRouterName, true},
 	}
 
 	for _, tt := range vservicetests {
@@ -126,13 +137,99 @@ func TestVServiceNeedsUpdate(t *testing.T) {
 	}
 }
 
+func TestVirtualRouterNeedsUpdate(t *testing.T) {
+
+	var (
+		// defaults
+		defaultRouter = &appmeshv1beta1.VirtualRouter{
+			Name: "example-router",
+			Listeners: []appmeshv1beta1.Listener{
+				appmeshv1beta1.Listener{
+					PortMapping: appmeshv1beta1.PortMapping{
+						Port:     9080,
+						Protocol: "http",
+					},
+				},
+			},
+		}
+
+		// result with the same values as spec1_default
+		defaultResult = &aws.VirtualRouter{
+			Data: appmesh.VirtualRouterData{
+				VirtualRouterName: awssdk.String(defaultRouter.Name),
+				Spec: &appmesh.VirtualRouterSpec{
+					Listeners: []*appmesh.VirtualRouterListener{
+						&appmesh.VirtualRouterListener{
+							PortMapping: &appmesh.PortMapping{
+								Port:     awssdk.Int64(9080),
+								Protocol: awssdk.String(appmesh.PortProtocolHttp),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		resultDifferentRouterName = &aws.VirtualRouter{
+			Data: appmesh.VirtualRouterData{
+				VirtualRouterName: awssdk.String(defaultRouter.Name + "2"),
+				Spec: &appmesh.VirtualRouterSpec{
+					Listeners: []*appmesh.VirtualRouterListener{
+						&appmesh.VirtualRouterListener{
+							PortMapping: &appmesh.PortMapping{
+								Port:     awssdk.Int64(9080),
+								Protocol: awssdk.String(appmesh.PortProtocolHttp),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		resultDifferentRouterListener = &aws.VirtualRouter{
+			Data: appmesh.VirtualRouterData{
+				VirtualRouterName: awssdk.String(defaultRouter.Name),
+				Spec: &appmesh.VirtualRouterSpec{
+					Listeners: []*appmesh.VirtualRouterListener{
+						&appmesh.VirtualRouterListener{
+							PortMapping: &appmesh.PortMapping{
+								Port:     awssdk.Int64(9999),
+								Protocol: awssdk.String(appmesh.PortProtocolHttp),
+							},
+						},
+					},
+				},
+			},
+		}
+	)
+
+	var tests = []struct {
+		name        string
+		spec        *appmeshv1beta1.VirtualRouter
+		aws         *aws.VirtualRouter
+		needsUpdate bool
+	}{
+		{"virtual-routers are the same", defaultRouter, defaultResult, false},
+		{"virtual-routers has different router name", defaultRouter, resultDifferentRouterName, true},
+		{"virtual-routers has different listener", defaultRouter, resultDifferentRouterListener, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if res := vrouterNeedsUpdate(tt.spec, tt.aws); res != tt.needsUpdate {
+				t.Errorf("got %v, want %v", res, tt.needsUpdate)
+			}
+		})
+	}
+}
+
 func TestRouteNeedUpdate(t *testing.T) {
 
 	var (
 		// shared defaults
-		defaultRouteName  = "example-route"
-		defaultPrefix     = "/"
-		defaultNodeName   = "example-node"
+		defaultRouteName = "example-route"
+		defaultPrefix    = "/"
+		defaultNodeName  = "example-node"
 
 		// Targets for default custom resource spec
 		defaultTargets = []appmeshv1beta1.WeightedTarget{
@@ -151,18 +248,18 @@ func TestRouteNeedUpdate(t *testing.T) {
 		}
 
 		// Extra target spec and result
-		extraTargetSpec       = newAPIHttpRoute(defaultRouteName, defaultPrefix, extraTarget)
-		extraTargetResult     = newAWSHttpRoute(defaultRouteName, defaultPrefix, extraTarget)
+		extraTargetSpec   = newAPIHttpRoute(defaultRouteName, defaultPrefix, extraTarget)
+		extraTargetResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, extraTarget)
 
 		// No targets spec and result
-		noTargetSpec          = newAPIHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
-		noTargetsResult       = newAWSHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
+		noTargetSpec    = newAPIHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
+		noTargetsResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
 
 		// Default result with different prefix match
 		differentPrefixResult = newAWSHttpRoute(defaultRouteName, "/foo", defaultTargets)
 
 		// Varying weight targets spec and result
-		varyingWeightTargets   = []appmeshv1beta1.WeightedTarget{
+		varyingWeightTargets = []appmeshv1beta1.WeightedTarget{
 			{Weight: int64(1), VirtualNodeName: "foo-bar"},
 			{Weight: int64(2), VirtualNodeName: "foo-bar-zoo"},
 			{Weight: int64(3), VirtualNodeName: "foo-dummyNamespace"},
@@ -170,7 +267,6 @@ func TestRouteNeedUpdate(t *testing.T) {
 		varyingWeightSpec = newAPIHttpRoute(defaultRouteName, defaultPrefix, varyingWeightTargets)
 
 		varyingWeightResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, varyingWeightTargets)
-
 	)
 
 	var routetests = []struct {
