@@ -109,8 +109,11 @@ type VirtualRouter struct {
 }
 
 type Route struct {
-	Name string    `json:"name"`
-	Http HttpRoute `json:"http"`
+	Name string `json:"name"`
+	// +optional
+	Http *HttpRoute `json:"http,omitempty"`
+	// +optional
+	Tcp *TcpRoute `json:"tcp,omitempty"`
 }
 
 type HttpRoute struct {
@@ -123,6 +126,14 @@ type HttpRouteMatch struct {
 }
 
 type HttpRouteAction struct {
+	WeightedTargets []WeightedTarget `json:"weightedTargets"`
+}
+
+type TcpRoute struct {
+	Action TcpRouteAction `json:"action"`
+}
+
+type TcpRouteAction struct {
 	WeightedTargets []WeightedTarget `json:"weightedTargets"`
 }
 

@@ -28,6 +28,8 @@ spec:
   backends:
     - virtualService:
         virtualServiceName: colorteller.${APP_NAMESPACE}
+    - virtualService:
+        virtualServiceName: tcpecho.${APP_NAMESPACE}
   logging:
     accessLog:
       file:
@@ -182,6 +184,8 @@ spec:
               value: "9080"
             - name: "COLOR_TELLER_ENDPOINT"
               value: "colorteller.${APP_NAMESPACE}:9080"
+            - name: "TCP_ECHO_ENDPOINT"
+              value: "tcpecho.${APP_NAMESPACE}:2701"
 ---
 apiVersion: v1
 kind: Service
@@ -363,4 +367,100 @@ spec:
             - name: "COLOR"
               value: "red"
 ---
-
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: VirtualNode
+metadata:
+  name: tcpecho
+  namespace: ${APP_NAMESPACE}
+spec:
+  meshName: ${MESH_NAME}
+  listeners:
+    - portMapping:
+        port: 2701
+        protocol: tcp
+  serviceDiscovery:
+    dns:
+      hostName: tcpecho.${APP_NAMESPACE}.svc.cluster.local
+---
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: VirtualService
+metadata:
+  name: tcpecho.${APP_NAMESPACE}
+  namespace: ${APP_NAMESPACE}
+spec:
+  meshName: ${MESH_NAME}
+  virtualRouter:
+    listeners:
+      - portMapping:
+          port: 2701
+          protocol: tcp
+  routes:
+    - name: tcpecho-route
+      tcp:
+        action:
+          weightedTargets:
+            - virtualNodeName: tcpecho
+              weight: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tcpecho
+  namespace: ${APP_NAMESPACE}
+  labels:
+    app: tcpecho
+spec:
+  ports:
+    - protocol: "TCP"
+      port: 2701
+      targetPort: 2701
+  selector:
+    app: tcpecho
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tcpecho
+  namespace: ${APP_NAMESPACE}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tcpecho
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: tcpecho
+        version: v1
+    spec:
+      containers:
+        - name: tcpecho
+          image: cjimti/go-echo
+          ports:
+            - name: tcp-echo-port
+              containerPort: 2701
+          env:
+            - name: TCP_PORT
+              value: "2701"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SERVICE_ACCOUNT
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.serviceAccountName
+---

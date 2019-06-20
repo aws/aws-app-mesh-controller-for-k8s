@@ -26,12 +26,23 @@ func newAPIVirtualService(meshName string, virtualRouter *appmeshv1beta1.Virtual
 
 func newAPIHttpRoute(routeName string, prefix string, targets []appmeshv1beta1.WeightedTarget) appmeshv1beta1.Route {
 	return appmeshv1beta1.Route{
-		Http: appmeshv1beta1.HttpRoute{
+		Http: &appmeshv1beta1.HttpRoute{
 			Action: appmeshv1beta1.HttpRouteAction{
 				WeightedTargets: targets,
 			},
 			Match: appmeshv1beta1.HttpRouteMatch{
 				Prefix: prefix,
+			},
+		},
+		Name: routeName,
+	}
+}
+
+func newAPITcpRoute(routeName string, targets []appmeshv1beta1.WeightedTarget) appmeshv1beta1.Route {
+	return appmeshv1beta1.Route{
+		Tcp: &appmeshv1beta1.TcpRoute{
+			Action: appmeshv1beta1.TcpRouteAction{
+				WeightedTargets: targets,
 			},
 		},
 		Name: routeName,
@@ -80,6 +91,31 @@ func newAWSHttpRoute(routeName string, prefix string, targets []appmeshv1beta1.W
 			})
 		}
 		awsRoute.Data.Spec.HttpRoute.Action.WeightedTargets = awstargets
+	}
+	return awsRoute
+}
+
+func newAWSTcpRoute(routeName string, targets []appmeshv1beta1.WeightedTarget) aws.Route {
+	awsRoute := aws.Route{
+		Data: appmesh.RouteData{
+			Spec: &appmesh.RouteSpec{
+				TcpRoute: &appmesh.TcpRoute{
+					Action: &appmesh.TcpRouteAction{},
+				},
+			},
+			RouteName: awssdk.String(routeName),
+		},
+	}
+
+	if targets != nil && len(targets) > 0 {
+		var awstargets []*appmesh.WeightedTarget
+		for _, t := range targets {
+			awstargets = append(awstargets, &appmesh.WeightedTarget{
+				VirtualNode: awssdk.String(t.VirtualNodeName),
+				Weight:      awssdk.Int64(t.Weight),
+			})
+		}
+		awsRoute.Data.Spec.TcpRoute.Action.WeightedTargets = awstargets
 	}
 	return awsRoute
 }
@@ -281,6 +317,71 @@ func TestRouteNeedUpdate(t *testing.T) {
 		{"no targets in result", extraTargetSpec, noTargetsResult, true},
 		{"no targets in spec", noTargetSpec, defaultRouteResult, true},
 		{"different prefix", defaultSpec, differentPrefixResult, true},
+		{"routes with varying weights are the same", varyingWeightSpec, varyingWeightResult, false},
+	}
+
+	for _, tt := range routetests {
+		t.Run(tt.name, func(t *testing.T) {
+			if res := routeNeedsUpdate(tt.spec, tt.routes); res != tt.needsUpdate {
+				t.Errorf("got %v, want %v", res, tt.needsUpdate)
+			}
+		})
+	}
+}
+
+func TestTcpRouteNeedUpdate(t *testing.T) {
+
+	var (
+		// shared defaults
+		defaultRouteName = "example-tcp-route"
+		defaultNodeName  = "example-node"
+
+		// Targets for default custom resource spec
+		defaultTargets = []appmeshv1beta1.WeightedTarget{
+			{Weight: int64(1), VirtualNodeName: defaultNodeName},
+		}
+
+		// Spec with default values
+		defaultSpec = newAPITcpRoute(defaultRouteName, defaultTargets)
+
+		// Result with the equivalent values as defaultSpec
+		defaultRouteResult = newAWSTcpRoute(defaultRouteName, defaultTargets)
+
+		extraTarget = []appmeshv1beta1.WeightedTarget{
+			{Weight: int64(1), VirtualNodeName: defaultNodeName},
+			{Weight: int64(1), VirtualNodeName: "extra-node"},
+		}
+
+		// Extra target spec and result
+		extraTargetSpec   = newAPITcpRoute(defaultRouteName, extraTarget)
+		extraTargetResult = newAWSTcpRoute(defaultRouteName, extraTarget)
+
+		// No targets spec and result
+		noTargetSpec    = newAPITcpRoute(defaultRouteName, []appmeshv1beta1.WeightedTarget{})
+		noTargetsResult = newAWSTcpRoute(defaultRouteName, []appmeshv1beta1.WeightedTarget{})
+
+		// Varying weight targets spec and result
+		varyingWeightTargets = []appmeshv1beta1.WeightedTarget{
+			{Weight: int64(1), VirtualNodeName: "foo-bar"},
+			{Weight: int64(2), VirtualNodeName: "foo-bar-zoo"},
+			{Weight: int64(3), VirtualNodeName: "foo-dummyNamespace"},
+		}
+		varyingWeightSpec = newAPITcpRoute(defaultRouteName, varyingWeightTargets)
+
+		varyingWeightResult = newAWSTcpRoute(defaultRouteName, varyingWeightTargets)
+	)
+
+	var routetests = []struct {
+		name        string
+		spec        appmeshv1beta1.Route
+		routes      aws.Route
+		needsUpdate bool
+	}{
+		{"routes are the same", defaultSpec, defaultRouteResult, false},
+		{"extra weighted target in result", defaultSpec, extraTargetResult, true},
+		{"extra weighted target in spec", extraTargetSpec, defaultRouteResult, true},
+		{"no targets in result", extraTargetSpec, noTargetsResult, true},
+		{"no targets in spec", noTargetSpec, defaultRouteResult, true},
 		{"routes with varying weights are the same", varyingWeightSpec, varyingWeightResult, false},
 	}
 
