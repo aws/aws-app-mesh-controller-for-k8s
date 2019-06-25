@@ -48,6 +48,11 @@ First, create a Mesh resource, which will trigger the controller to create a Mes
       namespace: prod
     spec:
       meshName: my-mesh
+      virtualRouter:
+        listeners:
+          - portMapping:
+              port: 9000
+              protocol: http
       routes:
         - name: route-to-svc-a
           http:
