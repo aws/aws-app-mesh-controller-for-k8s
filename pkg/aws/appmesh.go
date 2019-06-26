@@ -285,18 +285,16 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 		}
 	}
 
-	if vnode.Spec.Logging != nil {
-		if vnode.Spec.Logging.AccessLog != nil {
-			if vnode.Spec.Logging.AccessLog.File != nil {
-				input.Spec.SetLogging(&appmesh.Logging{
-					AccessLog: &appmesh.AccessLog{
-						File: &appmesh.FileAccessLog{
-							Path: aws.String(vnode.Spec.Logging.AccessLog.File.Path),
-						},
-					},
-				})
-			}
-		}
+	if vnode.Spec.Logging != nil &&
+		vnode.Spec.Logging.AccessLog != nil &&
+		vnode.Spec.Logging.AccessLog.File != nil {
+		input.Spec.SetLogging(&appmesh.Logging{
+			AccessLog: &appmesh.AccessLog{
+				File: &appmesh.FileAccessLog{
+					Path: aws.String(vnode.Spec.Logging.AccessLog.File.Path),
+				},
+			},
+		})
 	}
 
 	if output, err := c.appmesh.CreateVirtualNodeWithContext(ctx, input); err != nil {
@@ -362,18 +360,16 @@ func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 		}
 	}
 
-	if vnode.Spec.Logging != nil {
-		if vnode.Spec.Logging.AccessLog != nil {
-			if vnode.Spec.Logging.AccessLog.File != nil {
-				input.Spec.SetLogging(&appmesh.Logging{
-					AccessLog: &appmesh.AccessLog{
-						File: &appmesh.FileAccessLog{
-							Path: aws.String(vnode.Spec.Logging.AccessLog.File.Path),
-						},
-					},
-				})
-			}
-		}
+	if vnode.Spec.Logging != nil &&
+		vnode.Spec.Logging.AccessLog != nil &&
+		vnode.Spec.Logging.AccessLog.File != nil {
+		input.Spec.SetLogging(&appmesh.Logging{
+			AccessLog: &appmesh.AccessLog{
+				File: &appmesh.FileAccessLog{
+					Path: aws.String(vnode.Spec.Logging.AccessLog.File.Path),
+				},
+			},
+		})
 	}
 
 	if output, err := c.appmesh.UpdateVirtualNodeWithContext(ctx, input); err != nil {
