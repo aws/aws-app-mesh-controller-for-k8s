@@ -49,11 +49,16 @@ func (c *Controller) handleVService(key string) error {
 	}
 
 	for i := range vservice.Spec.Routes {
-		routeName := vservice.Spec.Routes[i].Name
-		vservice.Spec.Routes[i].Name = namespacedResourceName(routeName, vservice.Namespace)
-		for j := range vservice.Spec.Routes[i].Http.Action.WeightedTargets {
-			targetVNodeName := vservice.Spec.Routes[i].Http.Action.WeightedTargets[j].VirtualNodeName
-			vservice.Spec.Routes[i].Http.Action.WeightedTargets[j].VirtualNodeName = namespacedResourceName(targetVNodeName, vservice.Namespace)
+		route := vservice.Spec.Routes[i]
+		route.Name = namespacedResourceName(route.Name, vservice.Namespace)
+		var targets []appmeshv1beta1.WeightedTarget
+		if route.Http != nil {
+			targets = route.Http.Action.WeightedTargets
+		} else if route.Tcp != nil {
+			targets = route.Tcp.Action.WeightedTargets
+		}
+		for j := range targets {
+			targets[j].VirtualNodeName = namespacedResourceName(targets[j].VirtualNodeName, vservice.Namespace)
 		}
 	}
 
@@ -374,18 +379,33 @@ func allRoutesActive(routes aws.Routes) bool {
 }
 
 func routeNeedsUpdate(desired appmeshv1beta1.Route, target aws.Route) bool {
-	if desired.Http.Action.WeightedTargets != nil {
-		desiredSet := set.NewSet()
-		for _, target := range desired.Http.Action.WeightedTargets {
-			desiredSet.Add(appmeshv1beta1.WeightedTarget{VirtualNodeName: target.VirtualNodeName, Weight: target.Weight})
+	if desired.Http != nil {
+		if desired.Http.Action.WeightedTargets != nil {
+			desiredSet := set.NewSet()
+			for _, target := range desired.Http.Action.WeightedTargets {
+				desiredSet.Add(appmeshv1beta1.WeightedTarget{VirtualNodeName: target.VirtualNodeName, Weight: target.Weight})
+			}
+			currSet := target.WeightedTargetSet()
+			if !desiredSet.Equal(currSet) {
+				return true
+			}
 		}
-		currSet := target.WeightedTargetSet()
-		if !desiredSet.Equal(currSet) {
+		if desired.Http.Match.Prefix != target.Prefix() {
 			return true
 		}
 	}
-	if desired.Http.Match.Prefix != target.Prefix() {
-		return true
+
+	if desired.Tcp != nil {
+		if desired.Tcp.Action.WeightedTargets != nil {
+			desiredSet := set.NewSet()
+			for _, target := range desired.Tcp.Action.WeightedTargets {
+				desiredSet.Add(appmeshv1beta1.WeightedTarget{VirtualNodeName: target.VirtualNodeName, Weight: target.Weight})
+			}
+			currSet := target.WeightedTargetSet()
+			if !desiredSet.Equal(currSet) {
+				return true
+			}
+		}
 	}
 	return false
 }

@@ -262,6 +262,21 @@ spec:
                                   type: string
                                 weight:
                                   type: integer
+                  tcp:
+                    type: object
+                    properties:
+                      action:
+                        type: object
+                        properties:
+                          weightedTargets:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                virtualNodeName:
+                                  type: string
+                                weight:
+                                  type: integer
         status:
           properties:
             virtualServiceArn:

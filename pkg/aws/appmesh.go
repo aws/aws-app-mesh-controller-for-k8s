@@ -703,17 +703,22 @@ func (r *Route) Prefix() string {
 
 // WeightedTargets converts into our API type
 func (r *Route) WeightedTargets() []appmeshv1beta1.WeightedTarget {
-	if r.Data.Spec.HttpRoute.Action.WeightedTargets == nil {
-		return []appmeshv1beta1.WeightedTarget{}
+	var targets []appmeshv1beta1.WeightedTarget
+	var inputTargets []*appmesh.WeightedTarget
+
+	if r.Data.Spec.HttpRoute != nil {
+		inputTargets = r.Data.Spec.HttpRoute.Action.WeightedTargets
+	} else if r.Data.Spec.TcpRoute != nil {
+		inputTargets = r.Data.Spec.TcpRoute.Action.WeightedTargets
 	}
 
-	var targets = []appmeshv1beta1.WeightedTarget{}
-	for _, t := range r.Data.Spec.HttpRoute.Action.WeightedTargets {
+	for _, t := range inputTargets {
 		targets = append(targets, appmeshv1beta1.WeightedTarget{
 			VirtualNodeName: aws.StringValue(t.VirtualNode),
 			Weight:          aws.Int64Value(t.Weight),
 		})
 	}
+
 	return targets
 }
 
@@ -779,26 +784,8 @@ func (c *Cloud) CreateRoute(ctx context.Context, route *appmeshv1beta1.Route, ro
 		MeshName:          aws.String(meshName),
 		RouteName:         aws.String(route.Name),
 		VirtualRouterName: aws.String(routerName),
-		Spec: &appmesh.RouteSpec{
-			HttpRoute: &appmesh.HttpRoute{
-				Match: &appmesh.HttpRouteMatch{
-					Prefix: aws.String(route.Http.Match.Prefix),
-				},
-				Action: &appmesh.HttpRouteAction{},
-			},
-		},
+		Spec:              c.buildRouteSpec(route),
 	}
-
-	targets := []*appmesh.WeightedTarget{}
-	for _, target := range route.Http.Action.WeightedTargets {
-		weight := target.Weight
-		targets = append(targets, &appmesh.WeightedTarget{
-			VirtualNode: aws.String(target.VirtualNodeName),
-			Weight:      aws.Int64(weight),
-		})
-	}
-
-	input.Spec.HttpRoute.Action.SetWeightedTargets(targets)
 
 	if output, err := c.appmesh.CreateRouteWithContext(ctx, input); err != nil {
 		return nil, err
@@ -852,26 +839,8 @@ func (c *Cloud) UpdateRoute(ctx context.Context, route *appmeshv1beta1.Route, ro
 		MeshName:          aws.String(meshName),
 		RouteName:         aws.String(route.Name),
 		VirtualRouterName: aws.String(routerName),
-		Spec: &appmesh.RouteSpec{
-			HttpRoute: &appmesh.HttpRoute{
-				Match: &appmesh.HttpRouteMatch{
-					Prefix: aws.String(route.Http.Match.Prefix),
-				},
-				Action: &appmesh.HttpRouteAction{},
-			},
-		},
+		Spec:              c.buildRouteSpec(route),
 	}
-
-	targets := []*appmesh.WeightedTarget{}
-	for _, target := range route.Http.Action.WeightedTargets {
-		weight := target.Weight
-		targets = append(targets, &appmesh.WeightedTarget{
-			VirtualNode: aws.String(target.VirtualNodeName),
-			Weight:      aws.Int64(weight),
-		})
-	}
-
-	input.Spec.HttpRoute.Action.SetWeightedTargets(targets)
 
 	if output, err := c.appmesh.UpdateRouteWithContext(ctx, input); err != nil {
 		return nil, err
@@ -925,4 +894,47 @@ func IsAWSErrResourceInUse(err error) bool {
 		}
 	}
 	return false
+}
+
+func (c *Cloud) buildRouteSpec(route *appmeshv1beta1.Route) *appmesh.RouteSpec {
+	if route == nil {
+		return nil
+	}
+
+	if route.Http != nil {
+		return &appmesh.RouteSpec{
+			HttpRoute: &appmesh.HttpRoute{
+				Match: &appmesh.HttpRouteMatch{
+					Prefix: aws.String(route.Http.Match.Prefix),
+				},
+				Action: &appmesh.HttpRouteAction{
+					WeightedTargets: c.buildWeightedTargets(route.Http.Action.WeightedTargets),
+				},
+			},
+		}
+	}
+
+	if route.Tcp != nil {
+		return &appmesh.RouteSpec{
+			TcpRoute: &appmesh.TcpRoute{
+				Action: &appmesh.TcpRouteAction{
+					WeightedTargets: c.buildWeightedTargets(route.Tcp.Action.WeightedTargets),
+				},
+			},
+		}
+	}
+
+	return nil
+}
+
+func (c *Cloud) buildWeightedTargets(input []appmeshv1beta1.WeightedTarget) []*appmesh.WeightedTarget {
+	targets := []*appmesh.WeightedTarget{}
+	for _, target := range input {
+		weight := target.Weight
+		targets = append(targets, &appmesh.WeightedTarget{
+			VirtualNode: aws.String(target.VirtualNodeName),
+			Weight:      aws.Int64(weight),
+		})
+	}
+	return targets
 }
