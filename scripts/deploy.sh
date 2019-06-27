@@ -3,8 +3,6 @@
 set -e
 set -o pipefail
 
-DIR=$(cd "$(dirname "$0")"; pwd)/..
-
 if [[ -z "${AWS_ACCOUNT}" ]]; then
     echo "AWS_ACCOUNT must be set."
     exit 1
