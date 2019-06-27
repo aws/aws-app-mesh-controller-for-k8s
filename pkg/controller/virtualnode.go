@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	awssdk "github.com/aws/aws-sdk-go/aws"
+
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	"github.com/aws/aws-sdk-go/service/appmesh"
@@ -210,6 +212,41 @@ func vnodeNeedsUpdate(desired *appmeshv1beta1.VirtualNode, target *aws.VirtualNo
 		if len(target.Backends()) != 0 {
 			return true
 		}
+	}
+
+	if vnodeLoggingNeedsUpdate(desired, target) {
+		return true
+	}
+
+	return false
+}
+
+func vnodeLoggingNeedsUpdate(desired *appmeshv1beta1.VirtualNode, target *aws.VirtualNode) bool {
+	if desired.Spec.Logging != nil {
+		//target is missing logging so update is required
+		if target.Data.Spec.Logging == nil {
+			return true
+		}
+		if desired.Spec.Logging.AccessLog != nil {
+			//target is missing access-log config so update is required
+			if target.Data.Spec.Logging.AccessLog == nil {
+				return true
+			}
+			if desired.Spec.Logging.AccessLog.File != nil {
+				//target is missing access-log file config so update is required
+				if target.Data.Spec.Logging.AccessLog.File == nil ||
+					target.Data.Spec.Logging.AccessLog.File.Path == nil {
+					return true
+				}
+				//path exists but differs
+				if desired.Spec.Logging.AccessLog.File.Path != awssdk.StringValue(target.Data.Spec.Logging.AccessLog.File.Path) {
+					return true
+				}
+			}
+		}
+	} else if target.Data.Spec.Logging != nil {
+		//target has logging config but desired spec doesn't
+		return true
 	}
 	return false
 }

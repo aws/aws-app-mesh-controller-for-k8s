@@ -28,6 +28,10 @@ spec:
   backends:
     - virtualService:
         virtualServiceName: colorteller.${APP_NAMESPACE}
+  logging:
+    accessLog:
+      file:
+        path: /dev/stdout
 ---
 apiVersion: appmesh.k8s.aws/v1beta1
 kind: VirtualNode
