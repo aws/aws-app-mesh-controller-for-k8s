@@ -28,6 +28,7 @@ type Mesh struct {
 type MeshServiceDiscoveryType string
 
 const (
+	// Dns type is used when mesh is backed by a DNS namespace
 	Dns MeshServiceDiscoveryType = "Dns"
 )
 
@@ -237,7 +238,9 @@ type ServiceDiscovery struct {
 }
 
 type CloudMapServiceDiscovery struct {
-	CloudMapServiceName string `json:"cloudMapServiceName"`
+	ServiceName   string            `json:"serviceName"`
+	NamespaceName string            `json:"namespaceName"`
+	Attributes    map[string]string `json:"attributes,omitempty"`
 }
 
 type DnsServiceDiscovery struct {
@@ -272,13 +275,21 @@ type VirtualNodeStatus struct {
 	MeshArn *string `json:"meshArn,omitempty"`
 	// VirtualNodeArn is the AppMesh VirtualNode object's Amazon Resource Name
 	// +optional
-	VirtualNodeArn *string `json:"virtualNodeArn,omitempty"`
-	// CloudMapServiceArn is a CloudMap Service object's Amazon Resource Name
+	VirtualNodeArn *string                `json:"virtualNodeArn,omitempty"`
+	Conditions     []VirtualNodeCondition `json:"conditions"`
+	// CloudMapService is AWS CloudMap Service object's info
 	// +optional
-	CloudMapServiceArn *string `json:"cloudMapServiceArn,omitempty"`
+	CloudMapService *CloudMapServiceStatus `json:"cloudmapService,omitempty"`
+}
+
+// CloudMapServiceStatus is AWS CloudMap Service object's info
+type CloudMapServiceStatus struct {
+	// ServiceID is AWS CloudMap Service object's Id
 	// +optional
-	QueryParameters map[string]string      `json:"queryParameters,omitempty"`
-	Conditions      []VirtualNodeCondition `json:"conditions"`
+	ServiceID *string `json:"serviceId,omitempty"`
+	// NamespaceID is AWS CloudMap Service object's namespace Id
+	// +optional
+	NamespaceID *string `json:"namespaceId,omitempty"`
 }
 
 type VirtualNodeConditionType string

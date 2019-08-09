@@ -56,7 +56,9 @@ spec:
                 cloudMap:
                   type: object
                   properties:
-                    cloudMapServiceName:
+                    serviceName:
+                      type: string
+                    namespaceName:
                       type: string
                 dns:
                   type: object
@@ -90,10 +92,6 @@ spec:
             meshArn:
               type: string
             virtualNodeArn:
-              type: string
-            cloudMapServiceArn:
-              type: string
-            queryParameters:
               type: string
             conditions:
               type: array
