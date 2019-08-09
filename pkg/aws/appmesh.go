@@ -279,7 +279,7 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 			}
 			input.Spec.SetServiceDiscovery(serviceDiscovery)
 		} else if vnode.Spec.ServiceDiscovery.CloudMap != nil {
-			// TODO(nic) add CloudMap Service Discovery when SDK supports it
+			input.Spec.SetServiceDiscovery(c.buildAwsCloudMapServiceDiscovery(vnode))
 		} else {
 			klog.Warningf("No service discovery set for virtual node %s", vnode.Name)
 		}
@@ -354,7 +354,7 @@ func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 			}
 			input.Spec.SetServiceDiscovery(serviceDiscovery)
 		} else if vnode.Spec.ServiceDiscovery.CloudMap != nil {
-			// TODO(nic) add CloudMap Service Discovery when SDK supports it
+			input.Spec.SetServiceDiscovery(c.buildAwsCloudMapServiceDiscovery(vnode))
 		} else {
 			klog.Warningf("No service discovery set for virtual node %s", vnode.Name)
 		}
@@ -872,6 +872,28 @@ func (c *Cloud) DeleteRoute(ctx context.Context, name string, routerName string,
 			Data: *output.Route,
 		}, nil
 	}
+}
+
+func (c *Cloud) buildAwsCloudMapServiceDiscovery(vnode *appmeshv1beta1.VirtualNode) *appmesh.ServiceDiscovery {
+	attr := []*appmesh.AwsCloudMapInstanceAttribute{}
+
+	//adding attributes defined by customer
+	for k, v := range vnode.Spec.ServiceDiscovery.CloudMap.Attributes {
+		attr = append(attr, &appmesh.AwsCloudMapInstanceAttribute{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
+	}
+
+	serviceDiscovery := &appmesh.ServiceDiscovery{
+		AwsCloudMap: &appmesh.AwsCloudMapServiceDiscovery{
+			NamespaceName: aws.String(vnode.Spec.ServiceDiscovery.CloudMap.NamespaceName),
+			ServiceName:   aws.String(vnode.Spec.ServiceDiscovery.CloudMap.ServiceName),
+			Attributes:    attr,
+		},
+	}
+
+	return serviceDiscovery
 }
 
 func IsAWSErrNotFound(err error) bool {
