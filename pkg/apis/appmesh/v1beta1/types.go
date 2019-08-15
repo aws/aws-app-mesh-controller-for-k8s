@@ -120,8 +120,9 @@ type Route struct {
 }
 
 type HttpRoute struct {
-	Match  HttpRouteMatch  `json:"match"`
-	Action HttpRouteAction `json:"action"`
+	Match       HttpRouteMatch   `json:"match"`
+	Action      HttpRouteAction  `json:"action"`
+	RetryPolicy *HttpRetryPolicy `json:"retryPolicy,omitempty"`
 }
 
 type HttpRouteMatch struct {
@@ -153,6 +154,21 @@ type MatchRange struct {
 type HttpRouteAction struct {
 	WeightedTargets []WeightedTarget `json:"weightedTargets"`
 }
+
+type HttpRetryPolicy struct {
+	PerRetryTimeoutMillis *int64                 `json:"perRetryTimeoutMillis,omitempty"`
+	MaxRetries            *int64                 `json:"maxRetries,omitempty"`
+	HttpRetryPolicyEvents []HttpRetryPolicyEvent `json:"httpRetryEvents,omitempty"`
+	TcpRetryPolicyEvents  []TcpRetryPolicyEvent  `json:"tcpRetryEvents,omitempty"`
+}
+
+type HttpRetryPolicyEvent string
+
+type TcpRetryPolicyEvent string
+
+const (
+	TcpRetryPolicyEventConnectionError TcpRetryPolicyEvent = "connection-error"
+)
 
 type TcpRoute struct {
 	Action TcpRouteAction `json:"action"`

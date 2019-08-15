@@ -412,6 +412,11 @@ func routeNeedsUpdate(desired appmeshv1beta1.Route, target aws.Route) bool {
 		if !reflect.DeepEqual(desired.Http.Match, *targetRouteMatch) {
 			return true
 		}
+
+		targetRouteRetryPolicy := target.HttpRouteRetryPolicy()
+		if !reflect.DeepEqual(desired.Http.RetryPolicy, targetRouteRetryPolicy) {
+			return true
+		}
 	} else if target.Data.Spec.HttpRoute != nil {
 		return true
 	}
@@ -428,6 +433,7 @@ func routeNeedsUpdate(desired appmeshv1beta1.Route, target aws.Route) bool {
 			}
 		}
 	}
+
 	return false
 }
 

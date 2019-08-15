@@ -580,3 +580,134 @@ func TestHttpRouteWithHeaderNeedUpdate(t *testing.T) {
 		})
 	}
 }
+
+func TestHttpRouteWithRetryPolicyNeedUpdate(t *testing.T) {
+	var (
+		// shared defaults
+		defaultRouteName             = "example-route"
+		defaultPrefix                = "/"
+		defaultNodeName              = "example-node"
+		defaultPerRetryTimeoutMillis = int64(1000)
+		defaultMaxRetries            = int64(5)
+		defaultHttpRetryPolicyEvent  = "http-error"
+		defaultTcpRetryPolicyEvent   = appmesh.TcpRetryPolicyEventConnectionError
+
+		// Targets for default custom resource spec
+		defaultTargets = []appmeshv1beta1.WeightedTarget{
+			{Weight: int64(1), VirtualNodeName: defaultNodeName},
+		}
+
+		nilSpec   *appmeshv1beta1.HttpRetryPolicy
+		nilResult *appmesh.HttpRetryPolicy
+
+		emptySpec   = &appmeshv1beta1.HttpRetryPolicy{}
+		emptyResult = &appmesh.HttpRetryPolicy{}
+
+		specWithHttpEvent = &appmeshv1beta1.HttpRetryPolicy{
+			HttpRetryPolicyEvents: []appmeshv1beta1.HttpRetryPolicyEvent{
+				appmeshv1beta1.HttpRetryPolicyEvent(defaultHttpRetryPolicyEvent),
+			},
+		}
+		resultWithHttpEvent = &appmesh.HttpRetryPolicy{
+			HttpRetryEvents: []*string{
+				awssdk.String(defaultHttpRetryPolicyEvent),
+			},
+		}
+		resultWithDifferentHttpEvent = &appmesh.HttpRetryPolicy{
+			HttpRetryEvents: []*string{
+				awssdk.String("diff-http-error"),
+			},
+		}
+
+		specWithPerTryTimeout = &appmeshv1beta1.HttpRetryPolicy{
+			PerRetryTimeoutMillis: awssdk.Int64(defaultPerRetryTimeoutMillis),
+		}
+		resultWithPerTryTimeout = &appmesh.HttpRetryPolicy{
+			PerRetryTimeout: &appmesh.Duration{
+				Unit:  awssdk.String(appmesh.DurationUnitMs),
+				Value: awssdk.Int64(defaultPerRetryTimeoutMillis),
+			},
+		}
+		resultWithDifferentPerTryTimeout = &appmesh.HttpRetryPolicy{
+			PerRetryTimeout: &appmesh.Duration{
+				Unit:  awssdk.String(appmesh.DurationUnitMs),
+				Value: awssdk.Int64(defaultPerRetryTimeoutMillis + 1),
+			},
+		}
+		resultWithSamePerTryTimeoutAndDiffUnit = &appmesh.HttpRetryPolicy{
+			PerRetryTimeout: &appmesh.Duration{
+				Unit:  awssdk.String(appmesh.DurationUnitS),
+				Value: awssdk.Int64(defaultPerRetryTimeoutMillis / 1000),
+			},
+		}
+
+		specWithMaxRetries = &appmeshv1beta1.HttpRetryPolicy{
+			MaxRetries: awssdk.Int64(defaultMaxRetries),
+		}
+		resultWithMaxRetries = &appmesh.HttpRetryPolicy{
+			MaxRetries: awssdk.Int64(defaultMaxRetries),
+		}
+		resultWithDifferentMaxRetries = &appmesh.HttpRetryPolicy{
+			MaxRetries: awssdk.Int64(defaultMaxRetries + 1),
+		}
+
+		specWithTcpEvent = &appmeshv1beta1.HttpRetryPolicy{
+			TcpRetryPolicyEvents: []appmeshv1beta1.TcpRetryPolicyEvent{
+				appmeshv1beta1.TcpRetryPolicyEvent(defaultTcpRetryPolicyEvent),
+			},
+		}
+		resultWithTcpEvent = &appmesh.HttpRetryPolicy{
+			TcpRetryEvents: []*string{
+				awssdk.String(defaultTcpRetryPolicyEvent),
+			},
+		}
+		resultWithDifferentTcpEvent = &appmesh.HttpRetryPolicy{
+			TcpRetryEvents: []*string{
+				awssdk.String("diff-tcp-error"),
+			},
+		}
+	)
+
+	var tests = []struct {
+		name      string
+		desired   *appmeshv1beta1.HttpRetryPolicy
+		target    *appmesh.HttpRetryPolicy
+		different bool
+	}{
+		{"Nil spec", nilSpec, nilResult, false},
+		{"Empty spec", emptySpec, emptyResult, false},
+
+		{"PerTryTimeout: match", specWithPerTryTimeout, resultWithPerTryTimeout, false},
+		{"PerTryTimeout: match with different unit", specWithPerTryTimeout, resultWithSamePerTryTimeoutAndDiffUnit, false},
+		{"PerTryTimeout: missing in desired", emptySpec, resultWithPerTryTimeout, true},
+		{"PerTryTimeout: missing in target", specWithPerTryTimeout, emptyResult, true},
+		{"PerTryTimeout: diff", specWithPerTryTimeout, resultWithDifferentPerTryTimeout, true},
+
+		{"MaxRetries: match", specWithMaxRetries, resultWithMaxRetries, false},
+		{"MaxRetries: missing in desired", emptySpec, resultWithMaxRetries, true},
+		{"MaxRetries: missing in target", specWithMaxRetries, emptyResult, true},
+		{"MaxRetries: diff", specWithMaxRetries, resultWithDifferentMaxRetries, true},
+
+		{"HttpRetryPolicyEvent: match", specWithHttpEvent, resultWithHttpEvent, false},
+		{"HttpRetryPolicyEvent: missing in desired", emptySpec, resultWithHttpEvent, true},
+		{"HttpRetryPolicyEvent: missing in target", specWithHttpEvent, emptyResult, true},
+		{"HttpRetryPolicyEvent: diff", specWithHttpEvent, resultWithDifferentHttpEvent, true},
+
+		{"TcpRetryPolicyEvent: match", specWithTcpEvent, resultWithTcpEvent, false},
+		{"TcpRetryPolicyEvent: missing in desired", emptySpec, resultWithTcpEvent, true},
+		{"TcpRetryPolicyEvent: missing in target", specWithTcpEvent, emptyResult, true},
+		{"TcpRetryPolicyEvent: diff", specWithTcpEvent, resultWithDifferentTcpEvent, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := newAPIHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)
+			spec.Http.RetryPolicy = tt.desired
+			result := newAWSHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)
+			result.Data.Spec.HttpRoute.RetryPolicy = tt.target
+			if res := routeNeedsUpdate(spec, result); res != tt.different {
+				t.Errorf("got %v, want %v", res, tt.different)
+			}
+		})
+	}
+}
