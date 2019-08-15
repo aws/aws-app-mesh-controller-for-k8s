@@ -312,6 +312,23 @@ spec:
                                   type: string
                                 weight:
                                   type: integer
+                      retryPolicy:
+                        type: object
+                        properties:
+                          perRetryTimeoutMillis:
+                            type: integer
+                          maxRetries:
+                            type: integer
+                          httpRetryEvents:
+                            type: array
+                            items:
+                              type: string
+                          tcpRetryEvents:
+                            type: array
+                            items:
+                              type: string
+                              enum:
+                                - 'connection-error'
                   tcp:
                     type: object
                     properties:

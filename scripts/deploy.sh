@@ -17,10 +17,9 @@ DIR=$(cd "$(dirname "$0")"; pwd)/..
 OUT_DIR="${DIR}/_output/deploy/"
 mkdir -p ${OUT_DIR}
 
-kubectl apply -f ${DIR}/deploy/mesh-definition.yaml
-kubectl apply -f ${DIR}/deploy/virtual-service-definition.yaml
-kubectl apply -f ${DIR}/deploy/virtual-node-definition.yaml
+kubectl apply -f ${DIR}/deploy/all.yaml
 
+# override controller deployment with dev deployment
 eval "cat <<EOF
 $(<${DIR}/deploy/controller-deployment.yaml.template)
 EOF

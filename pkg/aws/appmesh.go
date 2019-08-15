@@ -765,6 +765,30 @@ func (r *Route) WeightedTargetSet() set.Set {
 	return s
 }
 
+func (r *Route) HttpRouteRetryPolicy() *appmeshv1beta1.HttpRetryPolicy {
+	if r.Data.Spec.HttpRoute == nil || r.Data.Spec.HttpRoute.RetryPolicy == nil {
+		return nil
+	}
+
+	input := r.Data.Spec.HttpRoute.RetryPolicy
+	result := &appmeshv1beta1.HttpRetryPolicy{
+		PerRetryTimeoutMillis: durationToMillis(input.PerRetryTimeout),
+		MaxRetries:            input.MaxRetries,
+	}
+
+	for _, inputEvent := range input.HttpRetryEvents {
+		resultEvent := appmeshv1beta1.HttpRetryPolicyEvent(aws.StringValue(inputEvent))
+		result.HttpRetryPolicyEvents = append(result.HttpRetryPolicyEvents, resultEvent)
+	}
+
+	for _, inputEvent := range input.TcpRetryEvents {
+		resultEvent := appmeshv1beta1.TcpRetryPolicyEvent(aws.StringValue(inputEvent))
+		result.TcpRetryPolicyEvents = append(result.TcpRetryPolicyEvents, resultEvent)
+	}
+
+	return result
+}
+
 func (r *Route) HttpRouteMatch() *appmeshv1beta1.HttpRouteMatch {
 	if r.Data.Spec.HttpRoute == nil || r.Data.Spec.HttpRoute.Match == nil {
 		return nil
@@ -999,6 +1023,7 @@ func (c *Cloud) buildRouteSpec(route *appmeshv1beta1.Route) *appmesh.RouteSpec {
 				Action: &appmesh.HttpRouteAction{
 					WeightedTargets: c.buildWeightedTargets(route.Http.Action.WeightedTargets),
 				},
+				RetryPolicy: c.buildHttpRetryPolicy(route.Http.RetryPolicy),
 			},
 		}
 	}
@@ -1070,6 +1095,33 @@ func (c *Cloud) buildHttpRouteHeader(input appmeshv1beta1.HttpRouteHeader) *appm
 	return appmeshHeader
 }
 
+func (c *Cloud) buildHttpRetryPolicy(input *appmeshv1beta1.HttpRetryPolicy) *appmesh.HttpRetryPolicy {
+	if input == nil {
+		return nil
+	}
+
+	appmeshRetryPolicy := &appmesh.HttpRetryPolicy{
+		MaxRetries: input.MaxRetries,
+	}
+
+	if input.PerRetryTimeoutMillis != nil {
+		appmeshRetryPolicy.PerRetryTimeout = &appmesh.Duration{
+			Unit:  aws.String(appmesh.DurationUnitMs),
+			Value: input.PerRetryTimeoutMillis,
+		}
+	}
+
+	for _, inputEvent := range input.HttpRetryPolicyEvents {
+		appmeshRetryPolicy.HttpRetryEvents = append(appmeshRetryPolicy.HttpRetryEvents, aws.String(string(inputEvent)))
+	}
+
+	for _, inputEvent := range input.TcpRetryPolicyEvents {
+		appmeshRetryPolicy.TcpRetryEvents = append(appmeshRetryPolicy.TcpRetryEvents, aws.String(string(inputEvent)))
+	}
+
+	return appmeshRetryPolicy
+}
+
 func defaultInt64(v *int64, defaultVal int64) *int64 {
 	if v != nil {
 		return v
@@ -1082,4 +1134,19 @@ func defaultString(v *string, defaultVal string) *string {
 		return v
 	}
 	return aws.String(defaultVal)
+}
+
+func durationToMillis(d *appmesh.Duration) *int64 {
+	if d == nil {
+		return nil
+	}
+
+	switch aws.StringValue(d.Unit) {
+	case appmesh.DurationUnitMs:
+		return d.Value
+	case appmesh.DurationUnitS:
+		return aws.Int64(aws.Int64Value(d.Value) * 1000)
+	}
+
+	return nil
 }
