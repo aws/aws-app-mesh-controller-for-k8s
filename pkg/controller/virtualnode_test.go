@@ -548,7 +548,6 @@ func TestHandleCloudMapServiceDiscovery(t *testing.T) {
 		})
 	}
 }
-
 func TestMutateVirtualNodeForProcessing(t *testing.T) {
 	var (
 		// defaults
@@ -618,4 +617,100 @@ func TestMutateVirtualNodeForProcessing(t *testing.T) {
 		})
 	}
 
+}
+
+func TestVNodeListenerHealthCheckNeedsUpdate(t *testing.T) {
+	var (
+		// defaults
+		port80            int64 = 80
+		protocolHTTP            = "http"
+		hostname                = "foo.local"
+		backend                 = "bar.local"
+		fileAccessLogPath       = awssdk.String("/dev/stdout")
+
+		specHealthCheck = &appmeshv1beta1.HealthCheckPolicy{
+			HealthyThreshold:   awssdk.Int64(1),
+			IntervalMillis:     awssdk.Int64(1000),
+			Path:               awssdk.String("/"),
+			Port:               awssdk.Int64(9080),
+			Protocol:           awssdk.String("HTTP"),
+			TimeoutMillis:      awssdk.Int64(1000),
+			UnhealthyThreshold: awssdk.Int64(1),
+		}
+
+		resultHealthCheck = &appmesh.HealthCheckPolicy{
+			HealthyThreshold:   awssdk.Int64(1),
+			IntervalMillis:     awssdk.Int64(1000),
+			Path:               awssdk.String("/"),
+			Port:               awssdk.Int64(9080),
+			Protocol:           awssdk.String("HTTP"),
+			TimeoutMillis:      awssdk.Int64(1000),
+			UnhealthyThreshold: awssdk.Int64(1),
+		}
+
+		differentHealthyThresholdHealthCheck = &appmesh.HealthCheckPolicy{
+			HealthyThreshold:   awssdk.Int64(2), //diff
+			IntervalMillis:     awssdk.Int64(1000),
+			Path:               awssdk.String("/"),
+			Port:               awssdk.Int64(9080),
+			Protocol:           awssdk.String("HTTP"),
+			TimeoutMillis:      awssdk.Int64(1000),
+			UnhealthyThreshold: awssdk.Int64(1),
+		}
+
+		differentPortHealthCheck = &appmesh.HealthCheckPolicy{
+			HealthyThreshold:   awssdk.Int64(1),
+			IntervalMillis:     awssdk.Int64(1000),
+			Path:               awssdk.String("/"),
+			Port:               awssdk.Int64(8080), //diff
+			Protocol:           awssdk.String("HTTP"),
+			TimeoutMillis:      awssdk.Int64(1000),
+			UnhealthyThreshold: awssdk.Int64(1),
+		}
+
+		differentPathHealthCheck = &appmesh.HealthCheckPolicy{
+			HealthyThreshold:   awssdk.Int64(1),
+			IntervalMillis:     awssdk.Int64(1000),
+			Path:               awssdk.String("/diff"), //diff
+			Port:               awssdk.Int64(9080),
+			Protocol:           awssdk.String("HTTP"),
+			TimeoutMillis:      awssdk.Int64(1000),
+			UnhealthyThreshold: awssdk.Int64(1),
+		}
+
+		differentProtocolHealthCheck = &appmesh.HealthCheckPolicy{
+			HealthyThreshold:   awssdk.Int64(1),
+			IntervalMillis:     awssdk.Int64(1000),
+			Path:               awssdk.String("/"),
+			Port:               awssdk.Int64(9080),
+			Protocol:           awssdk.String("TCP"), //diff
+			TimeoutMillis:      awssdk.Int64(1000),
+			UnhealthyThreshold: awssdk.Int64(1),
+		}
+	)
+
+	var vnodetests = []struct {
+		name        string
+		desired     *appmeshv1beta1.HealthCheckPolicy
+		target      *appmesh.HealthCheckPolicy
+		needsUpdate bool
+	}{
+		{"no health-check defined", nil, nil, false},
+		{"health-check are in sync", specHealthCheck, resultHealthCheck, false},
+		{"Path: target health-check is different", specHealthCheck, differentPathHealthCheck, true},
+		{"Protocol: target health-check is different", specHealthCheck, differentProtocolHealthCheck, true},
+		{"Port: target health-check is different", specHealthCheck, differentPortHealthCheck, true},
+		{"HealthyThreshold: target health-check is different", specHealthCheck, differentHealthyThresholdHealthCheck, true},
+	}
+	for _, tt := range vnodetests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, fileAccessLogPath)
+			spec.Spec.Listeners[0].HealthCheck = tt.desired
+			result := newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, fileAccessLogPath)
+			result.Data.Spec.Listeners[0].HealthCheck = tt.target
+			if res := vnodeNeedsUpdate(spec, result); res != tt.needsUpdate {
+				t.Errorf("got %v, want %v", res, tt.needsUpdate)
+			}
+		})
+	}
 }

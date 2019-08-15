@@ -83,16 +83,20 @@ func newAWSHttpRoute(routeName string, prefix string, targets []appmeshv1beta1.W
 	}
 
 	if targets != nil && len(targets) > 0 {
-		var awstargets []*appmesh.WeightedTarget
-		for _, t := range targets {
-			awstargets = append(awstargets, &appmesh.WeightedTarget{
-				VirtualNode: awssdk.String(t.VirtualNodeName),
-				Weight:      awssdk.Int64(t.Weight),
-			})
-		}
-		awsRoute.Data.Spec.HttpRoute.Action.WeightedTargets = awstargets
+		awsRoute.Data.Spec.HttpRoute.Action.WeightedTargets = newAWSWeightedTargets(targets)
 	}
 	return awsRoute
+}
+
+func newAWSWeightedTargets(targets []appmeshv1beta1.WeightedTarget) []*appmesh.WeightedTarget {
+	var awstargets []*appmesh.WeightedTarget
+	for _, t := range targets {
+		awstargets = append(awstargets, &appmesh.WeightedTarget{
+			VirtualNode: awssdk.String(t.VirtualNodeName),
+			Weight:      awssdk.Int64(t.Weight),
+		})
+	}
+	return awstargets
 }
 
 func newAWSTcpRoute(routeName string, targets []appmeshv1beta1.WeightedTarget) aws.Route {
@@ -278,6 +282,10 @@ func TestRouteNeedUpdate(t *testing.T) {
 		// Result with the equivalent values as defaultSpec
 		defaultRouteResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)
 
+		differentTargetResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{
+			{Weight: int64(1), VirtualNodeName: "diff-node"},
+		})
+
 		extraTarget = []appmeshv1beta1.WeightedTarget{
 			{Weight: int64(1), VirtualNodeName: defaultNodeName},
 			{Weight: int64(1), VirtualNodeName: "extra-node"},
@@ -312,6 +320,7 @@ func TestRouteNeedUpdate(t *testing.T) {
 		needsUpdate bool
 	}{
 		{"routes are the same", defaultSpec, defaultRouteResult, false},
+		{"different weighted target in result", defaultSpec, differentTargetResult, true},
 		{"extra weighted target in result", defaultSpec, extraTargetResult, true},
 		{"extra weighted target in spec", extraTargetSpec, defaultRouteResult, true},
 		{"no targets in result", extraTargetSpec, noTargetsResult, true},
@@ -389,6 +398,184 @@ func TestTcpRouteNeedUpdate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if res := routeNeedsUpdate(tt.spec, tt.routes); res != tt.needsUpdate {
 				t.Errorf("got %v, want %v", res, tt.needsUpdate)
+			}
+		})
+	}
+}
+
+func TestHttpRouteWithHeaderNeedUpdate(t *testing.T) {
+	var (
+		// shared defaults
+		defaultRouteName = "example-route"
+		defaultPrefix    = "/"
+		defaultNodeName  = "example-node"
+
+		// Targets for default custom resource spec
+		defaultTargets = []appmeshv1beta1.WeightedTarget{
+			{Weight: int64(1), VirtualNodeName: defaultNodeName},
+		}
+
+		specWithNoMatch = appmeshv1beta1.HttpRouteHeader{
+			Name:  "header1",
+			Match: &appmeshv1beta1.HeaderMatchMethod{},
+		}
+		resultWithNoMatch = appmesh.HttpRouteHeader{
+			Name:  awssdk.String("header1"),
+			Match: &appmesh.HeaderMatchMethod{},
+		}
+
+		//Exact
+		specWithExactHeaderMatch = appmeshv1beta1.HttpRouteHeader{
+			Name: "header1",
+			Match: &appmeshv1beta1.HeaderMatchMethod{
+				Exact: awssdk.String("value1"),
+			},
+		}
+		resultWithExactHeaderMatch = appmesh.HttpRouteHeader{
+			Name: awssdk.String("header1"),
+			Match: &appmesh.HeaderMatchMethod{
+				Exact: awssdk.String("value1"),
+			},
+		}
+		resultWithExactHeaderMatchDifferent = appmesh.HttpRouteHeader{
+			Name: awssdk.String("header1"),
+			Match: &appmesh.HeaderMatchMethod{
+				Exact: awssdk.String("diff1"),
+			},
+		}
+
+		//Prefix
+		specWithPrefixHeaderMatch = appmeshv1beta1.HttpRouteHeader{
+			Name: "header1",
+			Match: &appmeshv1beta1.HeaderMatchMethod{
+				Prefix: awssdk.String("value1"),
+			},
+		}
+		resultWithPrefixHeaderMatch = appmesh.HttpRouteHeader{
+			Name: awssdk.String("header1"),
+			Match: &appmesh.HeaderMatchMethod{
+				Prefix: awssdk.String("value1"),
+			},
+		}
+		resultWithPrefixHeaderMatchDifferent = appmesh.HttpRouteHeader{
+			Name: awssdk.String("header1"),
+			Match: &appmesh.HeaderMatchMethod{
+				Prefix: awssdk.String("diff1"),
+			},
+		}
+
+		//Suffix
+		specWithSuffixHeaderMatch = appmeshv1beta1.HttpRouteHeader{
+			Name: "header1",
+			Match: &appmeshv1beta1.HeaderMatchMethod{
+				Suffix: awssdk.String("value1"),
+			},
+		}
+		resultWithSuffixHeaderMatch = appmesh.HttpRouteHeader{
+			Name: awssdk.String("header1"),
+			Match: &appmesh.HeaderMatchMethod{
+				Suffix: awssdk.String("value1"),
+			},
+		}
+		resultWithSuffixHeaderMatchDifferent = appmesh.HttpRouteHeader{
+			Name: awssdk.String("header1"),
+			Match: &appmesh.HeaderMatchMethod{
+				Suffix: awssdk.String("diff1"),
+			},
+		}
+
+		//Regex
+		specWithRegexHeaderMatch = appmeshv1beta1.HttpRouteHeader{
+			Name: "header1",
+			Match: &appmeshv1beta1.HeaderMatchMethod{
+				Regex: awssdk.String("value1"),
+			},
+		}
+		resultWithRegexHeaderMatch = appmesh.HttpRouteHeader{
+			Name: awssdk.String("header1"),
+			Match: &appmesh.HeaderMatchMethod{
+				Regex: awssdk.String("value1"),
+			},
+		}
+		resultWithRegexHeaderMatchDifferent = appmesh.HttpRouteHeader{
+			Name: awssdk.String("header1"),
+			Match: &appmesh.HeaderMatchMethod{
+				Regex: awssdk.String("diff1"),
+			},
+		}
+
+		//Range
+		specWithRangeHeaderMatch = appmeshv1beta1.HttpRouteHeader{
+			Name: "header1",
+			Match: &appmeshv1beta1.HeaderMatchMethod{
+				Range: &appmeshv1beta1.MatchRange{
+					Start: awssdk.Int64(100),
+					End:   awssdk.Int64(200),
+				},
+			},
+		}
+		resultWithRangeHeaderMatch = appmesh.HttpRouteHeader{
+			Name: awssdk.String("header1"),
+			Match: &appmesh.HeaderMatchMethod{
+				Range: &appmesh.MatchRange{
+					Start: awssdk.Int64(100),
+					End:   awssdk.Int64(200),
+				},
+			},
+		}
+		resultWithRangeHeaderMatchDifferent = appmesh.HttpRouteHeader{
+			Name: awssdk.String("header1"),
+			Match: &appmesh.HeaderMatchMethod{
+				Range: &appmesh.MatchRange{
+					Start: awssdk.Int64(10),
+					End:   awssdk.Int64(20),
+				},
+			},
+		}
+	)
+
+	var tests = []struct {
+		name      string
+		desired   appmeshv1beta1.HttpRouteHeader
+		target    appmesh.HttpRouteHeader
+		different bool
+	}{
+		{"Desired and target have no match defined", specWithNoMatch, resultWithNoMatch, false},
+
+		{"Exact: headers are the same", specWithExactHeaderMatch, resultWithExactHeaderMatch, false},
+		{"Exact: target is missing", specWithExactHeaderMatch, resultWithNoMatch, true},
+		{"Exact: target is diff", specWithExactHeaderMatch, resultWithExactHeaderMatchDifferent, true},
+		{"Exact: desired is missing", specWithNoMatch, resultWithExactHeaderMatch, true},
+
+		{"Prefix: headers are the same", specWithPrefixHeaderMatch, resultWithPrefixHeaderMatch, false},
+		{"Prefix: target is missing", specWithPrefixHeaderMatch, resultWithNoMatch, true},
+		{"Prefix: target is diff", specWithPrefixHeaderMatch, resultWithPrefixHeaderMatchDifferent, true},
+		{"Prefix: desired is missing", specWithNoMatch, resultWithPrefixHeaderMatch, true},
+
+		{"Suffix: headers are the same", specWithSuffixHeaderMatch, resultWithSuffixHeaderMatch, false},
+		{"Suffix: target is missing", specWithSuffixHeaderMatch, resultWithNoMatch, true},
+		{"Suffix: target is diff", specWithSuffixHeaderMatch, resultWithSuffixHeaderMatchDifferent, true},
+		{"Suffix: desired is missing", specWithNoMatch, resultWithSuffixHeaderMatch, true},
+
+		{"Regex: headers are the same", specWithRegexHeaderMatch, resultWithRegexHeaderMatch, false},
+		{"Regex: target is missing", specWithRegexHeaderMatch, resultWithNoMatch, true},
+		{"Regex: target is diff", specWithRegexHeaderMatch, resultWithRegexHeaderMatchDifferent, true},
+		{"Regex: desired is missing", specWithNoMatch, resultWithRegexHeaderMatch, true},
+
+		{"Range: headers are the same", specWithRangeHeaderMatch, resultWithRangeHeaderMatch, false},
+		{"Range: target is missing", specWithRangeHeaderMatch, resultWithNoMatch, true},
+		{"Range: target is diff", specWithRangeHeaderMatch, resultWithRangeHeaderMatchDifferent, true},
+		{"Range: desired is missing", specWithNoMatch, resultWithRangeHeaderMatch, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := newAPIHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)
+			spec.Http.Match.Headers = []appmeshv1beta1.HttpRouteHeader{tt.desired}
+			result := newAWSHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)
+			result.Data.Spec.HttpRoute.Match.Headers = []*appmesh.HttpRouteHeader{&tt.target}
+			if res := routeNeedsUpdate(spec, result); res != tt.different {
+				t.Errorf("got %v, want %v", res, tt.different)
 			}
 		})
 	}

@@ -50,6 +50,25 @@ spec:
                           - grpc
                           - http2
                           - https
+                  healthCheck:
+                    properties:
+                      healthyThreshold:
+                        type: integer
+                      intervalMillis:
+                        type: integer
+                      path:
+                        type: string
+                      port:
+                        type: integer
+                      protocol:
+                        type: string
+                        enum:
+                          - tcp
+                          - http
+                      timeoutMillis:
+                        type: integer
+                      unhealthyThreshold:
+                        type: integer
             serviceDiscovery:
               type: object
               properties:
