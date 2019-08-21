@@ -337,7 +337,7 @@ spec:
       serviceAccountName: app-mesh-sa
       containers:
         - name: app-mesh-controller
-          image: 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/app-mesh-controller:v0.1.1
+          image: 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/app-mesh-controller:v0.1.2
           ports:
             - containerPort: 10555
 ---
