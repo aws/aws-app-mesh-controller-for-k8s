@@ -44,13 +44,9 @@ push-release:
 	docker tag $(IMAGE):$(VERSION) $(REPO):$(VERSION)
 	docker push $(REPO):$(VERSION)
 
-.PHONY: deploy-k8s-dev
-deploy-k8s-dev:
+.PHONY: deploy
+deploy:
 	./scripts/deploy.sh
-
-.PHONY: deploy-k8s-release
-deploy-k8s-release:
-	kubectl apply -f ./deploy/$(VERSION)
 
 .PHONY: example
 example:
