@@ -9,43 +9,44 @@ curl https://raw.githubusercontent.com/aws/aws-app-mesh-inject/master/scripts/in
 ```
 
 This will launch the webhook into the appmesh-inject namespace. Now add the correct permissions to your worker nodes (or your pod identity solution, like kube2iam):
+
 ```json
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": [
-                    "appmesh:DescribeMesh",
-                    "appmesh:DescribeVirtualNode",
-                    "appmesh:DescribeVirtualService",
-                    "appmesh:DescribeVirtualRouter",
-                    "appmesh:DescribeRoute",
-                    "appmesh:CreateMesh",
-                    "appmesh:CreateVirtualNode",
-                    "appmesh:CreateVirtualService",
-                    "appmesh:CreateVirtualRouter",
-                    "appmesh:CreateRoute",
-                    "appmesh:UpdateMesh",
-                    "appmesh:UpdateVirtualNode",
-                    "appmesh:UpdateVirtualService",
-                    "appmesh:UpdateVirtualRouter",
-                    "appmesh:UpdateRoute",
-                    "appmesh:ListMeshes",
-                    "appmesh:ListVirtualNodes",
-                    "appmesh:ListVirtualServices",
-                    "appmesh:ListVirtualRouters",
-                    "appmesh:ListRoutes",
-                    "appmesh:DeleteMesh",
-                    "appmesh:DeleteVirtualNode",
-                    "appmesh:DeleteVirtualService",
-                    "appmesh:DeleteVirtualRouter",
-                    "appmesh:DeleteRoute"
-                ],
-                "Resource": "*"
-            }
-        ]
-    }
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "appmesh:DescribeMesh",
+                "appmesh:DescribeVirtualNode",
+                "appmesh:DescribeVirtualService",
+                "appmesh:DescribeVirtualRouter",
+                "appmesh:DescribeRoute",
+                "appmesh:CreateMesh",
+                "appmesh:CreateVirtualNode",
+                "appmesh:CreateVirtualService",
+                "appmesh:CreateVirtualRouter",
+                "appmesh:CreateRoute",
+                "appmesh:UpdateMesh",
+                "appmesh:UpdateVirtualNode",
+                "appmesh:UpdateVirtualService",
+                "appmesh:UpdateVirtualRouter",
+                "appmesh:UpdateRoute",
+                "appmesh:ListMeshes",
+                "appmesh:ListVirtualNodes",
+                "appmesh:ListVirtualServices",
+                "appmesh:ListVirtualRouters",
+                "appmesh:ListRoutes",
+                "appmesh:DeleteMesh",
+                "appmesh:DeleteVirtualNode",
+                "appmesh:DeleteVirtualService",
+                "appmesh:DeleteVirtualRouter",
+                "appmesh:DeleteRoute"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
 ```
 
 Next, launch the controller:
