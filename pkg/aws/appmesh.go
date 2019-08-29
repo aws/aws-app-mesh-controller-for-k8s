@@ -16,26 +16,26 @@ import (
 )
 
 const (
-	DescribeMeshTimeout           = 5
-	CreateMeshTimeout             = 5
-	DeleteMeshTimeout             = 5
-	DescribeVirtualNodeTimeout    = 5
-	CreateVirtualNodeTimeout      = 5
-	UpdateVirtualNodeTimeout      = 5
-	DeleteVirtualNodeTimeout      = 5
-	DescribeVirtualServiceTimeout = 5
-	CreateVirtualServiceTimeout   = 5
-	UpdateVirtualServiceTimeout   = 5
-	DeleteVirtualServiceTimeout   = 5
-	DescribeVirtualRouterTimeout  = 5
-	CreateVirtualRouterTimeout    = 5
-	UpdateVirtualRouterTimeout    = 5
-	DeleteVirtualRouterTimeout    = 5
-	DescribeRouteTimeout          = 5
-	CreateRouteTimeout            = 5
+	DescribeMeshTimeout           = 10
+	CreateMeshTimeout             = 10
+	DeleteMeshTimeout             = 10
+	DescribeVirtualNodeTimeout    = 10
+	CreateVirtualNodeTimeout      = 10
+	UpdateVirtualNodeTimeout      = 10
+	DeleteVirtualNodeTimeout      = 10
+	DescribeVirtualServiceTimeout = 10
+	CreateVirtualServiceTimeout   = 10
+	UpdateVirtualServiceTimeout   = 10
+	DeleteVirtualServiceTimeout   = 10
+	DescribeVirtualRouterTimeout  = 10
+	CreateVirtualRouterTimeout    = 10
+	UpdateVirtualRouterTimeout    = 10
+	DeleteVirtualRouterTimeout    = 10
+	DescribeRouteTimeout          = 10
+	CreateRouteTimeout            = 10
 	ListRoutesTimeout             = 10
-	UpdateRouteTimeout            = 5
-	DeleteRouteTimeout            = 5
+	UpdateRouteTimeout            = 10
+	DeleteRouteTimeout            = 10
 )
 
 type AppMeshAPI interface {

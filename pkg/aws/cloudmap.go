@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/klog"
 
@@ -14,6 +15,14 @@ import (
 )
 
 const (
+	CreateServiceTimeout       = 10
+	DeregisterInstanceTimeout  = 10
+	GetServiceTimeout          = 10
+	ListInstancesPagesTimeout  = 10
+	ListNamespacesPagesTimeout = 10
+	ListServicesPagesTimeout   = 10
+	RegisterInstanceTimeout    = 10
+
 	//AttrAwsInstanceIPV4 is a special attribute expected by CloudMap.
 	//See https://github.com/aws/aws-sdk-go/blob/fd304fe4cb2ea1027e7fc7e21062beb768915fcc/service/servicediscovery/api.go#L5161
 	AttrAwsInstanceIPV4 = "AWS_INSTANCE_IPV4"
@@ -67,6 +76,9 @@ func (c *Cloud) CloudMapCreateService(ctx context.Context, cloudmapConfig *appme
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateServiceTimeout)
+	defer cancel()
+
 	createServiceOutput, err := c.cloudmap.CreateServiceWithContext(ctx, createServiceInput)
 	if err != nil {
 		//ignore already exists error
@@ -94,6 +106,9 @@ func (c *Cloud) CloudMapGetService(ctx context.Context, serviceID string) (*Clou
 	getServiceInput := &servicediscovery.GetServiceInput{
 		Id: awssdk.String(serviceID),
 	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*GetServiceTimeout)
+	defer cancel()
 
 	getServiceOutput, err := c.cloudmap.GetServiceWithContext(ctx, getServiceInput)
 	if err != nil {
@@ -145,7 +160,11 @@ func (c *Cloud) RegisterInstance(ctx context.Context, instanceID string, pod *co
 		CreatorRequestId: awssdk.String(pod.Name),
 		Attributes:       attr,
 	}
-	_, err = c.cloudmap.RegisterInstance(input)
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*RegisterInstanceTimeout)
+	defer cancel()
+
+	_, err = c.cloudmap.RegisterInstanceWithContext(ctx, input)
 	//ignore duplicate-request
 	if aerr, ok := err.(awserr.Error); ok {
 		if aerr.Code() == servicediscovery.ErrCodeDuplicateRequest {
@@ -167,7 +186,11 @@ func (c *Cloud) DeregisterInstance(ctx context.Context, instanceID string, cloud
 		ServiceId:  awssdk.String(serviceSummary.ServiceID),
 		InstanceId: awssdk.String(instanceID),
 	}
-	_, err = c.cloudmap.DeregisterInstance(input)
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*DeregisterInstanceTimeout)
+	defer cancel()
+
+	_, err = c.cloudmap.DeregisterInstanceWithContext(ctx, input)
 	//ignore duplicate-request
 	if aerr, ok := err.(awserr.Error); ok {
 		if aerr.Code() == servicediscovery.ErrCodeDuplicateRequest ||
@@ -192,6 +215,9 @@ func (c *Cloud) ListInstances(ctx context.Context, cloudmapConfig *appmesh.AwsCl
 	input := &servicediscovery.ListInstancesInput{
 		ServiceId: awssdk.String(serviceSummary.ServiceID),
 	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*ListInstancesPagesTimeout)
+	defer cancel()
 
 	c.cloudmap.ListInstancesPagesWithContext(ctx, input, func(output *servicediscovery.ListInstancesOutput, lastPage bool) bool {
 		for _, i := range output.Instances {
@@ -220,6 +246,9 @@ func (c *Cloud) getNamespace(ctx context.Context, cloudmapConfig *appmesh.AwsClo
 
 	listNamespacesInput := &servicediscovery.ListNamespacesInput{}
 	var namespaceItem *cloudmapNamespaceCacheItem
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*ListNamespacesPagesTimeout)
+	defer cancel()
 
 	err := c.cloudmap.ListNamespacesPagesWithContext(ctx,
 		listNamespacesInput,
@@ -293,6 +322,9 @@ func (c *Cloud) getServiceFromCloudMap(ctx context.Context, namespaceID string, 
 	}
 
 	var svcSummary *servicediscovery.ServiceSummary
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*ListServicesPagesTimeout)
+	defer cancel()
 
 	err := c.cloudmap.ListServicesPagesWithContext(ctx,
 		listServicesInput,
