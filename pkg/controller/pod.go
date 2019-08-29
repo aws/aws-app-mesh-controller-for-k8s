@@ -6,6 +6,7 @@ import (
 
 	ctrlaws "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 
+	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/appmesh"
 	corev1 "k8s.io/api/core/v1"
@@ -77,7 +78,7 @@ func (c *Controller) syncInstances(ctx context.Context) {
 			continue
 		}
 		cloudmapConfig := virtualNode.Spec.ServiceDiscovery.CloudMap
-		key := cloudmapConfig.ServiceName + "@" + cloudmapConfig.NamespaceName
+		key := cloudmapServiceCacheKey(*cloudmapConfig)
 		if _, ok := syncedServices[key]; ok {
 			continue
 		}
@@ -89,7 +90,7 @@ func (c *Controller) syncInstances(ctx context.Context) {
 
 		instances, err := c.cloud.ListInstances(ctx, appmeshCloudMapConfig)
 		if err != nil {
-			klog.Errorf("Error syncinc instances for cloudmapConfig %v, %v", cloudmapConfig, err)
+			klog.Errorf("Error syncing instances for cloudmapConfig %v, %v", cloudmapConfig, err)
 			continue
 		}
 
@@ -196,4 +197,8 @@ func podToInstanceID(pod *corev1.Pod) string {
 	}
 
 	return pod.Status.PodIP
+}
+
+func cloudmapServiceCacheKey(cloudmapConfig appmeshv1beta1.CloudMapServiceDiscovery) string {
+	return cloudmapConfig.ServiceName + "@" + cloudmapConfig.NamespaceName
 }
