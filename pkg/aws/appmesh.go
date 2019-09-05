@@ -16,26 +16,26 @@ import (
 )
 
 const (
-	DescribeMeshTimeout           = 5
-	CreateMeshTimeout             = 5
-	DeleteMeshTimeout             = 5
-	DescribeVirtualNodeTimeout    = 5
-	CreateVirtualNodeTimeout      = 5
-	UpdateVirtualNodeTimeout      = 5
-	DeleteVirtualNodeTimeout      = 5
-	DescribeVirtualServiceTimeout = 5
-	CreateVirtualServiceTimeout   = 5
-	UpdateVirtualServiceTimeout   = 5
-	DeleteVirtualServiceTimeout   = 5
-	DescribeVirtualRouterTimeout  = 5
-	CreateVirtualRouterTimeout    = 5
-	UpdateVirtualRouterTimeout    = 5
-	DeleteVirtualRouterTimeout    = 5
-	DescribeRouteTimeout          = 5
-	CreateRouteTimeout            = 5
+	DescribeMeshTimeout           = 10
+	CreateMeshTimeout             = 10
+	DeleteMeshTimeout             = 10
+	DescribeVirtualNodeTimeout    = 10
+	CreateVirtualNodeTimeout      = 10
+	UpdateVirtualNodeTimeout      = 10
+	DeleteVirtualNodeTimeout      = 10
+	DescribeVirtualServiceTimeout = 10
+	CreateVirtualServiceTimeout   = 10
+	UpdateVirtualServiceTimeout   = 10
+	DeleteVirtualServiceTimeout   = 10
+	DescribeVirtualRouterTimeout  = 10
+	CreateVirtualRouterTimeout    = 10
+	UpdateVirtualRouterTimeout    = 10
+	DeleteVirtualRouterTimeout    = 10
+	DescribeRouteTimeout          = 10
+	CreateRouteTimeout            = 10
 	ListRoutesTimeout             = 10
-	UpdateRouteTimeout            = 5
-	DeleteRouteTimeout            = 5
+	UpdateRouteTimeout            = 10
+	DeleteRouteTimeout            = 10
 )
 
 type AppMeshAPI interface {
@@ -279,7 +279,7 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 			}
 			input.Spec.SetServiceDiscovery(serviceDiscovery)
 		} else if vnode.Spec.ServiceDiscovery.CloudMap != nil {
-			// TODO(nic) add CloudMap Service Discovery when SDK supports it
+			input.Spec.SetServiceDiscovery(c.buildAwsCloudMapServiceDiscovery(vnode))
 		} else {
 			klog.Warningf("No service discovery set for virtual node %s", vnode.Name)
 		}
@@ -354,7 +354,7 @@ func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 			}
 			input.Spec.SetServiceDiscovery(serviceDiscovery)
 		} else if vnode.Spec.ServiceDiscovery.CloudMap != nil {
-			// TODO(nic) add CloudMap Service Discovery when SDK supports it
+			input.Spec.SetServiceDiscovery(c.buildAwsCloudMapServiceDiscovery(vnode))
 		} else {
 			klog.Warningf("No service discovery set for virtual node %s", vnode.Name)
 		}
@@ -871,6 +871,26 @@ func (c *Cloud) DeleteRoute(ctx context.Context, name string, routerName string,
 		return &Route{
 			Data: *output.Route,
 		}, nil
+	}
+}
+
+func (c *Cloud) buildAwsCloudMapServiceDiscovery(vnode *appmeshv1beta1.VirtualNode) *appmesh.ServiceDiscovery {
+	attr := []*appmesh.AwsCloudMapInstanceAttribute{}
+
+	//adding attributes defined by customer
+	for k, v := range vnode.Spec.ServiceDiscovery.CloudMap.Attributes {
+		attr = append(attr, &appmesh.AwsCloudMapInstanceAttribute{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
+	}
+
+	return &appmesh.ServiceDiscovery{
+		AwsCloudMap: &appmesh.AwsCloudMapServiceDiscovery{
+			NamespaceName: aws.String(vnode.Spec.ServiceDiscovery.CloudMap.NamespaceName),
+			ServiceName:   aws.String(vnode.Spec.ServiceDiscovery.CloudMap.ServiceName),
+			Attributes:    attr,
+		},
 	}
 }
 

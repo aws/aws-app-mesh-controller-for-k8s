@@ -2,6 +2,8 @@ package aws
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -10,10 +12,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/appmesh/appmeshiface"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	"github.com/aws/aws-sdk-go/service/servicediscovery/servicediscoveryiface"
+	"k8s.io/client-go/tools/cache"
 )
 
 type CloudAPI interface {
 	AppMeshAPI
+	CloudMapAPI
 }
 
 type Cloud struct {
@@ -21,6 +25,29 @@ type Cloud struct {
 
 	appmesh  appmeshiface.AppMeshAPI
 	cloudmap servicediscoveryiface.ServiceDiscoveryAPI
+
+	namespaceIDCache cache.Store
+	serviceIDCache   cache.Store
+}
+
+type cloudmapServiceCacheItem struct {
+	key   string
+	value CloudMapServiceSummary
+}
+
+type CloudMapServiceSummary struct {
+	NamespaceID string
+	ServiceID   string
+}
+
+type cloudmapNamespaceCacheItem struct {
+	key   string
+	value CloudMapNamespaceSummary
+}
+
+type CloudMapNamespaceSummary struct {
+	NamespaceID   string
+	NamespaceType string
 }
 
 func NewCloud(opts CloudOptions) (CloudAPI, error) {
@@ -41,8 +68,14 @@ func NewCloud(opts CloudOptions) (CloudAPI, error) {
 	}
 
 	return &Cloud{
-		aws.StringValue(cfg.Region),
-		appmesh.New(session, cfg),
-		servicediscovery.New(session, cfg),
+		region:   aws.StringValue(cfg.Region),
+		appmesh:  appmesh.New(session, cfg),
+		cloudmap: servicediscovery.New(session, cfg),
+		namespaceIDCache: cache.NewTTLStore(func(obj interface{}) (string, error) {
+			return obj.(*cloudmapNamespaceCacheItem).key, nil
+		}, 60*time.Second),
+		serviceIDCache: cache.NewTTLStore(func(obj interface{}) (string, error) {
+			return obj.(*cloudmapServiceCacheItem).key, nil
+		}, 60*time.Second),
 	}, nil
 }

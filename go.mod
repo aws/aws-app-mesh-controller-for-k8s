@@ -21,13 +21,16 @@ require (
 	github.com/onsi/ginkgo v1.7.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
+	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.2
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.1
-	golang.org/x/crypto v0.0.0-20190219172222-a4c6cb3142f2 // indirect
-	golang.org/x/net v0.0.0-20190213061140-3a22650c66bd // indirect
+	github.com/stretchr/objx v0.2.0 // indirect
+	github.com/stretchr/testify v1.3.0
+	github.com/vektra/mockery v0.0.0-20181123154057-e78b021dcbb5 // indirect
 	golang.org/x/oauth2 v0.0.0-20190220154721-9b3c75971fc9 // indirect
 	golang.org/x/time v0.0.0-20181108054448-85acf8d2951c // indirect
+	golang.org/x/tools/gopls v0.1.3 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/api v0.0.0-20181128191700-6db15a15d2d3
 	k8s.io/apimachinery v0.0.0-20181128191346-49ce2735e507

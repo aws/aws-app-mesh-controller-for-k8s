@@ -1,12 +1,18 @@
 package controller
 
 import (
+	"context"
+	"errors"
+	"strings"
 	"testing"
 
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
+	ctrlawsmocks "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/mocks"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/appmesh"
+	"github.com/aws/aws-sdk-go/service/servicediscovery"
+	"github.com/stretchr/testify/mock"
 )
 
 // newAWSVirtualNode is a helper function to generate an Kubernetes Custom Resource API object.
@@ -66,6 +72,12 @@ func newAPIVirtualNode(ports []int64, protocols []string, backends []string, hos
 	return &vn
 }
 
+func newAPIVirtualNodeWithCloudMap(ports []int64, protocols []string, backends []string, serviceDiscovery *appmeshv1beta1.ServiceDiscovery, fileAccessLogPath *string) *appmeshv1beta1.VirtualNode {
+	virtualNode := newAPIVirtualNode(ports, protocols, backends, "", fileAccessLogPath)
+	virtualNode.Spec.ServiceDiscovery = serviceDiscovery
+	return virtualNode
+}
+
 // newAWSVirtualNode is a helper function to generate an App Mesh API object.  Ports and protocols should be arrays
 // of the same length.
 func newAWSVirtualNode(ports []int64, protocols []string, backends []string, hostname string, fileAccessLogPath *string) *aws.VirtualNode {
@@ -120,6 +132,12 @@ func newAWSVirtualNode(ports []int64, protocols []string, backends []string, hos
 	return &awsVn
 }
 
+func newAWSVirtualNodeWithCloudMap(ports []int64, protocols []string, backends []string, serviceDiscovery *appmesh.ServiceDiscovery, fileAccessLogPath *string) *aws.VirtualNode {
+	virtualNode := newAWSVirtualNode(ports, protocols, backends, "", fileAccessLogPath)
+	virtualNode.Data.Spec.ServiceDiscovery = serviceDiscovery
+	return virtualNode
+}
+
 func TestVNodeNeedsUpdate(t *testing.T) {
 
 	var (
@@ -133,22 +151,20 @@ func TestVNodeNeedsUpdate(t *testing.T) {
 		port443       int64 = 443
 		protocolHTTPS       = "https"
 		backend2            = "baz.local"
-		hostname2           = "fizz.local"
 
 		// Spec with default values
 		defaultNodeSpec = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, nil)
 
 		// result with the same values as defaultNodeSpec
-		defaultNodeResult       = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, nil)
-		extraPortSpec           = newAPIVirtualNode([]int64{port80, port443}, []string{protocolHTTP, protocolHTTPS}, []string{backend}, hostname, nil)
-		extraPortResult         = newAWSVirtualNode([]int64{port80, port443}, []string{protocolHTTP, protocolHTTPS}, []string{backend}, hostname, nil)
-		noPortSpec              = newAPIVirtualNode([]int64{}, []string{}, []string{backend}, hostname, nil)
-		noPortResult            = newAWSVirtualNode([]int64{}, []string{}, []string{backend}, hostname, nil)
-		extraBackendSpec        = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend, backend2}, hostname, nil)
-		extraBackendResult      = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend, backend2}, hostname, nil)
-		noBackendsSpec          = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{}, hostname, nil)
-		noBackendsResult        = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{}, hostname, nil)
-		differentHostnameResult = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname2, nil)
+		defaultNodeResult  = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, nil)
+		extraPortSpec      = newAPIVirtualNode([]int64{port80, port443}, []string{protocolHTTP, protocolHTTPS}, []string{backend}, hostname, nil)
+		extraPortResult    = newAWSVirtualNode([]int64{port80, port443}, []string{protocolHTTP, protocolHTTPS}, []string{backend}, hostname, nil)
+		noPortSpec         = newAPIVirtualNode([]int64{}, []string{}, []string{backend}, hostname, nil)
+		noPortResult       = newAWSVirtualNode([]int64{}, []string{}, []string{backend}, hostname, nil)
+		extraBackendSpec   = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend, backend2}, hostname, nil)
+		extraBackendResult = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend, backend2}, hostname, nil)
+		noBackendsSpec     = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{}, hostname, nil)
+		noBackendsResult   = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{}, hostname, nil)
 	)
 
 	var vnodetests = []struct {
@@ -158,18 +174,213 @@ func TestVNodeNeedsUpdate(t *testing.T) {
 		needsUpdate bool
 	}{
 		{"vnodes are the same", defaultNodeSpec, defaultNodeResult, false},
+		//listener
 		{"extra port in spec", extraPortSpec, defaultNodeResult, true},
 		{"extra port in result", defaultNodeSpec, extraPortResult, true},
 		{"no ports in spec", noPortSpec, defaultNodeResult, true},
 		{"no ports in result", defaultNodeSpec, noPortResult, true},
 		{"no ports in either", noPortSpec, noPortResult, false},
+		//backend
 		{"extra backend in spec", extraBackendSpec, defaultNodeResult, true},
 		{"extra backend in result", defaultNodeSpec, extraBackendResult, true},
 		{"extra backend in both", extraBackendSpec, extraBackendResult, false},
 		{"no backend in spec", noBackendsSpec, defaultNodeResult, true},
 		{"no backend in result", defaultNodeSpec, noBackendsResult, true},
 		{"no backend in both", noBackendsSpec, noBackendsResult, false},
+	}
+
+	for _, tt := range vnodetests {
+		t.Run(tt.name, func(t *testing.T) {
+			if res := vnodeNeedsUpdate(tt.spec, tt.aws); res != tt.needsUpdate {
+				t.Errorf("got %v, want %v", res, tt.needsUpdate)
+			}
+		})
+	}
+}
+
+func TestVNodeServiceDiscoveryNeedsUpdate(t *testing.T) {
+
+	var (
+		// defaults
+		port80       int64 = 80
+		protocolHTTP       = "http"
+		hostname           = "foo.local"
+		backend            = "bar.local"
+
+		// extras
+		hostname2 = "fizz.local"
+
+		// Spec with default values
+		defaultNodeSpec = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, nil)
+
+		// result with the same values as defaultNodeSpec
+		defaultNodeResult       = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, nil)
+		differentHostnameResult = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname2, nil)
+		//cloudmap testdata
+		cloudMapNodeSpec = newAPIVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{backend},
+			&appmeshv1beta1.ServiceDiscovery{
+				CloudMap: &appmeshv1beta1.CloudMapServiceDiscovery{
+					ServiceName:   "foo",
+					NamespaceName: "local",
+					Attributes: map[string]string{
+						"version": "v1",
+						"stage":   "canary",
+					},
+				},
+			},
+			nil)
+		cloudMapNodeWithNoAttributesSpec = newAPIVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{backend},
+			&appmeshv1beta1.ServiceDiscovery{
+				CloudMap: &appmeshv1beta1.CloudMapServiceDiscovery{
+					ServiceName:   "foo",
+					NamespaceName: "local",
+				},
+			},
+			nil)
+		noServiceDiscoverySpec    = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, "", nil)
+		noServiceDiscoveryResult  = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, "", nil)
+		dnsServiceDiscoveryResult = newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, "foo.dns.local", nil)
+		cloudmapResult            = newAWSVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{backend},
+			&appmesh.ServiceDiscovery{
+				AwsCloudMap: &appmesh.AwsCloudMapServiceDiscovery{
+					ServiceName:   awssdk.String("foo"),
+					NamespaceName: awssdk.String("local"),
+					Attributes: []*appmesh.AwsCloudMapInstanceAttribute{
+						&appmesh.AwsCloudMapInstanceAttribute{
+							Key:   awssdk.String("version"),
+							Value: awssdk.String("v1"),
+						},
+						&appmesh.AwsCloudMapInstanceAttribute{
+							Key:   awssdk.String("stage"),
+							Value: awssdk.String("canary"),
+						},
+					},
+				},
+			},
+			nil,
+		)
+		cloudmapWithNoAttributesResult = newAWSVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{backend},
+			&appmesh.ServiceDiscovery{
+				AwsCloudMap: &appmesh.AwsCloudMapServiceDiscovery{
+					ServiceName:   awssdk.String("foo"),
+					NamespaceName: awssdk.String("local"),
+					Attributes:    []*appmesh.AwsCloudMapInstanceAttribute{},
+				},
+			},
+			nil,
+		)
+		cloudmapWithDifferentNamespaceResult = newAWSVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{backend},
+			&appmesh.ServiceDiscovery{
+				AwsCloudMap: &appmesh.AwsCloudMapServiceDiscovery{
+					ServiceName:   awssdk.String("foo"),
+					NamespaceName: awssdk.String("other"),
+					Attributes: []*appmesh.AwsCloudMapInstanceAttribute{
+						&appmesh.AwsCloudMapInstanceAttribute{
+							Key:   awssdk.String("version"),
+							Value: awssdk.String("v1"),
+						},
+						&appmesh.AwsCloudMapInstanceAttribute{
+							Key:   awssdk.String("stage"),
+							Value: awssdk.String("canary"),
+						},
+					},
+				},
+			},
+			nil,
+		)
+		cloudmapWithDifferentServiceNameResult = newAWSVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{backend},
+			&appmesh.ServiceDiscovery{
+				AwsCloudMap: &appmesh.AwsCloudMapServiceDiscovery{
+					ServiceName:   awssdk.String("bar"),
+					NamespaceName: awssdk.String("local"),
+					Attributes: []*appmesh.AwsCloudMapInstanceAttribute{
+						&appmesh.AwsCloudMapInstanceAttribute{
+							Key:   awssdk.String("version"),
+							Value: awssdk.String("v1"),
+						},
+						&appmesh.AwsCloudMapInstanceAttribute{
+							Key:   awssdk.String("stage"),
+							Value: awssdk.String("canary"),
+						},
+					},
+				},
+			},
+			nil,
+		)
+		cloudmapWithDifferentAttributeKeyResult = newAWSVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{backend},
+			&appmesh.ServiceDiscovery{
+				AwsCloudMap: &appmesh.AwsCloudMapServiceDiscovery{
+					ServiceName:   awssdk.String("foo"),
+					NamespaceName: awssdk.String("local"),
+					Attributes: []*appmesh.AwsCloudMapInstanceAttribute{
+						&appmesh.AwsCloudMapInstanceAttribute{
+							Key:   awssdk.String("version"),
+							Value: awssdk.String("v1"),
+						},
+						&appmesh.AwsCloudMapInstanceAttribute{
+							Key:   awssdk.String("type"),
+							Value: awssdk.String("canary"),
+						},
+					},
+				},
+			},
+			nil,
+		)
+		cloudmapWithDifferentAttributeValueResult = newAWSVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{backend},
+			&appmesh.ServiceDiscovery{
+				AwsCloudMap: &appmesh.AwsCloudMapServiceDiscovery{
+					ServiceName:   awssdk.String("foo"),
+					NamespaceName: awssdk.String("local"),
+					Attributes: []*appmesh.AwsCloudMapInstanceAttribute{
+						&appmesh.AwsCloudMapInstanceAttribute{
+							Key:   awssdk.String("version"),
+							Value: awssdk.String("v2"),
+						},
+						&appmesh.AwsCloudMapInstanceAttribute{
+							Key:   awssdk.String("stage"),
+							Value: awssdk.String("canary"),
+						},
+					},
+				},
+			},
+			nil,
+		)
+	)
+
+	var vnodetests = []struct {
+		name        string
+		spec        *appmeshv1beta1.VirtualNode
+		aws         *aws.VirtualNode
+		needsUpdate bool
+	}{
+		{"vnodes are the same", defaultNodeSpec, defaultNodeResult, false},
 		{"different hostname in result", defaultNodeSpec, differentHostnameResult, true},
+		{"different servicediscovery in spec", cloudMapNodeSpec, dnsServiceDiscoveryResult, true},
+		{"no servicediscovery in result", cloudMapNodeSpec, noServiceDiscoveryResult, true},
+		{"no servicediscovery in both", noServiceDiscoverySpec, noServiceDiscoveryResult, false},
+		{"same servicediscovery in both", cloudMapNodeSpec, cloudmapResult, false},
+		{"no cloudmap attributes in result", cloudMapNodeSpec, cloudmapWithNoAttributesResult, true},
+		{"no cloudmap attributes in both", cloudMapNodeWithNoAttributesSpec, cloudmapWithNoAttributesResult, false},
+		{"different cloudmap namespace", cloudMapNodeSpec, cloudmapWithDifferentNamespaceResult, true},
+		{"different cloudmap serviceName", cloudMapNodeSpec, cloudmapWithDifferentServiceNameResult, true},
+		{"different cloudmap attribute keys", cloudMapNodeSpec, cloudmapWithDifferentAttributeKeyResult, true},
+		{"different cloudmap attribute values", cloudMapNodeSpec, cloudmapWithDifferentAttributeValueResult, true},
 	}
 
 	for _, tt := range vnodetests {
@@ -220,4 +431,162 @@ func TestVNodeLoggingNeedsUpdate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHandleCloudMapServiceDiscovery(t *testing.T) {
+
+	var (
+		// defaults
+		port80       int64 = 80
+		protocolHTTP       = "http"
+		hostname           = "foo.local"
+		backend            = "bar.local"
+
+		// Spec with no service-discovery (client virtual-node)
+		noServiceDiscoverySpec = newAPIVirtualNode([]int64{}, []string{}, []string{backend}, "", nil)
+
+		// Spec with default values
+		dnsServiceDiscvery = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, nil)
+
+		//cloudmap testdata
+		cloudMapServiceDiscovery = newAPIVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{},
+			&appmeshv1beta1.ServiceDiscovery{
+				CloudMap: &appmeshv1beta1.CloudMapServiceDiscovery{
+					ServiceName:   "foo",
+					NamespaceName: "local",
+				},
+			},
+			nil)
+
+		cloudMapWithNoServiceName = newAPIVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{},
+			&appmeshv1beta1.ServiceDiscovery{
+				CloudMap: &appmeshv1beta1.CloudMapServiceDiscovery{
+					NamespaceName: "local",
+				},
+			},
+			nil)
+
+		cloudMapWithNoNamespaceName = newAPIVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{},
+			&appmeshv1beta1.ServiceDiscovery{
+				CloudMap: &appmeshv1beta1.CloudMapServiceDiscovery{
+					ServiceName: "foo",
+				},
+			},
+			nil)
+	)
+
+	var vnodetests = []struct {
+		name         string
+		spec         *appmeshv1beta1.VirtualNode
+		errExpected  bool
+		callCloudMap bool
+		errCloudMap  error
+	}{
+		{"no service-discovery", noServiceDiscoverySpec, false, false, nil},
+		{"dns service-discovery", dnsServiceDiscvery, false, false, nil},
+		{"cloudmap service-discovery with no namespaceName", cloudMapWithNoNamespaceName, true, false, nil},
+		{"cloudmap service-discovery with no serviceName", cloudMapWithNoServiceName, true, false, nil},
+		{"valid cloudmap service-discovery", cloudMapServiceDiscovery, false, true, nil},
+		{"valid cloudmap service-discovery but error from cloudmap", cloudMapServiceDiscovery, true, true, errors.New("cloudmap error")},
+	}
+
+	for _, tt := range vnodetests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			mockCloudAPI := new(ctrlawsmocks.CloudAPI)
+			c := &Controller{
+				name:  "test",
+				cloud: mockCloudAPI,
+			}
+			if tt.callCloudMap {
+				mockCloudmapService := &servicediscovery.Service{
+					Id: awssdk.String("id"),
+				}
+				mockCloudAPI.On("CloudMapCreateService", ctx, mock.AnythingOfType("*appmesh.AwsCloudMapServiceDiscovery"), c.name).Return(mockCloudmapService.Id, tt.errCloudMap)
+			}
+			err := c.handleServiceDiscovery(ctx, tt.spec, tt.spec.DeepCopy())
+			if err != nil && !tt.errExpected {
+				t.Errorf("unexpected error, %v", err)
+			} else if err == nil && tt.errExpected {
+				t.Errorf("expected error but no error was thrown")
+			}
+		})
+	}
+}
+
+func TestMutateVirtualNodeForProcessing(t *testing.T) {
+	var (
+		// defaults
+		port80       int64 = 80
+		protocolHTTP       = "http"
+		hostname           = "foo.local"
+		backend            = "bar.local"
+
+		noServiceDiscoverySpec                   = newAPIVirtualNode([]int64{}, []string{}, []string{backend}, "", nil)
+		dnsServiceDiscvery                       = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, nil)
+		cloudMapServiceDiscoveryWithNoAttributes = newAPIVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{},
+			&appmeshv1beta1.ServiceDiscovery{
+				CloudMap: &appmeshv1beta1.CloudMapServiceDiscovery{
+					ServiceName:   "foo",
+					NamespaceName: "local",
+				},
+			},
+			nil)
+
+		cloudMapServiceDiscoveryWithAttributes = newAPIVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{},
+			&appmeshv1beta1.ServiceDiscovery{
+				CloudMap: &appmeshv1beta1.CloudMapServiceDiscovery{
+					ServiceName:   "foo",
+					NamespaceName: "local",
+					Attributes:    map[string]string{"key1": "value1"},
+				},
+			},
+			nil)
+	)
+
+	var vnodetests = []struct {
+		name       string
+		spec       *appmeshv1beta1.VirtualNode
+		isCloudMap bool
+	}{
+		{"no service-discovery", noServiceDiscoverySpec, false},
+		{"dns service-discovery", dnsServiceDiscvery, false},
+		{"cloudmap service-discovery with no attributes", cloudMapServiceDiscoveryWithNoAttributes, true},
+		{"cloudmap service-discovery with attributes", cloudMapServiceDiscoveryWithAttributes, true},
+	}
+
+	for _, tt := range vnodetests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Controller{}
+			tt.spec.Namespace = "test-ns"
+			tt.spec.Spec.MeshName = "test-mesh"
+			c.mutateVirtualNodeForProcessing(tt.spec)
+			if !strings.HasSuffix(tt.spec.Name, tt.spec.Namespace) {
+				t.Errorf("Virtual Node name is not namespaced correctly")
+			}
+
+			if tt.isCloudMap {
+				meshAttrValue, ok := tt.spec.Spec.ServiceDiscovery.CloudMap.Attributes[attributeKeyAppMeshMeshName]
+				if !ok || meshAttrValue != tt.spec.Spec.MeshName {
+					t.Errorf("CloudMap service discover attribute %s is not set properly", attributeKeyAppMeshMeshName)
+				}
+
+				virtualNodeAttrValue, ok := tt.spec.Spec.ServiceDiscovery.CloudMap.Attributes[attributeKeyAppMeshVirtualNodeName]
+				if !ok || virtualNodeAttrValue != tt.spec.Name {
+					t.Errorf("CloudMap service discover attribute %s is not set properly", attributeKeyAppMeshVirtualNodeName)
+				}
+			}
+		})
+	}
+
 }

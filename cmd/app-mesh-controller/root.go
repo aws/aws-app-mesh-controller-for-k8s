@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
+
 	// TODO(nic) Don't depend on k8s.io/kubernetes, just duplicate the logic in this package -- it will be a
 	// smaller headache.
 	//_ "k8s.io/kubernetes/pkg/client/metrics/prometheus" // for client metric registration
@@ -25,10 +26,11 @@ import (
 )
 
 var (
-	cfgFile    string
-	master     string
-	kubeconfig string
-	region     string
+	cfgFile     string
+	master      string
+	kubeconfig  string
+	region      string
+	threadiness int
 )
 
 func init() {
@@ -37,6 +39,7 @@ func init() {
 	rootCmd.Flags().StringVar(&master, "master", "", "Master address")
 	rootCmd.Flags().StringVar(&kubeconfig, "kubeconfig", "", "Path to your kubeconfig")
 	rootCmd.Flags().StringVar(&region, "aws-region", "", "AWS Region")
+	rootCmd.Flags().IntVar(&threadiness, "threadiness", controller.DefaultThreadiness, "Worker concurrency.")
 
 	viper.BindPFlag("master", rootCmd.Flags().Lookup("master"))
 	viper.BindPFlag("kubeconfig", rootCmd.Flags().Lookup("kubeconfig"))
@@ -106,7 +109,7 @@ var rootCmd = &cobra.Command{
 		)
 
 		if err != nil {
-			klog.Fatal("Error running controller: %s", err)
+			klog.Fatalf("Error running controller: %s", err)
 		}
 
 		kubeInformerFactory.Start(stopCh)
@@ -117,8 +120,7 @@ var rootCmd = &cobra.Command{
 			klog.Fatal(httpServer.ListenAndServe())
 		}()
 
-		threadiness := 1
-
+		klog.Infof("Running controller with threadiness=%d", threadiness)
 		if err := c.Run(threadiness, stopCh); err != nil {
 			klog.Fatal(err)
 		}

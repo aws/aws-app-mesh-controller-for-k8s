@@ -13,8 +13,14 @@ import (
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog"
+)
+
+const (
+	attributeKeyAppMeshMeshName        = "appmesh.k8s.aws/mesh"
+	attributeKeyAppMeshVirtualNodeName = "appmesh.k8s.aws/virtualNode"
 )
 
 func (c *Controller) handleVNode(key string) error {
@@ -35,12 +41,11 @@ func (c *Controller) handleVNode(key string) error {
 
 	// Make copy here so we never update the shared copy
 	vnode := shared.DeepCopy()
+	//now mutate the node to adjust name and fill in default values
+	c.mutateVirtualNodeForProcessing(vnode)
 
 	// Make copy for updates so we don't save namespaced resource names
 	copy := shared.DeepCopy()
-
-	// Namespace resource names
-	vnode.Name = namespacedResourceName(vnode.Name, vnode.Namespace)
 
 	// Resources with finalizers are not deleted immediately,
 	// instead the deletion timestamp is set when a client deletes them.
@@ -108,6 +113,11 @@ func (c *Controller) handleVNode(key string) error {
 		copy = updated
 	}
 
+	err = c.handleServiceDiscovery(ctx, vnode, copy)
+	if err != nil {
+		return fmt.Errorf("Error handling cloudmap service discovery for virtual node %s: %s", vnode.Name, err)
+	}
+
 	return nil
 }
 
@@ -116,6 +126,7 @@ func (c *Controller) updateVNodeResource(vnode *appmeshv1beta1.VirtualNode) (*ap
 }
 
 func (c *Controller) updateVNodeStatus(vnode *appmeshv1beta1.VirtualNode, target *aws.VirtualNode) (*appmeshv1beta1.VirtualNode, error) {
+	vnode.Status.VirtualNodeArn = target.Data.Metadata.Arn
 	switch target.Status() {
 	case appmesh.VirtualNodeStatusCodeActive:
 		return c.updateVNodeActive(vnode, api.ConditionTrue)
@@ -168,15 +179,45 @@ func getVNodeCondition(conditionType appmeshv1beta1.VirtualNodeConditionType, st
 // vnodeNeedsUpdate compares the App Mesh API result (target) with the desired spec (desired) and
 // determines if there is any drift that requires an update.
 func vnodeNeedsUpdate(desired *appmeshv1beta1.VirtualNode, target *aws.VirtualNode) bool {
-	if desired.Spec.ServiceDiscovery != nil &&
-		desired.Spec.ServiceDiscovery.Dns != nil {
-		// If Service discovery is desired, verify target is equal
-		if desired.Spec.ServiceDiscovery.Dns.HostName != target.HostName() {
+	if desired.Spec.ServiceDiscovery != nil {
+		if target.Data.Spec.ServiceDiscovery == nil {
 			return true
+		}
+		if desired.Spec.ServiceDiscovery.Dns != nil {
+			// If Service discovery is desired, verify target is equal
+			if desired.Spec.ServiceDiscovery.Dns.HostName != target.HostName() {
+				return true
+			}
+		} else if desired.Spec.ServiceDiscovery.CloudMap != nil {
+			if target.Data.Spec.ServiceDiscovery.AwsCloudMap == nil {
+				return true
+			}
+			if desired.Spec.ServiceDiscovery.CloudMap.ServiceName !=
+				awssdk.StringValue(target.Data.Spec.ServiceDiscovery.AwsCloudMap.ServiceName) {
+				return true
+			}
+			if desired.Spec.ServiceDiscovery.CloudMap.NamespaceName !=
+				awssdk.StringValue(target.Data.Spec.ServiceDiscovery.AwsCloudMap.NamespaceName) {
+				return true
+			}
+			if len(desired.Spec.ServiceDiscovery.CloudMap.Attributes) != len(target.Data.Spec.ServiceDiscovery.AwsCloudMap.Attributes) {
+				return true
+			}
+			for _, attr := range target.Data.Spec.ServiceDiscovery.AwsCloudMap.Attributes {
+				val, ok := desired.Spec.ServiceDiscovery.CloudMap.Attributes[awssdk.StringValue(attr.Key)]
+				if !ok {
+					return true
+				}
+				if val != awssdk.StringValue(attr.Value) {
+					return true
+				}
+			}
+		} else {
+			klog.Errorf("Unknown servicediscovery %v is defined for virtual-node %s", desired.Spec.ServiceDiscovery, target.Name())
 		}
 	} else {
 		// If no desired Service Discovery, verify target is not set
-		if target.HostName() != "" {
+		if target.Data.Spec.ServiceDiscovery != nil {
 			return true
 		}
 	}
@@ -295,4 +336,80 @@ func (c *Controller) handleVNodeMeshDeleting(ctx context.Context, vnode *appmesh
 		return false
 	}
 	return true
+}
+
+func (c *Controller) handleServiceDiscovery(ctx context.Context, vnode *appmeshv1beta1.VirtualNode, copyForUpdate *appmeshv1beta1.VirtualNode) error {
+	//only handle cloudmap for now
+	if vnode.Spec.ServiceDiscovery == nil || vnode.Spec.ServiceDiscovery.CloudMap == nil {
+		klog.V(4).Infof("CloudMap service is already created")
+		return nil
+	}
+
+	if vnode.Status.CloudMapService != nil && vnode.Status.CloudMapService.ServiceID != nil {
+		klog.V(4).Infof("CloudMap service is already created for virtual-node %s", vnode.Name)
+		return nil
+	}
+
+	cloudmapNamespaceName := vnode.Spec.ServiceDiscovery.CloudMap.NamespaceName
+	cloudmapServiceName := vnode.Spec.ServiceDiscovery.CloudMap.ServiceName
+
+	if cloudmapNamespaceName == "" {
+		return fmt.Errorf("CloudMap servicediscovery is missing NamespaceName value for virtual node %s", vnode.Name)
+	}
+
+	if cloudmapServiceName == "" {
+		return fmt.Errorf("CloudMap servicediscovery is missing ServiceName value for virtual node %s", vnode.Name)
+	}
+
+	cloudmapConfig := &appmesh.AwsCloudMapServiceDiscovery{
+		NamespaceName: awssdk.String(cloudmapNamespaceName),
+		ServiceName:   awssdk.String(cloudmapServiceName),
+	}
+
+	//It is okay to call Create multiple times for same service-name.
+	//It is also cheaper than calling get and then figuring out to create.
+	cloudmapService, err := c.cloud.CloudMapCreateService(ctx, cloudmapConfig, c.name)
+	if err != nil {
+		return err
+	}
+
+	klog.Infof("Created CloudMap service %s (id:%s)", cloudmapServiceName, cloudmapService.ServiceID)
+	copyForUpdate.Status.CloudMapService = &appmeshv1beta1.CloudMapServiceStatus{
+		NamespaceID: awssdk.String(cloudmapService.NamespaceID),
+		ServiceID:   awssdk.String(cloudmapService.ServiceID),
+	}
+
+	if _, err := c.meshclientset.AppmeshV1beta1().VirtualNodes(copyForUpdate.Namespace).UpdateStatus(copyForUpdate); err != nil {
+		//these are informational fields, so will be saved when reconciling
+		klog.Errorf("Error updating CloudMapServiceStatus on virtual node %s: %s", copyForUpdate.Name, err)
+	}
+
+	return nil
+}
+
+func (c *Controller) reconcileServices(ctx context.Context) error {
+	virtualNodes, err := c.virtualNodeLister.List(labels.Everything())
+	if err != nil {
+		return err
+	}
+
+	for _, originalVNode := range virtualNodes {
+		vnode := originalVNode.DeepCopy()
+		copyForUpdate := originalVNode.DeepCopy()
+		c.handleServiceDiscovery(ctx, vnode, copyForUpdate)
+	}
+
+	//TODO: delete unused cloudmap services
+	return nil
+}
+
+func (c *Controller) mutateVirtualNodeForProcessing(vnode *appmeshv1beta1.VirtualNode) {
+	vnode.Name = namespacedResourceName(vnode.Name, vnode.Namespace)
+	if vnode.Spec.ServiceDiscovery != nil && vnode.Spec.ServiceDiscovery.CloudMap != nil {
+		if vnode.Spec.ServiceDiscovery.CloudMap.Attributes == nil {
+			vnode.Spec.ServiceDiscovery.CloudMap.Attributes = map[string]string{}
+		}
+		vnode.Spec.ServiceDiscovery.CloudMap.Attributes[attributeKeyAppMeshMeshName] = vnode.Spec.MeshName
+		vnode.Spec.ServiceDiscovery.CloudMap.Attributes[attributeKeyAppMeshVirtualNodeName] = vnode.Name
+	}
 }

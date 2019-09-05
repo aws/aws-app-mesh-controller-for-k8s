@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -26,6 +27,8 @@ import (
 )
 
 const (
+	//setting default threadiness to number of go-routines
+	DefaultThreadiness                  = 5
 	controllerAgentName                 = "app-mesh-controller"
 	meshDeletionFinalizerName           = "meshDeletion.finalizers.appmesh.k8s.aws"
 	virtualNodeDeletionFinalizerName    = "virtualNodeDeletion.finalizers.appmesh.k8s.aws"
@@ -33,6 +36,7 @@ const (
 )
 
 type Controller struct {
+	name  string
 	cloud aws.CloudAPI
 	// kubeclientset is a standard kubernetes clientset
 	kubeclientset kubernetes.Interface
@@ -60,6 +64,7 @@ type Controller struct {
 	mq workqueue.RateLimitingInterface
 	nq workqueue.RateLimitingInterface
 	sq workqueue.RateLimitingInterface
+	pq workqueue.RateLimitingInterface
 
 	// recorder is an event recorder for recording Event resources to the
 	// Kubernetes API.
@@ -83,6 +88,7 @@ func NewController(
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
 	controller := &Controller{
+		name:                 controllerAgentName,
 		cloud:                cloud,
 		kubeclientset:        kubeclientset,
 		meshclientset:        meshclientset,
@@ -97,6 +103,7 @@ func NewController(
 		mq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		nq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		sq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		pq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		recorder:             recorder,
 	}
 
@@ -176,6 +183,7 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) error {
 	defer c.mq.ShutDown()
 	defer c.nq.ShutDown()
 	defer c.sq.ShutDown()
+	defer c.pq.ShutDown()
 
 	// Start the informer factories to begin populating the informer caches
 	// Wait for the caches to be synced before starting workers
@@ -190,6 +198,8 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) error {
 		go wait.Until(c.meshWorker, time.Second, stopCh)
 		go wait.Until(c.vNodeWorker, time.Second, stopCh)
 		go wait.Until(c.vServiceWorker, time.Second, stopCh)
+		go wait.Until(c.podWorker, time.Second, stopCh)
+		go wait.Until(c.cloudmapReconciler, 1*time.Minute, stopCh)
 	}
 
 	klog.Info("Started workers")
@@ -201,28 +211,28 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) error {
 
 // podAdded adds the pods endpoint to matching CloudMap Services.
 func (c *Controller) podAdded(obj interface{}) {
-	klog.Info("Pod Added")
 	key, err := cache.MetaNamespaceKeyFunc(obj)
-	if err == nil {
-		c.sq.Add(key)
+	if err != nil {
+		klog.V(4).Infof("Error getting key for obj")
 	}
+	c.pq.Add(key)
 }
 
 func (c *Controller) podUpdated(old interface{}, new interface{}) {
-	klog.Info("Pod Updated")
 	key, err := cache.MetaNamespaceKeyFunc(new)
-	if err == nil {
-		c.sq.Add(key)
+	if err != nil {
+		klog.V(4).Infof("Error getting key for obj")
 	}
+	c.pq.Add(key)
 }
 
 // podDeleted removes the endpoint from matching CloudMap services
 func (c *Controller) podDeleted(obj interface{}) {
-	klog.Info("Pod Deleted")
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
-	if err == nil {
-		c.sq.Add(key)
+	if err != nil {
+		klog.V(4).Infof("Error getting key for obj")
 	}
+	c.pq.Add(key)
 }
 
 // getMeshServicesForPod finds Mesh Services with selectors that match the Pod's labels
@@ -231,8 +241,8 @@ func (c *Controller) getMeshServicesForPod(pod *corev1.Pod) ([]*appmeshv1beta1.V
 }
 
 func (c *Controller) meshAdded(obj interface{}) {
-	klog.Info("Mesh Added")
 	key, err := cache.MetaNamespaceKeyFunc(obj)
+	klog.V(4).Infof("Mesh Added: %s", key)
 	if err == nil {
 		c.mq.Add(key)
 	} else {
@@ -293,65 +303,65 @@ func (c *Controller) enqueueVServicesForMesh(name string) {
 }
 
 func (c *Controller) meshUpdated(old interface{}, new interface{}) {
-	klog.Info("Mesh Updated")
 	key, err := cache.MetaNamespaceKeyFunc(new)
 	if err == nil {
+		klog.V(4).Infof("Mesh Updated: %s", key)
 		c.mq.Add(key)
 	}
 }
 
 func (c *Controller) meshDeleted(obj interface{}) {
-	klog.Info("Mesh Deleted")
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err == nil {
+		klog.V(4).Infof("Mesh Deleted: %s", key)
 		c.mq.Add(key)
 	}
 }
 
 func (c *Controller) virtualNodeAdded(obj interface{}) {
-	klog.Info("Virtual Node Added")
 	key, err := cache.MetaNamespaceKeyFunc(obj)
 	if err == nil {
+		klog.V(4).Infof("Virtual Node Added: %s", key)
 		c.nq.Add(key)
 	}
 }
 
 func (c *Controller) virtualNodeUpdated(old interface{}, new interface{}) {
-	klog.Info("Virtual Node Updated")
 	key, err := cache.MetaNamespaceKeyFunc(new)
 	if err == nil {
+		klog.V(4).Infof("Virtual Node Updated: %s", key)
 		c.nq.Add(key)
 	}
 }
 
 func (c *Controller) virtualNodeDeleted(obj interface{}) {
-	klog.Info("Virtual Node Deleted")
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err == nil {
+		klog.V(4).Infof("Virtual Node Deleted: %s", key)
 		c.nq.Add(key)
 	}
 }
 
 func (c *Controller) virtualServiceAdded(obj interface{}) {
-	klog.Info("Virtual Service Added")
 	key, err := cache.MetaNamespaceKeyFunc(obj)
 	if err == nil {
+		klog.V(4).Infof("Virtual Service Added: %s", key)
 		c.sq.Add(key)
 	}
 }
 
 func (c *Controller) virtualServiceUpdated(old interface{}, new interface{}) {
-	klog.Info("Virtual Service Updated")
 	key, err := cache.MetaNamespaceKeyFunc(new)
 	if err == nil {
+		klog.V(4).Infof("Virtual Service Updated: %s", key)
 		c.sq.Add(key)
 	}
 }
 
 func (c *Controller) virtualServiceDeleted(obj interface{}) {
-	klog.Info("Virtual Service Deleted")
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err == nil {
+		klog.V(4).Infof("Virtual Service Deleted: %s", key)
 		c.sq.Add(key)
 	}
 }
@@ -369,6 +379,17 @@ func (c *Controller) vNodeWorker() {
 func (c *Controller) vServiceWorker() {
 	for c.processNext(c.sq, c.handleVService) {
 	}
+}
+
+func (c *Controller) podWorker() {
+	for c.processNext(c.pq, c.handlePod) {
+	}
+}
+
+func (c *Controller) cloudmapReconciler() {
+	ctx := context.Background()
+	c.reconcileServices(ctx)
+	c.reconcileInstances(ctx)
 }
 
 // processNext will read a single work item off the queue and
@@ -414,7 +435,7 @@ func processNextWorkItem(queue workqueue.RateLimitingInterface, syncHandler func
 		// Finally, if no error occurs we Forget this item so it does not
 		// get queued again until another change happens.
 		queue.Forget(obj)
-		klog.Infof("Successfully synced '%s'", key)
+		klog.V(4).Infof("Successfully synced '%s'", key)
 		return nil
 	}(obj)
 
