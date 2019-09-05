@@ -267,6 +267,10 @@ func (c *Cloud) getNamespace(ctx context.Context, cloudmapConfig *appmesh.AwsClo
 		},
 	)
 
+	if err != nil {
+		return nil, err
+	}
+
 	if namespaceItem == nil {
 		klog.Infof("No namespace found with name %s", awssdk.StringValue(cloudmapConfig.NamespaceName))
 		return nil, nil
