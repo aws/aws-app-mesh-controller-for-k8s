@@ -885,15 +885,13 @@ func (c *Cloud) buildAwsCloudMapServiceDiscovery(vnode *appmeshv1beta1.VirtualNo
 		})
 	}
 
-	serviceDiscovery := &appmesh.ServiceDiscovery{
+	return &appmesh.ServiceDiscovery{
 		AwsCloudMap: &appmesh.AwsCloudMapServiceDiscovery{
 			NamespaceName: aws.String(vnode.Spec.ServiceDiscovery.CloudMap.NamespaceName),
 			ServiceName:   aws.String(vnode.Spec.ServiceDiscovery.CloudMap.ServiceName),
 			Attributes:    attr,
 		},
 	}
-
-	return serviceDiscovery
 }
 
 func IsAWSErrNotFound(err error) bool {
