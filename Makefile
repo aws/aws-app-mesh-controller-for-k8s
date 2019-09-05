@@ -55,3 +55,11 @@ example:
 .PHONY: clean
 clean:
 	rm -rf ./_output
+
+.PHONY: mock-gen
+mock-gen:
+	./scripts/mockgen.sh
+
+.PHONY: test
+test:
+	go test ./pkg/controller/...

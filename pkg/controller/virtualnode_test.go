@@ -9,6 +9,8 @@ import (
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	ctrlawsmocks "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/mocks"
+	appmeshv1beta1mocks "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/mocks"
+	appmeshv1beta1typedmocks "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/typed/appmesh/v1beta1/mocks"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/appmesh"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
@@ -500,15 +502,42 @@ func TestHandleCloudMapServiceDiscovery(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			mockCloudAPI := new(ctrlawsmocks.CloudAPI)
+			mockMeshClientSet := new(appmeshv1beta1mocks.Interface)
+			mockAppmeshv1beta1Client := new(appmeshv1beta1typedmocks.AppmeshV1beta1Interface)
+			mockMeshClientSet.On(
+				"AppmeshV1beta1",
+			).Return(mockAppmeshv1beta1Client)
 			c := &Controller{
-				name:  "test",
-				cloud: mockCloudAPI,
+				name:          "test",
+				cloud:         mockCloudAPI,
+				meshclientset: mockMeshClientSet,
 			}
 			if tt.callCloudMap {
 				mockCloudmapService := &servicediscovery.Service{
 					Id: awssdk.String("id"),
 				}
-				mockCloudAPI.On("CloudMapCreateService", ctx, mock.AnythingOfType("*appmesh.AwsCloudMapServiceDiscovery"), c.name).Return(mockCloudmapService.Id, tt.errCloudMap)
+				mockCloudAPI.On(
+					"CloudMapCreateService",
+					ctx,
+					mock.AnythingOfType("*appmesh.AwsCloudMapServiceDiscovery"),
+					c.name,
+				).Return(
+					&aws.CloudMapServiceSummary{
+						NamespaceID: "nsId",
+						ServiceID:   awssdk.StringValue(mockCloudmapService.Id),
+					},
+					tt.errCloudMap,
+				)
+
+				mockVirtualNodeInterface := new(appmeshv1beta1typedmocks.VirtualNodeInterface)
+				mockAppmeshv1beta1Client.On(
+					"VirtualNodes",
+					mock.Anything,
+				).Return(mockVirtualNodeInterface)
+				mockVirtualNodeInterface.On(
+					"UpdateStatus",
+					mock.AnythingOfType("*v1beta1.VirtualNode"),
+				).Return(nil, nil)
 			}
 			err := c.handleServiceDiscovery(ctx, tt.spec, tt.spec.DeepCopy())
 			if err != nil && !tt.errExpected {
