@@ -46,7 +46,8 @@ type cloudmapNamespaceCacheItem struct {
 }
 
 type CloudMapNamespaceSummary struct {
-	NamespaceID string
+	NamespaceID   string
+	NamespaceType string
 }
 
 func NewCloud(opts CloudOptions) (CloudAPI, error) {

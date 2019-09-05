@@ -43,7 +43,7 @@ type CloudMapAPI interface {
 
 //CloudMapCreateService calls AWS ServiceDiscovery CreateService API
 func (c *Cloud) CloudMapCreateService(ctx context.Context, cloudmapConfig *appmesh.AwsCloudMapServiceDiscovery, creatorRequestID string) (*CloudMapServiceSummary, error) {
-	key := awssdk.StringValue(cloudmapConfig.ServiceName) + "@" + awssdk.StringValue(cloudmapConfig.NamespaceName)
+	key := c.serviceCacheKey(cloudmapConfig)
 
 	existingItem, exists, _ := c.serviceIDCache.Get(&cloudmapServiceCacheItem{
 		key: key,
@@ -61,6 +61,28 @@ func (c *Cloud) CloudMapCreateService(ctx context.Context, cloudmapConfig *appme
 		return nil, fmt.Errorf("Could not find namespace in cloudmap with name %s", awssdk.StringValue(cloudmapConfig.NamespaceName))
 	}
 
+	//Only DNS namespaces provide support for applications to resolve service names
+	//to endpoints. HTTP namespaces on the other hand require discover-instances API
+	//to be called to resolve names to endpoints. In App Mesh application uses standard
+	//DNS resolution before Envoy intercepts the traffic and uses discover-instances via
+	//App Mesh's EDS endpoint. Hence, both DNS and discover-instances resolution need to
+	//work. Today only private dns namespaces support this, hence this check.
+	//It is possible to use HTTP namespaces when Envoy supports DNS filter
+	//https://github.com/envoyproxy/envoy/issues/6748
+	//TODO add support for HTTP namespace
+	if namespaceSummary.NamespaceType != servicediscovery.NamespaceTypeDnsPrivate {
+		return nil, fmt.Errorf("Cannot create service under namespace %s with type %s, only namespaces with type %s are supported",
+			awssdk.StringValue(cloudmapConfig.NamespaceName),
+			namespaceSummary.NamespaceType,
+			servicediscovery.NamespaceTypeDnsPrivate,
+		)
+	}
+
+	return c.createServiceUnderPrivateDNSNamespace(ctx, cloudmapConfig, creatorRequestID, namespaceSummary)
+}
+
+func (c *Cloud) createServiceUnderPrivateDNSNamespace(ctx context.Context, cloudmapConfig *appmesh.AwsCloudMapServiceDiscovery, creatorRequestID string, namespaceSummary *CloudMapNamespaceSummary) (*CloudMapServiceSummary, error) {
+	key := c.serviceCacheKey(cloudmapConfig)
 	createServiceInput := &servicediscovery.CreateServiceInput{
 		CreatorRequestId: awssdk.String(creatorRequestID),
 		Name:             cloudmapConfig.ServiceName,
@@ -235,7 +257,7 @@ func (c *Cloud) ListInstances(ctx context.Context, cloudmapConfig *appmesh.AwsCl
 }
 
 func (c *Cloud) getNamespace(ctx context.Context, cloudmapConfig *appmesh.AwsCloudMapServiceDiscovery) (*CloudMapNamespaceSummary, error) {
-	key := awssdk.StringValue(cloudmapConfig.NamespaceName)
+	key := c.namespaceCacheKey(cloudmapConfig)
 
 	existingItem, exists, _ := c.namespaceIDCache.Get(&cloudmapNamespaceCacheItem{
 		key: key,
@@ -256,8 +278,11 @@ func (c *Cloud) getNamespace(ctx context.Context, cloudmapConfig *appmesh.AwsClo
 			for _, ns := range listNamespacesOutput.Namespaces {
 				if awssdk.StringValue(ns.Name) == awssdk.StringValue(cloudmapConfig.NamespaceName) {
 					namespaceItem = &cloudmapNamespaceCacheItem{
-						key:   key,
-						value: CloudMapNamespaceSummary{NamespaceID: awssdk.StringValue(ns.Id)},
+						key: key,
+						value: CloudMapNamespaceSummary{
+							NamespaceID:   awssdk.StringValue(ns.Id),
+							NamespaceType: awssdk.StringValue(ns.Type),
+						},
 					}
 					c.namespaceIDCache.Add(namespaceItem)
 					return true
@@ -280,7 +305,7 @@ func (c *Cloud) getNamespace(ctx context.Context, cloudmapConfig *appmesh.AwsClo
 }
 
 func (c *Cloud) getService(ctx context.Context, cloudmapConfig *appmesh.AwsCloudMapServiceDiscovery) (*CloudMapServiceSummary, error) {
-	key := awssdk.StringValue(cloudmapConfig.ServiceName) + "@" + awssdk.StringValue(cloudmapConfig.NamespaceName)
+	key := c.serviceCacheKey(cloudmapConfig)
 
 	existingItem, exists, _ := c.serviceIDCache.Get(&cloudmapServiceCacheItem{
 		key: key,
@@ -352,4 +377,12 @@ func (c *Cloud) getServiceFromCloudMap(ctx context.Context, namespaceID string, 
 	}
 
 	return svcSummary, err
+}
+
+func (c *Cloud) serviceCacheKey(cloudmapConfig *appmesh.AwsCloudMapServiceDiscovery) string {
+	return awssdk.StringValue(cloudmapConfig.ServiceName) + "@" + awssdk.StringValue(cloudmapConfig.NamespaceName)
+}
+
+func (c *Cloud) namespaceCacheKey(cloudmapConfig *appmesh.AwsCloudMapServiceDiscovery) string {
+	return awssdk.StringValue(cloudmapConfig.NamespaceName)
 }
