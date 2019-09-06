@@ -60,6 +60,12 @@ clean:
 mock-gen:
 	./scripts/mockgen.sh
 
-.PHONY: test
+PACKAGES:=$(shell go list ./... | sed -n '1!p' | grep ${PKG}/pkg/controller)
 test:
-	go test ./pkg/controller/...
+	echo "mode: count" > coverage-all.out
+	$(foreach pkg,$(PACKAGES), \
+		go test -p=1 -cover -covermode=count -coverprofile=coverage.out ${pkg}; \
+		tail -n +2 coverage.out >> coverage-all.out;)
+
+cover: test
+	go tool cover -html=coverage-all.out
