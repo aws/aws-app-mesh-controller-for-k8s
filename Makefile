@@ -55,3 +55,17 @@ example:
 .PHONY: clean
 clean:
 	rm -rf ./_output
+
+.PHONY: mock-gen
+mock-gen:
+	./scripts/mockgen.sh
+
+PACKAGES:=$(shell go list ./... | sed -n '1!p' | grep ${PKG}/pkg/controller)
+test:
+	echo "mode: count" > coverage-all.out
+	$(foreach pkg,$(PACKAGES), \
+		go test -p=1 -cover -covermode=count -coverprofile=coverage.out ${pkg}; \
+		tail -n +2 coverage.out >> coverage-all.out;)
+
+cover: test
+	go tool cover -html=coverage-all.out

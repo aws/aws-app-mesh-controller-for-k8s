@@ -39,11 +39,11 @@ func (_m *CloudAPI) CloudMapCreateService(_a0 context.Context, _a1 *appmesh.AwsC
 }
 
 // CloudMapGetService provides a mock function with given fields: _a0, _a1
-func (_m *CloudAPI) CloudMapGetService(_a0 context.Context, _a1 *appmesh.AwsCloudMapServiceDiscovery) (*aws.CloudMapServiceSummary, error) {
+func (_m *CloudAPI) CloudMapGetService(_a0 context.Context, _a1 string) (*aws.CloudMapServiceSummary, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *aws.CloudMapServiceSummary
-	if rf, ok := ret.Get(0).(func(context.Context, *appmesh.AwsCloudMapServiceDiscovery) *aws.CloudMapServiceSummary); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *aws.CloudMapServiceSummary); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -52,7 +52,7 @@ func (_m *CloudAPI) CloudMapGetService(_a0 context.Context, _a1 *appmesh.AwsClou
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *appmesh.AwsCloudMapServiceDiscovery) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -466,13 +466,13 @@ func (_m *CloudAPI) ListInstances(_a0 context.Context, _a1 *appmesh.AwsCloudMapS
 	return r0, r1
 }
 
-// RegisterInstance provides a mock function with given fields: _a0, _a1, _a2
-func (_m *CloudAPI) RegisterInstance(_a0 context.Context, _a1 *v1.Pod, _a2 *appmesh.AwsCloudMapServiceDiscovery) error {
-	ret := _m.Called(_a0, _a1, _a2)
+// RegisterInstance provides a mock function with given fields: _a0, _a1, _a2, _a3
+func (_m *CloudAPI) RegisterInstance(_a0 context.Context, _a1 string, _a2 *v1.Pod, _a3 *appmesh.AwsCloudMapServiceDiscovery) error {
+	ret := _m.Called(_a0, _a1, _a2, _a3)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v1.Pod, *appmesh.AwsCloudMapServiceDiscovery) error); ok {
-		r0 = rf(_a0, _a1, _a2)
+	if rf, ok := ret.Get(0).(func(context.Context, string, *v1.Pod, *appmesh.AwsCloudMapServiceDiscovery) error); ok {
+		r0 = rf(_a0, _a1, _a2, _a3)
 	} else {
 		r0 = ret.Error(0)
 	}

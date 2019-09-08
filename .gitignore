@@ -40,3 +40,5 @@ Session.vim
 
 /bazel-*
 *.pyc
+coverage-all.out
+coverage.out
