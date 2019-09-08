@@ -1,5 +1,7 @@
 ## Install
 
+*Minimum supported Kubernetes version: v1.11*
+
 Although the controller can be used independently from the aws-app-mesh-inject webhook, it is recommended that they be used together.  To Install the webhook, execute the following commands:
 
 ```bash
