@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/klog"
 )
 
@@ -225,26 +226,50 @@ func (c *Controller) updateRoutesActive(vservice *appmeshv1beta1.VirtualService,
 }
 
 func (c *Controller) updateVServiceCondition(vservice *appmeshv1beta1.VirtualService, conditionType appmeshv1beta1.VirtualServiceConditionType, status api.ConditionStatus) (*appmeshv1beta1.VirtualService, error) {
-	now := metav1.Now()
 	condition := getVServiceCondition(conditionType, vservice.Status)
+	if condition.Status == status {
+		// Already is set to status
+		return nil, nil
+	}
+
+	now := metav1.Now()
 	if condition == (appmeshv1beta1.VirtualServiceCondition{}) {
 		// condition does not exist
-		newCondition := appmeshv1beta1.VirtualServiceCondition{
+		condition = appmeshv1beta1.VirtualServiceCondition{
 			Type:               conditionType,
 			Status:             status,
 			LastTransitionTime: &now,
 		}
-		vservice.Status.Conditions = append(vservice.Status.Conditions, newCondition)
-	} else if condition.Status == status {
-		// Already is set to status
-		return nil, nil
 	} else {
 		// condition exists and not set to status
 		condition.Status = status
 		condition.LastTransitionTime = &now
 	}
 
-	return c.meshclientset.AppmeshV1beta1().VirtualServices(vservice.Namespace).UpdateStatus(vservice)
+	err := c.setVirtualServiceStatusCondition(vservice, condition)
+	if err != nil {
+		return nil, err
+	}
+
+	return vservice, nil
+}
+
+func (c *Controller) setVirtualServiceStatusCondition(vservice *appmeshv1beta1.VirtualService, condition appmeshv1beta1.VirtualServiceCondition) error {
+	firstTry := true
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		var getErr error
+		if !firstTry {
+			vservice, getErr = c.meshclientset.AppmeshV1beta1().VirtualServices(vservice.Namespace).Get(vservice.GetName(), metav1.GetOptions{})
+			if getErr != nil {
+				return getErr
+			}
+		}
+		copy := vservice.DeepCopy()
+		copy.Status.Conditions = append(vservice.Status.Conditions, condition)
+		_, err := c.meshclientset.AppmeshV1beta1().VirtualServices(vservice.Namespace).UpdateStatus(copy)
+		firstTry = false
+		return err
+	})
 }
 
 func getVServiceCondition(conditionType appmeshv1beta1.VirtualServiceConditionType, status appmeshv1beta1.VirtualServiceStatus) appmeshv1beta1.VirtualServiceCondition {

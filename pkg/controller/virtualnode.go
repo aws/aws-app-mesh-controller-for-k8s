@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/klog"
 )
 
@@ -144,26 +145,45 @@ func (c *Controller) updateVNodeActive(vnode *appmeshv1beta1.VirtualNode, status
 }
 
 func (c *Controller) updateVNodeCondition(vnode *appmeshv1beta1.VirtualNode, conditionType appmeshv1beta1.VirtualNodeConditionType, status api.ConditionStatus) (*appmeshv1beta1.VirtualNode, error) {
-	now := metav1.Now()
 	condition := getVNodeCondition(conditionType, vnode.Status)
+	if condition.Status == status {
+		return nil, nil
+	}
+
+	now := metav1.Now()
 	if condition == (appmeshv1beta1.VirtualNodeCondition{}) {
 		// condition does not exist
-		newCondition := appmeshv1beta1.VirtualNodeCondition{
+		condition = appmeshv1beta1.VirtualNodeCondition{
 			Type:               conditionType,
 			Status:             status,
 			LastTransitionTime: &now,
 		}
-		vnode.Status.Conditions = append(vnode.Status.Conditions, newCondition)
-	} else if condition.Status == status {
-		// Already is set to status
-		return nil, nil
 	} else {
 		// condition exists and not set to status
 		condition.Status = status
 		condition.LastTransitionTime = &now
 	}
 
-	return c.meshclientset.AppmeshV1beta1().VirtualNodes(vnode.Namespace).UpdateStatus(vnode)
+	err := c.setVirtualNodeStatusCondition(vnode, condition)
+	return vnode, err
+}
+
+func (c *Controller) setVirtualNodeStatusCondition(vnode *appmeshv1beta1.VirtualNode, condition appmeshv1beta1.VirtualNodeCondition) error {
+	firstTry := true
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		var getErr error
+		if !firstTry {
+			vnode, getErr = c.meshclientset.AppmeshV1beta1().VirtualNodes(vnode.Namespace).Get(vnode.GetName(), metav1.GetOptions{})
+			if getErr != nil {
+				return getErr
+			}
+		}
+		vnodeCopy := vnode.DeepCopy()
+		vnodeCopy.Status.Conditions = append(vnode.Status.Conditions, condition)
+		_, err := c.meshclientset.AppmeshV1beta1().VirtualNodes(vnode.Namespace).UpdateStatus(vnodeCopy)
+		firstTry = false
+		return err
+	})
 }
 
 func getVNodeCondition(conditionType appmeshv1beta1.VirtualNodeConditionType, status appmeshv1beta1.VirtualNodeStatus) appmeshv1beta1.VirtualNodeCondition {
@@ -374,17 +394,36 @@ func (c *Controller) handleServiceDiscovery(ctx context.Context, vnode *appmeshv
 	}
 
 	klog.Infof("Created CloudMap service %s (id:%s)", cloudmapServiceName, cloudmapService.ServiceID)
-	copyForUpdate.Status.CloudMapService = &appmeshv1beta1.CloudMapServiceStatus{
+
+	statusErr := c.setVirtualNodeStatusCloudMapService(copyForUpdate, &appmeshv1beta1.CloudMapServiceStatus{
 		NamespaceID: awssdk.String(cloudmapService.NamespaceID),
 		ServiceID:   awssdk.String(cloudmapService.ServiceID),
-	}
+	})
 
-	if _, err := c.meshclientset.AppmeshV1beta1().VirtualNodes(copyForUpdate.Namespace).UpdateStatus(copyForUpdate); err != nil {
+	if statusErr != nil {
 		//these are informational fields, so will be saved when reconciling
-		klog.Errorf("Error updating CloudMapServiceStatus on virtual node %s: %s", copyForUpdate.Name, err)
+		klog.Errorf("Error updating CloudMapServiceStatus on virtual node %s: %s", copyForUpdate.Name, statusErr)
 	}
 
 	return nil
+}
+
+func (c *Controller) setVirtualNodeStatusCloudMapService(vnode *appmeshv1beta1.VirtualNode, cloudmapService *appmeshv1beta1.CloudMapServiceStatus) error {
+	firstTry := true
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		var getErr error
+		if !firstTry {
+			vnode, getErr = c.meshclientset.AppmeshV1beta1().VirtualNodes(vnode.Namespace).Get(vnode.GetName(), metav1.GetOptions{})
+			if getErr != nil {
+				return getErr
+			}
+		}
+		vnodeCopy := vnode.DeepCopy()
+		vnodeCopy.Status.CloudMapService = cloudmapService
+		_, err := c.meshclientset.AppmeshV1beta1().VirtualNodes(vnode.Namespace).UpdateStatus(vnodeCopy)
+		firstTry = false
+		return err
+	})
 }
 
 func (c *Controller) reconcileServices(ctx context.Context) error {
