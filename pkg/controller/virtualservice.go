@@ -235,18 +235,19 @@ func (c *Controller) updateVServiceCondition(vservice *appmeshv1beta1.VirtualSer
 	now := metav1.Now()
 	if condition == (appmeshv1beta1.VirtualServiceCondition{}) {
 		// condition does not exist
-		condition = appmeshv1beta1.VirtualServiceCondition{
+		newCondition := appmeshv1beta1.VirtualServiceCondition{
 			Type:               conditionType,
 			Status:             status,
 			LastTransitionTime: &now,
 		}
+		vservice.Status.Conditions = append(vservice.Status.Conditions, newCondition)
 	} else {
 		// condition exists and not set to status
 		condition.Status = status
 		condition.LastTransitionTime = &now
 	}
 
-	err := c.setVirtualServiceStatusCondition(vservice, condition)
+	err := c.setVirtualServiceStatusConditions(vservice, vservice.Status.Conditions)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +255,7 @@ func (c *Controller) updateVServiceCondition(vservice *appmeshv1beta1.VirtualSer
 	return vservice, nil
 }
 
-func (c *Controller) setVirtualServiceStatusCondition(vservice *appmeshv1beta1.VirtualService, condition appmeshv1beta1.VirtualServiceCondition) error {
+func (c *Controller) setVirtualServiceStatusConditions(vservice *appmeshv1beta1.VirtualService, conditions []appmeshv1beta1.VirtualServiceCondition) error {
 	firstTry := true
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		var getErr error
@@ -265,7 +266,7 @@ func (c *Controller) setVirtualServiceStatusCondition(vservice *appmeshv1beta1.V
 			}
 		}
 		copy := vservice.DeepCopy()
-		copy.Status.Conditions = append(vservice.Status.Conditions, condition)
+		copy.Status.Conditions = conditions
 		_, err := c.meshclientset.AppmeshV1beta1().VirtualServices(vservice.Namespace).UpdateStatus(copy)
 		firstTry = false
 		return err

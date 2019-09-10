@@ -153,22 +153,23 @@ func (c *Controller) updateVNodeCondition(vnode *appmeshv1beta1.VirtualNode, con
 	now := metav1.Now()
 	if condition == (appmeshv1beta1.VirtualNodeCondition{}) {
 		// condition does not exist
-		condition = appmeshv1beta1.VirtualNodeCondition{
+		newCondition := appmeshv1beta1.VirtualNodeCondition{
 			Type:               conditionType,
 			Status:             status,
 			LastTransitionTime: &now,
 		}
+		vnode.Status.Conditions = append(vnode.Status.Conditions, newCondition)
 	} else {
 		// condition exists and not set to status
 		condition.Status = status
 		condition.LastTransitionTime = &now
 	}
 
-	err := c.setVirtualNodeStatusCondition(vnode, condition)
+	err := c.setVirtualNodeStatusConditions(vnode, vnode.Status.Conditions)
 	return vnode, err
 }
 
-func (c *Controller) setVirtualNodeStatusCondition(vnode *appmeshv1beta1.VirtualNode, condition appmeshv1beta1.VirtualNodeCondition) error {
+func (c *Controller) setVirtualNodeStatusConditions(vnode *appmeshv1beta1.VirtualNode, conditions []appmeshv1beta1.VirtualNodeCondition) error {
 	firstTry := true
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		var getErr error
@@ -179,7 +180,7 @@ func (c *Controller) setVirtualNodeStatusCondition(vnode *appmeshv1beta1.Virtual
 			}
 		}
 		vnodeCopy := vnode.DeepCopy()
-		vnodeCopy.Status.Conditions = append(vnode.Status.Conditions, condition)
+		vnodeCopy.Status.Conditions = conditions
 		_, err := c.meshclientset.AppmeshV1beta1().VirtualNodes(vnode.Namespace).UpdateStatus(vnodeCopy)
 		firstTry = false
 		return err
