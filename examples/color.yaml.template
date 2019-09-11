@@ -103,6 +103,7 @@ metadata:
 spec:
   meshName: ${MESH_NAME}
   virtualRouter:
+    name: color-router
     listeners:
       - portMapping:
           port: 9080
@@ -129,12 +130,13 @@ metadata:
 spec:
   meshName: ${MESH_NAME}
   virtualRouter:
+    name: gateway-router
     listeners:
       - portMapping:
           port: 9080
           protocol: http
   routes:
-    - name: color-route
+    - name: gateway-route
       http:
         match:
           prefix: /color
@@ -390,6 +392,7 @@ metadata:
 spec:
   meshName: ${MESH_NAME}
   virtualRouter:
+    name: tcpecho-router
     listeners:
       - portMapping:
           port: 2701
