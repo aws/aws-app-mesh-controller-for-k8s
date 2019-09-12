@@ -1,10 +1,14 @@
+<p align="center">
+    <img src="docs/product-icon_AWS_App_Mesh_icon_squid_ink.svg" alt="App Mesh Logo" width="200" />
+</p>
+
 ## AWS App Mesh Controller For K8s
 
-AWS App Mesh Controller For K8s is a controller to help manage AppMesh resources for a Kubernetes cluster.  The controller watches custom resources for changes and reflects those changes into the App Mesh API. It is accompanied by the deployment of three custom resource definitions ([CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)): meshes, virtualnodes, and virtualservices.  These map to App Mesh API objects which the controller manages for you. 
+AWS App Mesh Controller For K8s is a controller to help manage [App Mesh](https://aws.amazon.com/app-mesh/) resources for a Kubernetes cluster.  The controller watches custom resources for changes and reflects those changes into the [App Mesh API](https://docs.aws.amazon.com/app-mesh/latest/APIReference/Welcome.html). It is accompanied by the deployment of three custom resource definitions ([CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)): meshes, virtualnodes, and virtualservices.  These map to App Mesh API objects which the controller manages for you.
 
 ## Getting started
 
-Check out the [example](docs/example.md) application, and read the [design](docs/design.md).
+Check out the [example](docs/example.md) application, and read [design and usage](docs/design.md).
 
 To begin using it in your cluster, follow the [install instructions](docs/install.md).
 
@@ -55,7 +59,7 @@ First, create a Mesh resource, which will trigger the controller to create a Mes
               prefix: /
             action:
               weightedTargets:
-                - virtualNodeName: 
+                - virtualNodeName:
                   weight: 1
 
 
@@ -73,4 +77,4 @@ Contributions welcome!  Please read our [guidelines](CONTRIBUTING.md) and [Code 
 
 ## License
 
-This library is licensed under the Apache 2.0 License. 
+This library is licensed under the Apache 2.0 License.
