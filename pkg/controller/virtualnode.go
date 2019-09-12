@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	awssdk "github.com/aws/aws-sdk-go/aws"
 
@@ -244,12 +245,7 @@ func vnodeNeedsUpdate(desired *appmeshv1beta1.VirtualNode, target *aws.VirtualNo
 	}
 
 	if desired.Spec.Listeners != nil {
-		desiredSet := set.NewSet()
-		for i := range desired.Spec.Listeners {
-			desiredSet.Add(desired.Spec.Listeners[i])
-		}
-		currSet := target.ListenersSet()
-		if !desiredSet.Equal(currSet) {
+		if !reflect.DeepEqual(desired.Spec.Listeners, target.Listeners()) {
 			return true
 		}
 	} else {

@@ -112,6 +112,25 @@ spec:
                           - grpc
                           - http2
                           - https
+                  healthCheck:
+                    properties:
+                      healthyThreshold:
+                        type: integer
+                      intervalMillis:
+                        type: integer
+                      path:
+                        type: string
+                      port:
+                        type: integer
+                      protocol:
+                        type: string
+                        enum:
+                          - tcp
+                          - http
+                      timeoutMillis:
+                        type: integer
+                      unhealthyThreshold:
+                        type: integer
             serviceDiscovery:
               type: object
               properties:
@@ -243,11 +262,44 @@ spec:
                   http:
                     type: object
                     properties:
+                      priority:
+                        type: integer
                       match:
                         type: object
                         properties:
                           prefix:
                             type: string
+                          method:
+                            type: string
+                          scheme:
+                            type: string
+                          headers:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                invert:
+                                  type: boolean
+                                match:
+                                  type: object
+                                  properties:
+                                    exact:
+                                      type: string
+                                    prefix:
+                                      type: string
+                                    regex:
+                                      type: string
+                                    suffix:
+                                      type: string
+                                    range:
+                                      type: object
+                                      properties:
+                                        start:
+                                          type: integer
+                                        end:
+                                          type: integer
                       action:
                         type: object
                         properties:

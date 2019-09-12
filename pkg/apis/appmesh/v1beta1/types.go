@@ -115,6 +115,8 @@ type Route struct {
 	Http *HttpRoute `json:"http,omitempty"`
 	// +optional
 	Tcp *TcpRoute `json:"tcp,omitempty"`
+	// +optional
+	Priority *int64 `json:"priority,omitempty"`
 }
 
 type HttpRoute struct {
@@ -123,7 +125,29 @@ type HttpRoute struct {
 }
 
 type HttpRouteMatch struct {
-	Prefix string `json:"prefix"`
+	Prefix  string            `json:"prefix"`
+	Method  *string           `json:"method,omitempty"`
+	Headers []HttpRouteHeader `json:"headers,omitempty"`
+	Scheme  *string           `json:"scheme,omitempty"`
+}
+
+type HttpRouteHeader struct {
+	Name   string             `json:"name"`
+	Invert *bool              `json:"invert,omitempty"`
+	Match  *HeaderMatchMethod `json:"match,omitempty"`
+}
+
+type HeaderMatchMethod struct {
+	Exact  *string     `json:"exact,omitempty"`
+	Prefix *string     `json:"prefix,omitempty"`
+	Range  *MatchRange `json:"range,omitempty"`
+	Regex  *string     `json:"regex,omitempty"`
+	Suffix *string     `json:"suffix,omitempty"`
+}
+
+type MatchRange struct {
+	Start *int64 `json:"start,omitempty"`
+	End   *int64 `json:"end,omitempty"`
 }
 
 type HttpRouteAction struct {
@@ -222,13 +246,29 @@ type VirtualNodeSpec struct {
 }
 
 type Listener struct {
-	PortMapping PortMapping `json:"portMapping"`
+	PortMapping PortMapping        `json:"portMapping"`
+	HealthCheck *HealthCheckPolicy `json:"healthCheck,omitempty"`
 }
 
 type PortMapping struct {
 	Port     int64  `json:"port"`
 	Protocol string `json:"protocol"`
 }
+
+type HealthCheckPolicy struct {
+	HealthyThreshold   *int64  `json:"healthyThreshold,omitempty"`
+	IntervalMillis     *int64  `json:"intervalMillis,omitempty"`
+	Path               *string `json:"path,omitempty"`
+	Port               *int64  `json:"port,omitempty"`
+	Protocol           *string `json:"protocol,omitempty"`
+	TimeoutMillis      *int64  `json:"timeoutMillis,omitempty"`
+	UnhealthyThreshold *int64  `json:"unhealthyThreshold,omitempty"`
+}
+
+const (
+	PortProtocolHttp = "http"
+	PortProtocolTcp  = "tcp"
+)
 
 type ServiceDiscovery struct {
 	// +optional

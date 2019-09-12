@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
@@ -405,8 +406,24 @@ func allRoutesActive(routes aws.Routes) bool {
 }
 
 func routeNeedsUpdate(desired appmeshv1beta1.Route, target aws.Route) bool {
+	if diffInt64Value(desired.Priority, target.Data.Spec.Priority) {
+		return true
+	}
+
 	if desired.Http != nil {
+		if target.Data.Spec.HttpRoute == nil {
+			return true
+		}
+
+		if target.Data.Spec.HttpRoute.Action == nil {
+			return true
+		}
+
 		if desired.Http.Action.WeightedTargets != nil {
+			if target.Data.Spec.HttpRoute.Action.WeightedTargets == nil {
+				return true
+			}
+
 			desiredSet := set.NewSet()
 			for _, target := range desired.Http.Action.WeightedTargets {
 				desiredSet.Add(appmeshv1beta1.WeightedTarget{VirtualNodeName: target.VirtualNodeName, Weight: target.Weight})
@@ -416,9 +433,13 @@ func routeNeedsUpdate(desired appmeshv1beta1.Route, target aws.Route) bool {
 				return true
 			}
 		}
-		if desired.Http.Match.Prefix != target.Prefix() {
+
+		targetRouteMatch := target.HttpRouteMatch()
+		if !reflect.DeepEqual(desired.Http.Match, *targetRouteMatch) {
 			return true
 		}
+	} else if target.Data.Spec.HttpRoute != nil {
+		return true
 	}
 
 	if desired.Tcp != nil {
@@ -506,4 +527,19 @@ func (c *Controller) deleteVServiceResources(ctx context.Context, vservice *appm
 		}
 	}
 	return nil
+}
+
+func diffInt64Value(l *int64, r *int64) bool {
+	if l != nil {
+		if r == nil {
+			return true
+		}
+		if awssdk.Int64Value(l) != awssdk.Int64Value(r) {
+			return true
+		}
+	} else if r != nil {
+		return true
+	}
+
+	return false
 }

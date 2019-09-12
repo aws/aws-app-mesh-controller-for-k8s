@@ -36,6 +36,10 @@ const (
 	ListRoutesTimeout             = 10
 	UpdateRouteTimeout            = 10
 	DeleteRouteTimeout            = 10
+	DefaultHealthyThreshold       = 10
+	DefaultIntervalMillis         = 30000
+	DefaultTimeoutMillis          = 5000
+	DefaultUnhealthyThreshold     = 2
 )
 
 type AppMeshAPI interface {
@@ -164,13 +168,26 @@ func (v *VirtualNode) Listeners() []appmeshv1beta1.Listener {
 	}
 
 	var listeners = []appmeshv1beta1.Listener{}
-	for _, l := range v.Data.Spec.Listeners {
-		listeners = append(listeners, appmeshv1beta1.Listener{
+	for _, appmeshListener := range v.Data.Spec.Listeners {
+		listener := appmeshv1beta1.Listener{
 			PortMapping: appmeshv1beta1.PortMapping{
-				Port:     aws.Int64Value(l.PortMapping.Port),
-				Protocol: aws.StringValue(l.PortMapping.Protocol),
+				Port:     aws.Int64Value(appmeshListener.PortMapping.Port),
+				Protocol: aws.StringValue(appmeshListener.PortMapping.Protocol),
 			},
-		})
+		}
+		if appmeshListener.HealthCheck != nil {
+			healthCheck := &appmeshv1beta1.HealthCheckPolicy{
+				HealthyThreshold:   appmeshListener.HealthCheck.HealthyThreshold,
+				IntervalMillis:     appmeshListener.HealthCheck.IntervalMillis,
+				Path:               appmeshListener.HealthCheck.Path,
+				Port:               appmeshListener.HealthCheck.Port,
+				Protocol:           appmeshListener.HealthCheck.Protocol,
+				TimeoutMillis:      appmeshListener.HealthCheck.TimeoutMillis,
+				UnhealthyThreshold: appmeshListener.HealthCheck.UnhealthyThreshold,
+			}
+			listener.HealthCheck = healthCheck
+		}
+		listeners = append(listeners, listener)
 	}
 	return listeners
 }
@@ -248,12 +265,25 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 	if vnode.Spec.Listeners != nil {
 		listeners := []*appmesh.Listener{}
 		for _, listener := range vnode.Spec.Listeners {
-			listeners = append(listeners, &appmesh.Listener{
+			appmeshListener := &appmesh.Listener{
 				PortMapping: &appmesh.PortMapping{
-					Port:     &listener.PortMapping.Port,
+					Port:     aws.Int64(listener.PortMapping.Port),
 					Protocol: aws.String(listener.PortMapping.Protocol),
 				},
-			})
+			}
+			if listener.HealthCheck != nil {
+				appmeshHealthCheck := &appmesh.HealthCheckPolicy{
+					HealthyThreshold:   defaultInt64(listener.HealthCheck.HealthyThreshold, DefaultHealthyThreshold),
+					IntervalMillis:     defaultInt64(listener.HealthCheck.IntervalMillis, DefaultIntervalMillis),
+					Path:               listener.HealthCheck.Path,
+					Port:               defaultInt64(listener.HealthCheck.Port, listener.PortMapping.Port),          //using listener's port
+					Protocol:           defaultString(listener.HealthCheck.Protocol, listener.PortMapping.Protocol), //using listener's protocol
+					TimeoutMillis:      defaultInt64(listener.HealthCheck.TimeoutMillis, DefaultTimeoutMillis),
+					UnhealthyThreshold: defaultInt64(listener.HealthCheck.UnhealthyThreshold, DefaultUnhealthyThreshold),
+				}
+				appmeshListener.HealthCheck = appmeshHealthCheck
+			}
+			listeners = append(listeners, appmeshListener)
 		}
 		input.Spec.SetListeners(listeners)
 	}
@@ -323,12 +353,25 @@ func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 	if vnode.Spec.Listeners != nil {
 		listeners := []*appmesh.Listener{}
 		for _, listener := range vnode.Spec.Listeners {
-			listeners = append(listeners, &appmesh.Listener{
+			appmeshListener := &appmesh.Listener{
 				PortMapping: &appmesh.PortMapping{
 					Port:     &listener.PortMapping.Port,
 					Protocol: aws.String(listener.PortMapping.Protocol),
 				},
-			})
+			}
+			if listener.HealthCheck != nil {
+				appmeshHealthCheck := &appmesh.HealthCheckPolicy{
+					HealthyThreshold:   defaultInt64(listener.HealthCheck.HealthyThreshold, 10),
+					IntervalMillis:     defaultInt64(listener.HealthCheck.IntervalMillis, 30000),
+					Path:               listener.HealthCheck.Path,
+					Port:               listener.HealthCheck.Port,
+					Protocol:           defaultString(listener.HealthCheck.Protocol, appmeshv1beta1.PortProtocolHttp),
+					TimeoutMillis:      defaultInt64(listener.HealthCheck.TimeoutMillis, 5000),
+					UnhealthyThreshold: defaultInt64(listener.HealthCheck.UnhealthyThreshold, 2),
+				}
+				appmeshListener.HealthCheck = appmeshHealthCheck
+			}
+			listeners = append(listeners, appmeshListener)
 		}
 		input.Spec.SetListeners(listeners)
 	}
@@ -732,6 +775,43 @@ func (r *Route) WeightedTargetSet() set.Set {
 	return s
 }
 
+func (r *Route) HttpRouteMatch() *appmeshv1beta1.HttpRouteMatch {
+	if r.Data.Spec.HttpRoute == nil || r.Data.Spec.HttpRoute.Match == nil {
+		return nil
+	}
+
+	inputMatch := r.Data.Spec.HttpRoute.Match
+	resultMatch := &appmeshv1beta1.HttpRouteMatch{
+		Prefix: aws.StringValue(inputMatch.Prefix),
+		Method: inputMatch.Method,
+		Scheme: inputMatch.Scheme,
+	}
+
+	for _, h := range inputMatch.Headers {
+		resultHeader := appmeshv1beta1.HttpRouteHeader{
+			Name:   aws.StringValue(h.Name),
+			Invert: h.Invert,
+		}
+		if h.Match != nil {
+			resultHeader.Match = &appmeshv1beta1.HeaderMatchMethod{
+				Exact:  h.Match.Exact,
+				Prefix: h.Match.Prefix,
+				Suffix: h.Match.Suffix,
+				Regex:  h.Match.Regex,
+			}
+			if h.Match.Range != nil {
+				resultHeader.Match.Range = &appmeshv1beta1.MatchRange{
+					Start: h.Match.Range.Start,
+					End:   h.Match.Range.End,
+				}
+			}
+		}
+		resultMatch.Headers = append(resultMatch.Headers, resultHeader)
+	}
+
+	return resultMatch
+}
+
 type Routes []Route
 
 func (r Routes) RouteNamesSet() set.Set {
@@ -923,10 +1003,9 @@ func (c *Cloud) buildRouteSpec(route *appmeshv1beta1.Route) *appmesh.RouteSpec {
 
 	if route.Http != nil {
 		return &appmesh.RouteSpec{
+			Priority: route.Priority,
 			HttpRoute: &appmesh.HttpRoute{
-				Match: &appmesh.HttpRouteMatch{
-					Prefix: aws.String(route.Http.Match.Prefix),
-				},
+				Match: c.buildHttpRouteMatch(route.Http.Match),
 				Action: &appmesh.HttpRouteAction{
 					WeightedTargets: c.buildWeightedTargets(route.Http.Action.WeightedTargets),
 				},
@@ -936,6 +1015,7 @@ func (c *Cloud) buildRouteSpec(route *appmeshv1beta1.Route) *appmesh.RouteSpec {
 
 	if route.Tcp != nil {
 		return &appmesh.RouteSpec{
+			Priority: route.Priority,
 			TcpRoute: &appmesh.TcpRoute{
 				Action: &appmesh.TcpRouteAction{
 					WeightedTargets: c.buildWeightedTargets(route.Tcp.Action.WeightedTargets),
@@ -957,4 +1037,59 @@ func (c *Cloud) buildWeightedTargets(input []appmeshv1beta1.WeightedTarget) []*a
 		})
 	}
 	return targets
+}
+
+func (c *Cloud) buildHttpRouteMatch(input appmeshv1beta1.HttpRouteMatch) *appmesh.HttpRouteMatch {
+	appmeshRouteMatch := &appmesh.HttpRouteMatch{
+		Prefix: aws.String(input.Prefix),
+		Method: input.Method,
+		Scheme: input.Scheme,
+	}
+
+	if len(input.Headers) > 0 {
+		appmeshRouteMatch.Headers = []*appmesh.HttpRouteHeader{}
+		for _, h := range input.Headers {
+			appmeshRouteMatch.Headers = append(appmeshRouteMatch.Headers, c.buildHttpRouteHeader(h))
+		}
+	}
+
+	return appmeshRouteMatch
+}
+
+func (c *Cloud) buildHttpRouteHeader(input appmeshv1beta1.HttpRouteHeader) *appmesh.HttpRouteHeader {
+	appmeshHeader := &appmesh.HttpRouteHeader{
+		Name:   aws.String(input.Name),
+		Invert: input.Invert,
+	}
+	if input.Match != nil {
+		appmeshHeader.Match = &appmesh.HeaderMatchMethod{
+			Exact:  input.Match.Exact,
+			Prefix: input.Match.Prefix,
+			Regex:  input.Match.Regex,
+			Suffix: input.Match.Suffix,
+		}
+		if input.Match.Range != nil {
+			appmeshHeader.Match.Range = &appmesh.MatchRange{
+				Start: input.Match.Range.Start,
+				End:   input.Match.Range.End,
+			}
+			klog.Infof("Range = %+v", appmeshHeader.Match.Range)
+		}
+	}
+
+	return appmeshHeader
+}
+
+func defaultInt64(v *int64, defaultVal int64) *int64 {
+	if v != nil {
+		return v
+	}
+	return aws.Int64(defaultVal)
+}
+
+func defaultString(v *string, defaultVal string) *string {
+	if v != nil {
+		return v
+	}
+	return aws.String(defaultVal)
 }
