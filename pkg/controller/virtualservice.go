@@ -39,7 +39,7 @@ func (c *Controller) handleVService(key string) error {
 	vservice := shared.DeepCopy()
 	// Make copy for updates so we don't save namespaced resource names
 	copy := shared.DeepCopy()
-	copy.Spec.VirtualRouter = getVirtualRouter(copy)
+	copy.Spec.VirtualRouter = c.getVirtualRouter(copy)
 
 	// Namespace resource names for use against App Mesh API
 	if vservice.Spec.VirtualRouter == nil {
@@ -103,7 +103,7 @@ func (c *Controller) handleVService(key string) error {
 		return fmt.Errorf("mesh %s must be active for virtual service %s", meshName, name)
 	}
 
-	virtualRouter := getVirtualRouter(vservice)
+	virtualRouter := c.getVirtualRouter(vservice)
 
 	// Create virtual router if it does not exist
 	if targetRouter, err := c.cloud.GetVirtualRouter(ctx, virtualRouter.Name, meshName); err != nil {
@@ -227,7 +227,7 @@ func (c *Controller) updateRoutesActive(vservice *appmeshv1beta1.VirtualService,
 }
 
 func (c *Controller) updateVServiceCondition(vservice *appmeshv1beta1.VirtualService, conditionType appmeshv1beta1.VirtualServiceConditionType, status api.ConditionStatus) (*appmeshv1beta1.VirtualService, error) {
-	condition := getVServiceCondition(conditionType, vservice.Status)
+	condition := c.getVServiceCondition(conditionType, vservice.Status)
 	if condition.Status == status {
 		// Already is set to status
 		return nil, nil
@@ -274,7 +274,7 @@ func (c *Controller) setVirtualServiceStatusConditions(vservice *appmeshv1beta1.
 	})
 }
 
-func getVServiceCondition(conditionType appmeshv1beta1.VirtualServiceConditionType, status appmeshv1beta1.VirtualServiceStatus) appmeshv1beta1.VirtualServiceCondition {
+func (c *Controller) getVServiceCondition(conditionType appmeshv1beta1.VirtualServiceConditionType, status appmeshv1beta1.VirtualServiceStatus) appmeshv1beta1.VirtualServiceCondition {
 	for _, condition := range status.Conditions {
 		if condition.Type == conditionType {
 			return condition
@@ -284,13 +284,76 @@ func getVServiceCondition(conditionType appmeshv1beta1.VirtualServiceConditionTy
 	return appmeshv1beta1.VirtualServiceCondition{}
 }
 
-func getVirtualRouter(vservice *appmeshv1beta1.VirtualService) *appmeshv1beta1.VirtualRouter {
+func (c *Controller) getVirtualRouter(vservice *appmeshv1beta1.VirtualService) *appmeshv1beta1.VirtualRouter {
+	var vrouter *appmeshv1beta1.VirtualRouter
 	if vservice.Spec.VirtualRouter != nil {
-		return vservice.Spec.VirtualRouter
+		vrouter = vservice.Spec.VirtualRouter
+	} else {
+		vrouter = &appmeshv1beta1.VirtualRouter{
+			Name: vservice.Name,
+		}
 	}
-	return &appmeshv1beta1.VirtualRouter{
-		Name: vservice.Name,
+
+	if len(vrouter.Listeners) == 0 {
+		listener := c.getListenerFromRouteTarget(vservice, vrouter)
+		if listener != nil {
+			vrouter.Listeners = append(vrouter.Listeners, appmeshv1beta1.VirtualRouterListener{
+				PortMapping: listener.PortMapping,
+			})
+		}
 	}
+
+	return vrouter
+}
+
+//getListenerFromRouteTarget populates listener for virtual-router if one is missing.
+//Reason: VirtualRouter requires exactly one listener. Initial versions of CRD did not
+//have listener field defined in virtual-router object. Here we will peek into the
+//first route defined for the virtual-service and use one of the virtual-nodes listener
+//to populate virtual-router listener. In some edge cases this can be error-prone and
+//it is recommended to explicitly define virtual-router.
+//See https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_routers.html for more information.
+func (c *Controller) getListenerFromRouteTarget(vservice *appmeshv1beta1.VirtualService, vrouter *appmeshv1beta1.VirtualRouter) *appmeshv1beta1.Listener {
+	if len(vservice.Spec.Routes) == 0 {
+		return nil
+	}
+
+	var candidateVnodeName string
+	route := vservice.Spec.Routes[0]
+	if route.Http != nil {
+		if len(route.Http.Action.WeightedTargets) > 0 {
+			candidateVnodeName = route.Http.Action.WeightedTargets[0].VirtualNodeName
+		}
+	} else if route.Tcp != nil {
+		if len(route.Tcp.Action.WeightedTargets) > 0 {
+			candidateVnodeName = route.Tcp.Action.WeightedTargets[0].VirtualNodeName
+		}
+	}
+
+	if len(candidateVnodeName) == 0 {
+		klog.Errorf("No virtual-nodes found for routes defined under virtual-service %s in namespace %s, cannot determine listener to use for virtual-router",
+			vservice.Name, vservice.Namespace)
+		return nil
+	}
+
+	vnode, err := c.meshclientset.AppmeshV1beta1().VirtualNodes(vservice.Namespace).Get(candidateVnodeName, metav1.GetOptions{})
+	if err != nil {
+		klog.Errorf("Error getting virtual-node with name %s in namespace %s, %s", candidateVnodeName, vservice.Namespace, err)
+		return nil
+	}
+
+	if vnode == nil {
+		klog.Errorf("No virtual-node found with name %s in namespace %s", candidateVnodeName, vservice.Namespace)
+		return nil
+	}
+
+	if len(vnode.Spec.Listeners) == 0 {
+		klog.Errorf("virtual-node with name %s in namespace %s has no listeners defined, cannot be used for routing", candidateVnodeName, vservice.Namespace)
+		return nil
+	}
+
+	klog.Infof("Setting router listener to %v for virtual-service  %s in namespace %s", vnode.Spec.Listeners[0], vservice.Name, vservice.Namespace)
+	return &vnode.Spec.Listeners[0]
 }
 
 func getNamespacedVirtualRouterName(vservice *appmeshv1beta1.VirtualService) string {

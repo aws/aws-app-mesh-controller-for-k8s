@@ -1,12 +1,19 @@
 package controller
 
 import (
+	"fmt"
+	"reflect"
 	"testing"
 
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
+	ctrlawsmocks "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/mocks"
+	appmeshv1beta1mocks "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/mocks"
+	appmeshv1beta1typedmocks "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/typed/appmesh/v1beta1/mocks"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/appmesh"
+	"github.com/stretchr/testify/mock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // newAWSVirtualService is a helper function to generate an Kubernetes Custom Resource API object.
@@ -15,12 +22,10 @@ func newAPIVirtualService(meshName string, virtualRouter *appmeshv1beta1.Virtual
 		Spec: appmeshv1beta1.VirtualServiceSpec{
 			MeshName:      meshName,
 			VirtualRouter: virtualRouter,
+			Routes:        routes,
 		},
 	}
 
-	if routes != nil && len(routes) > 0 {
-		vs.Spec.Routes = routes
-	}
 	return vs
 }
 
@@ -183,8 +188,8 @@ func TestVirtualRouterNeedsUpdate(t *testing.T) {
 		// defaults
 		defaultRouter = &appmeshv1beta1.VirtualRouter{
 			Name: "example-router",
-			Listeners: []appmeshv1beta1.Listener{
-				appmeshv1beta1.Listener{
+			Listeners: []appmeshv1beta1.VirtualRouterListener{
+				appmeshv1beta1.VirtualRouterListener{
 					PortMapping: appmeshv1beta1.PortMapping{
 						Port:     9080,
 						Protocol: "http",
@@ -576,6 +581,238 @@ func TestHttpRouteWithHeaderNeedUpdate(t *testing.T) {
 			result.Data.Spec.HttpRoute.Match.Headers = []*appmesh.HttpRouteHeader{&tt.target}
 			if res := routeNeedsUpdate(spec, result); res != tt.different {
 				t.Errorf("got %v, want %v", res, tt.different)
+			}
+		})
+	}
+}
+
+func TestGetVirtualRouter(t *testing.T) {
+	var (
+		defaultMeshName  = "example-mesh"
+		defaultRouteName = "example-route"
+		defaultPrefix    = "/"
+
+		defaultHttpPort = appmeshv1beta1.PortMapping{
+			Port:     8080,
+			Protocol: appmeshv1beta1.PortProtocolHttp,
+		}
+		defaultTcpPort = appmeshv1beta1.PortMapping{
+			Port:     6379,
+			Protocol: appmeshv1beta1.PortProtocolTcp,
+		}
+		defaultHttpRouterListener = appmeshv1beta1.VirtualRouterListener{
+			PortMapping: defaultHttpPort,
+		}
+		defaultTcpRouterListener = appmeshv1beta1.VirtualRouterListener{
+			PortMapping: defaultTcpPort,
+		}
+		defaultHttpListener = appmeshv1beta1.Listener{
+			PortMapping: appmeshv1beta1.PortMapping{
+				Port:     8080,
+				Protocol: appmeshv1beta1.PortProtocolHttp,
+			},
+		}
+		defaultTcpListener = appmeshv1beta1.Listener{
+			PortMapping: appmeshv1beta1.PortMapping{
+				Port:     6379,
+				Protocol: appmeshv1beta1.PortProtocolTcp,
+			},
+		}
+		defaultHttpRoute            = newAPIHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
+		defaultTcpRoute             = newAPITcpRoute(defaultRouteName, []appmeshv1beta1.WeightedTarget{})
+		virtualRouterWithNoListener = appmeshv1beta1.VirtualRouter{
+			Name: "example-router",
+		}
+		virtualRouterWithHttpListener = appmeshv1beta1.VirtualRouter{
+			Name:      "example-http-router",
+			Listeners: []appmeshv1beta1.VirtualRouterListener{defaultHttpRouterListener},
+		}
+		virtualRouterWithTcpListener = appmeshv1beta1.VirtualRouter{
+			Name:      "example-tcp-router",
+			Listeners: []appmeshv1beta1.VirtualRouterListener{defaultTcpRouterListener},
+		}
+	)
+
+	var vservicetests = []struct {
+		id                   string
+		name                 string
+		expectedListener     *appmeshv1beta1.VirtualRouterListener
+		virtualRouter        *appmeshv1beta1.VirtualRouter
+		route                *appmeshv1beta1.Route
+		errorOnGetTargetNode bool
+		virtualNodeListener  *appmeshv1beta1.Listener
+	}{
+		{"0",
+			"virtual-service with router HTTP listener should be preserved",
+			&defaultHttpRouterListener,
+			&virtualRouterWithHttpListener,
+			nil,
+			false,
+			nil,
+		},
+
+		{"1",
+			"virtual-service with router TCP listener should be preserved",
+			&defaultTcpRouterListener,
+			&virtualRouterWithTcpListener,
+			nil,
+			false,
+			nil,
+		},
+
+		{"2",
+			"virtual-service with router missing listener should get listener from target node of HTTP route",
+			&defaultHttpRouterListener,
+			&virtualRouterWithNoListener,
+			&defaultHttpRoute,
+			false,
+			&defaultHttpListener,
+		},
+
+		{"3",
+			"virtual-service with router missing listener and failed to load virtual-node of HTTP route",
+			nil,
+			&virtualRouterWithNoListener,
+			&defaultHttpRoute,
+			true,
+			&defaultHttpListener,
+		},
+
+		{"4",
+			"virtual-service with router missing listener should get listener from target node of TCP route",
+			&defaultTcpRouterListener,
+			&virtualRouterWithNoListener,
+			&defaultTcpRoute,
+			false,
+			&defaultTcpListener,
+		},
+
+		{"5",
+			"virtual-service with router missing listener and failed to load virtual-node of TCP route",
+			nil,
+			&virtualRouterWithNoListener,
+			&defaultTcpRoute,
+			true,
+			&defaultTcpListener,
+		},
+
+		{"6",
+			"virtual-service with router missing listener and no routes",
+			nil,
+			&virtualRouterWithNoListener,
+			nil,
+			false,
+			nil,
+		},
+
+		{"7",
+			"virtual-service with router missing listener and target node missing listener",
+			nil,
+			&virtualRouterWithNoListener,
+			&defaultHttpRoute,
+			false,
+			nil,
+		},
+
+		{"8",
+			"virtual-service with no router should get listener from target node of HTTP route",
+			&defaultHttpRouterListener,
+			nil,
+			&defaultHttpRoute,
+			false,
+			&defaultHttpListener,
+		},
+	}
+
+	for _, tt := range vservicetests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCloudAPI := new(ctrlawsmocks.CloudAPI)
+			mockMeshClientSet := new(appmeshv1beta1mocks.Interface)
+			mockAppmeshv1beta1Client := new(appmeshv1beta1typedmocks.AppmeshV1beta1Interface)
+			mockMeshClientSet.On(
+				"AppmeshV1beta1",
+			).Return(mockAppmeshv1beta1Client)
+			mockVirtualNodeInterface := new(appmeshv1beta1typedmocks.VirtualNodeInterface)
+			mockAppmeshv1beta1Client.On(
+				"VirtualNodes",
+				mock.Anything,
+			).Return(mockVirtualNodeInterface)
+
+			virtualService := newAPIVirtualService(defaultMeshName,
+				nil,
+				[]appmeshv1beta1.Route{},
+			)
+			virtualService.Name = fmt.Sprintf("%s-vsvc", tt.id)
+			virtualService.Namespace = fmt.Sprintf("%s-ns", tt.id)
+
+			if tt.virtualRouter != nil {
+				virtualService.Spec.VirtualRouter = tt.virtualRouter.DeepCopy()
+			}
+
+			if tt.route != nil {
+				targetVirtualNodeName := fmt.Sprintf("%s-vnode", tt.id)
+				weightedTarget := appmeshv1beta1.WeightedTarget{
+					VirtualNodeName: targetVirtualNodeName,
+					Weight:          100,
+				}
+
+				if tt.route.Http != nil {
+					copy := tt.route.DeepCopy()
+					copy.Http.Action.WeightedTargets = append(copy.Http.Action.WeightedTargets, weightedTarget)
+					virtualService.Spec.Routes = append(virtualService.Spec.Routes, *copy)
+				} else if tt.virtualNodeListener.PortMapping.Protocol == appmeshv1beta1.PortProtocolTcp {
+					copy := tt.route.DeepCopy()
+					copy.Tcp.Action.WeightedTargets = append(copy.Tcp.Action.WeightedTargets, weightedTarget)
+					virtualService.Spec.Routes = append(virtualService.Spec.Routes, *copy)
+				}
+
+				if tt.errorOnGetTargetNode {
+					mockVirtualNodeInterface.On(
+						"Get",
+						targetVirtualNodeName,
+						metav1.GetOptions{},
+					).Return(nil, fmt.Errorf("Error loading virtual-node"))
+				} else {
+					var targetVirtualNode *appmeshv1beta1.VirtualNode
+					if tt.virtualNodeListener != nil {
+						targetVirtualNode = newAPIVirtualNode([]int64{tt.virtualNodeListener.PortMapping.Port},
+							[]string{tt.virtualNodeListener.PortMapping.Protocol},
+							[]string{},
+							"sample.com",
+							nil)
+					} else {
+						targetVirtualNode = newAPIVirtualNode([]int64{},
+							[]string{},
+							[]string{},
+							"",
+							nil)
+					}
+					targetVirtualNode.Name = targetVirtualNodeName
+					targetVirtualNode.Namespace = virtualService.Namespace
+					mockVirtualNodeInterface.On(
+						"Get",
+						targetVirtualNodeName,
+						metav1.GetOptions{},
+					).Return(targetVirtualNode, nil)
+				}
+			} else {
+				mockVirtualNodeInterface.AssertNotCalled(t, tt.name)
+			}
+
+			c := &Controller{
+				name:          "test",
+				cloud:         mockCloudAPI,
+				meshclientset: mockMeshClientSet,
+			}
+			vrouter := c.getVirtualRouter(&virtualService)
+			if tt.expectedListener != nil {
+				if len(vrouter.Listeners) == 0 {
+					t.Errorf("Expected listener %+v but got none", tt.expectedListener)
+				} else if !reflect.DeepEqual(vrouter.Listeners[0], *tt.expectedListener) {
+					t.Errorf("Expected listener %+v but got %+v", tt.expectedListener, vrouter.Listeners[0])
+				}
+			} else if len(vrouter.Listeners) > 0 {
+				t.Errorf("Expecting empty list of listeners on virtual-router but found %+v", vrouter.Listeners)
 			}
 		})
 	}

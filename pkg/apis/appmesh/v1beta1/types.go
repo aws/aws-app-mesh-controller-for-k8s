@@ -105,8 +105,12 @@ type VirtualServiceSpec struct {
 
 // VirtualRouter is the spec for a VirtualRouter resource
 type VirtualRouter struct {
-	Name      string     `json:"name"`
-	Listeners []Listener `json:"listeners,omitempty"`
+	Name      string                  `json:"name"`
+	Listeners []VirtualRouterListener `json:"listeners,omitempty"`
+}
+
+type VirtualRouterListener struct {
+	PortMapping PortMapping `json:"portMapping"`
 }
 
 type Route struct {
