@@ -34,7 +34,7 @@ First, create a Mesh resource, which will trigger the controller to create a Mes
       meshName: my-mesh
       listeners:
         - portMapping:
-            port: 9000
+            port: 9080
             protocol: http
       serviceDiscovery:
         dns:
@@ -52,6 +52,12 @@ First, create a Mesh resource, which will trigger the controller to create a Mes
       namespace: prod
     spec:
       meshName: my-mesh
+      virtualRouter:
+        name: my-svc-a-router
+        listeners:
+          - portMapping:
+              port: 9080
+              protocol: http
       routes:
         - name: route-to-svc-a
           http:

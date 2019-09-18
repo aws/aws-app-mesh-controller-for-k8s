@@ -53,6 +53,8 @@ This will launch the webhook into the appmesh-inject namespace. Now add the corr
 
 Next, launch the controller:
 
+```
+
 ```bash
 curl https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v0.1.2/deploy/all.yaml | kubectl apply -f -
 ```
@@ -61,6 +63,35 @@ Make sure it's ready:
 
 ```bash
 kubectl rollout status deployment app-mesh-controller -n appmesh-system
+```
+
+__IMPORTANT NOTE__: If you are using older versions (prior v0.1.2) of controller and have existing CRDs, then you need to update the virtualservice CRD specs to include virtualRouter and its listener as shown below.
+```
+spec:
+  meshName: color-mesh
+  routes:
+  - http:
+      action:
+        weightedTargets:
+        - virtualNodeName: colorteller.appmesh-demo
+          weight: 1
+```
+should change to
+```
+spec:
+  meshName: color-mesh
+  virtualRouter:
+    name: color-router
+    listeners:
+    - portMapping:
+        port: 9080
+        protocol: http
+  routes:
+  - http:
+      action:
+        weightedTargets:
+        - virtualNodeName: colorteller.appmesh-demo
+          weight: 1
 ```
 
 Now try following along with [the example](example.md) to get a feel for how it works!
