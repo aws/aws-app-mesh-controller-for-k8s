@@ -316,11 +316,12 @@ func (c *Controller) getVirtualRouter(vservice *appmeshv1beta1.VirtualService) *
 func (c *Controller) getListenerFromRouteTarget(originalVirtualService *appmeshv1beta1.VirtualService, vrouter *appmeshv1beta1.VirtualRouter) *appmeshv1beta1.Listener {
 	vservice, err := c.meshclientset.AppmeshV1beta1().VirtualServices(originalVirtualService.Namespace).Get(originalVirtualService.Name, metav1.GetOptions{})
 	if err != nil {
-		klog.Infof("Error loading virtual-service %s in namespace %s: %s", originalVirtualService.Name, originalVirtualService.Namespace, err)
+		klog.Infof("Cannot determine listener for virtual-service %s in namespace %s. Error loading virtual-service %s", originalVirtualService.Name, originalVirtualService.Namespace, err)
 		return nil
 	}
 
 	if len(vservice.Spec.Routes) == 0 {
+		klog.Infof("Cannot determine listener for virtual-service %s in namespace %s. No routes defined for virtual-service", originalVirtualService.Name, originalVirtualService.Namespace)
 		return nil
 	}
 
@@ -337,24 +338,26 @@ func (c *Controller) getListenerFromRouteTarget(originalVirtualService *appmeshv
 	}
 
 	if len(candidateVnodeName) == 0 {
-		klog.Errorf("No virtual-nodes found for routes defined under virtual-service %s in namespace %s, cannot determine listener to use for virtual-router",
+		klog.Errorf("Cannot determine listener for virtual-service %s in namespace %s. No virtual-nodes found for routes",
 			vservice.Name, vservice.Namespace)
 		return nil
 	}
 
+	klog.Infof("Using virtual-node %s to determine the listener for virtual-service %s in namespace %s", candidateVnodeName, vservice.Name, vservice.Namespace)
+
 	vnode, err := c.meshclientset.AppmeshV1beta1().VirtualNodes(vservice.Namespace).Get(candidateVnodeName, metav1.GetOptions{})
 	if err != nil {
-		klog.Errorf("Error getting virtual-node with name %s in namespace %s, %s", candidateVnodeName, vservice.Namespace, err)
+		klog.Errorf("Cannot determine listener for virtual-service %s in namespace %s. Error getting virtual-node with name %s, %s", vservice.Name, vservice.Namespace, candidateVnodeName, err)
 		return nil
 	}
 
 	if vnode == nil {
-		klog.Errorf("No virtual-node found with name %s in namespace %s", candidateVnodeName, vservice.Namespace)
+		klog.Errorf("Cannot determine listener for virtual-service %s in namespace %s. No virtual-node found with name %s", vservice.Name, vservice.Namespace, candidateVnodeName)
 		return nil
 	}
 
 	if len(vnode.Spec.Listeners) == 0 {
-		klog.Errorf("virtual-node with name %s in namespace %s has no listeners defined, cannot be used for routing", candidateVnodeName, vservice.Namespace)
+		klog.Errorf("Cannot determine listener for virtual-service %s in namespace %s. virtual-node with name %s no listeners defined", vservice.Name, vservice.Namespace, candidateVnodeName)
 		return nil
 	}
 
