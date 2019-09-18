@@ -1,0 +1,469 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    appmesh.k8s.aws/sidecarInjectorWebhook: enabled
+  name: appmesh-demo
+---
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: Mesh
+metadata:
+  name: color-mesh
+---
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: VirtualNode
+metadata:
+  name: colorgateway
+  namespace: appmesh-demo
+spec:
+  meshName: color-mesh
+  listeners:
+    - portMapping:
+        port: 9080
+        protocol: http
+  serviceDiscovery:
+    dns:
+      hostName: colorgateway.appmesh-demo.svc.cluster.local
+  backends:
+    - virtualService:
+        virtualServiceName: colorteller.appmesh-demo
+    - virtualService:
+        virtualServiceName: tcpecho.appmesh-demo
+  logging:
+    accessLog:
+      file:
+        path: /dev/stdout
+---
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: VirtualNode
+metadata:
+  name: colorteller
+  namespace: appmesh-demo
+spec:
+  meshName: color-mesh
+  listeners:
+    - portMapping:
+        port: 9080
+        protocol: http
+  serviceDiscovery:
+    dns:
+      hostName: colorteller.appmesh-demo.svc.cluster.local
+---
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: VirtualNode
+metadata:
+  name: colorteller-black
+  namespace: appmesh-demo
+spec:
+  meshName: color-mesh
+  listeners:
+    - portMapping:
+        port: 9080
+        protocol: http
+  serviceDiscovery:
+    dns:
+      hostName: colorteller-black.appmesh-demo.svc.cluster.local
+---
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: VirtualNode
+metadata:
+  name: colorteller-blue
+  namespace: appmesh-demo
+spec:
+  meshName: color-mesh
+  listeners:
+    - portMapping:
+        port: 9080
+        protocol: http
+  serviceDiscovery:
+    dns:
+      hostName: colorteller-blue.appmesh-demo.svc.cluster.local
+---
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: VirtualNode
+metadata:
+  name: colorteller-red
+  namespace: appmesh-demo
+spec:
+  meshName: color-mesh
+  listeners:
+    - portMapping:
+        port: 9080
+        protocol: http
+  serviceDiscovery:
+    dns:
+      hostName: colorteller-red.appmesh-demo.svc.cluster.local
+---
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: VirtualService
+metadata:
+  name: colorteller.appmesh-demo
+  namespace: appmesh-demo
+spec:
+  meshName: color-mesh
+  virtualRouter:
+    name: color-router
+    listeners:
+      - portMapping:
+          port: 9080
+          protocol: http
+  routes:
+    - name: color-route
+      http:
+        match:
+          prefix: /
+        action:
+          weightedTargets:
+            - virtualNodeName: colorteller
+              weight: 1
+            - virtualNodeName: colorteller-blue
+              weight: 1
+            - virtualNodeName: colorteller-black
+              weight: 1
+---
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: VirtualService
+metadata:
+  name: colorgateway.appmesh-demo
+  namespace: appmesh-demo
+spec:
+  meshName: color-mesh
+  virtualRouter:
+    name: gateway-router
+    listeners:
+      - portMapping:
+          port: 9080
+          protocol: http
+  routes:
+    - name: gateway-route
+      http:
+        match:
+          prefix: /color
+        action:
+          weightedTargets:
+            - virtualNodeName: colorgateway
+              weight: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: colorgateway
+  namespace: appmesh-demo
+  labels:
+    app: colorgateway
+spec:
+  ports:
+    - port: 9080
+      name: http
+  selector:
+    app: colorgateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: colorgateway
+  namespace: appmesh-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: colorgateway
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: colorgateway
+        version: v1
+    spec:
+      containers:
+        - name: colorgateway
+          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/gateway:latest
+          ports:
+            - containerPort: 9080
+          env:
+            - name: "SERVER_PORT"
+              value: "9080"
+            - name: "COLOR_TELLER_ENDPOINT"
+              value: "colorteller.appmesh-demo:9080"
+            - name: "TCP_ECHO_ENDPOINT"
+              value: "tcpecho.appmesh-demo:2701"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: colorteller
+  namespace: appmesh-demo
+  labels:
+    app: colorteller
+spec:
+  ports:
+    - port: 9080
+      name: http
+  selector:
+    app: colorteller
+    version: white
+---
+
+# white
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: colorteller
+  namespace: appmesh-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: colorteller
+      version: white
+  template:
+    metadata:
+      labels:
+        app: colorteller
+        version: white
+    spec:
+      containers:
+        - name: colorteller
+          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
+          ports:
+            - containerPort: 9080
+          env:
+            - name: "SERVER_PORT"
+              value: "9080"
+            - name: "COLOR"
+              value: "white"
+---
+# black
+apiVersion: v1
+kind: Service
+metadata:
+  name: colorteller-black
+  namespace: appmesh-demo
+  labels:
+    app: colorteller
+    version: black
+spec:
+  ports:
+    - port: 9080
+      name: http
+  selector:
+    app: colorteller
+    version: black
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: colorteller-black
+  namespace: appmesh-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: colorteller
+      version: black
+  template:
+    metadata:
+      labels:
+        app: colorteller
+        version: black
+    spec:
+      containers:
+        - name: colorteller
+          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
+          ports:
+            - containerPort: 9080
+          env:
+            - name: "SERVER_PORT"
+              value: "9080"
+            - name: "COLOR"
+              value: "black"
+---
+# blue
+apiVersion: v1
+kind: Service
+metadata:
+  name: colorteller-blue
+  namespace: appmesh-demo
+  labels:
+    app: colorteller
+    version: blue
+spec:
+  ports:
+    - port: 9080
+      name: http
+  selector:
+    app: colorteller
+    version: blue
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: colorteller-blue
+  namespace: appmesh-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: colorteller
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: colorteller
+        version: blue
+    spec:
+      containers:
+        - name: colorteller
+          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
+          ports:
+            - containerPort: 9080
+          env:
+            - name: "SERVER_PORT"
+              value: "9080"
+            - name: "COLOR"
+              value: "blue"
+---
+# red
+apiVersion: v1
+kind: Service
+metadata:
+  name: colorteller-red
+  namespace: appmesh-demo
+  labels:
+    app: colorteller
+    version: red
+spec:
+  ports:
+    - port: 9080
+      name: http
+  selector:
+    app: colorteller
+    version: red
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: colorteller-red
+  namespace: appmesh-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: colorteller
+      version: red
+  template:
+    metadata:
+      labels:
+        app: colorteller
+        version: red
+    spec:
+      containers:
+        - name: colorteller
+          image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
+          ports:
+            - containerPort: 9080
+          env:
+            - name: "SERVER_PORT"
+              value: "9080"
+            - name: "COLOR"
+              value: "red"
+---
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: VirtualNode
+metadata:
+  name: tcpecho
+  namespace: appmesh-demo
+spec:
+  meshName: color-mesh
+  listeners:
+    - portMapping:
+        port: 2701
+        protocol: tcp
+  serviceDiscovery:
+    dns:
+      hostName: tcpecho.appmesh-demo.svc.cluster.local
+---
+apiVersion: appmesh.k8s.aws/v1beta1
+kind: VirtualService
+metadata:
+  name: tcpecho.appmesh-demo
+  namespace: appmesh-demo
+spec:
+  meshName: color-mesh
+  virtualRouter:
+    name: tcpecho-router
+    listeners:
+      - portMapping:
+          port: 2701
+          protocol: tcp
+  routes:
+    - name: tcpecho-route
+      tcp:
+        action:
+          weightedTargets:
+            - virtualNodeName: tcpecho
+              weight: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tcpecho
+  namespace: appmesh-demo
+  labels:
+    app: tcpecho
+spec:
+  ports:
+    - protocol: "TCP"
+      port: 2701
+      targetPort: 2701
+  selector:
+    app: tcpecho
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tcpecho
+  namespace: appmesh-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tcpecho
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: tcpecho
+        version: v1
+    spec:
+      containers:
+        - name: tcpecho
+          image: cjimti/go-echo
+          ports:
+            - name: tcp-echo-port
+              containerPort: 2701
+          env:
+            - name: TCP_PORT
+              value: "2701"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SERVICE_ACCOUNT
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.serviceAccountName
+---

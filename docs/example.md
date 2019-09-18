@@ -71,6 +71,12 @@ For example, change the traffic to only forward to black.
 ```bash
 spec:
   meshName: color-mesh
+  virtualRouter:
+    name: color-router
+    listeners:
+    - portMapping:
+        port: 9080
+        protocol: http
   routes:
   - http:
       action:

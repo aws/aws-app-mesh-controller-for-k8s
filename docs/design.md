@@ -75,6 +75,12 @@ metadata:
   name: colorteller.appmesh-demo.svc.cluster.local
   namespace: appmesh-demo
 spec:
+  virtualRouter:
+    name: color-router
+    listeners:
+    - portMapping:
+        port: 9080
+        protocol: http
   routes:
   - http:
       action:
