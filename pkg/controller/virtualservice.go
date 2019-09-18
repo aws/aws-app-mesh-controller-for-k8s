@@ -313,7 +313,13 @@ func (c *Controller) getVirtualRouter(vservice *appmeshv1beta1.VirtualService) *
 //to populate virtual-router listener. In some edge cases this can be error-prone and
 //it is recommended to explicitly define virtual-router.
 //See https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_routers.html for more information.
-func (c *Controller) getListenerFromRouteTarget(vservice *appmeshv1beta1.VirtualService, vrouter *appmeshv1beta1.VirtualRouter) *appmeshv1beta1.Listener {
+func (c *Controller) getListenerFromRouteTarget(originalVirtualService *appmeshv1beta1.VirtualService, vrouter *appmeshv1beta1.VirtualRouter) *appmeshv1beta1.Listener {
+	vservice, err := c.meshclientset.AppmeshV1beta1().VirtualServices(originalVirtualService.Namespace).Get(originalVirtualService.Name, metav1.GetOptions{})
+	if err != nil {
+		klog.Infof("Error loading virtual-service %s in namespace %s: %s", originalVirtualService.Name, originalVirtualService.Namespace, err)
+		return nil
+	}
+
 	if len(vservice.Spec.Routes) == 0 {
 		return nil
 	}

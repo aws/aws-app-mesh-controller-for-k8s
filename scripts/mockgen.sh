@@ -23,3 +23,7 @@ $GOPATH/bin/mockery -name AppmeshV1beta1Interface \
 $GOPATH/bin/mockery -name VirtualNodeInterface \
     -dir ${SCRIPT_ROOT}/pkg/client/clientset/versioned/typed/appmesh/v1beta1 \
     -output ${SCRIPT_ROOT}/pkg/client/clientset/versioned/typed/appmesh/v1beta1/mocks
+
+$GOPATH/bin/mockery -name VirtualServiceInterface \
+    -dir ${SCRIPT_ROOT}/pkg/client/clientset/versioned/typed/appmesh/v1beta1 \
+    -output ${SCRIPT_ROOT}/pkg/client/clientset/versioned/typed/appmesh/v1beta1/mocks

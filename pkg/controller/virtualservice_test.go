@@ -732,6 +732,11 @@ func TestGetVirtualRouter(t *testing.T) {
 			mockMeshClientSet.On(
 				"AppmeshV1beta1",
 			).Return(mockAppmeshv1beta1Client)
+			mockVirtualServiceInterface := new(appmeshv1beta1typedmocks.VirtualServiceInterface)
+			mockAppmeshv1beta1Client.On(
+				"VirtualServices",
+				mock.Anything,
+			).Return(mockVirtualServiceInterface)
 			mockVirtualNodeInterface := new(appmeshv1beta1typedmocks.VirtualNodeInterface)
 			mockAppmeshv1beta1Client.On(
 				"VirtualNodes",
@@ -798,6 +803,12 @@ func TestGetVirtualRouter(t *testing.T) {
 			} else {
 				mockVirtualNodeInterface.AssertNotCalled(t, tt.name)
 			}
+
+			mockVirtualServiceInterface.On(
+				"Get",
+				virtualService.Name,
+				metav1.GetOptions{},
+			).Return(&virtualService, nil)
 
 			c := &Controller{
 				name:          "test",
