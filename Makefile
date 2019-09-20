@@ -5,7 +5,6 @@ LDFLAGS?="-X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT} -X main.bui
 GO111MODULE=on
 # Docker
 IMAGE=amazon/app-mesh-controller
-REGION=$(shell aws configure get region)
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE)
 VERSION=v0.1.2
 

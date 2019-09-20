@@ -507,16 +507,11 @@ func (c *Cloud) CreateVirtualService(ctx context.Context, vservice *appmeshv1bet
 		Spec: &appmesh.VirtualServiceSpec{
 			Provider: &appmesh.VirtualServiceProvider{
 				// We only support virtual router providers for now
-				VirtualRouter: &appmesh.VirtualRouterServiceProvider{},
+				VirtualRouter: &appmesh.VirtualRouterServiceProvider{
+					VirtualRouterName: aws.String(vservice.Spec.VirtualRouter.Name),
+				},
 			},
 		},
-	}
-
-	if vservice.Spec.VirtualRouter != nil {
-		input.Spec.Provider.VirtualRouter.VirtualRouterName = aws.String(vservice.Spec.VirtualRouter.Name)
-	} else {
-		// We default to a virtual router with the same name as the virtual service
-		input.Spec.Provider.VirtualRouter.VirtualRouterName = aws.String(vservice.Name)
 	}
 
 	if output, err := c.appmesh.CreateVirtualServiceWithContext(ctx, input); err != nil {
@@ -540,16 +535,11 @@ func (c *Cloud) UpdateVirtualService(ctx context.Context, vservice *appmeshv1bet
 		Spec: &appmesh.VirtualServiceSpec{
 			Provider: &appmesh.VirtualServiceProvider{
 				// We only support virtual router providers for now
-				VirtualRouter: &appmesh.VirtualRouterServiceProvider{},
+				VirtualRouter: &appmesh.VirtualRouterServiceProvider{
+					VirtualRouterName: aws.String(vservice.Spec.VirtualRouter.Name),
+				},
 			},
 		},
-	}
-
-	if vservice.Spec.VirtualRouter != nil {
-		input.Spec.Provider.VirtualRouter.VirtualRouterName = aws.String(vservice.Spec.VirtualRouter.Name)
-	} else {
-		// We default to a virtual router with the same name as the virtual service
-		input.Spec.Provider.VirtualRouter.VirtualRouterName = aws.String(vservice.Name)
 	}
 
 	if output, err := c.appmesh.UpdateVirtualServiceWithContext(ctx, input); err != nil {
