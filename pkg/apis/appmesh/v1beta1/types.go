@@ -126,32 +126,45 @@ type Route struct {
 type HttpRoute struct {
 	Match       HttpRouteMatch   `json:"match"`
 	Action      HttpRouteAction  `json:"action"`
+	// +optional
 	RetryPolicy *HttpRetryPolicy `json:"retryPolicy,omitempty"`
 }
 
 type HttpRouteMatch struct {
 	Prefix  string            `json:"prefix"`
+	// +optional
 	Method  *string           `json:"method,omitempty"`
+	// +optional
 	Headers []HttpRouteHeader `json:"headers,omitempty"`
+	// +optional
 	Scheme  *string           `json:"scheme,omitempty"`
 }
 
 type HttpRouteHeader struct {
 	Name   string             `json:"name"`
+	// +optional
 	Invert *bool              `json:"invert,omitempty"`
+	// +optional
 	Match  *HeaderMatchMethod `json:"match,omitempty"`
 }
 
 type HeaderMatchMethod struct {
+	// +optional
 	Exact  *string     `json:"exact,omitempty"`
+	// +optional
 	Prefix *string     `json:"prefix,omitempty"`
+	// +optional
 	Range  *MatchRange `json:"range,omitempty"`
+	// +optional
 	Regex  *string     `json:"regex,omitempty"`
+	// +optional
 	Suffix *string     `json:"suffix,omitempty"`
 }
 
 type MatchRange struct {
+	// +optional
 	Start *int64 `json:"start,omitempty"`
+	// +optional
 	End   *int64 `json:"end,omitempty"`
 }
 
@@ -160,9 +173,13 @@ type HttpRouteAction struct {
 }
 
 type HttpRetryPolicy struct {
+	// +optional
 	PerRetryTimeoutMillis *int64                 `json:"perRetryTimeoutMillis,omitempty"`
+	// +optional
 	MaxRetries            *int64                 `json:"maxRetries,omitempty"`
+	// +optional
 	HttpRetryPolicyEvents []HttpRetryPolicyEvent `json:"httpRetryEvents,omitempty"`
+	// +optional
 	TcpRetryPolicyEvents  []TcpRetryPolicyEvent  `json:"tcpRetryEvents,omitempty"`
 }
 
@@ -267,6 +284,7 @@ type VirtualNodeSpec struct {
 
 type Listener struct {
 	PortMapping PortMapping        `json:"portMapping"`
+	// +optional
 	HealthCheck *HealthCheckPolicy `json:"healthCheck,omitempty"`
 }
 
@@ -276,12 +294,19 @@ type PortMapping struct {
 }
 
 type HealthCheckPolicy struct {
+	// +optional
 	HealthyThreshold   *int64  `json:"healthyThreshold,omitempty"`
+	// +optional
 	IntervalMillis     *int64  `json:"intervalMillis,omitempty"`
+	// +optional
 	Path               *string `json:"path,omitempty"`
+	// +optional
 	Port               *int64  `json:"port,omitempty"`
+	// +optional
 	Protocol           *string `json:"protocol,omitempty"`
+	// +optional
 	TimeoutMillis      *int64  `json:"timeoutMillis,omitempty"`
+	// +optional
 	UnhealthyThreshold *int64  `json:"unhealthyThreshold,omitempty"`
 }
 
@@ -300,6 +325,7 @@ type ServiceDiscovery struct {
 type CloudMapServiceDiscovery struct {
 	ServiceName   string            `json:"serviceName"`
 	NamespaceName string            `json:"namespaceName"`
+	// +optional
 	Attributes    map[string]string `json:"attributes,omitempty"`
 }
 
