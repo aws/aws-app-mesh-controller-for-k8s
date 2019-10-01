@@ -56,7 +56,7 @@ Next, launch the controller:
 ```
 
 ```bash
-curl https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v0.1.2/deploy/all.yaml | kubectl apply -f -
+curl https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/master/deploy/all.yaml | kubectl apply -f -
 ```
 
 Make sure it's ready:
