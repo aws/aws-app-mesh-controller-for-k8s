@@ -53,8 +53,6 @@ This will launch the webhook into the appmesh-inject namespace. Now add the corr
 
 Next, launch the controller:
 
-```
-
 ```bash
 curl https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v0.1.2/deploy/all.yaml | kubectl apply -f -
 ```
