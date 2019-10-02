@@ -1,8 +1,5 @@
-FROM golang:1.12-stretch as builder
+FROM golang:1.13-stretch as builder
 WORKDIR /go/src/github.com/aws/aws-app-mesh-controller-for-k8s
-
-# Force the go compiler to use modules.
-ENV GO111MODULE=on
 
 # go.mod and go.sum go into their own layers.
 COPY go.mod .
