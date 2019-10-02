@@ -135,7 +135,7 @@ type controllerConfig struct {
 
 func getConfig() (controllerConfig, error) {
 	viper.SetDefault("master", "")
-	viper.SetDefault("listenAddress", "127.0.0.1:10555")
+	viper.SetDefault("listenAddress", ":10555")
 
 	return controllerConfig{
 		client: controller.ClientOptions{
