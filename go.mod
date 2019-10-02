@@ -1,5 +1,7 @@
 module github.com/aws/aws-app-mesh-controller-for-k8s
 
+go 1.13
+
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/aws/aws-sdk-go v1.23.18
