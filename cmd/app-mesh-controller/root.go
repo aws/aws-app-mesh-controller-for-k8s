@@ -1,12 +1,14 @@
 package main
 
 import (
-	"flag"
+	goflag "flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -48,6 +50,10 @@ func init() {
 
 func main() {
 	flag.CommandLine.Parse([]string{})
+
+	fs := rootCmd.Flags()
+	addKlogFlags(fs)
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
@@ -70,7 +76,12 @@ var rootCmd = &cobra.Command{
 	Long: `app-mesh-controller is responsible for creating resources in AWS App Mesh.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		version := NewVersion()
-		klog.Infof(version.String())
+		fmt.Printf("%s\n", version.String())
+
+		cmd.Flags().VisitAll(func(flag *flag.Flag) {
+			klog.V(1).Infof("FLAG: --%s=%q", flag.Name, flag.Value)
+		})
+
 		var stopCh chan struct{}
 
 		cfg, err := getConfig()
@@ -149,4 +160,20 @@ func getConfig() (controllerConfig, error) {
 			Region: viper.GetString("aws-region"),
 		},
 	}, nil
+}
+
+// addKlogFlags adds flags from k8s.io/klog
+func addKlogFlags(fs *flag.FlagSet) {
+	local := goflag.NewFlagSet(os.Args[0], goflag.ExitOnError)
+	klog.InitFlags(local)
+	local.VisitAll(func(fl *goflag.Flag) {
+		fl.Name = normalize(fl.Name)
+		fs.AddGoFlag(fl)
+	})
+}
+
+// normalize replaces underscores with hyphens
+// we should always use hyphens instead of underscores when registering component flags
+func normalize(s string) string {
+	return strings.Replace(s, "_", "-", -1)
 }
