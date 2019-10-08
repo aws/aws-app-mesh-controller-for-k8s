@@ -18,14 +18,40 @@ jobs:
           name: Validate deploy yamls
           command: |
             kubeval --strict --ignore-missing-schemas ./deploy/all.yaml
+  build-test-run:
+    docker:
+      - image: circleci/golang:1.13
+    working_directory: ~/build
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-{{ checksum "go.sum" }}
+      - run:
+          name: Build
+          command: make linux
+      - run:
+          name: Test
+          command: make test
+      - run:
+          name: Run
+          command: _output/bin/app-mesh-controller version
+      - save_cache:
+          key: go-mod-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod/"
 
 workflows:
   version: 2
-  build-test:
+  test:
     jobs:
       - validate-yaml:
           filters:
             branches:
               ignore:
                 - gh-pages
-
+      - build-test-run:
+          filters:
+            branches:
+              ignore:
+                - gh-pages

@@ -18,6 +18,12 @@ darwin:
 	mkdir -p bin
 	CGO_ENABLED=0 GOOS=darwin go build -ldflags ${LDFLAGS} -o _output/bin/app-mesh-controller-osx ./cmd/app-mesh-controller
 
+.PHONY: linux
+linux:
+	mkdir -p _output/bin
+	CGO_ENABLED=0 GOOS=linux go build -ldflags ${LDFLAGS} -o _output/bin/app-mesh-controller ./cmd/app-mesh-controller
+
+
 .PHONY: code-gen
 code-gen:
 	./scripts/update-codegen.sh
