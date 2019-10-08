@@ -1,0 +1,31 @@
+version: 2.1
+jobs:
+  validate-yaml:
+    docker:
+      - image: circleci/golang:1.13
+    steps:
+      - checkout
+      - run:
+          name: Install kubectl
+          command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl
+      - run:
+          name: Install kubeval
+          command: |
+            mkdir -p $HOME/tools && \
+            cd $HOME/tools && \
+            curl -L https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz | tar xz && sudo mv kubeval /bin/kubeval
+      - run:
+          name: Validate deploy yamls
+          command: |
+            kubeval --strict --ignore-missing-schemas ./deploy/all.yaml
+
+workflows:
+  version: 2
+  build-test:
+    jobs:
+      - validate-yaml:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+
