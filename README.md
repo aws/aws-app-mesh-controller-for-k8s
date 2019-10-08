@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/aws/aws-app-mesh-controller-for-k8s.svg?style=svg)](https://circleci.com/gh/aws/aws-app-mesh-controller-for-k8s)
+
 <p align="center">
     <img src="docs/product-icon_AWS_App_Mesh_icon_squid_ink.svg" alt="App Mesh Logo" width="200" />
 </p>
