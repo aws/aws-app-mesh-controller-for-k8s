@@ -1,0 +1,57 @@
+version: 2.1
+jobs:
+  validate-yaml:
+    docker:
+      - image: circleci/golang:1.13
+    steps:
+      - checkout
+      - run:
+          name: Install kubectl
+          command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl
+      - run:
+          name: Install kubeval
+          command: |
+            mkdir -p $HOME/tools && \
+            cd $HOME/tools && \
+            curl -L https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz | tar xz && sudo mv kubeval /bin/kubeval
+      - run:
+          name: Validate deploy yamls
+          command: |
+            kubeval --strict --ignore-missing-schemas ./deploy/all.yaml
+  build-test-run:
+    docker:
+      - image: circleci/golang:1.13
+    working_directory: ~/build
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-{{ checksum "go.sum" }}
+      - run:
+          name: Build
+          command: make linux
+      - run:
+          name: Test
+          command: make test
+      - run:
+          name: Run
+          command: _output/bin/app-mesh-controller version
+      - save_cache:
+          key: go-mod-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod/"
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - validate-yaml:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - build-test-run:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
