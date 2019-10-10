@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
-	github.com/aws/aws-sdk-go v1.23.18
+	github.com/aws/aws-sdk-go v1.25.10
 	github.com/deckarep/golang-set v1.7.1
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect
@@ -43,3 +43,6 @@ require (
 	k8s.io/klog v0.2.0
 	k8s.io/kube-openapi v0.0.0-20190222203931-aa8624f5a2df // indirect
 )
+
+// TODO: Use this to test appmesh preview channel model
+replace github.com/aws/aws-sdk-go => ./vendor/github.com/aws/aws-sdk-go
