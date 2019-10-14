@@ -124,48 +124,48 @@ type Route struct {
 }
 
 type HttpRoute struct {
-	Match       HttpRouteMatch   `json:"match"`
-	Action      HttpRouteAction  `json:"action"`
+	Match  HttpRouteMatch  `json:"match"`
+	Action HttpRouteAction `json:"action"`
 	// +optional
 	RetryPolicy *HttpRetryPolicy `json:"retryPolicy,omitempty"`
 }
 
 type HttpRouteMatch struct {
-	Prefix  string            `json:"prefix"`
+	Prefix string `json:"prefix"`
 	// +optional
-	Method  *string           `json:"method,omitempty"`
+	Method *string `json:"method,omitempty"`
 	// +optional
 	Headers []HttpRouteHeader `json:"headers,omitempty"`
 	// +optional
-	Scheme  *string           `json:"scheme,omitempty"`
+	Scheme *string `json:"scheme,omitempty"`
 }
 
 type HttpRouteHeader struct {
-	Name   string             `json:"name"`
+	Name string `json:"name"`
 	// +optional
-	Invert *bool              `json:"invert,omitempty"`
+	Invert *bool `json:"invert,omitempty"`
 	// +optional
-	Match  *HeaderMatchMethod `json:"match,omitempty"`
+	Match *HeaderMatchMethod `json:"match,omitempty"`
 }
 
 type HeaderMatchMethod struct {
 	// +optional
-	Exact  *string     `json:"exact,omitempty"`
+	Exact *string `json:"exact,omitempty"`
 	// +optional
-	Prefix *string     `json:"prefix,omitempty"`
+	Prefix *string `json:"prefix,omitempty"`
 	// +optional
-	Range  *MatchRange `json:"range,omitempty"`
+	Range *MatchRange `json:"range,omitempty"`
 	// +optional
-	Regex  *string     `json:"regex,omitempty"`
+	Regex *string `json:"regex,omitempty"`
 	// +optional
-	Suffix *string     `json:"suffix,omitempty"`
+	Suffix *string `json:"suffix,omitempty"`
 }
 
 type MatchRange struct {
 	// +optional
 	Start *int64 `json:"start,omitempty"`
 	// +optional
-	End   *int64 `json:"end,omitempty"`
+	End *int64 `json:"end,omitempty"`
 }
 
 type HttpRouteAction struct {
@@ -174,13 +174,13 @@ type HttpRouteAction struct {
 
 type HttpRetryPolicy struct {
 	// +optional
-	PerRetryTimeoutMillis *int64                 `json:"perRetryTimeoutMillis,omitempty"`
+	PerRetryTimeoutMillis *int64 `json:"perRetryTimeoutMillis,omitempty"`
 	// +optional
-	MaxRetries            *int64                 `json:"maxRetries,omitempty"`
+	MaxRetries *int64 `json:"maxRetries,omitempty"`
 	// +optional
 	HttpRetryPolicyEvents []HttpRetryPolicyEvent `json:"httpRetryEvents,omitempty"`
 	// +optional
-	TcpRetryPolicyEvents  []TcpRetryPolicyEvent  `json:"tcpRetryEvents,omitempty"`
+	TcpRetryPolicyEvents []TcpRetryPolicyEvent `json:"tcpRetryEvents,omitempty"`
 }
 
 type HttpRetryPolicyEvent string
@@ -283,7 +283,7 @@ type VirtualNodeSpec struct {
 }
 
 type Listener struct {
-	PortMapping PortMapping        `json:"portMapping"`
+	PortMapping PortMapping `json:"portMapping"`
 	// +optional
 	HealthCheck *HealthCheckPolicy `json:"healthCheck,omitempty"`
 }
@@ -295,19 +295,19 @@ type PortMapping struct {
 
 type HealthCheckPolicy struct {
 	// +optional
-	HealthyThreshold   *int64  `json:"healthyThreshold,omitempty"`
+	HealthyThreshold *int64 `json:"healthyThreshold,omitempty"`
 	// +optional
-	IntervalMillis     *int64  `json:"intervalMillis,omitempty"`
+	IntervalMillis *int64 `json:"intervalMillis,omitempty"`
 	// +optional
-	Path               *string `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
 	// +optional
-	Port               *int64  `json:"port,omitempty"`
+	Port *int64 `json:"port,omitempty"`
 	// +optional
-	Protocol           *string `json:"protocol,omitempty"`
+	Protocol *string `json:"protocol,omitempty"`
 	// +optional
-	TimeoutMillis      *int64  `json:"timeoutMillis,omitempty"`
+	TimeoutMillis *int64 `json:"timeoutMillis,omitempty"`
 	// +optional
-	UnhealthyThreshold *int64  `json:"unhealthyThreshold,omitempty"`
+	UnhealthyThreshold *int64 `json:"unhealthyThreshold,omitempty"`
 }
 
 const (
@@ -323,10 +323,10 @@ type ServiceDiscovery struct {
 }
 
 type CloudMapServiceDiscovery struct {
-	ServiceName   string            `json:"serviceName"`
-	NamespaceName string            `json:"namespaceName"`
+	ServiceName   string `json:"serviceName"`
+	NamespaceName string `json:"namespaceName"`
 	// +optional
-	Attributes    map[string]string `json:"attributes,omitempty"`
+	Attributes map[string]string `json:"attributes,omitempty"`
 }
 
 type DnsServiceDiscovery struct {
@@ -399,7 +399,7 @@ type VirtualNodeCondition struct {
 	Reason *string `json:"reason,omitempty"`
 	// A human readable message indicating details about the transition.
 	// +optional
-	Message *string `json:"reason,omitempty"`
+	Message *string `json:"message,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
