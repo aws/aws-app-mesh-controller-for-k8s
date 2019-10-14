@@ -15,6 +15,10 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
 
+	//Tools
+	_ "k8s.io/code-generator"
+	_ "github.com/vektra/mockery"
+
 	// TODO(nic) Don't depend on k8s.io/kubernetes, just duplicate the logic in this package -- it will be a
 	// smaller headache.
 	//_ "k8s.io/kubernetes/pkg/client/metrics/prometheus" // for client metric registration
