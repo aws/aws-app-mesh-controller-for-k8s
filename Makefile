@@ -78,3 +78,6 @@ test:
 
 cover: test
 	go tool cover -html=coverage-all.out
+
+go-fmt:
+	gofmt -l pkg/* | grep ".*\.go"; if [ "$$?" = "0" ]; then exit 1; fi;
