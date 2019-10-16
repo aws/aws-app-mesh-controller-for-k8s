@@ -37,6 +37,9 @@ jobs:
           name: Test
           command: make test
       - run:
+          name: Verify code gen
+          command: make verify-codegen
+      - run:
           name: Run
           command: _output/bin/app-mesh-controller version
       - save_cache:
