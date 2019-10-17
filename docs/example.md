@@ -2,7 +2,7 @@
 
 After following the [install instructions](install.md), you can deploy an example application with:
 
-    curl https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/v0.1.2/examples/color.yaml | kubectl apply -f -
+    kubectl apply -f https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/master/examples/color.yaml
 
 Alternatively, if you have the repository checked out, you can launch the example application with:
 
@@ -62,7 +62,7 @@ for i in {1..100}; do curl colorgateway:9080/color; echo; done
 # {"color":"white", "stats": {"black":0.36,"blue":0.32,"white":0.32}}
 ```
 
-Next update the traffic weight towards the colorteller backends. 
+Next update the traffic weight towards the colorteller backends.
 
 ```bash
     kubectl edit VirtualService colorteller.appmesh-demo -n appmesh-demo
