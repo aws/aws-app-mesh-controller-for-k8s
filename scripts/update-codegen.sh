@@ -14,6 +14,12 @@ APIS_PKG=${ROOT_PKG}/pkg/apis
 CODEGEN_VERSION=$(grep 'k8s.io/code-generator' go.sum | awk '{print $2}' | head -1)
 CODEGEN_PKG=$(echo `go env GOPATH`"/pkg/mod/k8s.io/code-generator@${CODEGEN_VERSION}")
 
+if [[ ! -d ${CODEGEN_PKG} ]]; then
+    echo "${CODEGEN_PKG} is missing. Run 'go mod download'."
+    exit 1
+fi
+
+
 echo ">> Using ${CODEGEN_PKG}"
 
 # code-generator does work with go.mod but makes assumptions about
