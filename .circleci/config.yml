@@ -28,6 +28,9 @@ jobs:
           keys:
             - go-mod-{{ checksum "go.sum" }}
       - run:
+          name: Lint
+          command: make go-fmt
+      - run:
           name: Build
           command: make linux
       - run:

@@ -6,7 +6,7 @@ GO111MODULE=on
 # Docker
 IMAGE=amazon/app-mesh-controller
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE)
-VERSION=v0.1.2
+VERSION=v0.2.0
 
 .PHONY: eks-appmesh-controller
 eks-appmesh-controller:
@@ -78,3 +78,6 @@ test:
 
 cover: test
 	go tool cover -html=coverage-all.out
+
+go-fmt:
+	gofmt -l pkg/* | grep ".*\.go"; if [ "$$?" = "0" ]; then exit 1; fi;

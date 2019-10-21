@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/klog"
-
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/appmesh"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
 )
 
 const (
