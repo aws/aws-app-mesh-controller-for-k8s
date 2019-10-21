@@ -120,6 +120,10 @@ type Route struct {
 	// +optional
 	Tcp *TcpRoute `json:"tcp,omitempty"`
 	// +optional
+	Http2 *HttpRoute `json:"http2,omitempty"`
+	// +optional
+	Grpc *GrpcRoute `json:"grpc,omitempty"`
+	// +optional
 	Priority *int64 `json:"priority,omitempty"`
 }
 
@@ -187,6 +191,8 @@ type HttpRetryPolicyEvent string
 
 type TcpRetryPolicyEvent string
 
+type GrpcRetryPolicyEvent string
+
 const (
 	TcpRetryPolicyEventConnectionError TcpRetryPolicyEvent = "connection-error"
 )
@@ -197,6 +203,60 @@ type TcpRoute struct {
 
 type TcpRouteAction struct {
 	WeightedTargets []WeightedTarget `json:"weightedTargets"`
+}
+
+type GrpcRoute struct {
+	Match       GrpcRouteMatch   `json:"match"`
+	Action      GrpcRouteAction  `json:"action"`
+	// +optional
+	RetryPolicy *GrpcRetryPolicy `json:"retryPolicy,omitempty"`	
+}
+
+type GrpcRouteMatch struct {
+	// +optional
+	ServiceName *string 			`json:"serviceName,omitempty"`
+	// +optional
+	MethodName 	*string 			`json:"methodName,omitempty"`
+	// +optional
+	Metadata 	[]GrpcRouteMetadata `json:"metadata,omitempty"`
+}
+
+type GrpcRouteMetadata struct {
+	Name 	string 					`json:"name"`
+	// +optional
+	Invert 	*bool 					`json:"invert,omitempty"`
+	// +optional
+	Match 	*MetadataMatchMethod	`json:"match,omitempty"`
+}
+
+type MetadataMatchMethod struct {
+	// +optional
+	Exact  *string     `json:"exact,omitempty"`
+	// +optional
+	Prefix *string     `json:"prefix,omitempty"`
+	// +optional
+	Range  *MatchRange `json:"range,omitempty"`
+	// +optional
+	Regex  *string     `json:"regex,omitempty"`
+	// +optional
+	Suffix *string     `json:"suffix,omitempty"`	
+}
+
+type GrpcRouteAction struct {
+	WeightedTargets []WeightedTarget `json:"weightedTargets"`
+}
+
+type GrpcRetryPolicy struct {
+	// +optional
+	PerRetryTimeoutMillis *int64                 `json:"perRetryTimeoutMillis,omitempty"`
+	// +optional
+	MaxRetries            *int64                 `json:"maxRetries,omitempty"`
+	// +optional
+	HttpRetryPolicyEvents []HttpRetryPolicyEvent `json:"httpRetryEvents,omitempty"`
+	// +optional
+	TcpRetryPolicyEvents  []TcpRetryPolicyEvent  `json:"tcpRetryEvents,omitempty"`
+	// +optional 
+	GrpcRetryPolicyEvents []GrpcRetryPolicyEvent `json:"grpcRetryEvents,omitempty"`
 }
 
 type WeightedTarget struct {
