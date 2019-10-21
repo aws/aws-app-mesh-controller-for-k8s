@@ -6,15 +6,16 @@ import (
 	"strings"
 	"testing"
 
+	awssdk "github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/appmesh"
+	"github.com/aws/aws-sdk-go/service/servicediscovery"
+	"github.com/stretchr/testify/mock"
+
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	ctrlawsmocks "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/mocks"
 	appmeshv1beta1mocks "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/mocks"
 	appmeshv1beta1typedmocks "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/typed/appmesh/v1beta1/mocks"
-	awssdk "github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/appmesh"
-	"github.com/aws/aws-sdk-go/service/servicediscovery"
-	"github.com/stretchr/testify/mock"
 )
 
 // newAWSVirtualNode is a helper function to generate an Kubernetes Custom Resource API object.
@@ -141,7 +142,6 @@ func newAWSVirtualNodeWithCloudMap(ports []int64, protocols []string, backends [
 }
 
 func TestVNodeNeedsUpdate(t *testing.T) {
-
 	var (
 		// defaults
 		port80       int64 = 80
