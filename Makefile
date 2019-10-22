@@ -28,6 +28,10 @@ linux:
 code-gen:
 	./scripts/update-codegen.sh
 
+.PHONY: verify-codegen
+verify-codegen:
+	./scripts/verify-codegen.sh
+
 .PHONY: image
 image:
 	docker build -t $(IMAGE):latest .
