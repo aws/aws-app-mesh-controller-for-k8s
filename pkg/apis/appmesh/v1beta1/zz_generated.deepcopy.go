@@ -501,7 +501,7 @@ func (in *MeshCondition) DeepCopy() *MeshCondition {
 func (in *MeshList) DeepCopyInto(out *MeshList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]Mesh, len(*in))
@@ -752,7 +752,7 @@ func (in *VirtualNodeCondition) DeepCopy() *VirtualNodeCondition {
 func (in *VirtualNodeList) DeepCopyInto(out *VirtualNodeList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]VirtualNode, len(*in))
@@ -973,7 +973,7 @@ func (in *VirtualServiceCondition) DeepCopy() *VirtualServiceCondition {
 func (in *VirtualServiceList) DeepCopyInto(out *VirtualServiceList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]VirtualService, len(*in))
