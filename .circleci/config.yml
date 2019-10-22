@@ -28,6 +28,9 @@ jobs:
           keys:
             - go-mod-{{ checksum "go.sum" }}
       - run:
+          name: go mod download
+          command: go mod download
+      - run:
           name: Lint
           command: make go-fmt
       - run:
@@ -36,6 +39,9 @@ jobs:
       - run:
           name: Test
           command: make test
+      - run:
+          name: Verify code gen
+          command: make verify-codegen
       - run:
           name: Run
           command: _output/bin/app-mesh-controller version
