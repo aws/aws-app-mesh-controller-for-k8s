@@ -66,7 +66,7 @@ func newAPIGrpcRoute(routeName string, serviceName string, methodName string, ta
 			},
 			Match: appmeshv1beta1.GrpcRouteMatch{
 				ServiceName: &serviceName,
-				MethodName: &methodName,
+				MethodName:  &methodName,
 			},
 		},
 		Name: routeName,
@@ -152,7 +152,7 @@ func newAWSGrpcRoute(routeName string, serviceName string, methodName string, ta
 					Action: &appmesh.GrpcRouteAction{},
 					Match: &appmesh.GrpcRouteMatch{
 						ServiceName: awssdk.String(serviceName),
-						MethodName: awssdk.String(methodName),
+						MethodName:  awssdk.String(methodName),
 					},
 				},
 			},
@@ -165,7 +165,6 @@ func newAWSGrpcRoute(routeName string, serviceName string, methodName string, ta
 	}
 	return awsRoute
 }
-
 
 func newAWSWeightedTargets(targets []appmeshv1beta1.WeightedTarget) []*appmesh.WeightedTarget {
 	var awstargets []*appmesh.WeightedTarget
@@ -552,10 +551,10 @@ func TestGrpcRouteNeedUpdate(t *testing.T) {
 
 	var (
 		// shared defaults
-		defaultRouteName = "example-http2-route"
-		defaultNodeName  = "example-node"
+		defaultRouteName   = "example-http2-route"
+		defaultNodeName    = "example-node"
 		defaultServiceName = "service-name"
-		defaultMethodName = "method-name"
+		defaultMethodName  = "method-name"
 
 		// Targets for default custom resource spec
 		defaultTargets = []appmeshv1beta1.WeightedTarget{
@@ -974,10 +973,10 @@ func TestHttp2RouteWithHeaderNeedUpdate(t *testing.T) {
 func TestGrpcRouteWithMetadataNeedUpdate(t *testing.T) {
 	var (
 		// shared defaults
-		defaultRouteName = "example-route"
+		defaultRouteName   = "example-route"
 		defaultServiceName = "example-serviceName"
-		defaultMethodName = "example-methodName"
-		defaultNodeName  = "example-node"
+		defaultMethodName  = "example-methodName"
+		defaultNodeName    = "example-node"
 
 		// Targets for default custom resource spec
 		defaultTargets = []appmeshv1beta1.WeightedTarget{
@@ -1659,12 +1658,12 @@ func TestGrpcRouteWithRetryPolicyNeedUpdate(t *testing.T) {
 	var (
 		// shared defaults
 		defaultRouteName             = "example-route"
-		defaultServiceName			 = "service-name"
-		defaultMethodName			 = "method-name"
+		defaultServiceName           = "service-name"
+		defaultMethodName            = "method-name"
 		defaultNodeName              = "example-node"
 		defaultPerRetryTimeoutMillis = int64(1000)
 		defaultMaxRetries            = int64(5)
-		defaultGrpcRetryPolicyEvent = "unavailable"
+		defaultGrpcRetryPolicyEvent  = "unavailable"
 		defaultHttpRetryPolicyEvent  = "http-error"
 		defaultTcpRetryPolicyEvent   = appmesh.TcpRetryPolicyEventConnectionError
 
@@ -1789,7 +1788,7 @@ func TestGrpcRouteWithRetryPolicyNeedUpdate(t *testing.T) {
 		{"GrpcRetryPolicyEvent: missing in desired", emptySpec, resultWithGrpcEvent, true},
 		{"GrpcRetryPolicyEvent: missing in target", specWithGrpcEvent, emptyResult, true},
 		{"GrpcRetryPolicyEvent: diff", specWithGrpcEvent, resultWithDifferentGrpcEvent, true},
-		
+
 		{"TcpRetryPolicyEvent: match", specWithTcpEvent, resultWithTcpEvent, false},
 		{"TcpRetryPolicyEvent: missing in desired", emptySpec, resultWithTcpEvent, true},
 		{"TcpRetryPolicyEvent: missing in target", specWithTcpEvent, emptyResult, true},

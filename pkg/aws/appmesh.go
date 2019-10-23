@@ -816,7 +816,7 @@ func (r *Route) Http2RouteMatch() *appmeshv1beta1.HttpRouteMatch {
 	inputMatch := r.Data.Spec.Http2Route.Match
 
 	return HttpRouteMatchHelper(inputMatch)
-} 
+}
 
 func (r *Route) HttpRouteMatch() *appmeshv1beta1.HttpRouteMatch {
 	if r.Data.Spec.HttpRoute == nil || r.Data.Spec.HttpRoute.Match == nil {
@@ -868,12 +868,12 @@ func (r *Route) GrpcRouteMatch() *appmeshv1beta1.GrpcRouteMatch {
 	inputMatch := r.Data.Spec.GrpcRoute.Match
 	resultMatch := &appmeshv1beta1.GrpcRouteMatch{
 		ServiceName: inputMatch.ServiceName,
-		MethodName: inputMatch.MethodName,
+		MethodName:  inputMatch.MethodName,
 	}
 
 	for _, m := range inputMatch.Metadata {
 		resultMetadata := appmeshv1beta1.GrpcRouteMetadata{
-			Name: aws.StringValue(m.Name),
+			Name:   aws.StringValue(m.Name),
 			Invert: m.Invert,
 		}
 		if m.Match != nil {
@@ -886,7 +886,7 @@ func (r *Route) GrpcRouteMatch() *appmeshv1beta1.GrpcRouteMatch {
 			if m.Match.Range != nil {
 				resultMetadata.Match.Range = &appmeshv1beta1.MatchRange{
 					Start: m.Match.Range.Start,
-					End: m.Match.Range.End,
+					End:   m.Match.Range.End,
 				}
 			}
 		}
@@ -897,14 +897,14 @@ func (r *Route) GrpcRouteMatch() *appmeshv1beta1.GrpcRouteMatch {
 }
 
 func (r *Route) GrpcRouteRetryPolicy() *appmeshv1beta1.GrpcRetryPolicy {
-	if (r.Data.Spec.GrpcRoute == nil || r.Data.Spec.GrpcRoute.RetryPolicy == nil) {
+	if r.Data.Spec.GrpcRoute == nil || r.Data.Spec.GrpcRoute.RetryPolicy == nil {
 		return nil
 	}
 
 	input := r.Data.Spec.GrpcRoute.RetryPolicy
 	result := &appmeshv1beta1.GrpcRetryPolicy{
 		PerRetryTimeoutMillis: durationToMillis(input.PerRetryTimeout),
-		MaxRetries: 		   input.MaxRetries,
+		MaxRetries:            input.MaxRetries,
 	}
 
 	for _, inputEvent := range input.HttpRetryEvents {
@@ -1281,12 +1281,12 @@ func (c *Cloud) buildGrpcRetryPolicy(input *appmeshv1beta1.GrpcRetryPolicy) *app
 func (c *Cloud) buildGrpcRouteMatch(input appmeshv1beta1.GrpcRouteMatch) *appmesh.GrpcRouteMatch {
 	appmeshRouteMatch := &appmesh.GrpcRouteMatch{
 		ServiceName: input.ServiceName,
-		MethodName: input.MethodName,
+		MethodName:  input.MethodName,
 	}
-	
+
 	if len(input.Metadata) > 0 {
 		appmeshRouteMatch.Metadata = []*appmesh.GrpcRouteMetadata{}
-		for _, m:= range input.Metadata {
+		for _, m := range input.Metadata {
 			appmeshRouteMatch.Metadata = append(appmeshRouteMatch.Metadata, c.buildGrpcRouteMetadata(m))
 		}
 	}

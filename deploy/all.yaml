@@ -486,6 +486,7 @@ spec:
                             type: array
                             items:
                               type: string   
+                              enum:
                                 - 'server-error' # HTTP status codes 500, 501, 502, 503, 504, 505, 506, 507, 508, 510, and 511
                                 - 'gateway-error' # HTTP status codes 502, 503, and 504
                                 - 'client-error' # HTTP status code 409

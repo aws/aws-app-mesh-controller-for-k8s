@@ -206,40 +206,40 @@ type TcpRouteAction struct {
 }
 
 type GrpcRoute struct {
-	Match       GrpcRouteMatch   `json:"match"`
-	Action      GrpcRouteAction  `json:"action"`
+	Match  GrpcRouteMatch  `json:"match"`
+	Action GrpcRouteAction `json:"action"`
 	// +optional
-	RetryPolicy *GrpcRetryPolicy `json:"retryPolicy,omitempty"`	
+	RetryPolicy *GrpcRetryPolicy `json:"retryPolicy,omitempty"`
 }
 
 type GrpcRouteMatch struct {
 	// +optional
-	ServiceName *string 			`json:"serviceName,omitempty"`
+	ServiceName *string `json:"serviceName,omitempty"`
 	// +optional
-	MethodName 	*string 			`json:"methodName,omitempty"`
+	MethodName *string `json:"methodName,omitempty"`
 	// +optional
-	Metadata 	[]GrpcRouteMetadata `json:"metadata,omitempty"`
+	Metadata []GrpcRouteMetadata `json:"metadata,omitempty"`
 }
 
 type GrpcRouteMetadata struct {
-	Name 	string 					`json:"name"`
+	Name string `json:"name"`
 	// +optional
-	Invert 	*bool 					`json:"invert,omitempty"`
+	Invert *bool `json:"invert,omitempty"`
 	// +optional
-	Match 	*MetadataMatchMethod	`json:"match,omitempty"`
+	Match *MetadataMatchMethod `json:"match,omitempty"`
 }
 
 type MetadataMatchMethod struct {
 	// +optional
-	Exact  *string     `json:"exact,omitempty"`
+	Exact *string `json:"exact,omitempty"`
 	// +optional
-	Prefix *string     `json:"prefix,omitempty"`
+	Prefix *string `json:"prefix,omitempty"`
 	// +optional
-	Range  *MatchRange `json:"range,omitempty"`
+	Range *MatchRange `json:"range,omitempty"`
 	// +optional
-	Regex  *string     `json:"regex,omitempty"`
+	Regex *string `json:"regex,omitempty"`
 	// +optional
-	Suffix *string     `json:"suffix,omitempty"`	
+	Suffix *string `json:"suffix,omitempty"`
 }
 
 type GrpcRouteAction struct {
@@ -248,14 +248,14 @@ type GrpcRouteAction struct {
 
 type GrpcRetryPolicy struct {
 	// +optional
-	PerRetryTimeoutMillis *int64                 `json:"perRetryTimeoutMillis,omitempty"`
+	PerRetryTimeoutMillis *int64 `json:"perRetryTimeoutMillis,omitempty"`
 	// +optional
-	MaxRetries            *int64                 `json:"maxRetries,omitempty"`
+	MaxRetries *int64 `json:"maxRetries,omitempty"`
 	// +optional
 	HttpRetryPolicyEvents []HttpRetryPolicyEvent `json:"httpRetryEvents,omitempty"`
 	// +optional
-	TcpRetryPolicyEvents  []TcpRetryPolicyEvent  `json:"tcpRetryEvents,omitempty"`
-	// +optional 
+	TcpRetryPolicyEvents []TcpRetryPolicyEvent `json:"tcpRetryEvents,omitempty"`
+	// +optional
 	GrpcRetryPolicyEvents []GrpcRetryPolicyEvent `json:"grpcRetryEvents,omitempty"`
 }
 
