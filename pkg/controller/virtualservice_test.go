@@ -341,7 +341,7 @@ func TestVirtualRouterNeedsUpdate(t *testing.T) {
 	}
 }
 
-func TestRouteNeedUpdate(t *testing.T) {
+func TestHttpRouteNeedUpdate(t *testing.T) {
 
 	var (
 		// shared defaults
@@ -495,10 +495,10 @@ func TestHttp2RouteNeedUpdate(t *testing.T) {
 		}
 
 		// Spec with default values
-		defaultSpec = newAPIHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)
+		defaultSpec = newAPIHttp2Route(defaultRouteName, defaultPrefix, defaultTargets)
 
 		// Result with the equivalent values as defaultSpec
-		defaultRouteResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, defaultTargets)
+		defaultRouteResult = newAWSHttp2Route(defaultRouteName, defaultPrefix, defaultTargets)
 
 		extraTarget = []appmeshv1beta1.WeightedTarget{
 			{Weight: int64(1), VirtualNodeName: defaultNodeName},
@@ -506,12 +506,12 @@ func TestHttp2RouteNeedUpdate(t *testing.T) {
 		}
 
 		// Extra target spec and result
-		extraTargetSpec   = newAPIHttpRoute(defaultRouteName, defaultPrefix, extraTarget)
-		extraTargetResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, extraTarget)
+		extraTargetSpec   = newAPIHttp2Route(defaultRouteName, defaultPrefix, extraTarget)
+		extraTargetResult = newAWSHttp2Route(defaultRouteName, defaultPrefix, extraTarget)
 
 		// No targets spec and result
-		noTargetSpec    = newAPIHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
-		noTargetsResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
+		noTargetSpec    = newAPIHttp2Route(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
+		noTargetsResult = newAWSHttp2Route(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
 
 		// Varying weight targets spec and result
 		varyingWeightTargets = []appmeshv1beta1.WeightedTarget{
@@ -519,9 +519,9 @@ func TestHttp2RouteNeedUpdate(t *testing.T) {
 			{Weight: int64(2), VirtualNodeName: "foo-bar-zoo"},
 			{Weight: int64(3), VirtualNodeName: "foo-dummyNamespace"},
 		}
-		varyingWeightSpec = newAPIHttpRoute(defaultRouteName, defaultPrefix, varyingWeightTargets)
+		varyingWeightSpec = newAPIHttp2Route(defaultRouteName, defaultPrefix, varyingWeightTargets)
 
-		varyingWeightResult = newAWSHttpRoute(defaultRouteName, defaultPrefix, varyingWeightTargets)
+		varyingWeightResult = newAWSHttp2Route(defaultRouteName, defaultPrefix, varyingWeightTargets)
 	)
 
 	var routetests = []struct {

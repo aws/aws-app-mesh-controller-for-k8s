@@ -127,6 +127,8 @@ spec:
                         enum:
                           - tcp
                           - http
+                          - http2
+                          - grpc
                       timeoutMillis:
                         type: integer
                       unhealthyThreshold:

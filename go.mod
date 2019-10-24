@@ -3,7 +3,7 @@ module github.com/aws/aws-app-mesh-controller-for-k8s
 go 1.13
 
 require (
-	github.com/aws/aws-sdk-go v1.23.18
+	github.com/aws/aws-sdk-go v1.25.19
 	github.com/deckarep/golang-set v1.7.1
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect
@@ -37,6 +37,3 @@ replace (
 	k8s.io/client-go => k8s.io/client-go v0.0.0-20191014070654-bd505ee787b2
 	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20191003035328-700b1226c0bd
 )
-
-// TODO: Use this to test appmesh preview channel model
-replace github.com/aws/aws-sdk-go => ./vendor/github.com/aws/aws-sdk-go

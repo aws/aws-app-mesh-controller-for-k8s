@@ -1141,12 +1141,12 @@ func (c *Cloud) buildRouteSpec(route *appmeshv1beta1.Route) *appmesh.RouteSpec {
 	if route.Http2 != nil {
 		return &appmesh.RouteSpec{
 			Priority: route.Priority,
-			HttpRoute: &appmesh.HttpRoute{
-				Match: c.buildHttpRouteMatch(route.Http.Match),
+			Http2Route: &appmesh.HttpRoute{
+				Match: c.buildHttpRouteMatch(route.Http2.Match),
 				Action: &appmesh.HttpRouteAction{
-					WeightedTargets: c.buildWeightedTargets(route.Http.Action.WeightedTargets),
+					WeightedTargets: c.buildWeightedTargets(route.Http2.Action.WeightedTargets),
 				},
-				RetryPolicy: c.buildHttpRetryPolicy(route.Http.RetryPolicy),
+				RetryPolicy: c.buildHttpRetryPolicy(route.Http2.RetryPolicy),
 			},
 		}
 	}
