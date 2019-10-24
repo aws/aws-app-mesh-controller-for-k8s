@@ -1154,6 +1154,8 @@ func TestGetVirtualRouter(t *testing.T) {
 		defaultMeshName  = "example-mesh"
 		defaultRouteName = "example-route"
 		defaultPrefix    = "/"
+		defaultServiceName = "serviceName"
+		defaultMethodName = "methodName" 
 
 		defaultHttpPort = appmeshv1beta1.PortMapping{
 			Port:     8080,
@@ -1163,12 +1165,28 @@ func TestGetVirtualRouter(t *testing.T) {
 			Port:     6379,
 			Protocol: appmeshv1beta1.PortProtocolTcp,
 		}
+		defaultHttp2Port = appmeshv1beta1.PortMapping{
+			Port:     8081,
+			Protocol: appmeshv1beta1.PortProtocolHttp2,
+		}
+		defaultGrpcPort = appmeshv1beta1.PortMapping{
+			Port:     8082,
+			Protocol: appmeshv1beta1.PortProtocolGrpc,
+		}
+
 		defaultHttpRouterListener = appmeshv1beta1.VirtualRouterListener{
 			PortMapping: defaultHttpPort,
 		}
 		defaultTcpRouterListener = appmeshv1beta1.VirtualRouterListener{
 			PortMapping: defaultTcpPort,
 		}
+		defaultHttp2RouterListener = appmeshv1beta1.VirtualRouterListener{
+			PortMapping: defaultHttp2Port,
+		}
+		defaultGrpcRouterListener = appmeshv1beta1.VirtualRouterListener{
+			PortMapping: defaultGrpcPort,
+		}
+		
 		defaultHttpListener = appmeshv1beta1.Listener{
 			PortMapping: appmeshv1beta1.PortMapping{
 				Port:     8080,
@@ -1181,8 +1199,24 @@ func TestGetVirtualRouter(t *testing.T) {
 				Protocol: appmeshv1beta1.PortProtocolTcp,
 			},
 		}
+		defaultHttp2Listener = appmeshv1beta1.Listener{
+			PortMapping: appmeshv1beta1.PortMapping{
+				Port:     8081,
+				Protocol: appmeshv1beta1.PortProtocolHttp2,
+			},
+		}
+		defaultGrpcListener = appmeshv1beta1.Listener{
+			PortMapping: appmeshv1beta1.PortMapping{
+				Port:     8082,
+				Protocol: appmeshv1beta1.PortProtocolGrpc,
+			},
+		}
+
 		defaultHttpRoute            = newAPIHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
 		defaultTcpRoute             = newAPITcpRoute(defaultRouteName, []appmeshv1beta1.WeightedTarget{})
+		defaultHttp2Route            = newAPIHttp2Route(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
+		defaultGrpcRoute            = newAPIGrpcRoute(defaultRouteName, defaultServiceName, defaultMethodName, []appmeshv1beta1.WeightedTarget{})
+
 		virtualRouterWithNoListener = appmeshv1beta1.VirtualRouter{
 			Name: "example-router",
 		}
@@ -1193,6 +1227,14 @@ func TestGetVirtualRouter(t *testing.T) {
 		virtualRouterWithTcpListener = appmeshv1beta1.VirtualRouter{
 			Name:      "example-tcp-router",
 			Listeners: []appmeshv1beta1.VirtualRouterListener{defaultTcpRouterListener},
+		}
+		virtualRouterWithHttp2Listener = appmeshv1beta1.VirtualRouter{
+			Name:      "example-http2-router",
+			Listeners: []appmeshv1beta1.VirtualRouterListener{defaultHttp2RouterListener},
+		}
+		virtualRouterWithGrpcListener = appmeshv1beta1.VirtualRouter{
+			Name:      "example-grpc-router",
+			Listeners: []appmeshv1beta1.VirtualRouterListener{defaultGrpcRouterListener},
 		}
 	)
 
@@ -1224,6 +1266,24 @@ func TestGetVirtualRouter(t *testing.T) {
 		},
 
 		{"2",
+			"virtual-service with router HTTP2 listener should be preserved",
+			&defaultHttp2RouterListener,
+			&virtualRouterWithHttp2Listener,
+			nil,
+			false,
+			nil,
+		},		
+
+		{"3",
+			"virtual-service with router GRPC listener should be preserved",
+			&defaultGrpcRouterListener,
+			&virtualRouterWithGrpcListener,
+			nil,
+			false,
+			nil,
+		},				
+
+		{"4",
 			"virtual-service with router missing listener should get listener from target node of HTTP route",
 			&defaultHttpRouterListener,
 			&virtualRouterWithNoListener,
@@ -1232,7 +1292,7 @@ func TestGetVirtualRouter(t *testing.T) {
 			&defaultHttpListener,
 		},
 
-		{"3",
+		{"5",
 			"virtual-service with router missing listener and failed to load virtual-node of HTTP route",
 			nil,
 			&virtualRouterWithNoListener,
@@ -1241,7 +1301,7 @@ func TestGetVirtualRouter(t *testing.T) {
 			&defaultHttpListener,
 		},
 
-		{"4",
+		{"6",
 			"virtual-service with router missing listener should get listener from target node of TCP route",
 			&defaultTcpRouterListener,
 			&virtualRouterWithNoListener,
@@ -1250,7 +1310,7 @@ func TestGetVirtualRouter(t *testing.T) {
 			&defaultTcpListener,
 		},
 
-		{"5",
+		{"7",
 			"virtual-service with router missing listener and failed to load virtual-node of TCP route",
 			nil,
 			&virtualRouterWithNoListener,
@@ -1259,7 +1319,43 @@ func TestGetVirtualRouter(t *testing.T) {
 			&defaultTcpListener,
 		},
 
-		{"6",
+		{"8",
+			"virtual-service with router missing listener should get listener from target node of HTTP2 route",
+			&defaultHttp2RouterListener,
+			&virtualRouterWithNoListener,
+			&defaultHttp2Route,
+			false,
+			&defaultHttp2Listener,
+		},
+
+		{"9",
+			"virtual-service with router missing listener and failed to load virtual-node of HTTP2 route",
+			nil,
+			&virtualRouterWithNoListener,
+			&defaultHttp2Route,
+			true,
+			&defaultHttp2Listener,
+		},
+
+		{"10",
+			"virtual-service with router missing listener should get listener from target node of GRPC route",
+			&defaultGrpcRouterListener,
+			&virtualRouterWithNoListener,
+			&defaultGrpcRoute,
+			false,
+			&defaultGrpcListener,
+		},
+
+		{"11",
+			"virtual-service with router missing listener and failed to load virtual-node of GRPC route",
+			nil,
+			&virtualRouterWithNoListener,
+			&defaultGrpcRoute,
+			true,
+			&defaultGrpcListener,
+		},		
+
+		{"12",
 			"virtual-service with router missing listener and no routes",
 			nil,
 			&virtualRouterWithNoListener,
@@ -1268,7 +1364,7 @@ func TestGetVirtualRouter(t *testing.T) {
 			nil,
 		},
 
-		{"7",
+		{"13",
 			"virtual-service with router missing listener and target node missing listener",
 			nil,
 			&virtualRouterWithNoListener,
@@ -1277,7 +1373,7 @@ func TestGetVirtualRouter(t *testing.T) {
 			nil,
 		},
 
-		{"8",
+		{"14",
 			"virtual-service with no router should get listener from target node of HTTP route",
 			&defaultHttpRouterListener,
 			nil,
@@ -1331,6 +1427,14 @@ func TestGetVirtualRouter(t *testing.T) {
 				} else if tt.virtualNodeListener.PortMapping.Protocol == appmeshv1beta1.PortProtocolTcp {
 					copy := tt.route.DeepCopy()
 					copy.Tcp.Action.WeightedTargets = append(copy.Tcp.Action.WeightedTargets, weightedTarget)
+					virtualService.Spec.Routes = append(virtualService.Spec.Routes, *copy)
+				} else if tt.virtualNodeListener.PortMapping.Protocol == appmeshv1beta1.PortProtocolHttp2 {
+					copy := tt.route.DeepCopy()
+					copy.Http2.Action.WeightedTargets = append(copy.Http2.Action.WeightedTargets, weightedTarget)
+					virtualService.Spec.Routes = append(virtualService.Spec.Routes, *copy)
+				} else if tt.virtualNodeListener.PortMapping.Protocol == appmeshv1beta1.PortProtocolGrpc {
+					copy := tt.route.DeepCopy()
+					copy.Grpc.Action.WeightedTargets = append(copy.Grpc.Action.WeightedTargets, weightedTarget)
 					virtualService.Spec.Routes = append(virtualService.Spec.Routes, *copy)
 				}
 
