@@ -1151,11 +1151,11 @@ func TestGrpcRouteWithMetadataNeedUpdate(t *testing.T) {
 
 func TestGetVirtualRouter(t *testing.T) {
 	var (
-		defaultMeshName  = "example-mesh"
-		defaultRouteName = "example-route"
-		defaultPrefix    = "/"
+		defaultMeshName    = "example-mesh"
+		defaultRouteName   = "example-route"
+		defaultPrefix      = "/"
 		defaultServiceName = "serviceName"
-		defaultMethodName = "methodName" 
+		defaultMethodName  = "methodName"
 
 		defaultHttpPort = appmeshv1beta1.PortMapping{
 			Port:     8080,
@@ -1186,7 +1186,7 @@ func TestGetVirtualRouter(t *testing.T) {
 		defaultGrpcRouterListener = appmeshv1beta1.VirtualRouterListener{
 			PortMapping: defaultGrpcPort,
 		}
-		
+
 		defaultHttpListener = appmeshv1beta1.Listener{
 			PortMapping: appmeshv1beta1.PortMapping{
 				Port:     8080,
@@ -1212,10 +1212,10 @@ func TestGetVirtualRouter(t *testing.T) {
 			},
 		}
 
-		defaultHttpRoute            = newAPIHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
-		defaultTcpRoute             = newAPITcpRoute(defaultRouteName, []appmeshv1beta1.WeightedTarget{})
-		defaultHttp2Route            = newAPIHttp2Route(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
-		defaultGrpcRoute            = newAPIGrpcRoute(defaultRouteName, defaultServiceName, defaultMethodName, []appmeshv1beta1.WeightedTarget{})
+		defaultHttpRoute  = newAPIHttpRoute(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
+		defaultTcpRoute   = newAPITcpRoute(defaultRouteName, []appmeshv1beta1.WeightedTarget{})
+		defaultHttp2Route = newAPIHttp2Route(defaultRouteName, defaultPrefix, []appmeshv1beta1.WeightedTarget{})
+		defaultGrpcRoute  = newAPIGrpcRoute(defaultRouteName, defaultServiceName, defaultMethodName, []appmeshv1beta1.WeightedTarget{})
 
 		virtualRouterWithNoListener = appmeshv1beta1.VirtualRouter{
 			Name: "example-router",
@@ -1272,7 +1272,7 @@ func TestGetVirtualRouter(t *testing.T) {
 			nil,
 			false,
 			nil,
-		},		
+		},
 
 		{"3",
 			"virtual-service with router GRPC listener should be preserved",
@@ -1281,7 +1281,7 @@ func TestGetVirtualRouter(t *testing.T) {
 			nil,
 			false,
 			nil,
-		},				
+		},
 
 		{"4",
 			"virtual-service with router missing listener should get listener from target node of HTTP route",
@@ -1353,7 +1353,7 @@ func TestGetVirtualRouter(t *testing.T) {
 			&defaultGrpcRoute,
 			true,
 			&defaultGrpcListener,
-		},		
+		},
 
 		{"12",
 			"virtual-service with router missing listener and no routes",
