@@ -371,10 +371,10 @@ type HealthCheckPolicy struct {
 }
 
 const (
-	PortProtocolHttp = "http"
-	PortProtocolTcp  = "tcp"
+	PortProtocolHttp  = "http"
+	PortProtocolTcp   = "tcp"
 	PortProtocolHttp2 = "http2"
-	PortProtocolGrpc = "grpc"
+	PortProtocolGrpc  = "grpc"
 )
 
 type ServiceDiscovery struct {
