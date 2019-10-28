@@ -103,11 +103,11 @@ spec:
           prefix: /
         action:
           weightedTargets:
-            - virtualNodeName: colorteller.appmesh-demo
+            - virtualNodeName: colorteller
               weight: 1
             - virtualNodeName: colorteller-blue
               weight: 1
-            - virtualNodeName: colorteller-black.appmesh-demo
+            - virtualNodeName: colorteller-black
               weight: 1
 ---
 apiVersion: appmesh.k8s.aws/v1beta1
