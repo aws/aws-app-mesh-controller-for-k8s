@@ -3,7 +3,7 @@ module github.com/aws/aws-app-mesh-controller-for-k8s
 go 1.13
 
 require (
-	github.com/aws/aws-sdk-go v1.23.18
+	github.com/aws/aws-sdk-go v1.25.19
 	github.com/deckarep/golang-set v1.7.1
 	github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect
