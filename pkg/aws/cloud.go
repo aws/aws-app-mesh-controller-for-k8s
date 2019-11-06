@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/metrics"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/appmesh"
 	"github.com/aws/aws-sdk-go/service/appmesh/appmeshiface"
@@ -28,6 +28,8 @@ type Cloud struct {
 
 	namespaceIDCache cache.Store
 	serviceIDCache   cache.Store
+
+	stats *metrics.Recorder
 }
 
 type cloudmapServiceCacheItem struct {
@@ -50,7 +52,7 @@ type CloudMapNamespaceSummary struct {
 	NamespaceType string
 }
 
-func NewCloud(opts CloudOptions) (CloudAPI, error) {
+func NewCloud(opts CloudOptions, stats *metrics.Recorder) (CloudAPI, error) {
 	cfg := &aws.Config{Region: aws.String(opts.Region)}
 
 	session, err := session.NewSession(cfg)
@@ -77,5 +79,6 @@ func NewCloud(opts CloudOptions) (CloudAPI, error) {
 		serviceIDCache: cache.NewTTLStore(func(obj interface{}) (string, error) {
 			return obj.(*cloudmapServiceCacheItem).key, nil
 		}, 60*time.Second),
+		stats: stats,
 	}, nil
 }
