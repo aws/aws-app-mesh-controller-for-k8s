@@ -76,6 +76,11 @@ func (v *Mesh) Name() string {
 
 // GetMesh calls describe mesh.
 func (c *Cloud) GetMesh(ctx context.Context, name string) (*Mesh, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("mesh", name, "get", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeMeshTimeout)
 	defer cancel()
 
@@ -96,6 +101,11 @@ func (c *Cloud) GetMesh(ctx context.Context, name string) (*Mesh, error) {
 
 // CreateMesh converts the desired mesh spec into CreateMeshInput and calls create mesh.
 func (c *Cloud) CreateMesh(ctx context.Context, mesh *appmeshv1beta1.Mesh) (*Mesh, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("mesh", mesh.Name, "create", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateMeshTimeout)
 	defer cancel()
 
@@ -116,6 +126,11 @@ func (c *Cloud) CreateMesh(ctx context.Context, mesh *appmeshv1beta1.Mesh) (*Mes
 
 // DeleteMesh deletes the given mesh
 func (c *Cloud) DeleteMesh(ctx context.Context, name string) (*Mesh, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("mesh", name, "delete", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteMeshTimeout)
 	defer cancel()
 
@@ -231,6 +246,11 @@ func (v *VirtualNode) BackendsSet() set.Set {
 
 // GetVirtualNode calls describe virtual node.
 func (c *Cloud) GetVirtualNode(ctx context.Context, name string, meshName string) (*VirtualNode, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_node", name, "get", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeVirtualNodeTimeout)
 	defer cancel()
 
@@ -253,6 +273,11 @@ func (c *Cloud) GetVirtualNode(ctx context.Context, name string, meshName string
 // CreateVirtualNode converts the desired virtual node spec into CreateVirtualNodeInput and calls create
 // virtual node.
 func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.VirtualNode) (*VirtualNode, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_node", vnode.Name, "create", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateVirtualNodeTimeout)
 	defer cancel()
 
@@ -341,6 +366,11 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 // UpdateVirtualNode converts the desired virtual node spec into UpdateVirtualNodeInput and calls update
 // virtual node.
 func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.VirtualNode) (*VirtualNode, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_node", vnode.Name, "update", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateVirtualNodeTimeout)
 	defer cancel()
 
@@ -427,6 +457,11 @@ func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 }
 
 func (c *Cloud) DeleteVirtualNode(ctx context.Context, name string, meshName string) (*VirtualNode, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_node", name, "delete", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteVirtualNodeTimeout)
 	defer cancel()
 
@@ -476,6 +511,11 @@ func (v *VirtualService) Status() string {
 
 // GetVirtualService calls describe virtual service.
 func (c *Cloud) GetVirtualService(ctx context.Context, name string, meshName string) (*VirtualService, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_service", name, "get", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeVirtualServiceTimeout)
 	defer cancel()
 
@@ -498,6 +538,11 @@ func (c *Cloud) GetVirtualService(ctx context.Context, name string, meshName str
 // CreateVirtualService converts the desired virtual service spec into CreateVirtualServiceInput and calls create
 // virtual service.
 func (c *Cloud) CreateVirtualService(ctx context.Context, vservice *appmeshv1beta1.VirtualService) (*VirtualService, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_service", vservice.Name, "create", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateVirtualServiceTimeout)
 	defer cancel()
 
@@ -526,6 +571,11 @@ func (c *Cloud) CreateVirtualService(ctx context.Context, vservice *appmeshv1bet
 }
 
 func (c *Cloud) UpdateVirtualService(ctx context.Context, vservice *appmeshv1beta1.VirtualService) (*VirtualService, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_service", vservice.Name, "update", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateVirtualServiceTimeout)
 	defer cancel()
 
@@ -554,6 +604,11 @@ func (c *Cloud) UpdateVirtualService(ctx context.Context, vservice *appmeshv1bet
 }
 
 func (c *Cloud) DeleteVirtualService(ctx context.Context, name string, meshName string) (*VirtualService, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_service", name, "delete", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteVirtualServiceTimeout)
 	defer cancel()
 
@@ -593,6 +648,11 @@ func (v *VirtualRouter) Status() string {
 
 // GetVirtualRouter calls describe virtual router.
 func (c *Cloud) GetVirtualRouter(ctx context.Context, name string, meshName string) (*VirtualRouter, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_router", name, "get", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeVirtualRouterTimeout)
 	defer cancel()
 
@@ -615,6 +675,11 @@ func (c *Cloud) GetVirtualRouter(ctx context.Context, name string, meshName stri
 // CreateVirtualRouter converts the desired virtual service spec into CreateVirtualServiceInput and calls create
 // virtual router.
 func (c *Cloud) CreateVirtualRouter(ctx context.Context, vrouter *appmeshv1beta1.VirtualRouter, meshName string) (*VirtualRouter, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_router", vrouter.Name, "create", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateVirtualRouterTimeout)
 	defer cancel()
 
@@ -652,6 +717,11 @@ func (c *Cloud) CreateVirtualRouter(ctx context.Context, vrouter *appmeshv1beta1
 
 // UpdateVirtualRouter converts the desired virtual router spec into UpdateVirtualRouter calls
 func (c *Cloud) UpdateVirtualRouter(ctx context.Context, vrouter *appmeshv1beta1.VirtualRouter, meshName string) (*VirtualRouter, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_router", vrouter.Name, "update", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateVirtualRouterTimeout)
 	defer cancel()
 
@@ -688,6 +758,11 @@ func (c *Cloud) UpdateVirtualRouter(ctx context.Context, vrouter *appmeshv1beta1
 }
 
 func (c *Cloud) DeleteVirtualRouter(ctx context.Context, name string, meshName string) (*VirtualRouter, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_router", name, "delete", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteVirtualRouterTimeout)
 	defer cancel()
 
@@ -948,6 +1023,11 @@ func (r Routes) RouteByName(name string) Route {
 
 // GetRoute calls describe route.
 func (c *Cloud) GetRoute(ctx context.Context, name string, routerName string, meshName string) (*Route, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_route", name, "get", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeRouteTimeout)
 	defer cancel()
 
@@ -970,6 +1050,11 @@ func (c *Cloud) GetRoute(ctx context.Context, name string, routerName string, me
 
 // CreateRoute converts the desired virtual service spec into CreateVirtualServiceInput and calls create route.
 func (c *Cloud) CreateRoute(ctx context.Context, route *appmeshv1beta1.Route, routerName string, meshName string) (*Route, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_route", route.Name, "create", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateRouteTimeout)
 	defer cancel()
 
@@ -992,6 +1077,11 @@ func (c *Cloud) CreateRoute(ctx context.Context, route *appmeshv1beta1.Route, ro
 }
 
 func (c *Cloud) GetRoutesForVirtualRouter(ctx context.Context, routerName string, meshName string) (Routes, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_router", routerName, "get", time.Since(begin))
+	}()
+
 	listctx, cancel := context.WithTimeout(ctx, time.Second*ListRoutesTimeout)
 	defer cancel()
 
@@ -1025,6 +1115,11 @@ func (c *Cloud) GetRoutesForVirtualRouter(ctx context.Context, routerName string
 
 // UpdateRoute converts the desired virtual service spec into UpdateRouteInput and calls update route.
 func (c *Cloud) UpdateRoute(ctx context.Context, route *appmeshv1beta1.Route, routerName string, meshName string) (*Route, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_route", route.Name, "update", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateRouteTimeout)
 	defer cancel()
 
@@ -1047,6 +1142,11 @@ func (c *Cloud) UpdateRoute(ctx context.Context, route *appmeshv1beta1.Route, ro
 }
 
 func (c *Cloud) DeleteRoute(ctx context.Context, name string, routerName string, meshName string) (*Route, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_route", name, "delete", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteRouteTimeout)
 	defer cancel()
 

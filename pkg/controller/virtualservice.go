@@ -79,6 +79,7 @@ func (c *Controller) handleVService(key string) error {
 	// Resources with finalizers are not deleted immediately,
 	// instead the deletion timestamp is set when a client deletes them.
 	if !vservice.DeletionTimestamp.IsZero() {
+		c.stats.SetVirtualServiceInactive(vservice.Name, vservice.Spec.MeshName)
 		// Resource is being deleted, process finalizers
 		return c.handleVServiceDelete(ctx, vservice, copy)
 	}
@@ -173,6 +174,8 @@ func (c *Controller) handleVService(key string) error {
 			klog.Infof("Updated virtual service %s", vservice.Name)
 		}
 	}
+
+	c.stats.SetVirtualServiceActive(vservice.Name, vservice.Spec.MeshName)
 
 	if updated, err := c.updateVServiceStatus(copy, targetService); err != nil {
 		return fmt.Errorf("error updating virtual service status: %s", err)

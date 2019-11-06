@@ -35,6 +35,7 @@ func (c *Controller) handleMesh(key string) error {
 	// Resources with finalizers are not deleted immediately,
 	// instead the deletion timestamp is set when a client deletes them.
 	if !mesh.DeletionTimestamp.IsZero() {
+		c.stats.SetMeshInactive(mesh.Name)
 		// Resource is being deleted, process finalizers
 		return c.handleMeshDelete(ctx, mesh)
 	}
@@ -64,6 +65,8 @@ func (c *Controller) handleMesh(key string) error {
 			return fmt.Errorf("error updating mesh status: %s", err)
 		}
 	}
+
+	c.stats.SetMeshActive(mesh.Name)
 
 	return nil
 }
