@@ -52,6 +52,7 @@ func (c *Controller) handleVNode(key string) error {
 	// Resources with finalizers are not deleted immediately,
 	// instead the deletion timestamp is set when a client deletes them.
 	if !vnode.DeletionTimestamp.IsZero() {
+		c.stats.SetVirtualNodeInactive(vnode.Name, vnode.Spec.MeshName)
 		// Resource is being deleted, process finalizers
 		return c.handleVNodeDelete(ctx, vnode, copy)
 	}
@@ -107,6 +108,8 @@ func (c *Controller) handleVNode(key string) error {
 			klog.Infof("Updated virtual node %s", vnode.Name)
 		}
 	}
+
+	c.stats.SetVirtualNodeActive(vnode.Name, vnode.Spec.MeshName)
 
 	updated, err := c.updateVNodeStatus(copy, targetNode)
 	if err != nil {
