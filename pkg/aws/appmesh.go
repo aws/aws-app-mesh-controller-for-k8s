@@ -76,6 +76,11 @@ func (v *Mesh) Name() string {
 
 // GetMesh calls describe mesh.
 func (c *Cloud) GetMesh(ctx context.Context, name string) (*Mesh, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("mesh", name, "get", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeMeshTimeout)
 	defer cancel()
 
@@ -96,6 +101,11 @@ func (c *Cloud) GetMesh(ctx context.Context, name string) (*Mesh, error) {
 
 // CreateMesh converts the desired mesh spec into CreateMeshInput and calls create mesh.
 func (c *Cloud) CreateMesh(ctx context.Context, mesh *appmeshv1beta1.Mesh) (*Mesh, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("mesh", mesh.Name, "create", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateMeshTimeout)
 	defer cancel()
 
@@ -116,6 +126,11 @@ func (c *Cloud) CreateMesh(ctx context.Context, mesh *appmeshv1beta1.Mesh) (*Mes
 
 // DeleteMesh deletes the given mesh
 func (c *Cloud) DeleteMesh(ctx context.Context, name string) (*Mesh, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("mesh", name, "delete", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteMeshTimeout)
 	defer cancel()
 
@@ -231,6 +246,11 @@ func (v *VirtualNode) BackendsSet() set.Set {
 
 // GetVirtualNode calls describe virtual node.
 func (c *Cloud) GetVirtualNode(ctx context.Context, name string, meshName string) (*VirtualNode, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_node", name, "get", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeVirtualNodeTimeout)
 	defer cancel()
 
@@ -253,6 +273,11 @@ func (c *Cloud) GetVirtualNode(ctx context.Context, name string, meshName string
 // CreateVirtualNode converts the desired virtual node spec into CreateVirtualNodeInput and calls create
 // virtual node.
 func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.VirtualNode) (*VirtualNode, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_node", vnode.Name, "create", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateVirtualNodeTimeout)
 	defer cancel()
 
@@ -341,6 +366,11 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 // UpdateVirtualNode converts the desired virtual node spec into UpdateVirtualNodeInput and calls update
 // virtual node.
 func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.VirtualNode) (*VirtualNode, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_node", vnode.Name, "update", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateVirtualNodeTimeout)
 	defer cancel()
 
@@ -427,6 +457,11 @@ func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 }
 
 func (c *Cloud) DeleteVirtualNode(ctx context.Context, name string, meshName string) (*VirtualNode, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_node", name, "delete", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteVirtualNodeTimeout)
 	defer cancel()
 
@@ -476,6 +511,11 @@ func (v *VirtualService) Status() string {
 
 // GetVirtualService calls describe virtual service.
 func (c *Cloud) GetVirtualService(ctx context.Context, name string, meshName string) (*VirtualService, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_service", name, "get", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeVirtualServiceTimeout)
 	defer cancel()
 
@@ -498,6 +538,11 @@ func (c *Cloud) GetVirtualService(ctx context.Context, name string, meshName str
 // CreateVirtualService converts the desired virtual service spec into CreateVirtualServiceInput and calls create
 // virtual service.
 func (c *Cloud) CreateVirtualService(ctx context.Context, vservice *appmeshv1beta1.VirtualService) (*VirtualService, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_service", vservice.Name, "create", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateVirtualServiceTimeout)
 	defer cancel()
 
@@ -526,6 +571,11 @@ func (c *Cloud) CreateVirtualService(ctx context.Context, vservice *appmeshv1bet
 }
 
 func (c *Cloud) UpdateVirtualService(ctx context.Context, vservice *appmeshv1beta1.VirtualService) (*VirtualService, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_service", vservice.Name, "update", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateVirtualServiceTimeout)
 	defer cancel()
 
@@ -554,6 +604,11 @@ func (c *Cloud) UpdateVirtualService(ctx context.Context, vservice *appmeshv1bet
 }
 
 func (c *Cloud) DeleteVirtualService(ctx context.Context, name string, meshName string) (*VirtualService, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_service", name, "delete", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteVirtualServiceTimeout)
 	defer cancel()
 
@@ -593,6 +648,11 @@ func (v *VirtualRouter) Status() string {
 
 // GetVirtualRouter calls describe virtual router.
 func (c *Cloud) GetVirtualRouter(ctx context.Context, name string, meshName string) (*VirtualRouter, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_router", name, "get", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeVirtualRouterTimeout)
 	defer cancel()
 
@@ -615,6 +675,11 @@ func (c *Cloud) GetVirtualRouter(ctx context.Context, name string, meshName stri
 // CreateVirtualRouter converts the desired virtual service spec into CreateVirtualServiceInput and calls create
 // virtual router.
 func (c *Cloud) CreateVirtualRouter(ctx context.Context, vrouter *appmeshv1beta1.VirtualRouter, meshName string) (*VirtualRouter, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_router", vrouter.Name, "create", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateVirtualRouterTimeout)
 	defer cancel()
 
@@ -652,6 +717,11 @@ func (c *Cloud) CreateVirtualRouter(ctx context.Context, vrouter *appmeshv1beta1
 
 // UpdateVirtualRouter converts the desired virtual router spec into UpdateVirtualRouter calls
 func (c *Cloud) UpdateVirtualRouter(ctx context.Context, vrouter *appmeshv1beta1.VirtualRouter, meshName string) (*VirtualRouter, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_router", vrouter.Name, "update", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateVirtualRouterTimeout)
 	defer cancel()
 
@@ -688,6 +758,11 @@ func (c *Cloud) UpdateVirtualRouter(ctx context.Context, vrouter *appmeshv1beta1
 }
 
 func (c *Cloud) DeleteVirtualRouter(ctx context.Context, name string, meshName string) (*VirtualRouter, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_router", name, "delete", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteVirtualRouterTimeout)
 	defer cancel()
 
@@ -743,6 +818,10 @@ func (r *Route) WeightedTargets() []appmeshv1beta1.WeightedTarget {
 		inputTargets = r.Data.Spec.HttpRoute.Action.WeightedTargets
 	} else if r.Data.Spec.TcpRoute != nil {
 		inputTargets = r.Data.Spec.TcpRoute.Action.WeightedTargets
+	} else if r.Data.Spec.Http2Route != nil {
+		inputTargets = r.Data.Spec.Http2Route.Action.WeightedTargets
+	} else if r.Data.Spec.GrpcRoute != nil {
+		inputTargets = r.Data.Spec.GrpcRoute.Action.WeightedTargets
 	}
 
 	for _, t := range inputTargets {
@@ -765,28 +844,53 @@ func (r *Route) WeightedTargetSet() set.Set {
 	return s
 }
 
+func (r *Route) Http2RouteRetryPolicy() *appmeshv1beta1.HttpRetryPolicy {
+	if r.Data.Spec.Http2Route == nil || r.Data.Spec.Http2Route.RetryPolicy == nil {
+		return nil
+	}
+
+	inputRetryPolicy := r.Data.Spec.Http2Route.RetryPolicy
+
+	return HttpRouteRetryPolicyHelper(inputRetryPolicy)
+}
+
 func (r *Route) HttpRouteRetryPolicy() *appmeshv1beta1.HttpRetryPolicy {
 	if r.Data.Spec.HttpRoute == nil || r.Data.Spec.HttpRoute.RetryPolicy == nil {
 		return nil
 	}
 
-	input := r.Data.Spec.HttpRoute.RetryPolicy
+	inputRetryPolicy := r.Data.Spec.HttpRoute.RetryPolicy
+
+	return HttpRouteRetryPolicyHelper(inputRetryPolicy)
+}
+
+func HttpRouteRetryPolicyHelper(r *appmesh.HttpRetryPolicy) *appmeshv1beta1.HttpRetryPolicy {
 	result := &appmeshv1beta1.HttpRetryPolicy{
-		PerRetryTimeoutMillis: durationToMillis(input.PerRetryTimeout),
-		MaxRetries:            input.MaxRetries,
+		PerRetryTimeoutMillis: durationToMillis(r.PerRetryTimeout),
+		MaxRetries:            r.MaxRetries,
 	}
 
-	for _, inputEvent := range input.HttpRetryEvents {
+	for _, inputEvent := range r.HttpRetryEvents {
 		resultEvent := appmeshv1beta1.HttpRetryPolicyEvent(aws.StringValue(inputEvent))
 		result.HttpRetryPolicyEvents = append(result.HttpRetryPolicyEvents, resultEvent)
 	}
 
-	for _, inputEvent := range input.TcpRetryEvents {
+	for _, inputEvent := range r.TcpRetryEvents {
 		resultEvent := appmeshv1beta1.TcpRetryPolicyEvent(aws.StringValue(inputEvent))
 		result.TcpRetryPolicyEvents = append(result.TcpRetryPolicyEvents, resultEvent)
 	}
 
 	return result
+}
+
+func (r *Route) Http2RouteMatch() *appmeshv1beta1.HttpRouteMatch {
+	if r.Data.Spec.Http2Route == nil || r.Data.Spec.Http2Route.Match == nil {
+		return nil
+	}
+
+	inputMatch := r.Data.Spec.Http2Route.Match
+
+	return HttpRouteMatchHelper(inputMatch)
 }
 
 func (r *Route) HttpRouteMatch() *appmeshv1beta1.HttpRouteMatch {
@@ -795,13 +899,18 @@ func (r *Route) HttpRouteMatch() *appmeshv1beta1.HttpRouteMatch {
 	}
 
 	inputMatch := r.Data.Spec.HttpRoute.Match
+
+	return HttpRouteMatchHelper(inputMatch)
+}
+
+func HttpRouteMatchHelper(m *appmesh.HttpRouteMatch) *appmeshv1beta1.HttpRouteMatch {
 	resultMatch := &appmeshv1beta1.HttpRouteMatch{
-		Prefix: aws.StringValue(inputMatch.Prefix),
-		Method: inputMatch.Method,
-		Scheme: inputMatch.Scheme,
+		Prefix: aws.StringValue(m.Prefix),
+		Method: m.Method,
+		Scheme: m.Scheme,
 	}
 
-	for _, h := range inputMatch.Headers {
+	for _, h := range m.Headers {
 		resultHeader := appmeshv1beta1.HttpRouteHeader{
 			Name:   aws.StringValue(h.Name),
 			Invert: h.Invert,
@@ -824,6 +933,71 @@ func (r *Route) HttpRouteMatch() *appmeshv1beta1.HttpRouteMatch {
 	}
 
 	return resultMatch
+}
+
+func (r *Route) GrpcRouteMatch() *appmeshv1beta1.GrpcRouteMatch {
+	if r.Data.Spec.GrpcRoute == nil || r.Data.Spec.GrpcRoute.Match == nil {
+		return nil
+	}
+
+	inputMatch := r.Data.Spec.GrpcRoute.Match
+	resultMatch := &appmeshv1beta1.GrpcRouteMatch{
+		ServiceName: inputMatch.ServiceName,
+		MethodName:  inputMatch.MethodName,
+	}
+
+	for _, m := range inputMatch.Metadata {
+		resultMetadata := appmeshv1beta1.GrpcRouteMetadata{
+			Name:   aws.StringValue(m.Name),
+			Invert: m.Invert,
+		}
+		if m.Match != nil {
+			resultMetadata.Match = &appmeshv1beta1.MetadataMatchMethod{
+				Exact:  m.Match.Exact,
+				Prefix: m.Match.Prefix,
+				Suffix: m.Match.Suffix,
+				Regex:  m.Match.Regex,
+			}
+			if m.Match.Range != nil {
+				resultMetadata.Match.Range = &appmeshv1beta1.MatchRange{
+					Start: m.Match.Range.Start,
+					End:   m.Match.Range.End,
+				}
+			}
+		}
+		resultMatch.Metadata = append(resultMatch.Metadata, resultMetadata)
+	}
+
+	return resultMatch
+}
+
+func (r *Route) GrpcRouteRetryPolicy() *appmeshv1beta1.GrpcRetryPolicy {
+	if r.Data.Spec.GrpcRoute == nil || r.Data.Spec.GrpcRoute.RetryPolicy == nil {
+		return nil
+	}
+
+	input := r.Data.Spec.GrpcRoute.RetryPolicy
+	result := &appmeshv1beta1.GrpcRetryPolicy{
+		PerRetryTimeoutMillis: durationToMillis(input.PerRetryTimeout),
+		MaxRetries:            input.MaxRetries,
+	}
+
+	for _, inputEvent := range input.HttpRetryEvents {
+		resultEvent := appmeshv1beta1.HttpRetryPolicyEvent(aws.StringValue(inputEvent))
+		result.HttpRetryPolicyEvents = append(result.HttpRetryPolicyEvents, resultEvent)
+	}
+
+	for _, inputEvent := range input.TcpRetryEvents {
+		resultEvent := appmeshv1beta1.TcpRetryPolicyEvent(aws.StringValue(inputEvent))
+		result.TcpRetryPolicyEvents = append(result.TcpRetryPolicyEvents, resultEvent)
+	}
+
+	for _, inputEvent := range input.GrpcRetryEvents {
+		resultEvent := appmeshv1beta1.GrpcRetryPolicyEvent(aws.StringValue(inputEvent))
+		result.GrpcRetryPolicyEvents = append(result.GrpcRetryPolicyEvents, resultEvent)
+	}
+
+	return result
 }
 
 type Routes []Route
@@ -849,6 +1023,11 @@ func (r Routes) RouteByName(name string) Route {
 
 // GetRoute calls describe route.
 func (c *Cloud) GetRoute(ctx context.Context, name string, routerName string, meshName string) (*Route, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_route", name, "get", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DescribeRouteTimeout)
 	defer cancel()
 
@@ -871,6 +1050,11 @@ func (c *Cloud) GetRoute(ctx context.Context, name string, routerName string, me
 
 // CreateRoute converts the desired virtual service spec into CreateVirtualServiceInput and calls create route.
 func (c *Cloud) CreateRoute(ctx context.Context, route *appmeshv1beta1.Route, routerName string, meshName string) (*Route, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_route", route.Name, "create", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*CreateRouteTimeout)
 	defer cancel()
 
@@ -893,6 +1077,11 @@ func (c *Cloud) CreateRoute(ctx context.Context, route *appmeshv1beta1.Route, ro
 }
 
 func (c *Cloud) GetRoutesForVirtualRouter(ctx context.Context, routerName string, meshName string) (Routes, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_router", routerName, "get", time.Since(begin))
+	}()
+
 	listctx, cancel := context.WithTimeout(ctx, time.Second*ListRoutesTimeout)
 	defer cancel()
 
@@ -926,6 +1115,11 @@ func (c *Cloud) GetRoutesForVirtualRouter(ctx context.Context, routerName string
 
 // UpdateRoute converts the desired virtual service spec into UpdateRouteInput and calls update route.
 func (c *Cloud) UpdateRoute(ctx context.Context, route *appmeshv1beta1.Route, routerName string, meshName string) (*Route, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_route", route.Name, "update", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateRouteTimeout)
 	defer cancel()
 
@@ -948,6 +1142,11 @@ func (c *Cloud) UpdateRoute(ctx context.Context, route *appmeshv1beta1.Route, ro
 }
 
 func (c *Cloud) DeleteRoute(ctx context.Context, name string, routerName string, meshName string) (*Route, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("virtual_route", name, "delete", time.Since(begin))
+	}()
+
 	ctx, cancel := context.WithTimeout(ctx, time.Second*DeleteRouteTimeout)
 	defer cancel()
 
@@ -1039,6 +1238,32 @@ func (c *Cloud) buildRouteSpec(route *appmeshv1beta1.Route) *appmesh.RouteSpec {
 		}
 	}
 
+	if route.Http2 != nil {
+		return &appmesh.RouteSpec{
+			Priority: route.Priority,
+			Http2Route: &appmesh.HttpRoute{
+				Match: c.buildHttpRouteMatch(route.Http2.Match),
+				Action: &appmesh.HttpRouteAction{
+					WeightedTargets: c.buildWeightedTargets(route.Http2.Action.WeightedTargets),
+				},
+				RetryPolicy: c.buildHttpRetryPolicy(route.Http2.RetryPolicy),
+			},
+		}
+	}
+
+	if route.Grpc != nil {
+		return &appmesh.RouteSpec{
+			Priority: route.Priority,
+			GrpcRoute: &appmesh.GrpcRoute{
+				Match: c.buildGrpcRouteMatch(route.Grpc.Match),
+				Action: &appmesh.GrpcRouteAction{
+					WeightedTargets: c.buildWeightedTargets(route.Grpc.Action.WeightedTargets),
+				},
+				RetryPolicy: c.buildGrpcRetryPolicy(route.Grpc.RetryPolicy),
+			},
+		}
+	}
+
 	return nil
 }
 
@@ -1120,6 +1345,77 @@ func (c *Cloud) buildHttpRetryPolicy(input *appmeshv1beta1.HttpRetryPolicy) *app
 	}
 
 	return appmeshRetryPolicy
+}
+
+func (c *Cloud) buildGrpcRetryPolicy(input *appmeshv1beta1.GrpcRetryPolicy) *appmesh.GrpcRetryPolicy {
+	if input == nil {
+		return nil
+	}
+
+	appmeshRetryPolicy := &appmesh.GrpcRetryPolicy{
+		MaxRetries: input.MaxRetries,
+	}
+
+	if input.PerRetryTimeoutMillis != nil {
+		appmeshRetryPolicy.PerRetryTimeout = &appmesh.Duration{
+			Unit:  aws.String(appmesh.DurationUnitMs),
+			Value: input.PerRetryTimeoutMillis,
+		}
+	}
+
+	for _, inputEvent := range input.HttpRetryPolicyEvents {
+		appmeshRetryPolicy.HttpRetryEvents = append(appmeshRetryPolicy.HttpRetryEvents, aws.String(string(inputEvent)))
+	}
+
+	for _, inputEvent := range input.TcpRetryPolicyEvents {
+		appmeshRetryPolicy.TcpRetryEvents = append(appmeshRetryPolicy.TcpRetryEvents, aws.String(string(inputEvent)))
+	}
+
+	for _, inputEvent := range input.GrpcRetryPolicyEvents {
+		appmeshRetryPolicy.GrpcRetryEvents = append(appmeshRetryPolicy.GrpcRetryEvents, aws.String(string(inputEvent)))
+	}
+
+	return appmeshRetryPolicy
+}
+
+func (c *Cloud) buildGrpcRouteMatch(input appmeshv1beta1.GrpcRouteMatch) *appmesh.GrpcRouteMatch {
+	appmeshRouteMatch := &appmesh.GrpcRouteMatch{
+		ServiceName: input.ServiceName,
+		MethodName:  input.MethodName,
+	}
+
+	if len(input.Metadata) > 0 {
+		appmeshRouteMatch.Metadata = []*appmesh.GrpcRouteMetadata{}
+		for _, m := range input.Metadata {
+			appmeshRouteMatch.Metadata = append(appmeshRouteMatch.Metadata, c.buildGrpcRouteMetadata(m))
+		}
+	}
+
+	return appmeshRouteMatch
+}
+
+func (c *Cloud) buildGrpcRouteMetadata(input appmeshv1beta1.GrpcRouteMetadata) *appmesh.GrpcRouteMetadata {
+	appmeshMetadata := &appmesh.GrpcRouteMetadata{
+		Name:   aws.String(input.Name),
+		Invert: input.Invert,
+	}
+	if input.Match != nil {
+		appmeshMetadata.Match = &appmesh.GrpcRouteMetadataMatchMethod{
+			Exact:  input.Match.Exact,
+			Prefix: input.Match.Prefix,
+			Regex:  input.Match.Regex,
+			Suffix: input.Match.Suffix,
+		}
+		if input.Match.Range != nil {
+			appmeshMetadata.Match.Range = &appmesh.MatchRange{
+				Start: input.Match.Range.Start,
+				End:   input.Match.Range.End,
+			}
+			klog.Infof("Range = %+v", appmeshMetadata.Match.Range)
+		}
+	}
+
+	return appmeshMetadata
 }
 
 func defaultInt64(v *int64, defaultVal int64) *int64 {

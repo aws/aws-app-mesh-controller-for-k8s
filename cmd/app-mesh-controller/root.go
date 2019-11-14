@@ -15,16 +15,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
 
-	// TODO(nic) Don't depend on k8s.io/kubernetes, just duplicate the logic in this package -- it will be a
-	// smaller headache.
-	//_ "k8s.io/kubernetes/pkg/client/metrics/prometheus" // for client metric registration
-	//_ "k8s.io/kubernetes/pkg/util/reflector/prometheus" // for reflector metric registration
-	//_ "k8s.io/kubernetes/pkg/util/workqueue/prometheus" // for workqueue metric registration
-
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	meshclientset "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned"
 	meshinformers "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/informers/externalversions"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/controller"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/metrics"
 )
 
 var (
@@ -89,7 +84,8 @@ var rootCmd = &cobra.Command{
 			klog.Fatal(err)
 		}
 
-		cloud, err := aws.NewCloud(cfg.aws)
+		stats := metrics.NewRecorder(true)
+		cloud, err := aws.NewCloud(cfg.aws, stats)
 		if err != nil {
 			klog.Fatal(err)
 		}
@@ -117,6 +113,7 @@ var rootCmd = &cobra.Command{
 			meshInformerFactory.Appmesh().V1beta1().Meshes(),
 			meshInformerFactory.Appmesh().V1beta1().VirtualNodes(),
 			meshInformerFactory.Appmesh().V1beta1().VirtualServices(),
+			stats,
 		)
 
 		if err != nil {

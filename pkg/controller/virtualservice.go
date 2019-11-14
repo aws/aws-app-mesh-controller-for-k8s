@@ -79,6 +79,7 @@ func (c *Controller) handleVService(key string) error {
 	// Resources with finalizers are not deleted immediately,
 	// instead the deletion timestamp is set when a client deletes them.
 	if !vservice.DeletionTimestamp.IsZero() {
+		c.stats.SetVirtualServiceInactive(vservice.Name, vservice.Spec.MeshName)
 		// Resource is being deleted, process finalizers
 		return c.handleVServiceDelete(ctx, vservice, copy)
 	}
@@ -173,6 +174,8 @@ func (c *Controller) handleVService(key string) error {
 			klog.Infof("Updated virtual service %s", vservice.Name)
 		}
 	}
+
+	c.stats.SetVirtualServiceActive(vservice.Name, vservice.Spec.MeshName)
 
 	if updated, err := c.updateVServiceStatus(copy, targetService); err != nil {
 		return fmt.Errorf("error updating virtual service status: %s", err)
@@ -334,6 +337,14 @@ func (c *Controller) getListenerFromRouteTarget(originalVirtualService *appmeshv
 	} else if route.Tcp != nil {
 		if len(route.Tcp.Action.WeightedTargets) > 0 {
 			candidateVnodeName = route.Tcp.Action.WeightedTargets[0].VirtualNodeName
+		}
+	} else if route.Http2 != nil {
+		if len(route.Http2.Action.WeightedTargets) > 0 {
+			candidateVnodeName = route.Http2.Action.WeightedTargets[0].VirtualNodeName
+		}
+	} else if route.Grpc != nil {
+		if len(route.Grpc.Action.WeightedTargets) > 0 {
+			candidateVnodeName = route.Grpc.Action.WeightedTargets[0].VirtualNodeName
 		}
 	}
 
@@ -530,6 +541,81 @@ func routeNeedsUpdate(desired appmeshv1beta1.Route, target aws.Route) bool {
 				return true
 			}
 		}
+	}
+
+	if desired.Http2 != nil {
+		if target.Data.Spec.Http2Route == nil {
+			return true
+		}
+
+		if target.Data.Spec.Http2Route.Action == nil {
+			return true
+		}
+
+		if desired.Http2.Action.WeightedTargets != nil {
+			if target.Data.Spec.Http2Route.Action.WeightedTargets == nil {
+				return true
+			}
+
+			desiredSet := set.NewSet()
+			for _, target := range desired.Http2.Action.WeightedTargets {
+				desiredSet.Add(appmeshv1beta1.WeightedTarget{VirtualNodeName: target.VirtualNodeName, Weight: target.Weight})
+			}
+			currSet := target.WeightedTargetSet()
+			if !desiredSet.Equal(currSet) {
+				return true
+			}
+		}
+
+		targetRouteMatch := target.Http2RouteMatch()
+		if !reflect.DeepEqual(desired.Http2.Match, *targetRouteMatch) {
+			return true
+		}
+
+		// maybe this needs to be Http2RouteRetryPolicy??
+		targetRouteRetryPolicy := target.Http2RouteRetryPolicy()
+		if !reflect.DeepEqual(desired.Http2.RetryPolicy, targetRouteRetryPolicy) {
+			return true
+		}
+	} else if target.Data.Spec.Http2Route != nil {
+		return true
+	}
+
+	if desired.Grpc != nil {
+		if target.Data.Spec.GrpcRoute == nil {
+			return true
+		}
+
+		if target.Data.Spec.GrpcRoute.Action == nil {
+			return true
+		}
+
+		if desired.Grpc.Action.WeightedTargets != nil {
+			if target.Data.Spec.GrpcRoute.Action.WeightedTargets == nil {
+				return true
+			}
+
+			desiredSet := set.NewSet()
+			for _, target := range desired.Grpc.Action.WeightedTargets {
+				desiredSet.Add(appmeshv1beta1.WeightedTarget{VirtualNodeName: target.VirtualNodeName, Weight: target.Weight})
+			}
+			currSet := target.WeightedTargetSet()
+			if !desiredSet.Equal(currSet) {
+				return true
+			}
+		}
+
+		targetRouteMatch := target.GrpcRouteMatch()
+		if !reflect.DeepEqual(desired.Grpc.Match, *targetRouteMatch) {
+			return true
+		}
+
+		targetRouteRetryPolicy := target.GrpcRouteRetryPolicy()
+		if !reflect.DeepEqual(desired.Grpc.RetryPolicy, targetRouteRetryPolicy) {
+			return true
+		}
+	} else if target.Data.Spec.GrpcRoute != nil {
+		return true
 	}
 
 	return false

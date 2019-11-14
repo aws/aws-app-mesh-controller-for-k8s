@@ -11,6 +11,7 @@ import (
 	meshscheme "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned/scheme"
 	meshinformers "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/informers/externalversions/appmesh/v1beta1"
 	meshlisters "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/listers/appmesh/v1beta1"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/metrics"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -69,6 +70,9 @@ type Controller struct {
 	// recorder is an event recorder for recording Event resources to the
 	// Kubernetes API.
 	recorder record.EventRecorder
+
+	// stats records mesh Prometheus metrics
+	stats *metrics.Recorder
 }
 
 func NewController(
@@ -78,7 +82,8 @@ func NewController(
 	podInformer coreinformers.PodInformer,
 	meshInformer meshinformers.MeshInformer,
 	virtualNodeInformer meshinformers.VirtualNodeInformer,
-	virtualServiceInformer meshinformers.VirtualServiceInformer) (*Controller, error) {
+	virtualServiceInformer meshinformers.VirtualServiceInformer,
+	stats *metrics.Recorder) (*Controller, error) {
 
 	utilruntime.Must(meshscheme.AddToScheme(scheme.Scheme))
 	klog.V(4).Info("Creating event broadcaster")
@@ -105,6 +110,7 @@ func NewController(
 		sq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		pq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		recorder:             recorder,
+		stats:                stats,
 	}
 
 	podInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
