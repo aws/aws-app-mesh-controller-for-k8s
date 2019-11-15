@@ -6,7 +6,7 @@ GO111MODULE=on
 # Docker
 IMAGE=amazon/app-mesh-controller
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE)
-VERSION=v0.2.0
+VERSION=v0.3.0
 
 .PHONY: eks-appmesh-controller
 eks-appmesh-controller:
