@@ -94,7 +94,7 @@ spec:
 ```
 the corresponding virtual node names in the App Mesh backend are, `colorteller-appmesh-demo`, `colorteller-blue-appmesh-demo`, and `colorteller-black-appmesh-demo` respectively.
 
-Check out the [example](docs/example.md) application for more details.
+Check out the [example](example.md) application for more details.
 
 ## Cloud Map Service Discovery
 
