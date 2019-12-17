@@ -50,7 +50,6 @@ You should see a collection of virtual services, virtual nodes and a mesh, along
     virtualnode.appmesh.k8s.aws/colorteller-blue-appmesh-demo    3h
     virtualnode.appmesh.k8s.aws/colorteller-red-appmesh-demo     3h
     NAME                                                                         AGE
-    virtualservice.appmesh.k8s.aws/colorgateway.appmesh-demo.svc.cluster.local   3h
     virtualservice.appmesh.k8s.aws/colorteller.appmesh-demo.svc.cluster.local    3h
 
 Verify App Mesh is working
