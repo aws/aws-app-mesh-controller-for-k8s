@@ -121,28 +121,6 @@ spec:
             - virtualNodeName: colorteller-black
               weight: 1
 ---
-apiVersion: appmesh.k8s.aws/v1beta1
-kind: VirtualService
-metadata:
-  name: colorgateway.${APP_NAMESPACE}
-  namespace: ${APP_NAMESPACE}
-spec:
-  meshName: ${MESH_NAME}
-  virtualRouter:
-    listeners:
-      - portMapping:
-          port: 9080
-          protocol: http
-  routes:
-    - name: gateway-route
-      http:
-        match:
-          prefix: /color
-        action:
-          weightedTargets:
-            - virtualNodeName: colorgateway
-              weight: 1
----
 apiVersion: v1
 kind: Service
 metadata:
