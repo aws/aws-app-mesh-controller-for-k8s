@@ -54,9 +54,9 @@ You should see a collection of virtual services, virtual nodes and a mesh, along
 
 Verify App Mesh is working
 ```
-kubectl run -n appmesh-demo -it curler --image=pstauffer/curl sh
+kubectl run -n appmesh-demo -it curler --image=curlimages/curl sh
 
-for i in 1 2 3 4 5 6 7 8 9 10; do curl colorgateway:9080/color; echo; done
+for i in {`seq ..100`}; do curl colorgateway:9080/color; echo; done
 # Expect to see even distribution of three colors
 # {"color":"white", "stats": {"black":0.36,"blue":0.32,"white":0.32}}
 ```
