@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	promdto "github.com/prometheus/client_model/go"
@@ -90,6 +91,26 @@ func TestRecorder_SetVirtualService(t *testing.T) {
 	}
 }
 
+func TestRecorder_RecordOperation(t *testing.T) {
+	stats.RecordOperation("test-op-kind", "test-op-object", "test-op-name", 2*time.Second)
+
+	//verify duration metric
+	metric_name := "operation_duration_seconds"
+	metric, err := lookupMetric(metric_name, promdto.MetricType_HISTOGRAM,
+		"kind", "test-op-kind",
+		"object", "test-op-object",
+		"operation", "test-op-name")
+	if err != nil {
+		t.Fatalf("Error collecting %s metric: %v", metric_name, err)
+	}
+	if int(*metric.Histogram.SampleSum) != 2 {
+		t.Errorf("%s expected value %v got %v", metric_name, 2, *metric.Histogram.SampleSum)
+	}
+	if int(*metric.Histogram.SampleCount) != 1 {
+		t.Errorf("%s expected value %v got %v", metric_name, 1, *metric.Histogram.SampleCount)
+	}
+}
+
 func lookupMetric(name string, metricType promdto.MetricType, labels ...string) (*promdto.Metric, error) {
 	metricsRegistry := prometheus.DefaultRegisterer.(*prometheus.Registry)
 	if metrics, err := metricsRegistry.Gather(); err == nil {
@@ -100,7 +121,7 @@ func lookupMetric(name string, metricType promdto.MetricType, labels ...string) 
 				}
 				for _, metric := range metricFamily.Metric {
 					if len(labels) != len(metric.Label)*2 {
-						return nil, fmt.Errorf("metric labels length for %v doesn't correpond: %v != %v", name, len(labels)*2, len(metric.Label))
+						return nil, fmt.Errorf("metric labels length for %v doesn't correpond: %v != %v", name, len(labels), len(metric.Label)*2)
 					}
 					return metric, nil
 				}

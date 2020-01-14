@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"strings"
+	"time"
 
 	ctrlaws "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 
@@ -23,6 +24,11 @@ const (
 )
 
 func (c *Controller) handlePod(key string) error {
+	begin := time.Now()
+	defer func() {
+		c.stats.RecordOperation("podctl", "", "handlePod", time.Since(begin))
+	}()
+
 	ctx := context.Background()
 
 	klog.V(4).Infof("processing pod %s", key)
@@ -50,6 +56,10 @@ func (c *Controller) reconcileInstances(ctx context.Context) {
 }
 
 func (c *Controller) syncPods(ctx context.Context) {
+	begin := time.Now()
+	defer func() {
+		c.stats.RecordOperation("podctl", "", "syncPods", time.Since(begin))
+	}()
 	pods, err := c.podsLister.List(labels.Everything())
 	if err != nil {
 		klog.Errorf("Error listing pods %v", err)
@@ -65,6 +75,11 @@ func (c *Controller) syncPods(ctx context.Context) {
 }
 
 func (c *Controller) syncInstances(ctx context.Context) {
+	begin := time.Now()
+	defer func() {
+		c.stats.RecordOperation("podctl", "", "syncInstances", time.Since(begin))
+	}()
+
 	syncedServices := make(map[string]bool)
 
 	virtualNodes, err := c.virtualNodeLister.List(labels.Everything())
@@ -111,6 +126,11 @@ func (c *Controller) syncInstances(ctx context.Context) {
 }
 
 func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
+	begin := time.Now()
+	defer func() {
+		c.stats.RecordOperation("podctl", "", "syncPod", time.Since(begin))
+	}()
+
 	instanceID := podToInstanceID(pod)
 	if instanceID == "" {
 		klog.V(4).Infof("Skipping pod %s with no instanceID mapping", pod.Name)
