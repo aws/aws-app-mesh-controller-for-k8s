@@ -7,7 +7,6 @@ import (
 
 // Subsystem represents the Prometheus metrics prefix
 const Subsystem = "appmesh"
-const operationSubsystem = "operation"
 
 // Recorder exports mesh stats as Prometheus metrics
 type Recorder struct {
@@ -46,7 +45,7 @@ func NewRecorder(register bool) *Recorder {
 	}, []string{"kind", "object", "operation"})
 
 	operationDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Subsystem: operationSubsystem,
+		Subsystem: Subsystem,
 		Name:      "duration_seconds",
 		Help:      "Seconds spent performing operation.",
 		Buckets:   prometheus.DefBuckets,
