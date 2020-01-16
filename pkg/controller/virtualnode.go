@@ -314,6 +314,9 @@ func vnodeLoggingNeedsUpdate(desired *appmeshv1beta1.VirtualNode, target *aws.Vi
 
 func (c *Controller) handleVNodeDelete(ctx context.Context, vnode *appmeshv1beta1.VirtualNode, copy *appmeshv1beta1.VirtualNode) error {
 	if yes, _ := containsFinalizer(vnode, virtualNodeDeletionFinalizerName); yes {
+		if err := c.deregisterInstancesForVirtualNode(ctx, vnode); err != nil {
+			return err
+		}
 		if _, err := c.cloud.DeleteVirtualNode(ctx, vnode.Name, vnode.Spec.MeshName); err != nil {
 			if !aws.IsAWSErrNotFound(err) {
 				return fmt.Errorf("failed to clean up virtual node %s during deletion finalizer: %s", vnode.Name, err)
@@ -329,6 +332,41 @@ func (c *Controller) handleVNodeDelete(ctx context.Context, vnode *appmeshv1beta
 	return nil
 }
 
+// deregisterInstancesForVirtualNode uses serviceDiscovery configuration
+// from virtualNode spec to deregister instances from AWS CloudMap
+func (c *Controller) deregisterInstancesForVirtualNode(ctx context.Context, vnode *appmeshv1beta1.VirtualNode) error {
+	if vnode.Spec.ServiceDiscovery == nil ||
+		vnode.Spec.ServiceDiscovery.CloudMap == nil {
+		return nil
+	}
+	cloudmapConfig := vnode.Spec.ServiceDiscovery.CloudMap
+	appmeshCloudMapConfig := &appmesh.AwsCloudMapServiceDiscovery{
+		NamespaceName: awssdk.String(cloudmapConfig.NamespaceName),
+		ServiceName:   awssdk.String(cloudmapConfig.ServiceName),
+	}
+
+	instances, err := c.cloud.ListInstances(ctx, appmeshCloudMapConfig)
+	if err != nil {
+		return fmt.Errorf("Error getting list of instances under virtual node %s to deregister: %s", vnode.Name, err)
+	}
+
+	for _, instance := range instances {
+		meshName := awssdk.StringValue(instance.Attributes[attributeKeyAppMeshMeshName])
+		virtualNodeName := awssdk.StringValue(instance.Attributes[attributeKeyAppMeshVirtualNodeName])
+		if meshName != vnode.Spec.MeshName ||
+			virtualNodeName != namespacedResourceName(vnode.Name, vnode.Namespace) {
+			continue
+		}
+		err = c.cloud.DeregisterInstance(ctx, awssdk.StringValue(instance.Id), appmeshCloudMapConfig)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// handleVNodeMeshDeleting deletes virtualNode when mesh is deleted (cascade)
 func (c *Controller) handleVNodeMeshDeleting(ctx context.Context, vnode *appmeshv1beta1.VirtualNode) (processVNode bool) {
 	mesh, err := c.meshLister.Get(vnode.Spec.MeshName)
 
@@ -358,8 +396,9 @@ func (c *Controller) handleVNodeMeshDeleting(ctx context.Context, vnode *appmesh
 	return true
 }
 
+// handleServiceDiscovery uses serviceDiscovery configuration on virtualNode
+// to setup external resources. For now only Cloud Map _service_ is setup
 func (c *Controller) handleServiceDiscovery(ctx context.Context, vnode *appmeshv1beta1.VirtualNode, copyForUpdate *appmeshv1beta1.VirtualNode) error {
-	//only handle cloudmap for now
 	if vnode.Spec.ServiceDiscovery == nil || vnode.Spec.ServiceDiscovery.CloudMap == nil {
 		klog.V(4).Infof("CloudMap service is already created")
 		return nil
@@ -408,6 +447,7 @@ func (c *Controller) handleServiceDiscovery(ctx context.Context, vnode *appmeshv
 	return nil
 }
 
+// setVirtualNodeStatusCloudMapService updates the status of virtualNode with CloudMap service details
 func (c *Controller) setVirtualNodeStatusCloudMapService(vnode *appmeshv1beta1.VirtualNode, cloudmapService *appmeshv1beta1.CloudMapServiceStatus) error {
 	firstTry := true
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
@@ -426,6 +466,8 @@ func (c *Controller) setVirtualNodeStatusCloudMapService(vnode *appmeshv1beta1.V
 	})
 }
 
+// reconcileServices reconciles the external _service_ resources corresponding to virtualNode
+// using its serviceDiscovery configuration.
 func (c *Controller) reconcileServices(ctx context.Context) error {
 	virtualNodes, err := c.virtualNodeLister.List(labels.Everything())
 	if err != nil {
