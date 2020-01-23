@@ -152,6 +152,8 @@ spec:
         app: colorgateway
         version: v1
     spec:
+      securityContext:
+        fsGroup: 1337
       containers:
         - name: colorgateway
           image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/gateway:latest
@@ -199,6 +201,8 @@ spec:
         app: colorteller
         version: white
     spec:
+      securityContext:
+        fsGroup: 1337
       containers:
         - name: colorteller
           image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
@@ -244,6 +248,8 @@ spec:
         app: colorteller
         version: black
     spec:
+      securityContext:
+        fsGroup: 1337
       containers:
         - name: colorteller
           image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
@@ -289,6 +295,8 @@ spec:
         app: colorteller
         version: blue
     spec:
+      securityContext:
+        fsGroup: 1337
       containers:
         - name: colorteller
           image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
@@ -334,6 +342,8 @@ spec:
         app: colorteller
         version: red
     spec:
+      securityContext:
+        fsGroup: 1337
       containers:
         - name: colorteller
           image: 970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest
@@ -412,6 +422,8 @@ spec:
         app: tcpecho
         version: v1
     spec:
+      securityContext:
+        fsGroup: 1337
       containers:
         - name: tcpecho
           image: cjimti/go-echo
