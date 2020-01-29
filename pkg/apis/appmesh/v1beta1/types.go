@@ -35,6 +35,8 @@ const (
 // MeshSpec is the spec for a Mesh resource
 type MeshSpec struct {
 	// +optional
+	EgressFilter *MeshEgressFilter `json:"egressFilter,omitempty"`
+	// +optional
 	ServiceDiscoveryType *MeshServiceDiscoveryType `json:"serviceDiscoveryType,omitempty"`
 }
 
@@ -44,6 +46,17 @@ type MeshStatus struct {
 	// +optional
 	MeshArn    *string         `json:"meshArn,omitempty"`
 	Conditions []MeshCondition `json:"meshCondition"`
+}
+
+const (
+	// MeshEgressFilterTypeAllowAll allows egress to any endpoint inside or outside of the service mesh
+	MeshEgressFilterTypeAllowAll = "ALLOW_ALL"
+	// MeshEgressFilterTypeDropAll allows egress only from virtual nodes to other defined resources in the service mesh (and any traffic to *.amazonaws.com for AWS API calls)
+	MeshEgressFilterTypeDropAll = "DROP_ALL"
+)
+
+type MeshEgressFilter struct {
+	Type string `json:"type"`
 }
 
 type MeshConditionType string
