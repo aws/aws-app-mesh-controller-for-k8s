@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -548,6 +549,116 @@ func TestHandleCloudMapServiceDiscovery(t *testing.T) {
 		})
 	}
 }
+
+func TestVirtualNode_deregisterInstancesForVirtualNode(t *testing.T) {
+	var (
+		// defaults
+		port80       int64 = 80
+		protocolHTTP       = "http"
+		hostname           = "foo.local"
+		backend            = "bar.local"
+		k8sNamespace       = "test-ns"
+		meshName           = "test-mesh"
+		vnodeName          = "test-vn"
+
+		noServiceDiscoverySpec   = newAPIVirtualNode([]int64{}, []string{}, []string{backend}, "", nil)
+		dnsServiceDiscvery       = newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, nil)
+		cloudMapServiceDiscovery = newAPIVirtualNodeWithCloudMap([]int64{port80},
+			[]string{protocolHTTP},
+			[]string{},
+			&appmeshv1beta1.ServiceDiscovery{
+				CloudMap: &appmeshv1beta1.CloudMapServiceDiscovery{
+					ServiceName:   "foo",
+					NamespaceName: "local",
+				},
+			},
+			nil)
+
+		//vnodeInstance should be deregistered
+		vnodeInstance = &servicediscovery.InstanceSummary{
+			Id: awssdk.String("i-1"),
+			Attributes: map[string]*string{
+				attributeKeyAppMeshMeshName:        awssdk.String(meshName),
+				attributeKeyAppMeshVirtualNodeName: awssdk.String(namespacedResourceName(vnodeName, k8sNamespace)),
+			},
+		}
+
+		//diffVnodeInstance should be deregistered
+		diffVnodeInstance = &servicediscovery.InstanceSummary{
+			Id: awssdk.String("i-4"),
+			Attributes: map[string]*string{
+				attributeKeyAppMeshMeshName:        awssdk.String(meshName),
+				attributeKeyAppMeshVirtualNodeName: awssdk.String(namespacedResourceName(vnodeName+"other", k8sNamespace)),
+			},
+		}
+
+		//nonVnodeInstance should not be deregistered
+		nonVnodeInstance = &servicediscovery.InstanceSummary{
+			Id: awssdk.String("i-2"),
+			Attributes: map[string]*string{
+				attributeKeyAppMeshMeshName: awssdk.String(meshName),
+			},
+		}
+
+		//nonMeshInstance should not be deregistered
+		nonMeshInstance = &servicediscovery.InstanceSummary{
+			Id: awssdk.String("i-3"),
+		}
+	)
+
+	var vnodetests = []struct {
+		name       string
+		spec       *appmeshv1beta1.VirtualNode
+		isCloudmap bool
+	}{
+		{"no service-discovery", noServiceDiscoverySpec, false},
+		{"dns service-discovery", dnsServiceDiscvery, false},
+		{"cloudmap service-discovery", cloudMapServiceDiscovery, true},
+	}
+
+	for _, tt := range vnodetests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			tt.spec.Namespace = "test-ns"
+			tt.spec.Name = vnodeName
+			tt.spec.Spec.MeshName = meshName
+			mockCloudAPI := new(ctrlawsmocks.CloudAPI)
+			mockCloudAPI.On(
+				"ListInstances",
+				ctx,
+				mock.AnythingOfType("*appmesh.AwsCloudMapServiceDiscovery"),
+			).Return(
+				[]*servicediscovery.InstanceSummary{
+					vnodeInstance, nonVnodeInstance, nonMeshInstance, diffVnodeInstance,
+				},
+				nil,
+			)
+			mockCloudAPI.On(
+				"DeregisterInstance",
+				ctx,
+				awssdk.StringValue(vnodeInstance.Id),
+				mock.AnythingOfType("*appmesh.AwsCloudMapServiceDiscovery"),
+			).Return(nil)
+			for _, id := range []*string{nonVnodeInstance.Id, nonMeshInstance.Id, diffVnodeInstance.Id} {
+				mockCloudAPI.On(
+					"DeregisterInstance",
+					ctx,
+					awssdk.StringValue(id),
+					mock.AnythingOfType("*appmesh.AwsCloudMapServiceDiscovery"),
+				).Return(fmt.Errorf("Unexpected deregisterInstance call id=%s", awssdk.StringValue(id)))
+			}
+
+			c := &Controller{
+				cloud: mockCloudAPI,
+			}
+			err := c.deregisterInstancesForVirtualNode(ctx, tt.spec)
+			if err != nil {
+				t.Errorf("Unexpected error %+v", err)
+			}
+		})
+	}
+}
+
 func TestMutateVirtualNodeForProcessing(t *testing.T) {
 	var (
 		// defaults
