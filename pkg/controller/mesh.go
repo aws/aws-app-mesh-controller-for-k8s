@@ -6,6 +6,7 @@ import (
 
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
+	awssdk "github.com/aws/aws-sdk-go/aws"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,6 +62,12 @@ func (c *Controller) handleMesh(key string) error {
 			return fmt.Errorf("error describing mesh: %s", err)
 		}
 	} else {
+		if c.meshNeedsUpdate(mesh, targetMesh) {
+			if targetMesh, err = c.cloud.UpdateMesh(ctx, mesh); err != nil {
+				return fmt.Errorf("error updating mesh: %s", err)
+			}
+			klog.Infof("Updated mesh %s", mesh.Name)
+		}
 		if err := c.updateMeshActive(mesh); err != nil {
 			return fmt.Errorf("error updating mesh status: %s", err)
 		}
@@ -69,6 +76,21 @@ func (c *Controller) handleMesh(key string) error {
 	c.stats.SetMeshActive(mesh.Name)
 
 	return nil
+}
+
+func (c *Controller) meshNeedsUpdate(desired *appmeshv1beta1.Mesh, target *aws.Mesh) bool {
+	if desired.Spec.EgressFilter != nil {
+		if target.Data.Spec.EgressFilter == nil {
+			return true
+		}
+		if desired.Spec.EgressFilter.Type != awssdk.StringValue(target.Data.Spec.EgressFilter.Type) {
+			return true
+		}
+	} else if target.Data.Spec.EgressFilter != nil {
+		return true
+	}
+
+	return false
 }
 
 func (c *Controller) updateMeshResource(mesh *appmeshv1beta1.Mesh) error {
