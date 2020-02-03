@@ -113,7 +113,7 @@ func (r *Recorder) SetRequestDuration(kind string, object string, operation stri
 }
 
 // RecordOperation records the duration of operation (e.g. API Call, Function exection)
-// based on object kind, name and operation type. The operation type can be get, create, update, delete
+// based on object kind, name and operation type. Operation can be any string based on the context, e.g. get, create
 func (r *Recorder) RecordOperation(kind string, object string, operation string, duration time.Duration) {
 	r.operationDuration.WithLabelValues(kind, object, operation).Observe(duration.Seconds())
 }
