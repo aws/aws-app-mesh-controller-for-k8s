@@ -58,6 +58,13 @@ func NewRecorder(register bool) *Recorder {
 	}
 }
 
+func (r *Recorder) clearRegistry() {
+	prometheus.Unregister(r.meshState)
+	prometheus.Unregister(r.virtualNodeState)
+	prometheus.Unregister(r.virtualServiceState)
+	prometheus.Unregister(r.apiRequestDuration)
+}
+
 // SetMeshActive sets the mesh gauge to 1
 func (r *Recorder) SetMeshActive(name string) {
 	r.meshState.WithLabelValues(name).Set(1)
