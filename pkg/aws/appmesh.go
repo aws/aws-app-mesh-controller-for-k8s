@@ -18,6 +18,7 @@ import (
 const (
 	DescribeMeshTimeout           = 10
 	CreateMeshTimeout             = 10
+	UpdateMeshTimeout             = 10
 	DeleteMeshTimeout             = 10
 	DescribeVirtualNodeTimeout    = 10
 	CreateVirtualNodeTimeout      = 10
@@ -45,6 +46,7 @@ const (
 type AppMeshAPI interface {
 	GetMesh(context.Context, string) (*Mesh, error)
 	CreateMesh(context.Context, *appmeshv1beta1.Mesh) (*Mesh, error)
+	UpdateMesh(context.Context, *appmeshv1beta1.Mesh) (*Mesh, error)
 	DeleteMesh(context.Context, string) (*Mesh, error)
 	GetVirtualNode(context.Context, string, string) (*VirtualNode, error)
 	CreateVirtualNode(context.Context, *appmeshv1beta1.VirtualNode) (*VirtualNode, error)
@@ -111,9 +113,48 @@ func (c *Cloud) CreateMesh(ctx context.Context, mesh *appmeshv1beta1.Mesh) (*Mes
 
 	input := &appmesh.CreateMeshInput{
 		MeshName: aws.String(mesh.Name),
+		Spec:     &appmesh.MeshSpec{},
+	}
+
+	if mesh.Spec.EgressFilter != nil {
+		input.Spec.EgressFilter = &appmesh.EgressFilter{
+			Type: aws.String(mesh.Spec.EgressFilter.Type),
+		}
 	}
 
 	if output, err := c.appmesh.CreateMeshWithContext(ctx, input); err != nil {
+		return nil, err
+	} else if output == nil || output.Mesh == nil {
+		return nil, fmt.Errorf("mesh %s not found", mesh.Name)
+	} else {
+		return &Mesh{
+			Data: *output.Mesh,
+		}, nil
+	}
+}
+
+// UpdateMesh converts the desired mesh spec into UpdateMeshInput and calls update mesh.
+func (c *Cloud) UpdateMesh(ctx context.Context, mesh *appmeshv1beta1.Mesh) (*Mesh, error) {
+	begin := time.Now()
+	defer func() {
+		c.stats.SetRequestDuration("mesh", mesh.Name, "update", time.Since(begin))
+	}()
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*UpdateMeshTimeout)
+	defer cancel()
+
+	input := &appmesh.UpdateMeshInput{
+		MeshName: aws.String(mesh.Name),
+		Spec:     &appmesh.MeshSpec{},
+	}
+
+	if mesh.Spec.EgressFilter != nil {
+		input.Spec.EgressFilter = &appmesh.EgressFilter{
+			Type: aws.String(mesh.Spec.EgressFilter.Type),
+		}
+	}
+
+	if output, err := c.appmesh.UpdateMeshWithContext(ctx, input); err != nil {
 		return nil, err
 	} else if output == nil || output.Mesh == nil {
 		return nil, fmt.Errorf("mesh %s not found", mesh.Name)

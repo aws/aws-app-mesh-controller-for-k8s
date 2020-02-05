@@ -5,6 +5,7 @@ set -o nounset
 set -o pipefail
 
 SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
+GOPATH=${GOPATH:-$(go env GOPATH)}
 
 go get github.com/vektra/mockery/.../
 

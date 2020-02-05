@@ -480,6 +480,29 @@ func (_m *CloudAPI) RegisterInstance(_a0 context.Context, _a1 string, _a2 *v1.Po
 	return r0
 }
 
+// UpdateMesh provides a mock function with given fields: _a0, _a1
+func (_m *CloudAPI) UpdateMesh(_a0 context.Context, _a1 *v1beta1.Mesh) (*aws.Mesh, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *aws.Mesh
+	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Mesh) *aws.Mesh); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*aws.Mesh)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *v1beta1.Mesh) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateRoute provides a mock function with given fields: _a0, _a1, _a2, _a3
 func (_m *CloudAPI) UpdateRoute(_a0 context.Context, _a1 *v1beta1.Route, _a2 string, _a3 string) (*aws.Route, error) {
 	ret := _m.Called(_a0, _a1, _a2, _a3)
