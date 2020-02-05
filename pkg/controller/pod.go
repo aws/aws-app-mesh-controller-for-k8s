@@ -26,7 +26,7 @@ const (
 func (c *Controller) handlePod(key string) error {
 	begin := time.Now()
 	defer func() {
-		c.stats.RecordOperation("podctl", "", "handlePod", time.Since(begin))
+		c.stats.RecordOperationDuration("podctl", "", "handlePod", time.Since(begin))
 	}()
 
 	ctx := context.Background()
@@ -58,7 +58,7 @@ func (c *Controller) reconcileInstances(ctx context.Context) {
 func (c *Controller) syncPods(ctx context.Context) {
 	begin := time.Now()
 	defer func() {
-		c.stats.RecordOperation("podctl", "", "syncPods", time.Since(begin))
+		c.stats.RecordOperationDuration("podctl", "", "syncPods", time.Since(begin))
 	}()
 	pods, err := c.podsLister.List(labels.Everything())
 	if err != nil {
@@ -77,7 +77,7 @@ func (c *Controller) syncPods(ctx context.Context) {
 func (c *Controller) syncInstances(ctx context.Context) {
 	begin := time.Now()
 	defer func() {
-		c.stats.RecordOperation("podctl", "", "syncInstances", time.Since(begin))
+		c.stats.RecordOperationDuration("podctl", "", "syncInstances", time.Since(begin))
 	}()
 
 	syncedServices := make(map[string]bool)
@@ -128,7 +128,7 @@ func (c *Controller) syncInstances(ctx context.Context) {
 func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 	begin := time.Now()
 	defer func() {
-		c.stats.RecordOperation("podctl", "", "syncPod", time.Since(begin))
+		c.stats.RecordOperationDuration("podctl", "", "syncPod", time.Since(begin))
 	}()
 
 	instanceID := podToInstanceID(pod)

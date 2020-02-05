@@ -91,11 +91,11 @@ func TestRecorder_SetVirtualService(t *testing.T) {
 	}
 }
 
-func TestRecorder_RecordOperation(t *testing.T) {
-	stats.RecordOperation("test-op-kind", "test-op-object", "test-op-name", 2*time.Second)
+func TestRecorder_RecordOperationDuration(t *testing.T) {
+	stats.RecordOperationDuration("test-op-kind", "test-op-object", "test-op-name", 2*time.Second)
 
 	//verify duration metric
-	metric_name := "operation_duration_seconds"
+	metric_name := "appmesh_operation_duration_seconds"
 	metric, err := lookupMetric(metric_name, promdto.MetricType_HISTOGRAM,
 		"kind", "test-op-kind",
 		"object", "test-op-object",

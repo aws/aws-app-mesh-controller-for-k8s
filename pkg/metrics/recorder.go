@@ -46,7 +46,7 @@ func NewRecorder(register bool) *Recorder {
 
 	operationDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Subsystem: Subsystem,
-		Name:      "duration_seconds",
+		Name:      "operation_duration_seconds",
 		Help:      "Seconds spent performing operation.",
 		Buckets:   prometheus.DefBuckets,
 	}, []string{"kind", "object", "operation"})
@@ -112,8 +112,8 @@ func (r *Recorder) SetRequestDuration(kind string, object string, operation stri
 	r.apiRequestDuration.WithLabelValues(kind, object, operation).Observe(duration.Seconds())
 }
 
-// RecordOperation records the duration of operation (e.g. API Call, Function exection)
+// RecordOperationDuration records the duration of operation (e.g. API Call, Function exection)
 // based on object kind, name and operation type. Operation can be any string based on the context, e.g. get, create
-func (r *Recorder) RecordOperation(kind string, object string, operation string, duration time.Duration) {
+func (r *Recorder) RecordOperationDuration(kind string, object string, operation string, duration time.Duration) {
 	r.operationDuration.WithLabelValues(kind, object, operation).Observe(duration.Seconds())
 }

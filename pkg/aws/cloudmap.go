@@ -104,7 +104,7 @@ func (c *Cloud) createServiceUnderHTTPNamespace(ctx context.Context, cloudmapCon
 func (c *Cloud) createService(ctx context.Context, cloudmapConfig *appmesh.AwsCloudMapServiceDiscovery, namespaceSummary *CloudMapNamespaceSummary, createServiceInput *servicediscovery.CreateServiceInput) (*CloudMapServiceSummary, error) {
 	begin := time.Now()
 	defer func() {
-		c.stats.RecordOperation("cloudmap", "service", "create", time.Since(begin))
+		c.stats.RecordOperationDuration("cloudmap", "service", "create", time.Since(begin))
 	}()
 
 	key := c.serviceCacheKey(cloudmapConfig)
@@ -138,7 +138,7 @@ func (c *Cloud) createService(ctx context.Context, cloudmapConfig *appmesh.AwsCl
 func (c *Cloud) CloudMapGetService(ctx context.Context, serviceID string) (*CloudMapServiceSummary, error) {
 	begin := time.Now()
 	defer func() {
-		c.stats.RecordOperation("cloudmap", "service", "getByID", time.Since(begin))
+		c.stats.RecordOperationDuration("cloudmap", "service", "getByID", time.Since(begin))
 	}()
 
 	getServiceInput := &servicediscovery.GetServiceInput{
@@ -168,7 +168,7 @@ func (c *Cloud) CloudMapGetService(ctx context.Context, serviceID string) (*Clou
 func (c *Cloud) RegisterInstance(ctx context.Context, instanceID string, pod *corev1.Pod, cloudmapConfig *appmesh.AwsCloudMapServiceDiscovery) error {
 	begin := time.Now()
 	defer func() {
-		c.stats.RecordOperation("cloudmap", "instance", "register", time.Since(begin))
+		c.stats.RecordOperationDuration("cloudmap", "instance", "register", time.Since(begin))
 	}()
 
 	if pod.Status.Phase != corev1.PodRunning {
@@ -222,7 +222,7 @@ func (c *Cloud) RegisterInstance(ctx context.Context, instanceID string, pod *co
 func (c *Cloud) DeregisterInstance(ctx context.Context, instanceID string, cloudmapConfig *appmesh.AwsCloudMapServiceDiscovery) error {
 	begin := time.Now()
 	defer func() {
-		c.stats.RecordOperation("cloudmap", "instance", "deregister", time.Since(begin))
+		c.stats.RecordOperationDuration("cloudmap", "instance", "deregister", time.Since(begin))
 	}()
 
 	serviceSummary, err := c.getService(ctx, cloudmapConfig)
@@ -254,7 +254,7 @@ func (c *Cloud) DeregisterInstance(ctx context.Context, instanceID string, cloud
 func (c *Cloud) ListInstances(ctx context.Context, cloudmapConfig *appmesh.AwsCloudMapServiceDiscovery) ([]*servicediscovery.InstanceSummary, error) {
 	begin := time.Now()
 	defer func() {
-		c.stats.RecordOperation("cloudmap", "instance", "list", time.Since(begin))
+		c.stats.RecordOperationDuration("cloudmap", "instance", "list", time.Since(begin))
 	}()
 
 	instances := []*servicediscovery.InstanceSummary{}
@@ -299,7 +299,7 @@ func (c *Cloud) getNamespace(ctx context.Context, cloudmapConfig *appmesh.AwsClo
 
 	begin := time.Now()
 	defer func() {
-		c.stats.RecordOperation("cloudmap", "namespace", "getByName", time.Since(begin))
+		c.stats.RecordOperationDuration("cloudmap", "namespace", "getByName", time.Since(begin))
 	}()
 
 	listNamespacesInput := &servicediscovery.ListNamespacesInput{}
@@ -378,7 +378,7 @@ func (c *Cloud) getService(ctx context.Context, cloudmapConfig *appmesh.AwsCloud
 func (c *Cloud) getServiceFromCloudMap(ctx context.Context, namespaceID string, serviceName string) (*servicediscovery.ServiceSummary, error) {
 	begin := time.Now()
 	defer func() {
-		c.stats.RecordOperation("cloudmap", "service", "getByName", time.Since(begin))
+		c.stats.RecordOperationDuration("cloudmap", "service", "getByName", time.Since(begin))
 	}()
 
 	listServicesInput := &servicediscovery.ListServicesInput{
