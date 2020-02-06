@@ -53,7 +53,7 @@ func NewRecorder(register bool) *Recorder {
 		Buckets:   prometheus.DefBuckets,
 	}, []string{"kind", "object", "operation"})
 
-  awsAPIRequestError := prometheus.NewCounterVec(prometheus.CounterOpts{
+	awsAPIRequestError := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Subsystem: Subsystem,
 		Name:      "aws_api_errors",
 		Help:      "Cumulative number of errors from the AWS API",

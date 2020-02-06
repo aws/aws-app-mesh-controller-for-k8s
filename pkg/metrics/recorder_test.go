@@ -108,7 +108,7 @@ func TestRecorder_RecordOperationDuration(t *testing.T) {
 	}
 	if int(*metric.Histogram.SampleCount) != 1 {
 		t.Errorf("%s expected value %v got %v", metric_name, 1, *metric.Histogram.SampleCount)
-  }
+	}
 }
 
 func TestRecorder_RecordAWSAPIRequestError(t *testing.T) {
