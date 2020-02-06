@@ -108,6 +108,25 @@ func TestRecorder_RecordOperationDuration(t *testing.T) {
 	}
 	if int(*metric.Histogram.SampleCount) != 1 {
 		t.Errorf("%s expected value %v got %v", metric_name, 1, *metric.Histogram.SampleCount)
+  }
+}
+
+func TestRecorder_RecordAWSAPIRequestError(t *testing.T) {
+	stats.RecordAWSAPIRequestError("test-svc", "test-op", "test-error-code")
+
+	metric_name := "appmesh_aws_api_errors"
+	metric, err := lookupMetric(
+		metric_name,
+		promdto.MetricType_COUNTER,
+		"service", "test-svc",
+		"operation", "test-op",
+		"errorcode", "test-error-code",
+	)
+	if err != nil {
+		t.Fatalf("Error collecting %s metric: %v", metric_name, err)
+	}
+	if int(*metric.Counter.Value) != 1 {
+		t.Errorf("%s expected value %v got %v", metric_name, 1, *metric.Counter.Value)
 	}
 }
 

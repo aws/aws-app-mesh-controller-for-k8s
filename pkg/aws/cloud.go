@@ -6,7 +6,9 @@ import (
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/metrics"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/appmesh"
 	"github.com/aws/aws-sdk-go/service/appmesh/appmeshiface"
@@ -55,7 +57,7 @@ type CloudMapNamespaceSummary struct {
 func NewCloud(opts CloudOptions, stats *metrics.Recorder) (CloudAPI, error) {
 	cfg := &aws.Config{Region: aws.String(opts.Region)}
 
-	session, err := session.NewSession(cfg)
+	session, err := newAWSSession(cfg, stats)
 	if err != nil {
 		return nil, err
 	}
@@ -81,4 +83,34 @@ func NewCloud(opts CloudOptions, stats *metrics.Recorder) (CloudAPI, error) {
 		}, 60*time.Second),
 		stats: stats,
 	}, nil
+}
+
+func newAWSSession(cfg *aws.Config, stats *metrics.Recorder) (*session.Session, error) {
+	session, err := session.NewSession(cfg)
+	if err != nil {
+		stats.RecordAWSAPIRequestError("session", "NewSession", getAWSErrorCode(err))
+		return nil, err
+	}
+
+	session.Handlers.Send.PushFront(func(r *request.Request) {
+		stats.RecordAWSAPIRequestCount(r.ClientInfo.ServiceName, r.Operation.Name)
+	})
+
+	session.Handlers.Complete.PushFront(func(r *request.Request) {
+		if r.Error != nil {
+			stats.RecordAWSAPIRequestError(r.ClientInfo.ServiceName, r.Operation.Name, getAWSErrorCode(r.Error))
+		}
+	})
+
+	return session, nil
+}
+
+func getAWSErrorCode(err error) string {
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			return aerr.Code()
+		}
+		return "internal"
+	}
+	return ""
 }
