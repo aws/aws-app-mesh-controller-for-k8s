@@ -11,9 +11,8 @@ AWS App Mesh Controller For K8s is a controller to help manage [App Mesh](https:
 
 ## Getting started
 
-Check out the [example](docs/example.md) application, and read [design and usage](docs/design.md).
-
-To begin using it in your cluster, follow the [install instructions](docs/install.md).
+- Install using steps under [install.md](./docs/install.md)
+- Follow the walkthroughs under [aws-app-mesh-examples](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs), e.g. [howto-k8s-fargate](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-fargate), [howto-k8s-retry-policy](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-retry-policy).
 
 ## Custom Resource Examples
 
