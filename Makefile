@@ -73,7 +73,7 @@ clean:
 mock-gen:
 	./scripts/mockgen.sh
 
-PACKAGES:=$(shell go list ./... | sed -n '1!p' | grep ${PKG}/pkg/controller)
+PACKAGES:=$(shell go list ./... | sed -n '1!p' | grep ${PKG}/pkg | grep -v ${PKG}/pkg/client)
 test:
 	echo "mode: count" > coverage-all.out
 	$(foreach pkg,$(PACKAGES), \

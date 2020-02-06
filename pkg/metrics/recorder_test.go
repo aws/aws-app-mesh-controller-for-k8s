@@ -2,15 +2,23 @@ package metrics
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
 	promdto "github.com/prometheus/client_model/go"
 )
 
-func TestRecorder_SetMesh(t *testing.T) {
-	stats := NewRecorder(true)
+var stats *Recorder
 
+func TestMain(m *testing.M) {
+	stats = NewRecorder(true)
+	defer stats.clearRegistry()
+	code := m.Run()
+	os.Exit(code)
+}
+
+func TestRecorder_SetMesh(t *testing.T) {
 	stats.SetMeshActive("test-mesh")
 
 	name := "appmesh_mesh_state"
@@ -35,8 +43,6 @@ func TestRecorder_SetMesh(t *testing.T) {
 }
 
 func TestRecorder_SetVirtualNode(t *testing.T) {
-	stats := NewRecorder(true)
-
 	stats.SetVirtualNodeActive("test-vt", "test-mesh")
 
 	name := "appmesh_virtual_node_state"
@@ -61,8 +67,6 @@ func TestRecorder_SetVirtualNode(t *testing.T) {
 }
 
 func TestRecorder_SetVirtualService(t *testing.T) {
-	stats := NewRecorder(true)
-
 	stats.SetVirtualServiceActive("test-vs", "test-mesh")
 
 	name := "appmesh_virtual_service_state"
@@ -83,6 +87,25 @@ func TestRecorder_SetVirtualService(t *testing.T) {
 
 	if int(*metric.Gauge.Value) != 0 {
 		t.Errorf("%s expected value %v got %v", name, 0, *metric.Gauge.Value)
+	}
+}
+
+func TestRecorder_RecordAWSAPIRequestError(t *testing.T) {
+	stats.RecordAWSAPIRequestError("test-svc", "test-op", "test-error-code")
+
+	metric_name := "appmesh_aws_api_errors"
+	metric, err := lookupMetric(
+		metric_name,
+		promdto.MetricType_COUNTER,
+		"service", "test-svc",
+		"operation", "test-op",
+		"errorcode", "test-error-code",
+	)
+	if err != nil {
+		t.Fatalf("Error collecting %s metric: %v", metric_name, err)
+	}
+	if int(*metric.Counter.Value) != 1 {
+		t.Errorf("%s expected value %v got %v", metric_name, 1, *metric.Counter.Value)
 	}
 }
 
