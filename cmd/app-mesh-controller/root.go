@@ -23,11 +23,14 @@ import (
 )
 
 var (
-	cfgFile     string
-	master      string
-	kubeconfig  string
-	region      string
-	threadiness int
+	cfgFile                 string
+	master                  string
+	kubeconfig              string
+	region                  string
+	threadiness             int
+	leaderElection          bool
+	leaderElectionID        string
+	leaderElectionNamespace string
 )
 
 func init() {
@@ -37,10 +40,16 @@ func init() {
 	rootCmd.Flags().StringVar(&kubeconfig, "kubeconfig", "", "Path to your kubeconfig")
 	rootCmd.Flags().StringVar(&region, "aws-region", "", "AWS Region")
 	rootCmd.Flags().IntVar(&threadiness, "threadiness", controller.DefaultThreadiness, "Worker concurrency.")
+	rootCmd.Flags().BoolVar(&leaderElection, "election", controller.DefaultElection, `Whether to do leader election for controller`)
+	rootCmd.Flags().StringVar(&leaderElectionID, "election-id", controller.DefaultElectionID, "Namespace of leader-election configmap for ingress controller")
+	rootCmd.Flags().StringVar(&leaderElectionNamespace, "election-namespace", controller.DefaultElectionNamespace, "Namespace of leader-election configmap for ingress controller. If unspecified, the namespace of this controller pod will be used")
 
 	viper.BindPFlag("master", rootCmd.Flags().Lookup("master"))
 	viper.BindPFlag("kubeconfig", rootCmd.Flags().Lookup("kubeconfig"))
 	viper.BindPFlag("aws-region", rootCmd.Flags().Lookup("aws-region"))
+	viper.BindPFlag("election", rootCmd.Flags().Lookup("election"))
+	viper.BindPFlag("election-id", rootCmd.Flags().Lookup("election-id"))
+	viper.BindPFlag("election-namespace", rootCmd.Flags().Lookup("election-namespace"))
 }
 
 func main() {
@@ -77,7 +86,7 @@ var rootCmd = &cobra.Command{
 			klog.V(1).Infof("FLAG: --%s=%q", flag.Name, flag.Value)
 		})
 
-		var stopCh chan struct{}
+		stopCh := make(chan struct{})
 
 		cfg, err := getConfig()
 		if err != nil {
@@ -114,6 +123,9 @@ var rootCmd = &cobra.Command{
 			meshInformerFactory.Appmesh().V1beta1().VirtualNodes(),
 			meshInformerFactory.Appmesh().V1beta1().VirtualServices(),
 			stats,
+			leaderElection,
+			leaderElectionID,
+			leaderElectionNamespace,
 		)
 
 		if err != nil {
