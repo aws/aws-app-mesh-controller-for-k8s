@@ -2,9 +2,14 @@ package controller
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/meta"
+	"io/ioutil"
+	"os"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/api/meta"
 )
+
+const inClusterNamespacePath = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 
 func containsFinalizer(obj interface{}, finalizer string) (bool, error) {
 	metaobj, err := meta.Accessor(obj)
@@ -61,4 +66,23 @@ func namespacedResourceName(resourceName string, defaultResourceNamespace string
 		return strings.ReplaceAll(resourceName, ".", "-")
 	}
 	return resourceName + "-" + defaultResourceNamespace
+}
+
+// getInClusterNamespace returns the namespace of the controller pod.
+func getInClusterNamespace() (string, error) {
+	// Check whether the namespace file exists.
+	// If not, we are not running in a cluster and can't get the namespace.
+	_, err := os.Stat(inClusterNamespacePath)
+	if os.IsNotExist(err) {
+		return "", fmt.Errorf("not running in-cluster, please specify --election-namespace")
+	} else if err != nil {
+		return "", fmt.Errorf("error checking namespace file: %v", err)
+	}
+
+	// Load the namespace file and return its content
+	namespace, err := ioutil.ReadFile(inClusterNamespacePath)
+	if err != nil {
+		return "", fmt.Errorf("error reading namespace file: %v", err)
+	}
+	return string(namespace), nil
 }

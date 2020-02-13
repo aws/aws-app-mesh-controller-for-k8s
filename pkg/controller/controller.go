@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/uuid"
+	"k8s.io/client-go/tools/leaderelection"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
+
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	meshclientset "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned"
@@ -29,7 +33,11 @@ import (
 
 const (
 	//setting default threadiness to number of go-routines
-	DefaultThreadiness                  = 5
+	DefaultThreadiness       = 5
+	DefaultElection          = true
+	DefaultElectionID        = "app-mesh-controller-leader"
+	DefaultElectionNamespace = ""
+
 	controllerAgentName                 = "app-mesh-controller"
 	meshDeletionFinalizerName           = "meshDeletion.finalizers.appmesh.k8s.aws"
 	virtualNodeDeletionFinalizerName    = "virtualNodeDeletion.finalizers.appmesh.k8s.aws"
@@ -73,6 +81,18 @@ type Controller struct {
 
 	// stats records mesh Prometheus metrics
 	stats *metrics.Recorder
+
+	// LeaderElection determines whether or not to use leader election when
+	// starting the manager.
+	leaderElection bool
+
+	// LeaderElectionID determines the name of the configmap that leader election
+	// will use for holding the leader lock.
+	leaderElectionID string
+
+	// LeaderElectionNamespace determines the namespace in which the leader
+	// election configmap will be created.
+	leaderElectionNamespace string
 }
 
 func NewController(
@@ -83,7 +103,10 @@ func NewController(
 	meshInformer meshinformers.MeshInformer,
 	virtualNodeInformer meshinformers.VirtualNodeInformer,
 	virtualServiceInformer meshinformers.VirtualServiceInformer,
-	stats *metrics.Recorder) (*Controller, error) {
+	stats *metrics.Recorder,
+	leaderElection bool,
+	leaderElectionID string,
+	leaderElectionNamespace string) (*Controller, error) {
 
 	utilruntime.Must(meshscheme.AddToScheme(scheme.Scheme))
 	klog.V(4).Info("Creating event broadcaster")
@@ -93,24 +116,27 @@ func NewController(
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
 	controller := &Controller{
-		name:                 controllerAgentName,
-		cloud:                cloud,
-		kubeclientset:        kubeclientset,
-		meshclientset:        meshclientset,
-		podsLister:           podInformer.Lister(),
-		podsSynced:           podInformer.Informer().HasSynced,
-		meshLister:           meshInformer.Lister(),
-		meshSynced:           meshInformer.Informer().HasSynced,
-		virtualNodeLister:    virtualNodeInformer.Lister(),
-		virtualNodeSynced:    virtualNodeInformer.Informer().HasSynced,
-		virtualServiceLister: virtualServiceInformer.Lister(),
-		virtualServiceSynced: virtualServiceInformer.Informer().HasSynced,
-		mq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
-		nq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
-		sq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
-		pq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
-		recorder:             recorder,
-		stats:                stats,
+		name:                    controllerAgentName,
+		cloud:                   cloud,
+		kubeclientset:           kubeclientset,
+		meshclientset:           meshclientset,
+		podsLister:              podInformer.Lister(),
+		podsSynced:              podInformer.Informer().HasSynced,
+		meshLister:              meshInformer.Lister(),
+		meshSynced:              meshInformer.Informer().HasSynced,
+		virtualNodeLister:       virtualNodeInformer.Lister(),
+		virtualNodeSynced:       virtualNodeInformer.Informer().HasSynced,
+		virtualServiceLister:    virtualServiceInformer.Lister(),
+		virtualServiceSynced:    virtualServiceInformer.Informer().HasSynced,
+		mq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		nq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		sq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		pq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		recorder:                recorder,
+		stats:                   stats,
+		leaderElection:          leaderElection,
+		leaderElectionID:        leaderElectionID,
+		leaderElectionNamespace: leaderElectionNamespace,
 	}
 
 	podInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -198,21 +224,76 @@ func (c *Controller) Run(threadiness int, stopCh chan struct{}) error {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		select {
+		case <-stopCh:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+	if c.leaderElection {
+		return c.runWorkersWithLeaderElection(ctx, threadiness)
+	}
+	c.runWorkers(ctx, threadiness)
+	return nil
+}
+
+func (c *Controller) runWorkersWithLeaderElection(ctx context.Context, threadiness int) error {
+	leaderElectionNamespace := c.leaderElectionNamespace
+	if leaderElectionNamespace == "" {
+		var err error
+		if leaderElectionNamespace, err = getInClusterNamespace(); err != nil {
+			return err
+		}
+	}
+
+	leaderElectionIdentity := string(uuid.NewUUID())
+	leaderElectionLock, err := resourcelock.New(resourcelock.ConfigMapsResourceLock,
+		leaderElectionNamespace,
+		c.leaderElectionID,
+		c.kubeclientset.CoreV1(),
+		c.kubeclientset.CoordinationV1(),
+		resourcelock.ResourceLockConfig{
+			Identity: leaderElectionIdentity,
+		})
+	if err != nil {
+		return err
+	}
+	elector, err := leaderelection.NewLeaderElector(leaderelection.LeaderElectionConfig{
+		Lock:          leaderElectionLock,
+		LeaseDuration: 60 * time.Second,
+		RenewDeadline: 15 * time.Second,
+		RetryPeriod:   5 * time.Second,
+		Callbacks: leaderelection.LeaderCallbacks{
+			OnStartedLeading: func(ctx context.Context) {
+				c.runWorkers(ctx, threadiness)
+			},
+			OnStoppedLeading: func() {
+				klog.Info("losing leader")
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	elector.Run(ctx)
+	return nil
+}
+
+func (c *Controller) runWorkers(ctx context.Context, threadiness int) {
 	klog.Info("Starting workers")
 	// Launch workers to process Mesh resources
 	for i := 0; i < threadiness; i++ {
-		go wait.Until(c.meshWorker, time.Second, stopCh)
-		go wait.Until(c.vNodeWorker, time.Second, stopCh)
-		go wait.Until(c.vServiceWorker, time.Second, stopCh)
-		go wait.Until(c.podWorker, time.Second, stopCh)
-		go wait.Until(c.cloudmapReconciler, 1*time.Minute, stopCh)
+		go wait.Until(c.meshWorker, time.Second, ctx.Done())
+		go wait.Until(c.vNodeWorker, time.Second, ctx.Done())
+		go wait.Until(c.vServiceWorker, time.Second, ctx.Done())
+		go wait.Until(c.podWorker, time.Second, ctx.Done())
+		go wait.Until(c.cloudmapReconciler, 1*time.Minute, ctx.Done())
 	}
-
 	klog.Info("Started workers")
-	<-stopCh
+	<-ctx.Done()
 	klog.Info("Shutting down workers")
-
-	return nil
 }
 
 // podAdded adds the pods endpoint to matching CloudMap Services.
