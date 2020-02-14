@@ -11,16 +11,13 @@ Following steps will help you get ready with a local development stack to contri
 - Follow the [installation](install.md) steps. It is recommended to use the Helm to setup App Mesh controller.
 - Clone and checkout aws-app-mesh-controller-for-k8s.
 - Make code or configuration changes.
-- Build container image.
-`make image`
-- Push image to your favourite repository.
+- Build and push container image.
 ```
-docker tag amazon/app-mesh-controller:latest <image-url>:<version>
-docker push <image-url><version>
+make image push
 ```
-- Update image of the appmesh-controller deployment. `
+- Deploy latest changes to appmesh-controller
 ```
-kubectl set image deployment/appmesh-controller -n appmesh-system appmesh-controller=<image-url>:<version>
+make deploy
 ```
 - Use examples from [aws-app-mesh-examples](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs) to verify the controller behavior.
 

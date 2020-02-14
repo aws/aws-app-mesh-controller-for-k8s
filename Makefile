@@ -7,6 +7,8 @@ GO111MODULE=on
 IMAGE=amazon/app-mesh-controller
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE)
 VERSION=v0.3.0
+GIT_COMMIT_SHORT=$(shell git log -1 --format=%h)
+DEV_VERSION=${VERSION}-${GIT_COMMIT_SHORT}
 
 .PHONY: eks-appmesh-controller
 eks-appmesh-controller:
@@ -34,7 +36,7 @@ verify-codegen:
 
 .PHONY: image
 image:
-	docker build -t $(IMAGE):latest .
+	docker build -t $(IMAGE):$(DEV_VERSION) .
 
 .PHONY: image-release
 image-release:
@@ -42,11 +44,8 @@ image-release:
 
 .PHONY: push
 push:
-ifeq ($(AWS_ACCOUNT),)
-	$(error AWS_ACCOUNT is not set)
-endif
-	docker tag $(IMAGE):latest $(REPO):latest
-	docker push $(REPO):latest
+	docker tag $(IMAGE):$(DEV_VERSION) $(REPO):$(DEV_VERSION)
+	docker push $(REPO):$(DEV_VERSION)
 
 .PHONY: push-release
 push-release:
@@ -55,7 +54,7 @@ push-release:
 
 .PHONY: deploy
 deploy:
-	./scripts/deploy.sh
+	./scripts/deploy.sh ${REPO}:${DEV_VERSION}
 
 .PHONY: example
 example:
