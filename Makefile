@@ -45,6 +45,9 @@ push:
 ifeq ($(AWS_ACCOUNT),)
 	$(error AWS_ACCOUNT is not set)
 endif
+ifeq ($(AWS_REGION),)
+	$(error AWS_REGION is not set)
+endif
 	docker tag $(IMAGE):$(DEV_VERSION) $(REPO):$(DEV_VERSION)
 	docker push $(REPO):$(DEV_VERSION)
 

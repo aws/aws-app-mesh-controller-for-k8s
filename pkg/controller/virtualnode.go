@@ -10,7 +10,6 @@ import (
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	"github.com/aws/aws-sdk-go/service/appmesh"
-	set "github.com/deckarep/golang-set"
 	api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,6 +26,7 @@ const (
 	defaultIntervalMillis              = 30000
 	defaultTimeoutMillis               = 5000
 	defaultUnhealthyThreshold          = 2
+	defaultClientPolicyTlsEnforce      = true
 )
 
 func (c *Controller) handleVNode(key string) error {
@@ -262,14 +262,18 @@ func vnodeNeedsUpdate(desired *appmeshv1beta1.VirtualNode, target *aws.VirtualNo
 		}
 	}
 
-	// This needs to be updated since AppMesh VN name isn't the same as k8s VN name.
+	// Since API may not guarantee order, convert backends to a map for equality checking
 	if desired.Spec.Backends != nil {
-		desiredSet := set.NewSet()
-		for i := range desired.Spec.Backends {
-			desiredSet.Add(desired.Spec.Backends[i])
+		desiredBackendMap := make(map[string]appmeshv1beta1.Backend, len(desired.Spec.Backends))
+		for _, val := range desired.Spec.Backends {
+			desiredBackendMap[val.VirtualService.VirtualServiceName] = val
 		}
-		currSet := target.BackendsSet()
-		if !desiredSet.Equal(currSet) {
+		targetBackends := target.Backends()
+		targetBackendMap := make(map[string]appmeshv1beta1.Backend, len(targetBackends))
+		for _, val := range targetBackends {
+			targetBackendMap[val.VirtualService.VirtualServiceName] = val
+		}
+		if !reflect.DeepEqual(desiredBackendMap, targetBackendMap) {
 			return true
 		}
 	} else {
@@ -277,6 +281,10 @@ func vnodeNeedsUpdate(desired *appmeshv1beta1.VirtualNode, target *aws.VirtualNo
 		if len(target.Backends()) != 0 {
 			return true
 		}
+	}
+
+	if !reflect.DeepEqual(desired.Spec.BackendDefaults, target.BackendDefaults()) {
+		return true
 	}
 
 	if vnodeLoggingNeedsUpdate(desired, target) {
@@ -506,6 +514,38 @@ func (c *Controller) mutateVirtualNodeForProcessing(vnode *appmeshv1beta1.Virtua
 				listener.HealthCheck.UnhealthyThreshold = defaultInt64(listener.HealthCheck.UnhealthyThreshold, defaultUnhealthyThreshold)
 			}
 		}
+	}
+
+	// The following overrides facilitate matching the spec to the API response.
+	// They can be removed if the API response matches the input spec.
+	if vnode.Spec.Backends != nil {
+		for _, backend := range vnode.Spec.Backends {
+			if backend.VirtualService.ClientPolicy != nil {
+				clientPolicy := backend.VirtualService.ClientPolicy
+				if clientPolicy.TLS != nil {
+					mergeTlsClientPolicyDefaults(clientPolicy.TLS)
+				}
+			}
+		}
+	}
+	if vnode.Spec.BackendDefaults != nil {
+		if vnode.Spec.BackendDefaults.ClientPolicy != nil {
+			clientPolicy := vnode.Spec.BackendDefaults.ClientPolicy
+			if clientPolicy.TLS != nil {
+				mergeTlsClientPolicyDefaults(clientPolicy.TLS)
+			}
+		}
+	}
+}
+
+func mergeTlsClientPolicyDefaults(specClientPolicyTls *appmeshv1beta1.ClientPolicyTls) {
+	// API currently returns the default of true if no flag is set in spec
+	if specClientPolicyTls.Enforce == nil {
+		specClientPolicyTls.Enforce = awssdk.Bool(defaultClientPolicyTlsEnforce)
+	}
+	// API currently returns an empty array in response if no ports are set in spec
+	if specClientPolicyTls.Ports == nil {
+		specClientPolicyTls.Ports = []int64{}
 	}
 }
 
