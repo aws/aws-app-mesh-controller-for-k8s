@@ -11,6 +11,10 @@ Following steps will help you get ready with a local development stack to contri
 - Follow the [installation](install.md) steps. It is recommended to use the Helm to setup App Mesh controller.
 - Clone and checkout aws-app-mesh-controller-for-k8s.
 - Make code or configuration changes.
+- Run go-fmt
+```
+make go-fmt
+```
 - Build and push container image.
 ```
 make image push
