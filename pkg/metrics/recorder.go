@@ -14,6 +14,7 @@ type Recorder struct {
 	virtualNodeState    *prometheus.GaugeVec
 	virtualServiceState *prometheus.GaugeVec
 	apiRequestDuration  *prometheus.HistogramVec
+	operationDuration   *prometheus.HistogramVec
 	awsAPIRequestError  *prometheus.CounterVec
 	awsAPIRequestCount  *prometheus.CounterVec
 }
@@ -45,6 +46,13 @@ func NewRecorder(register bool) *Recorder {
 		Buckets:   prometheus.DefBuckets,
 	}, []string{"kind", "object", "operation"})
 
+	operationDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Subsystem: Subsystem,
+		Name:      "operation_duration_seconds",
+		Help:      "Seconds spent performing operation.",
+		Buckets:   prometheus.DefBuckets,
+	}, []string{"kind", "object", "operation"})
+
 	awsAPIRequestError := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Subsystem: Subsystem,
 		Name:      "aws_api_errors",
@@ -62,6 +70,7 @@ func NewRecorder(register bool) *Recorder {
 		prometheus.MustRegister(virtualNodeState)
 		prometheus.MustRegister(virtualServiceState)
 		prometheus.MustRegister(apiRequestDuration)
+		prometheus.MustRegister(operationDuration)
 		prometheus.MustRegister(awsAPIRequestError)
 		prometheus.MustRegister(awsAPIRequestCount)
 	}
@@ -71,6 +80,7 @@ func NewRecorder(register bool) *Recorder {
 		virtualNodeState:    virtualNodeState,
 		virtualServiceState: virtualServiceState,
 		apiRequestDuration:  apiRequestDuration,
+		operationDuration:   operationDuration,
 		awsAPIRequestError:  awsAPIRequestError,
 		awsAPIRequestCount:  awsAPIRequestCount,
 	}
@@ -81,6 +91,7 @@ func (r *Recorder) clearRegistry() {
 	prometheus.Unregister(r.virtualNodeState)
 	prometheus.Unregister(r.virtualServiceState)
 	prometheus.Unregister(r.apiRequestDuration)
+	prometheus.Unregister(r.operationDuration)
 	prometheus.Unregister(r.awsAPIRequestError)
 	prometheus.Unregister(r.awsAPIRequestCount)
 }
@@ -119,6 +130,12 @@ func (r *Recorder) SetVirtualServiceInactive(name string, mesh string) {
 // The operation type can be get, create, update, delete
 func (r *Recorder) SetRequestDuration(kind string, object string, operation string, duration time.Duration) {
 	r.apiRequestDuration.WithLabelValues(kind, object, operation).Observe(duration.Seconds())
+}
+
+// RecordOperationDuration records the duration of operation (e.g. API Call, Function exection)
+// based on object kind, name and operation type. Operation can be any string based on the context, e.g. get, create
+func (r *Recorder) RecordOperationDuration(kind string, object string, operation string, duration time.Duration) {
+	r.operationDuration.WithLabelValues(kind, object, operation).Observe(duration.Seconds())
 }
 
 // RecordAWSAPIRequestError records error count of AWS API calls
