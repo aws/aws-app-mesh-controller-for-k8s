@@ -94,8 +94,6 @@ spec:
 ```
 the corresponding virtual node names in the App Mesh backend are, `colorteller-appmesh-demo`, `colorteller-blue-appmesh-demo`, and `colorteller-black-appmesh-demo` respectively.
 
-Check out the [example](example.md) application for more details.
-
 ## Cloud Map Service Discovery
 
 Cloud Map service discovery can be used in place of DNS. See this [App Mesh road map item](https://github.com/aws/aws-app-mesh-roadmap/issues/47).  In order to use it, you must specify the service discovery type as "cloudMap" in your virtual node definition.  For example,

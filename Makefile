@@ -57,14 +57,6 @@ push-release:
 deploy:
 	./scripts/deploy.sh ${REPO}:${DEV_VERSION}
 
-.PHONY: example
-example:
-	./scripts/example.sh
-
-.PHONY: release-example-gen
-release-example-gen:
-	RELEASE=1 ./scripts/example.sh
-
 .PHONY: clean
 clean:
 	rm -rf ./_output
