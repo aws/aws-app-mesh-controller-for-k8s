@@ -739,6 +739,20 @@ func TestVNodeListenerHealthCheckNeedsUpdate(t *testing.T) {
 		backend                 = "bar.local"
 		fileAccessLogPath       = awssdk.String("/dev/stdout")
 
+		defaultSpecHealthCheck = &appmeshv1beta1.HealthCheckPolicy{
+			Path: awssdk.String("/"),
+		}
+
+		defaultResultHealthCheck = &appmesh.HealthCheckPolicy{
+			Path:               awssdk.String("/"),
+			Port:               awssdk.Int64(port80),
+			Protocol:           awssdk.String(protocolHTTP),
+			HealthyThreshold:   awssdk.Int64(defaultHealthyThreshold),
+			IntervalMillis:     awssdk.Int64(defaultIntervalMillis),
+			TimeoutMillis:      awssdk.Int64(defaultTimeoutMillis),
+			UnhealthyThreshold: awssdk.Int64(defaultUnhealthyThreshold),
+		}
+
 		specHealthCheck = &appmeshv1beta1.HealthCheckPolicy{
 			HealthyThreshold:   awssdk.Int64(1),
 			IntervalMillis:     awssdk.Int64(1000),
@@ -807,6 +821,7 @@ func TestVNodeListenerHealthCheckNeedsUpdate(t *testing.T) {
 		needsUpdate bool
 	}{
 		{"no health-check defined", nil, nil, false},
+		{"health-check are in sync with default", defaultSpecHealthCheck, defaultResultHealthCheck, false},
 		{"health-check are in sync", specHealthCheck, resultHealthCheck, false},
 		{"Path: target health-check is different", specHealthCheck, differentPathHealthCheck, true},
 		{"Protocol: target health-check is different", specHealthCheck, differentProtocolHealthCheck, true},
@@ -817,6 +832,11 @@ func TestVNodeListenerHealthCheckNeedsUpdate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			spec := newAPIVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, fileAccessLogPath)
 			spec.Spec.Listeners[0].HealthCheck = tt.desired
+			c := &Controller{}
+			spec.Namespace = "test-ns"
+			spec.Spec.MeshName = "test-mesh"
+			c.mutateVirtualNodeForProcessing(spec)
+
 			result := newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, fileAccessLogPath)
 			result.Data.Spec.Listeners[0].HealthCheck = tt.target
 			if res := vnodeNeedsUpdate(spec, result); res != tt.needsUpdate {
