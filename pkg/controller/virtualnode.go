@@ -23,6 +23,10 @@ import (
 const (
 	attributeKeyAppMeshMeshName        = "appmesh.k8s.aws/mesh"
 	attributeKeyAppMeshVirtualNodeName = "appmesh.k8s.aws/virtualNode"
+	defaultHealthyThreshold            = 10
+	defaultIntervalMillis              = 30000
+	defaultTimeoutMillis               = 5000
+	defaultUnhealthyThreshold          = 2
 )
 
 func (c *Controller) handleVNode(key string) error {
@@ -493,4 +497,33 @@ func (c *Controller) mutateVirtualNodeForProcessing(vnode *appmeshv1beta1.Virtua
 		vnode.Spec.ServiceDiscovery.CloudMap.Attributes[attributeKeyAppMeshMeshName] = vnode.Spec.MeshName
 		vnode.Spec.ServiceDiscovery.CloudMap.Attributes[attributeKeyAppMeshVirtualNodeName] = vnode.Name
 	}
+
+	if vnode.Spec.Listeners != nil {
+		for _, listener := range vnode.Spec.Listeners {
+			if listener.HealthCheck != nil {
+				//if port-mapping is not set for health-check we default it to listener's port-mapping
+				listener.HealthCheck.Port = defaultInt64(listener.HealthCheck.Port, listener.PortMapping.Port)
+				listener.HealthCheck.Protocol = defaultString(listener.HealthCheck.Protocol, listener.PortMapping.Protocol)
+				//below are some sane defaults for majority of applications
+				listener.HealthCheck.HealthyThreshold = defaultInt64(listener.HealthCheck.HealthyThreshold, defaultHealthyThreshold)
+				listener.HealthCheck.IntervalMillis = defaultInt64(listener.HealthCheck.IntervalMillis, defaultIntervalMillis)
+				listener.HealthCheck.TimeoutMillis = defaultInt64(listener.HealthCheck.TimeoutMillis, defaultTimeoutMillis)
+				listener.HealthCheck.UnhealthyThreshold = defaultInt64(listener.HealthCheck.UnhealthyThreshold, defaultUnhealthyThreshold)
+			}
+		}
+	}
+}
+
+func defaultInt64(v *int64, defaultVal int64) *int64 {
+	if v != nil {
+		return v
+	}
+	return awssdk.Int64(defaultVal)
+}
+
+func defaultString(v *string, defaultVal string) *string {
+	if v != nil {
+		return v
+	}
+	return awssdk.String(defaultVal)
 }
