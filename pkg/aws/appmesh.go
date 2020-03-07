@@ -37,10 +37,6 @@ const (
 	ListRoutesTimeout             = 10
 	UpdateRouteTimeout            = 10
 	DeleteRouteTimeout            = 10
-	DefaultHealthyThreshold       = 10
-	DefaultIntervalMillis         = 30000
-	DefaultTimeoutMillis          = 5000
-	DefaultUnhealthyThreshold     = 2
 )
 
 type AppMeshAPI interface {
@@ -339,13 +335,13 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 			}
 			if listener.HealthCheck != nil {
 				appmeshHealthCheck := &appmesh.HealthCheckPolicy{
-					HealthyThreshold:   defaultInt64(listener.HealthCheck.HealthyThreshold, DefaultHealthyThreshold),
-					IntervalMillis:     defaultInt64(listener.HealthCheck.IntervalMillis, DefaultIntervalMillis),
+					HealthyThreshold:   listener.HealthCheck.HealthyThreshold,
+					IntervalMillis:     listener.HealthCheck.IntervalMillis,
 					Path:               listener.HealthCheck.Path,
-					Port:               defaultInt64(listener.HealthCheck.Port, listener.PortMapping.Port),          //using listener's port
-					Protocol:           defaultString(listener.HealthCheck.Protocol, listener.PortMapping.Protocol), //using listener's protocol
-					TimeoutMillis:      defaultInt64(listener.HealthCheck.TimeoutMillis, DefaultTimeoutMillis),
-					UnhealthyThreshold: defaultInt64(listener.HealthCheck.UnhealthyThreshold, DefaultUnhealthyThreshold),
+					Port:               listener.HealthCheck.Port,
+					Protocol:           listener.HealthCheck.Protocol,
+					TimeoutMillis:      listener.HealthCheck.TimeoutMillis,
+					UnhealthyThreshold: listener.HealthCheck.UnhealthyThreshold,
 				}
 				appmeshListener.HealthCheck = appmeshHealthCheck
 			}
@@ -432,13 +428,13 @@ func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 			}
 			if listener.HealthCheck != nil {
 				appmeshHealthCheck := &appmesh.HealthCheckPolicy{
-					HealthyThreshold:   defaultInt64(listener.HealthCheck.HealthyThreshold, 10),
-					IntervalMillis:     defaultInt64(listener.HealthCheck.IntervalMillis, 30000),
+					HealthyThreshold:   listener.HealthCheck.HealthyThreshold,
+					IntervalMillis:     listener.HealthCheck.IntervalMillis,
 					Path:               listener.HealthCheck.Path,
 					Port:               listener.HealthCheck.Port,
-					Protocol:           defaultString(listener.HealthCheck.Protocol, appmeshv1beta1.PortProtocolHttp),
-					TimeoutMillis:      defaultInt64(listener.HealthCheck.TimeoutMillis, 5000),
-					UnhealthyThreshold: defaultInt64(listener.HealthCheck.UnhealthyThreshold, 2),
+					Protocol:           listener.HealthCheck.Protocol,
+					TimeoutMillis:      listener.HealthCheck.TimeoutMillis,
+					UnhealthyThreshold: listener.HealthCheck.UnhealthyThreshold,
 				}
 				appmeshListener.HealthCheck = appmeshHealthCheck
 			}
@@ -1457,20 +1453,6 @@ func (c *Cloud) buildGrpcRouteMetadata(input appmeshv1beta1.GrpcRouteMetadata) *
 	}
 
 	return appmeshMetadata
-}
-
-func defaultInt64(v *int64, defaultVal int64) *int64 {
-	if v != nil {
-		return v
-	}
-	return aws.Int64(defaultVal)
-}
-
-func defaultString(v *string, defaultVal string) *string {
-	if v != nil {
-		return v
-	}
-	return aws.String(defaultVal)
 }
 
 func durationToMillis(d *appmesh.Duration) *int64 {
