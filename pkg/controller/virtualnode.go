@@ -404,12 +404,7 @@ func (c *Controller) handleVNodeMeshDeleting(ctx context.Context, vnode *appmesh
 // to setup external resources. For now only Cloud Map _service_ is setup
 func (c *Controller) handleServiceDiscovery(ctx context.Context, vnode *appmeshv1beta1.VirtualNode, copyForUpdate *appmeshv1beta1.VirtualNode) error {
 	if vnode.Spec.ServiceDiscovery == nil || vnode.Spec.ServiceDiscovery.CloudMap == nil {
-		klog.V(4).Infof("CloudMap service is already created")
-		return nil
-	}
-
-	if vnode.Status.CloudMapService != nil && vnode.Status.CloudMapService.ServiceID != nil {
-		klog.V(4).Infof("CloudMap service is already created for virtual-node %s", vnode.Name)
+		klog.V(4).Infof("Virtual-node %s is not using Cloud Map as servicediscovery", vnode.Name)
 		return nil
 	}
 
@@ -436,7 +431,7 @@ func (c *Controller) handleServiceDiscovery(ctx context.Context, vnode *appmeshv
 		return err
 	}
 
-	klog.Infof("Created CloudMap service %s (id:%s)", cloudmapServiceName, cloudmapService.ServiceID)
+	klog.V(4).Infof("Created CloudMap service %s (id:%s)", cloudmapServiceName, cloudmapService.ServiceID)
 
 	statusErr := c.setVirtualNodeStatusCloudMapService(copyForUpdate, &appmeshv1beta1.CloudMapServiceStatus{
 		NamespaceID: awssdk.String(cloudmapService.NamespaceID),
