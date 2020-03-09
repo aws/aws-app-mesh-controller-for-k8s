@@ -352,6 +352,8 @@ type VirtualNodeSpec struct {
 	// +optional
 	Backends []Backend `json:"backends,omitempty"`
 	// +optional
+	BackendDefaults *BackendDefaults `json:"backendDefaults,omitempty"`
+	// +optional
 	Logging *Logging `json:"logging,omitempty"`
 }
 
@@ -359,6 +361,8 @@ type Listener struct {
 	PortMapping PortMapping `json:"portMapping"`
 	// +optional
 	HealthCheck *HealthCheckPolicy `json:"healthCheck,omitempty"`
+	// +optional
+	TLS *ListenerTls `json:"tls,omitempty"`
 }
 
 type PortMapping struct {
@@ -412,8 +416,15 @@ type Backend struct {
 	VirtualService VirtualServiceBackend `json:"virtualService"`
 }
 
+type BackendDefaults struct {
+	// +optional
+	ClientPolicy *ClientPolicy `json:"clientPolicy,omitempty"`
+}
+
 type VirtualServiceBackend struct {
 	VirtualServiceName string `json:"virtualServiceName"`
+	// +optional
+	ClientPolicy *ClientPolicy `json:"clientPolicy,omitempty"`
 }
 
 // Logging refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Logging.html
@@ -452,6 +463,71 @@ type CloudMapServiceStatus struct {
 	// +optional
 	NamespaceID *string `json:"namespaceId,omitempty"`
 }
+
+// General TLS Types
+
+type TlsValidationContext struct {
+	Trust TlsValidationContextTrust `json:"trust"`
+}
+
+type TlsValidationContextTrust struct {
+	// +optional
+	ACM *TlsValidationContextAcmTrust `json:"acm,omitempty"`
+	// +optional
+	File *TlsValidationContextFileTrust `json:"file,omitempty"`
+}
+
+type TlsValidationContextAcmTrust struct {
+	CertificateAuthorityArns []string `json:"certificateAuthorityArns"`
+}
+
+type TlsValidationContextFileTrust struct {
+	CertificateChain string `json:"certificateChain"`
+}
+
+// END General TLS Types
+
+// Listener TLS Types
+
+type ListenerTls struct {
+	Mode        string                 `json:"mode"`
+	Certificate ListenerTlsCertificate `json:"certificate"`
+}
+
+type ListenerTlsCertificate struct {
+	// +optional
+	ACM *ListenerTlsAcmCertificate `json:"acm,omitempty"`
+	// +optional
+	File *ListenerTlsFileCertificate `json:"file,omitempty"`
+}
+
+type ListenerTlsAcmCertificate struct {
+	CertificateArn string `json:"certificateArn"`
+}
+
+type ListenerTlsFileCertificate struct {
+	CertificateChain string `json:"certificateChain"`
+	PrivateKey       string `json:"privateKey"`
+}
+
+// END Listener TLS Types
+
+// Client Policy Types
+
+type ClientPolicy struct {
+	// +optional
+	TLS *ClientPolicyTls `json:"tls,omitempty"`
+}
+
+type ClientPolicyTls struct {
+	// +optional
+	Enforce *bool `json:"enforce,omitempty"`
+	// +optional
+	Ports      []int64              `json:"ports,omitempty"`
+	Validation TlsValidationContext `json:"validation"`
+}
+
+// END Client Policy Types
 
 type VirtualNodeConditionType string
 

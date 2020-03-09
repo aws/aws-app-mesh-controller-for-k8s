@@ -76,6 +76,14 @@ func newAPIVirtualNode(ports []int64, protocols []string, backends []string, hos
 	return &vn
 }
 
+func newEmptyCRDVirtualNode() appmeshv1beta1.VirtualNode {
+	return appmeshv1beta1.VirtualNode{Spec: appmeshv1beta1.VirtualNodeSpec{}}
+}
+
+func newEmptySDKVirtualNode() aws.VirtualNode {
+	return aws.VirtualNode{Data: appmesh.VirtualNodeData{Spec: &appmesh.VirtualNodeSpec{}}}
+}
+
 func newAPIVirtualNodeWithCloudMap(ports []int64, protocols []string, backends []string, serviceDiscovery *appmeshv1beta1.ServiceDiscovery, fileAccessLogPath *string) *appmeshv1beta1.VirtualNode {
 	virtualNode := newAPIVirtualNode(ports, protocols, backends, "", fileAccessLogPath)
 	virtualNode.Spec.ServiceDiscovery = serviceDiscovery
@@ -840,6 +848,308 @@ func TestVNodeListenerHealthCheckNeedsUpdate(t *testing.T) {
 			result := newAWSVirtualNode([]int64{port80}, []string{protocolHTTP}, []string{backend}, hostname, fileAccessLogPath)
 			result.Data.Spec.Listeners[0].HealthCheck = tt.target
 			if res := vnodeNeedsUpdate(spec, result); res != tt.needsUpdate {
+				t.Errorf("got %v, want %v", res, tt.needsUpdate)
+			}
+		})
+	}
+}
+
+func newCRDVirtualNodeWithListenerTls(listenerTls []appmeshv1beta1.ListenerTls) *appmeshv1beta1.VirtualNode {
+	if len(listenerTls) < 1 {
+		panic("must provide at least one listener TLS object")
+	}
+	listeners := []appmeshv1beta1.Listener{}
+	for _, lt := range listenerTls {
+		listeners = append(listeners, appmeshv1beta1.Listener{
+			PortMapping: appmeshv1beta1.PortMapping{Port: 8080, Protocol: "http"},
+			TLS:         &lt,
+		})
+	}
+	return &appmeshv1beta1.VirtualNode{
+		Spec: appmeshv1beta1.VirtualNodeSpec{
+			Listeners: listeners,
+		},
+	}
+}
+
+func newSDKVirtualNodeWithListenerTls(listenerTls []appmesh.ListenerTls) *aws.VirtualNode {
+	if len(listenerTls) < 1 {
+		panic("must provide at least one listener TLS object")
+	}
+	listeners := []*appmesh.Listener{}
+	for _, lt := range listenerTls {
+		listeners = append(listeners, &appmesh.Listener{
+			PortMapping: &appmesh.PortMapping{Port: awssdk.Int64(8080), Protocol: awssdk.String("http")},
+			Tls:         &lt,
+		})
+	}
+	return &aws.VirtualNode{
+		Data: appmesh.VirtualNodeData{
+			Spec: &appmesh.VirtualNodeSpec{
+				Listeners: listeners,
+			},
+		},
+	}
+}
+
+func TestVnodeListenerTlsNeedsUpdate(t *testing.T) {
+	var (
+		tlsMode            = "STRICT"
+		certArn            = "arn:to:a:cert"
+		fileCertPath       = "/path/to/cert-chain.pem"
+		certPrivateKeyPath = "/path/to/private-key.pem"
+		crdAcmCert         = appmeshv1beta1.ListenerTlsAcmCertificate{CertificateArn: certArn}
+		sdkAcmCert         = appmesh.ListenerTlsAcmCertificate{CertificateArn: &certArn}
+		crdFileCert        = appmeshv1beta1.ListenerTlsFileCertificate{CertificateChain: fileCertPath, PrivateKey: certPrivateKeyPath}
+		sdkFileCert        = appmesh.ListenerTlsFileCertificate{CertificateChain: &fileCertPath, PrivateKey: &certPrivateKeyPath}
+
+		defaultNodeSpec   = newEmptyCRDVirtualNode()
+		defaultNodeResult = newEmptySDKVirtualNode()
+		acmTlsNodeSpec    = newCRDVirtualNodeWithListenerTls([]appmeshv1beta1.ListenerTls{appmeshv1beta1.ListenerTls{
+			Mode: tlsMode,
+			Certificate: appmeshv1beta1.ListenerTlsCertificate{
+				ACM: &crdAcmCert,
+			}}})
+		acmTlsNodeResult = newSDKVirtualNodeWithListenerTls([]appmesh.ListenerTls{appmesh.ListenerTls{
+			Mode: &tlsMode,
+			Certificate: &appmesh.ListenerTlsCertificate{
+				Acm: &sdkAcmCert,
+			}}})
+		fileTlsNodeSpec = newCRDVirtualNodeWithListenerTls([]appmeshv1beta1.ListenerTls{appmeshv1beta1.ListenerTls{
+			Mode: tlsMode,
+			Certificate: appmeshv1beta1.ListenerTlsCertificate{
+				File: &crdFileCert,
+			}}})
+		fileTlsNodeResult = newSDKVirtualNodeWithListenerTls([]appmesh.ListenerTls{appmesh.ListenerTls{
+			Mode: &tlsMode,
+			Certificate: &appmesh.ListenerTlsCertificate{
+				File: &sdkFileCert,
+			}}})
+		permissiveTlsNodeResult = newSDKVirtualNodeWithListenerTls([]appmesh.ListenerTls{appmesh.ListenerTls{
+			Mode: awssdk.String("PERMISSIVE"),
+			Certificate: &appmesh.ListenerTlsCertificate{
+				Acm: &sdkAcmCert,
+			}}})
+	)
+
+	var vnodetests = []struct {
+		name        string
+		spec        *appmeshv1beta1.VirtualNode
+		aws         *aws.VirtualNode
+		needsUpdate bool
+	}{
+		{"no changes acm listener", acmTlsNodeSpec, acmTlsNodeResult, false},
+		{"no changes file listener", fileTlsNodeSpec, fileTlsNodeResult, false},
+		{"acm listener tls added", acmTlsNodeSpec, &defaultNodeResult, true},
+		{"remove listener tls", &defaultNodeSpec, acmTlsNodeResult, true},
+		{"tls type changed file to acm", acmTlsNodeSpec, fileTlsNodeResult, true},
+		{"tls type changed acm to file", fileTlsNodeSpec, acmTlsNodeResult, true},
+		{"mode changed strict to permissive", acmTlsNodeSpec, permissiveTlsNodeResult, true},
+	}
+
+	for _, tt := range vnodetests {
+		t.Run(tt.name, func(t *testing.T) {
+			if res := vnodeNeedsUpdate(tt.spec, tt.aws); res != tt.needsUpdate {
+				t.Errorf("got %v, want %v", res, tt.needsUpdate)
+			}
+		})
+	}
+}
+
+func newCRDVirtualNodeWithTlsClientPolicy(clientPolicyTls []appmeshv1beta1.ClientPolicyTls) *appmeshv1beta1.VirtualNode {
+	if len(clientPolicyTls) < 1 {
+		panic("must provide at least one client policy TLS object")
+	}
+	vn := newEmptyCRDVirtualNode()
+	backends := []appmeshv1beta1.Backend{}
+	for _, cpt := range clientPolicyTls {
+		backends = append(backends, appmeshv1beta1.Backend{
+			VirtualService: appmeshv1beta1.VirtualServiceBackend{
+				VirtualServiceName: "some-service",
+				ClientPolicy: &appmeshv1beta1.ClientPolicy{
+					TLS: &cpt,
+				},
+			},
+		})
+	}
+	vn.Spec.Backends = backends
+	return &vn
+}
+
+func newSDKVirtualNodeWithTlsClientPolicy(clientPolicyTls []appmesh.ClientPolicyTls) *aws.VirtualNode {
+	if len(clientPolicyTls) < 1 {
+		panic("must provide at least one client policy TLS object")
+	}
+	vn := newEmptySDKVirtualNode()
+	backends := []*appmesh.Backend{}
+	for _, cpt := range clientPolicyTls {
+		backends = append(backends, &appmesh.Backend{
+			VirtualService: &appmesh.VirtualServiceBackend{
+				VirtualServiceName: awssdk.String("some-service"),
+				ClientPolicy: &appmesh.ClientPolicy{
+					Tls: &cpt,
+				},
+			},
+		})
+	}
+	vn.Data.Spec.Backends = backends
+	return &vn
+}
+
+func TestVnodeClientPoliciesNeedsUpdate(t *testing.T) {
+	var (
+		tlsPorts             = []int64{8080}
+		sdkTlsPorts          = []*int64{awssdk.Int64(8080)}
+		certAuthorityArn     = "arn:to:a:cert:authority"
+		certAuthorityArns    = []string{certAuthorityArn}
+		sdkCertAuthorityArns = []*string{awssdk.String(certAuthorityArn)}
+		fileCertPath         = "/path/to/cert-chain.pem"
+		crdAcmTrust          = appmeshv1beta1.TlsValidationContextTrust{ACM: &appmeshv1beta1.TlsValidationContextAcmTrust{CertificateAuthorityArns: certAuthorityArns}}
+		sdkAcmTrust          = appmesh.TlsValidationContextTrust{Acm: &appmesh.TlsValidationContextAcmTrust{CertificateAuthorityArns: sdkCertAuthorityArns}}
+		crdFileTrust         = appmeshv1beta1.TlsValidationContextTrust{File: &appmeshv1beta1.TlsValidationContextFileTrust{CertificateChain: fileCertPath}}
+		sdkFileTrust         = appmesh.TlsValidationContextTrust{File: &appmesh.TlsValidationContextFileTrust{CertificateChain: awssdk.String(fileCertPath)}}
+
+		defaultNodeSpec   = newEmptyCRDVirtualNode()
+		defaultNodeResult = newEmptySDKVirtualNode()
+		acmTrustNodeSpec  = newCRDVirtualNodeWithTlsClientPolicy([]appmeshv1beta1.ClientPolicyTls{appmeshv1beta1.ClientPolicyTls{
+			Enforce: awssdk.Bool(true),
+			Ports:   tlsPorts,
+			Validation: appmeshv1beta1.TlsValidationContext{
+				Trust: crdAcmTrust,
+			}}})
+		acmTrustNodeResult = newSDKVirtualNodeWithTlsClientPolicy([]appmesh.ClientPolicyTls{appmesh.ClientPolicyTls{
+			Enforce: awssdk.Bool(true),
+			Ports:   sdkTlsPorts,
+			Validation: &appmesh.TlsValidationContext{
+				Trust: &sdkAcmTrust,
+			}}})
+		fileTrustNodeSpec = newCRDVirtualNodeWithTlsClientPolicy([]appmeshv1beta1.ClientPolicyTls{appmeshv1beta1.ClientPolicyTls{
+			Enforce: awssdk.Bool(true),
+			Ports:   tlsPorts,
+			Validation: appmeshv1beta1.TlsValidationContext{
+				Trust: crdFileTrust,
+			}}})
+		fileTrustNodeResult = newSDKVirtualNodeWithTlsClientPolicy([]appmesh.ClientPolicyTls{appmesh.ClientPolicyTls{
+			Enforce: awssdk.Bool(true),
+			Ports:   sdkTlsPorts,
+			Validation: &appmesh.TlsValidationContext{
+				Trust: &sdkFileTrust,
+			}}})
+		enforceDisabledNodeResult = newSDKVirtualNodeWithTlsClientPolicy([]appmesh.ClientPolicyTls{appmesh.ClientPolicyTls{
+			Enforce: awssdk.Bool(false),
+			Ports:   sdkTlsPorts,
+			Validation: &appmesh.TlsValidationContext{
+				Trust: &sdkAcmTrust,
+			}}})
+	)
+
+	var vnodetests = []struct {
+		name        string
+		spec        *appmeshv1beta1.VirtualNode
+		aws         *aws.VirtualNode
+		needsUpdate bool
+	}{
+		{"no changes acm trust", acmTrustNodeSpec, acmTrustNodeResult, false},
+		{"no changes file trust", fileTrustNodeSpec, fileTrustNodeResult, false},
+		{"add validation", acmTrustNodeSpec, &defaultNodeResult, true},
+		{"remove validation", &defaultNodeSpec, acmTrustNodeResult, true},
+		{"change trust type acm to file", acmTrustNodeSpec, fileTrustNodeResult, true},
+		{"change trust type file to acm", fileTrustNodeSpec, acmTrustNodeResult, true},
+		{"enforce changed to false", acmTrustNodeSpec, enforceDisabledNodeResult, true},
+	}
+
+	for _, tt := range vnodetests {
+		t.Run(tt.name, func(t *testing.T) {
+			if res := vnodeNeedsUpdate(tt.spec, tt.aws); res != tt.needsUpdate {
+				t.Errorf("got %v, want %v", res, tt.needsUpdate)
+			}
+		})
+	}
+}
+
+func newCRDVirtualNodeWithTlsClientPolicyBackendDefault(enforce bool, ports []int64, validationContext appmeshv1beta1.TlsValidationContext) *appmeshv1beta1.VirtualNode {
+	vn := newEmptyCRDVirtualNode()
+	vn.Spec.BackendDefaults = &appmeshv1beta1.BackendDefaults{
+		ClientPolicy: &appmeshv1beta1.ClientPolicy{
+			TLS: &appmeshv1beta1.ClientPolicyTls{
+				Enforce:    awssdk.Bool(true),
+				Ports:      ports,
+				Validation: validationContext,
+			},
+		},
+	}
+	return &vn
+}
+
+func newSDKVirtualNodeWithTlsClientPolicyBackendDefault(enforce bool, ports []*int64, validationContext appmesh.TlsValidationContext) *aws.VirtualNode {
+	vn := newEmptySDKVirtualNode()
+	vn.Data.Spec.BackendDefaults = &appmesh.BackendDefaults{
+		ClientPolicy: &appmesh.ClientPolicy{
+			Tls: &appmesh.ClientPolicyTls{
+				Enforce:    awssdk.Bool(enforce),
+				Ports:      ports,
+				Validation: &validationContext,
+			},
+		},
+	}
+	return &vn
+}
+
+func TestVnodeBackendDefaultsNeedsUpdate(t *testing.T) {
+	var (
+		certAuthorityArns = []*string{awssdk.String("arn:to:a:cert:authority"), awssdk.String("arn:to:another:cert:authority")}
+		crdAuthorityArns  = []string{"arn:to:a:cert:authority", "arn:to:another:cert:authority"}
+		fileCertPath      = "/path/to/cert-chain.pem"
+		tlsPorts          = []*int64{awssdk.Int64(8080)}
+		crdTlsPorts       = []int64{8080}
+		defaultNodeSpec   = newEmptyCRDVirtualNode()
+		defaultNodeResult = newEmptySDKVirtualNode()
+		acmTrustNodeSpec  = newCRDVirtualNodeWithTlsClientPolicyBackendDefault(true, crdTlsPorts, appmeshv1beta1.TlsValidationContext{
+			Trust: appmeshv1beta1.TlsValidationContextTrust{
+				ACM: &appmeshv1beta1.TlsValidationContextAcmTrust{
+					CertificateAuthorityArns: crdAuthorityArns,
+				},
+			},
+		})
+		acmTrustNodeResult = newSDKVirtualNodeWithTlsClientPolicyBackendDefault(true, tlsPorts, appmesh.TlsValidationContext{
+			Trust: &appmesh.TlsValidationContextTrust{
+				Acm: &appmesh.TlsValidationContextAcmTrust{
+					CertificateAuthorityArns: certAuthorityArns,
+				},
+			},
+		})
+		fileTrustNodeSpec = newCRDVirtualNodeWithTlsClientPolicyBackendDefault(true, crdTlsPorts, appmeshv1beta1.TlsValidationContext{
+			Trust: appmeshv1beta1.TlsValidationContextTrust{
+				File: &appmeshv1beta1.TlsValidationContextFileTrust{
+					CertificateChain: fileCertPath,
+				},
+			},
+		})
+		fileTrustNodeResult = newSDKVirtualNodeWithTlsClientPolicyBackendDefault(true, tlsPorts, appmesh.TlsValidationContext{
+			Trust: &appmesh.TlsValidationContextTrust{
+				File: &appmesh.TlsValidationContextFileTrust{
+					CertificateChain: awssdk.String(fileCertPath),
+				},
+			},
+		})
+	)
+
+	var vnodetests = []struct {
+		name        string
+		spec        *appmeshv1beta1.VirtualNode
+		aws         *aws.VirtualNode
+		needsUpdate bool
+	}{
+		{"no changes", acmTrustNodeSpec, acmTrustNodeResult, false},
+		{"remove trust default", &defaultNodeSpec, acmTrustNodeResult, true},
+		{"add acm trust default", acmTrustNodeSpec, &defaultNodeResult, true},
+		{"add file trust default", fileTrustNodeSpec, &defaultNodeResult, true},
+		{"switch file trust to acm", acmTrustNodeSpec, fileTrustNodeResult, true},
+	}
+
+	for _, tt := range vnodetests {
+		t.Run(tt.name, func(t *testing.T) {
+			if res := vnodeNeedsUpdate(tt.spec, tt.aws); res != tt.needsUpdate {
 				t.Errorf("got %v, want %v", res, tt.needsUpdate)
 			}
 		})

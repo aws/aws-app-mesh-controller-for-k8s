@@ -220,38 +220,46 @@ func (v *VirtualNode) Listeners() []appmeshv1beta1.Listener {
 	}
 
 	var listeners = []appmeshv1beta1.Listener{}
-	for _, appmeshListener := range v.Data.Spec.Listeners {
+	for _, sdkListener := range v.Data.Spec.Listeners {
 		listener := appmeshv1beta1.Listener{
 			PortMapping: appmeshv1beta1.PortMapping{
-				Port:     aws.Int64Value(appmeshListener.PortMapping.Port),
-				Protocol: aws.StringValue(appmeshListener.PortMapping.Protocol),
+				Port:     aws.Int64Value(sdkListener.PortMapping.Port),
+				Protocol: aws.StringValue(sdkListener.PortMapping.Protocol),
 			},
 		}
-		if appmeshListener.HealthCheck != nil {
+		if sdkListener.HealthCheck != nil {
 			healthCheck := &appmeshv1beta1.HealthCheckPolicy{
-				HealthyThreshold:   appmeshListener.HealthCheck.HealthyThreshold,
-				IntervalMillis:     appmeshListener.HealthCheck.IntervalMillis,
-				Path:               appmeshListener.HealthCheck.Path,
-				Port:               appmeshListener.HealthCheck.Port,
-				Protocol:           appmeshListener.HealthCheck.Protocol,
-				TimeoutMillis:      appmeshListener.HealthCheck.TimeoutMillis,
-				UnhealthyThreshold: appmeshListener.HealthCheck.UnhealthyThreshold,
+				HealthyThreshold:   sdkListener.HealthCheck.HealthyThreshold,
+				IntervalMillis:     sdkListener.HealthCheck.IntervalMillis,
+				Path:               sdkListener.HealthCheck.Path,
+				Port:               sdkListener.HealthCheck.Port,
+				Protocol:           sdkListener.HealthCheck.Protocol,
+				TimeoutMillis:      sdkListener.HealthCheck.TimeoutMillis,
+				UnhealthyThreshold: sdkListener.HealthCheck.UnhealthyThreshold,
 			}
 			listener.HealthCheck = healthCheck
+		}
+		if sdkListener.Tls != nil {
+			cert := appmeshv1beta1.ListenerTlsCertificate{}
+			if sdkListener.Tls.Certificate.Acm != nil {
+				cert.ACM = &appmeshv1beta1.ListenerTlsAcmCertificate{
+					CertificateArn: aws.StringValue(sdkListener.Tls.Certificate.Acm.CertificateArn),
+				}
+			}
+			if sdkListener.Tls.Certificate.File != nil {
+				cert.File = &appmeshv1beta1.ListenerTlsFileCertificate{
+					CertificateChain: aws.StringValue(sdkListener.Tls.Certificate.File.CertificateChain),
+					PrivateKey:       aws.StringValue(sdkListener.Tls.Certificate.File.PrivateKey),
+				}
+			}
+			listener.TLS = &appmeshv1beta1.ListenerTls{
+				Mode:        aws.StringValue(sdkListener.Tls.Mode),
+				Certificate: cert,
+			}
 		}
 		listeners = append(listeners, listener)
 	}
 	return listeners
-}
-
-// ListenersSet converts into a Set of Listeners
-func (v *VirtualNode) ListenersSet() set.Set {
-	listeners := v.Listeners()
-	s := set.NewSet()
-	for i := range listeners {
-		s.Add(listeners[i])
-	}
-	return s
 }
 
 // Backends converts into our API type
@@ -261,24 +269,31 @@ func (v *VirtualNode) Backends() []appmeshv1beta1.Backend {
 	}
 
 	var backends = []appmeshv1beta1.Backend{}
-	for _, b := range v.Data.Spec.Backends {
-		backends = append(backends, appmeshv1beta1.Backend{
+	for _, sdkBackend := range v.Data.Spec.Backends {
+		crdBackend := appmeshv1beta1.Backend{
 			VirtualService: appmeshv1beta1.VirtualServiceBackend{
-				VirtualServiceName: aws.StringValue(b.VirtualService.VirtualServiceName),
+				VirtualServiceName: aws.StringValue(sdkBackend.VirtualService.VirtualServiceName),
 			},
-		})
+		}
+		if sdkBackend.VirtualService.ClientPolicy != nil {
+			crdBackend.VirtualService.ClientPolicy = convertSdkClientPolicyToCrd(sdkBackend.VirtualService.ClientPolicy)
+		}
+		backends = append(backends, crdBackend)
 	}
 	return backends
 }
 
-// BackendsSet returns a set of Backends defined for virtual-node
-func (v *VirtualNode) BackendsSet() set.Set {
-	backends := v.Backends()
-	s := set.NewSet()
-	for i := range backends {
-		s.Add(backends[i])
+// BackendDefaults converts from the SDK types into CRD types
+func (v *VirtualNode) BackendDefaults() *appmeshv1beta1.BackendDefaults {
+	if v.Data.Spec.BackendDefaults == nil {
+		return nil
 	}
-	return s
+	sdkBackendDefaults := v.Data.Spec.BackendDefaults
+	crdBackendDefaults := appmeshv1beta1.BackendDefaults{}
+	if sdkBackendDefaults.ClientPolicy != nil {
+		crdBackendDefaults.ClientPolicy = convertSdkClientPolicyToCrd(sdkBackendDefaults.ClientPolicy)
+	}
+	return &crdBackendDefaults
 }
 
 // GetVirtualNode calls describe virtual node.
@@ -345,6 +360,24 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 				}
 				appmeshListener.HealthCheck = appmeshHealthCheck
 			}
+			if listener.TLS != nil {
+				appmeshCert := &appmesh.ListenerTlsCertificate{}
+				if listener.TLS.Certificate.ACM != nil {
+					appmeshCert.SetAcm(&appmesh.ListenerTlsAcmCertificate{
+						CertificateArn: aws.String(listener.TLS.Certificate.ACM.CertificateArn),
+					})
+				}
+				if listener.TLS.Certificate.File != nil {
+					appmeshCert.SetFile(&appmesh.ListenerTlsFileCertificate{
+						CertificateChain: aws.String(listener.TLS.Certificate.File.CertificateChain),
+						PrivateKey:       aws.String(listener.TLS.Certificate.File.PrivateKey),
+					})
+				}
+				appmeshListener.SetTls(&appmesh.ListenerTls{
+					Mode:        aws.String(listener.TLS.Mode),
+					Certificate: appmeshCert,
+				})
+			}
 			listeners = append(listeners, appmeshListener)
 		}
 		input.Spec.SetListeners(listeners)
@@ -352,14 +385,26 @@ func (c *Cloud) CreateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 
 	if vnode.Spec.Backends != nil {
 		backends := []*appmesh.Backend{}
-		for _, backend := range vnode.Spec.Backends {
-			backends = append(backends, &appmesh.Backend{
+		for _, crdBackend := range vnode.Spec.Backends {
+			appmeshBackend := appmesh.Backend{
 				VirtualService: &appmesh.VirtualServiceBackend{
-					VirtualServiceName: aws.String(backend.VirtualService.VirtualServiceName),
+					VirtualServiceName: aws.String(crdBackend.VirtualService.VirtualServiceName),
 				},
-			})
+			}
+			if crdBackend.VirtualService.ClientPolicy != nil {
+				appmeshBackend.VirtualService.SetClientPolicy(convertCrdClientPolicyToSdk(crdBackend.VirtualService.ClientPolicy))
+			}
+			backends = append(backends, &appmeshBackend)
 		}
 		input.Spec.SetBackends(backends)
+	}
+
+	if vnode.Spec.BackendDefaults != nil {
+		backendDefaults := appmesh.BackendDefaults{}
+		if vnode.Spec.BackendDefaults.ClientPolicy != nil {
+			backendDefaults.SetClientPolicy(convertCrdClientPolicyToSdk(vnode.Spec.BackendDefaults.ClientPolicy))
+		}
+		input.Spec.SetBackendDefaults(&backendDefaults)
 	}
 
 	if vnode.Spec.ServiceDiscovery != nil {
@@ -419,38 +464,70 @@ func (c *Cloud) UpdateVirtualNode(ctx context.Context, vnode *appmeshv1beta1.Vir
 
 	if vnode.Spec.Listeners != nil {
 		listeners := []*appmesh.Listener{}
-		for _, listener := range vnode.Spec.Listeners {
-			appmeshListener := &appmesh.Listener{
+		for _, crdListener := range vnode.Spec.Listeners {
+			sdkListener := appmesh.Listener{
 				PortMapping: &appmesh.PortMapping{
-					Port:     &listener.PortMapping.Port,
-					Protocol: aws.String(listener.PortMapping.Protocol),
+					Port:     &crdListener.PortMapping.Port,
+					Protocol: aws.String(crdListener.PortMapping.Protocol),
 				},
 			}
-			if listener.HealthCheck != nil {
-				appmeshHealthCheck := &appmesh.HealthCheckPolicy{
-					HealthyThreshold:   listener.HealthCheck.HealthyThreshold,
-					IntervalMillis:     listener.HealthCheck.IntervalMillis,
-					Path:               listener.HealthCheck.Path,
-					Port:               listener.HealthCheck.Port,
-					Protocol:           listener.HealthCheck.Protocol,
-					TimeoutMillis:      listener.HealthCheck.TimeoutMillis,
-					UnhealthyThreshold: listener.HealthCheck.UnhealthyThreshold,
+			if sdkListener.HealthCheck != nil {
+				sdkHealthCheck := appmesh.HealthCheckPolicy{
+					HealthyThreshold:   sdkListener.HealthCheck.HealthyThreshold,
+					IntervalMillis:     sdkListener.HealthCheck.IntervalMillis,
+					Path:               sdkListener.HealthCheck.Path,
+					Port:               sdkListener.HealthCheck.Port,
+					Protocol:           sdkListener.HealthCheck.Protocol,
+					TimeoutMillis:      sdkListener.HealthCheck.TimeoutMillis,
+					UnhealthyThreshold: sdkListener.HealthCheck.UnhealthyThreshold,
 				}
-				appmeshListener.HealthCheck = appmeshHealthCheck
+				sdkListener.SetHealthCheck(&sdkHealthCheck)
 			}
-			listeners = append(listeners, appmeshListener)
+			if crdListener.TLS != nil {
+				sdkCertificate := appmesh.ListenerTlsCertificate{}
+				if crdListener.TLS.Certificate.ACM != nil {
+					sdkCertificate.SetAcm(&appmesh.ListenerTlsAcmCertificate{
+						CertificateArn: &crdListener.TLS.Certificate.ACM.CertificateArn,
+					})
+				}
+				if crdListener.TLS.Certificate.File != nil {
+					sdkCertificate.SetFile(&appmesh.ListenerTlsFileCertificate{
+						CertificateChain: &crdListener.TLS.Certificate.File.CertificateChain,
+						PrivateKey:       &crdListener.TLS.Certificate.File.PrivateKey,
+					})
+				}
+				sdkListenerTls := appmesh.ListenerTls{
+					Mode:        &crdListener.TLS.Mode,
+					Certificate: &sdkCertificate,
+				}
+				sdkListener.SetTls(&sdkListenerTls)
+			}
+			listeners = append(listeners, &sdkListener)
 		}
 		input.Spec.SetListeners(listeners)
 	}
 
+	if vnode.Spec.BackendDefaults != nil {
+		crdBackendDefaults := vnode.Spec.BackendDefaults
+		sdkBackendDefaults := appmesh.BackendDefaults{}
+		if crdBackendDefaults.ClientPolicy != nil {
+			sdkBackendDefaults.SetClientPolicy(convertCrdClientPolicyToSdk(crdBackendDefaults.ClientPolicy))
+		}
+		input.Spec.SetBackendDefaults(&sdkBackendDefaults)
+	}
+
 	if vnode.Spec.Backends != nil {
 		backends := []*appmesh.Backend{}
-		for _, backend := range vnode.Spec.Backends {
-			backends = append(backends, &appmesh.Backend{
+		for _, crdBackend := range vnode.Spec.Backends {
+			sdkBackend := appmesh.Backend{
 				VirtualService: &appmesh.VirtualServiceBackend{
-					VirtualServiceName: aws.String(backend.VirtualService.VirtualServiceName),
+					VirtualServiceName: aws.String(crdBackend.VirtualService.VirtualServiceName),
 				},
-			})
+			}
+			if crdBackend.VirtualService.ClientPolicy != nil {
+				sdkBackend.VirtualService.SetClientPolicy(convertCrdClientPolicyToSdk(crdBackend.VirtualService.ClientPolicy))
+			}
+			backends = append(backends, &sdkBackend)
 		}
 		input.Spec.SetBackends(backends)
 	}
@@ -1468,4 +1545,68 @@ func durationToMillis(d *appmesh.Duration) *int64 {
 	}
 
 	return nil
+}
+
+func convertCrdClientPolicyToSdk(crdClientPolicy *appmeshv1beta1.ClientPolicy) *appmesh.ClientPolicy {
+	if crdClientPolicy == nil {
+		return nil
+	}
+	sdkClientPolicy := appmesh.ClientPolicy{}
+	if crdClientPolicy.TLS != nil {
+		sdkClientPolicyTls := appmesh.ClientPolicyTls{
+			Enforce: crdClientPolicy.TLS.Enforce,
+			Ports:   aws.Int64Slice(crdClientPolicy.TLS.Ports),
+		}
+		crdTrust := crdClientPolicy.TLS.Validation.Trust
+		sdkTrust := appmesh.TlsValidationContextTrust{}
+		if crdTrust.ACM != nil {
+			sdkTrust.SetAcm(&appmesh.TlsValidationContextAcmTrust{
+				CertificateAuthorityArns: aws.StringSlice(crdTrust.ACM.CertificateAuthorityArns),
+			})
+		}
+		if crdTrust.File != nil {
+			sdkTrust.SetFile(&appmesh.TlsValidationContextFileTrust{
+				CertificateChain: aws.String(crdTrust.File.CertificateChain),
+			})
+		}
+		sdkClientPolicyTls.SetValidation(&appmesh.TlsValidationContext{
+			Trust: &sdkTrust,
+		})
+		sdkClientPolicy.SetTls(&sdkClientPolicyTls)
+	}
+	return &sdkClientPolicy
+}
+
+func convertSdkClientPolicyToCrd(sdkClientPolicy *appmesh.ClientPolicy) *appmeshv1beta1.ClientPolicy {
+	if sdkClientPolicy == nil {
+		return nil
+	}
+	crdClientPolicy := appmeshv1beta1.ClientPolicy{}
+	if sdkClientPolicy.Tls != nil {
+		crdTls := appmeshv1beta1.ClientPolicyTls{
+			Enforce: sdkClientPolicy.Tls.Enforce,
+			Ports:   aws.Int64ValueSlice(sdkClientPolicy.Tls.Ports),
+		}
+		if sdkClientPolicy.Tls.Validation != nil {
+			crdTlsValidation := appmeshv1beta1.TlsValidationContext{}
+			if sdkClientPolicy.Tls.Validation.Trust != nil {
+				sdkTrust := sdkClientPolicy.Tls.Validation.Trust
+				crdTrust := appmeshv1beta1.TlsValidationContextTrust{}
+				if sdkClientPolicy.Tls.Validation.Trust.Acm != nil {
+					crdTrust.ACM = &appmeshv1beta1.TlsValidationContextAcmTrust{
+						CertificateAuthorityArns: aws.StringValueSlice(sdkTrust.Acm.CertificateAuthorityArns),
+					}
+				}
+				if sdkClientPolicy.Tls.Validation.Trust.File != nil {
+					crdTrust.File = &appmeshv1beta1.TlsValidationContextFileTrust{
+						CertificateChain: aws.StringValue(sdkClientPolicy.Tls.Validation.Trust.File.CertificateChain),
+					}
+				}
+				crdTlsValidation.Trust = crdTrust
+			}
+			crdTls.Validation = crdTlsValidation
+		}
+		crdClientPolicy.TLS = &crdTls
+	}
+	return &crdClientPolicy
 }
