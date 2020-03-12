@@ -1,19 +1,53 @@
 version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@0.1.22
+  k8s: circleci/kubernetes@0.11.0
+
+commands:
+  checkout_and_cache_dependencies:
+    description: "checkout code and cache go dependencies"
+    steps:
+      - checkout
+      - restore_cache:
+          key: go-mod-{{ checksum "go.sum" }}
+      - run:
+          name: go mod download
+          command: go mod download
+      - save_cache:
+          key: go-mod-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod/"
+  run_e2e_test:
+    description: "build and run e2e test on EKS"
+    parameters:
+      k8s_version:
+        type: string
+    steps:
+      - checkout_and_cache_dependencies
+      - setup_remote_docker
+      - aws-cli/setup
+      - run:
+          name: Run e2e tests
+          command: CLUSTER_VERSION=<< parameters.k8s_version >> ./scripts/ci_e2e_test.sh
+      - store_artifacts:
+          path: /tmp/appmesh-e2e/clusters/
+
 jobs:
   validate-yaml:
     docker:
       - image: circleci/golang:1.13
+    working_directory: ~/build
     steps:
       - checkout
-      - run:
-          name: Install kubectl
-          command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl
+      - k8s/install-kubectl
       - run:
           name: Install kubeval
           command: |
             mkdir -p $HOME/tools && \
             cd $HOME/tools && \
-            curl -L https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz | tar xz && sudo mv kubeval /bin/kubeval
+            curl -L https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz | tar xz && \
+            sudo mv kubeval /usr/local/bin/kubeval
       - run:
           name: Validate deploy yamls
           command: |
@@ -23,13 +57,7 @@ jobs:
       - image: circleci/golang:1.13
     working_directory: ~/build
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - go-mod-{{ checksum "go.sum" }}
-      - run:
-          name: go mod download
-          command: go mod download
+      - checkout_and_cache_dependencies
       - run:
           name: Lint
           command: make go-fmt
@@ -37,7 +65,7 @@ jobs:
           name: Build
           command: make linux
       - run:
-          name: Test
+          name: Unit test
           command: make test
       - run:
           name: Verify code gen
@@ -45,22 +73,50 @@ jobs:
       - run:
           name: Run
           command: _output/bin/app-mesh-controller version
-      - save_cache:
-          key: go-mod-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod/"
+  e2e_test_114:
+    docker:
+      - image: circleci/golang:1.13
+    working_directory: ~/build
+    steps:
+      - run_e2e_test:
+          k8s_version: "1.14"
+  e2e_test_113:
+    docker:
+      - image: circleci/golang:1.13
+    working_directory: ~/build
+    steps:
+      - run_e2e_test:
+          k8s_version: "1.13"
+  e2e_test_112:
+    docker:
+      - image: circleci/golang:1.13
+    working_directory: ~/build
+    steps:
+      - run_e2e_test:
+          k8s_version: "1.12"
 
 workflows:
   version: 2
-  test:
+  check:
     jobs:
-      - validate-yaml:
+      - validate-yaml
+      - build-test-run
+      - hold:
+          type: approval
+          requires:
+            - validate-yaml
+            - build-test-run
+      - e2e_test_114:
+          requires:
+            - hold
+  nightly-test-run:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
           filters:
             branches:
-              ignore:
-                - gh-pages
-      - build-test-run:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
+              only:
+                - master
+    jobs:
+      - e2e_test_114
+      - e2e_test_113
