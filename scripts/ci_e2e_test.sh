@@ -4,7 +4,7 @@ set -ueo pipefail
 
 # AWS environment
 AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-"us-west-2"}
-AWS_K8S_TESTER_VERSION="v0.7.6"
+AWS_K8S_TESTER_VERSION="v0.7.8"
 source $(dirname "${BASH_SOURCE}")/lib/cluster.sh
 source $(dirname "${BASH_SOURCE}")/lib/ecr.sh
 
