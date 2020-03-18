@@ -69,6 +69,7 @@ mock-gen:
 	./scripts/mockgen.sh
 
 PACKAGES:=$(shell go list ./... | sed -n '1!p' | grep ${PKG}/pkg | grep -v ${PKG}/pkg/client)
+.PHONY: test
 test:
 	echo "mode: count" > coverage-all.out
 	$(foreach pkg,$(PACKAGES), \

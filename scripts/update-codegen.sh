@@ -11,7 +11,7 @@ APIS_PKG=${ROOT_PKG}/pkg/apis
 
 # Below code is copied from https://github.com/weaveworks/flagger/blob/master/hack/update-codegen.sh
 # Grab code-generator version from go.sum.
-CODEGEN_VERSION=$(grep 'k8s.io/code-generator' go.sum | awk '{print $2}' | head -1)
+CODEGEN_VERSION=$(grep 'k8s.io/code-generator' go.sum | awk '{print $2}' | awk -F / '{print $1}' | head -1)
 CODEGEN_PKG=$(echo `go env GOPATH`"/pkg/mod/k8s.io/code-generator@${CODEGEN_VERSION}")
 
 if [[ ! -d ${CODEGEN_PKG} ]]; then
