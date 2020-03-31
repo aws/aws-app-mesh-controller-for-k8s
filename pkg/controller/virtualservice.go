@@ -655,7 +655,7 @@ func (c *Controller) handleVServiceMeshDeleting(ctx context.Context, vservice *a
 
 	// if mesh DeletionTimestamp is set, clean up virtual service via App Mesh API
 	if !mesh.DeletionTimestamp.IsZero() {
-		if err := c.meshclientset.AppmeshV1beta1().VirtualServices(vservice.Namespace).Delete(vservice.Name, &metav1.DeleteOptions{}); err != nil{
+		if err := c.meshclientset.AppmeshV1beta1().VirtualServices(vservice.Namespace).Delete(vservice.Name, &metav1.DeleteOptions{}); err != nil {
 			klog.Errorf("Deletion failed for virtual service: %s - %s", vservice.Name, err)
 			return false
 		}
