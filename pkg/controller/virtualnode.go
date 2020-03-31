@@ -334,8 +334,6 @@ func (c *Controller) handleVNodeDelete(ctx context.Context, vnode *appmeshv1beta
 			if !aws.IsAWSErrNotFound(err) {
 				return fmt.Errorf("failed to clean up virtual node %s during deletion finalizer: %s", vnode.Name, err)
 			}
-		} else {
-			klog.Infof("Deleted App Mesh virtual node %s because mesh %s is being deleted", vnode.Name, vnode.Spec.MeshName)
 		}
 		if err := removeFinalizer(copy, virtualNodeDeletionFinalizerName); err != nil {
 			return fmt.Errorf("error removing finalizer %s to virtual node %s during deletion: %s", virtualNodeDeletionFinalizerName, vnode.Name, err)
@@ -399,7 +397,7 @@ func (c *Controller) handleVNodeMeshDeleting(ctx context.Context, vnode *appmesh
 			klog.Errorf("Deletion failed for virtual node: %s - %s", vnode.Name, err)
 			return false
 		}
-		klog.Infof("Successfully deleted virtual node: %s", vnode.Name)
+		klog.Infof("Deleted App Mesh virtual node %s because mesh %s is being deleted", vnode.Name, vnode.Spec.MeshName)
 	}
 
 	return true
