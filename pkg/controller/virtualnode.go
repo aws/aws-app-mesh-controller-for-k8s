@@ -73,7 +73,7 @@ func (c *Controller) handleVNode(key string) error {
 		}
 	}
 
-	if processVNode := c.handleVNodeMeshDeleting(ctx, vnode); !processVNode {
+	if processVNode := c.handleVNodeMeshDeleting(ctx, copy); !processVNode {
 		klog.Infof("skipping processing virtual node %s", vnode.Name)
 		return nil
 	}
@@ -329,10 +329,13 @@ func (c *Controller) handleVNodeDelete(ctx context.Context, vnode *appmeshv1beta
 		if err := c.deregisterInstancesForVirtualNode(ctx, vnode); err != nil {
 			return err
 		}
+
 		if _, err := c.cloud.DeleteVirtualNode(ctx, vnode.Name, vnode.Spec.MeshName); err != nil {
 			if !aws.IsAWSErrNotFound(err) {
 				return fmt.Errorf("failed to clean up virtual node %s during deletion finalizer: %s", vnode.Name, err)
 			}
+		} else {
+			klog.Infof("Deleted App Mesh virtual node %s because mesh %s is being deleted", vnode.Name, vnode.Spec.MeshName)
 		}
 		if err := removeFinalizer(copy, virtualNodeDeletionFinalizerName); err != nil {
 			return fmt.Errorf("error removing finalizer %s to virtual node %s during deletion: %s", virtualNodeDeletionFinalizerName, vnode.Name, err)
@@ -361,7 +364,6 @@ func (c *Controller) deregisterInstancesForVirtualNode(ctx context.Context, vnod
 	if err != nil {
 		return fmt.Errorf("Error getting list of instances under virtual node %s to deregister: %s", vnode.Name, err)
 	}
-
 	for _, instance := range instances {
 		meshName := awssdk.StringValue(instance.Attributes[attributeKeyAppMeshMeshName])
 		virtualNodeName := awssdk.StringValue(instance.Attributes[attributeKeyAppMeshVirtualNodeName])
@@ -374,7 +376,6 @@ func (c *Controller) deregisterInstancesForVirtualNode(ctx context.Context, vnod
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -394,17 +395,13 @@ func (c *Controller) handleVNodeMeshDeleting(ctx context.Context, vnode *appmesh
 
 	// if mesh DeletionTimestamp is set, clean up virtual node via App Mesh API
 	if !mesh.DeletionTimestamp.IsZero() {
-		if _, err := c.cloud.DeleteVirtualNode(ctx, vnode.Name, vnode.Spec.MeshName); err != nil {
-			if aws.IsAWSErrNotFound(err) {
-				klog.Infof("virtual node %s not found", vnode.Name)
-			} else {
-				klog.Errorf("failed to clean up virtual node %s during mesh deletion: %s", vnode.Name, err)
-			}
-		} else {
-			klog.Infof("Deleted virtual node %s because mesh %s is being deleted", vnode.Name, vnode.Spec.MeshName)
+		if err := c.meshclientset.AppmeshV1beta1().VirtualNodes(vnode.Namespace).Delete(vnode.Name, &metav1.DeleteOptions{}); err != nil {
+			klog.Errorf("Deletion failed for virtual node: %s - %s", vnode.Name, err)
+			return false
 		}
-		return false
+		klog.Infof("Successfully deleted virtual node: %s", vnode.Name)
 	}
+
 	return true
 }
 
