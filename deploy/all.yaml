@@ -111,6 +111,9 @@ spec:
                 type: object
                 properties:
                   portMapping:
+                    required:
+                      - port
+                      - protocol
                     properties:
                       port:
                         type: integer
