@@ -1,0 +1,7 @@
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: Mesh
+metadata:
+  name: mesh-sample
+spec:
+  # Add fields here
+  foo: bar
