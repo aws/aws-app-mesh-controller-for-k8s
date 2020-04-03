@@ -17,25 +17,77 @@ limitations under the License.
 package v1beta2
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// VirtualNodeServiceProvider refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualNodeServiceProvider.html
+type VirtualNodeServiceProvider struct {
+	// The virtual node that is acting as a service provider.
+	VirtualNodeRef VirtualNodeReference `json:"virtualNodeRef"`
+}
+
+// VirtualRouterServiceProvider refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualRouterServiceProvider.html
+type VirtualRouterServiceProvider struct {
+	// The virtual router that is acting as a service provider.
+	VirtualRouterRef VirtualRouterReference `json:"virtualRouterRef"`
+}
+
+// VirtualServiceProvider refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceProvider.html
+type VirtualServiceProvider struct {
+	// The virtual node associated with a virtual service.
+	// +optional
+	VirtualNode *VirtualNodeServiceProvider `json:"virtualNode,omitempty"`
+	// The virtual router associated with a virtual service.
+	// +optional
+	VirtualRouter *VirtualRouterServiceProvider `json:"virtualRouter,omitempty"`
+}
+
+type VirtualServiceConditionType string
+
+const (
+	// VirtualServiceActive is True when the AppMesh VirtualService has been created or found via the API
+	VirtualServiceActive VirtualServiceConditionType = "VirtualServiceActive"
+)
+
+type VirtualServiceCondition struct {
+	// Type of VirtualService condition.
+	Type VirtualServiceConditionType `json:"type"`
+	// Status of the condition, one of True, False, Unknown.
+	Status corev1.ConditionStatus `json:"status"`
+	// Last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime *metav1.Time `json:"lastTransitionTime,omitempty"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason *string `json:"reason,omitempty"`
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message *string `json:"message,omitempty"`
+}
 
 // VirtualServiceSpec defines the desired state of VirtualService
 type VirtualServiceSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// AWSName is the AppMesh VirtualService object's name.
+	// If unspecified, it defaults to be "${name}" of k8s VirtualService
+	// +optional
+	AWSName *string `json:"awsName,omitempty"`
 
-	// Foo is an example field of VirtualService. Edit VirtualService_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// The provider for virtual services. You can specify a single virtual node or virtual router.
+	Provider VirtualServiceProvider `json:"provider"`
 }
 
 // VirtualServiceStatus defines the observed state of VirtualService
 type VirtualServiceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// MeshArn is the AppMesh Mesh object's Amazon Resource Name.
+	// +optional
+	MeshArn *string `json:"meshArn,omitempty"`
+	// VirtualServiceArn is the AppMesh VirtualService object's Amazon Resource Name.
+	// +optional
+	VirtualServiceArn string `json:"virtualServiceArn,omitempty"`
+	// The current VirtualService status.
+	// +optional
+	Conditions []VirtualServiceCondition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

@@ -17,25 +17,73 @@ limitations under the License.
 package v1beta2
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// +kubebuilder:validation:Enum=ALLOW_ALL;DROP_ALL
+type EgressFilterType string
+
+const (
+	// EgressFilterTypeAllowAll allows egress to any endpoint inside or outside of the service mesh
+	EgressFilterTypeAllowAll EgressFilterType = "ALLOW_ALL"
+	// EgressFilterTypeDropAll allows egress only from virtual nodes to other defined resources in the service mesh (and any traffic to *.amazonaws.com for AWS API calls)
+	EgressFilterTypeDropAll EgressFilterType = "DROP_ALL"
+)
+
+// EgressFilter refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_EgressFilter.html
+type EgressFilter struct {
+	// The egress filter type
+	Type EgressFilterType `json:"type"`
+}
+
+type MeshConditionType string
+
+const (
+	// MeshActive is True when the AppMesh Mesh has been created or found via the API
+	MeshActive MeshConditionType = "MeshActive"
+)
+
+type MeshCondition struct {
+	// Type of mesh condition.
+	Type MeshConditionType `json:"type"`
+	// Status of the condition, one of True, False, Unknown.
+	Status corev1.ConditionStatus `json:"status"`
+	// Last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime *metav1.Time `json:"lastTransitionTime,omitempty"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason *string `json:"reason,omitempty"`
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message *string `json:"message,omitempty"`
+}
 
 // MeshSpec defines the desired state of Mesh
+// refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_MeshSpec.html
 type MeshSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Mesh. Edit Mesh_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// AWSName is the AppMesh Mesh object's name.
+	// If unspecified, it defaults to be "${name}" of k8s Mesh
+	// +optional
+	AWSName *string `json:"awsName,omitempty"`
+	// NamespaceSelector selects Namespaces using labels to designate mesh membership.
+	// This field follows standard label selector semantics; if present but empty, it selects all namespaces.
+	// +optional
+	NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector,omitempty"`
+	// The egress filter rules for a service mesh
+	// +optional
+	EgressFilter *EgressFilter `json:"egressFilter,omitempty"`
 }
 
 // MeshStatus defines the observed state of Mesh
 type MeshStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// MeshArn is the AppMesh Mesh object's Amazon Resource Name
+	// +optional
+	MeshArn *string `json:"meshArn,omitempty"`
+	// The current Mesh status.
+	// +optional
+	Conditions []MeshCondition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

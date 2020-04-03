@@ -17,25 +17,170 @@ limitations under the License.
 package v1beta2
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// VirtualServiceBackend refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceBackend.html
+type VirtualServiceBackend struct {
+	// The VirtualService that is acting as a virtual node backend.
+	VirtualServiceRef VirtualServiceReference `json:"virtualServiceRef"`
+	// A reference to an object that represents the client policy for a backend.
+	// +optional
+	ClientPolicy *ClientPolicy `json:"clientPolicy,omitempty"`
+}
+
+// Backend refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Backend.html
+type Backend struct {
+	// Specifies a virtual service to use as a backend for a virtual node.
+	VirtualService VirtualServiceBackend `json:"virtualService"`
+}
+
+// BackendDefaults refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_BackendDefaults.html
+type BackendDefaults struct {
+	// A reference to an object that represents a client policy.
+	// +optional
+	ClientPolicy *ClientPolicy `json:"clientPolicy,omitempty"`
+}
+
+// AwsCloudMapInstanceAttribute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapInstanceAttribute.html
+type AwsCloudMapInstanceAttribute struct {
+	// The name of an AWS Cloud Map service instance attribute key.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	Key string `json:"key"`
+	// The value of an AWS Cloud Map service instance attribute key.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=1024
+	Value string `json:"value"`
+}
+
+// AwsCloudMapServiceDiscovery refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapServiceDiscovery.html
+type AwsCloudMapServiceDiscovery struct {
+	// The name of the AWS Cloud Map namespace to use.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=1024
+	NamespaceName string `json:"namespaceName"`
+	// The name of the AWS Cloud Map service to use.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=1024
+	ServiceName string `json:"serviceName"`
+	// A string map that contains attributes with values that you can use to filter instances by any custom attribute that you specified when you registered the instance
+	// +optional
+	Attributes []AwsCloudMapInstanceAttribute `json:"attributes,omitempty"`
+}
+
+// DnsServiceDiscovery refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_DnsServiceDiscovery.html
+type DnsServiceDiscovery struct {
+	// Specifies the DNS service discovery hostname for the virtual node.
+	Hostname string `json:"hostname"`
+}
+
+// ServiceDiscovery refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ServiceDiscovery.html
+type ServiceDiscovery struct {
+	// Specifies any AWS Cloud Map information for the virtual node.
+	// +optional
+	AWSCloudMap *AwsCloudMapServiceDiscovery `json:"awsCloudMap,omitempty"`
+	// Specifies the DNS information for the virtual node.
+	// +optional
+	DNS *DnsServiceDiscovery `json:"dns,omitempty"`
+}
+
+// FileAccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_FileAccessLog.html
+type FileAccessLog struct {
+	// The file path to write access logs to.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	Path string `json:"path"`
+}
+
+// AccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AccessLog.html
+type AccessLog struct {
+	// The file object to send virtual node access logs to.
+	// +optional
+	File *FileAccessLog `json:"file,omitempty"`
+}
+
+// Logging refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Logging.html
+type Logging struct {
+	// The access log configuration for a virtual node.
+	// +optional
+	AccessLog *AccessLog `json:"accessLog,omitempty"`
+}
+
+type VirtualNodeConditionType string
+
+const (
+	// VirtualNodeActive is True when the AppMesh VirtualNode has been created or found via the API
+	VirtualNodeActive VirtualNodeConditionType = "VirtualNodeActive"
+)
+
+type VirtualNodeCondition struct {
+	// Type of VirtualNode condition.
+	Type VirtualNodeConditionType `json:"type"`
+	// Status of the condition, one of True, False, Unknown.
+	Status corev1.ConditionStatus `json:"status"`
+	// Last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime *metav1.Time `json:"lastTransitionTime,omitempty"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason *string `json:"reason,omitempty"`
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message *string `json:"message,omitempty"`
+}
+
+// AwsCloudMapServiceStatus is AWS CloudMap Service object's info
+type AwsCloudMapServiceStatus struct {
+	// NamespaceID is AWS CloudMap Service object's namespace Id
+	// +optional
+	NamespaceID *string `json:"namespaceID,omitempty"`
+	// ServiceID is AWS CloudMap Service object's Id
+	// +optional
+	ServiceID *string `json:"serviceID,omitempty"`
+}
 
 // VirtualNodeSpec defines the desired state of VirtualNode
+// refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html
 type VirtualNodeSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of VirtualNode. Edit VirtualNode_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// AWSName is the AppMesh VirtualNode object's name.
+	// If unspecified, it defaults to be "${name}_${namespace}" of k8s VirtualNode
+	// +optional
+	AWSName *string `json:"awsName,omitempty"`
+	// The listener that the virtual node is expected to receive inbound traffic from
+	// +kubebuilder:validation:MinItems=0
+	// +kubebuilder:validation:MaxItems=1
+	// +optional
+	Listeners []Listener `json:"listeners,omitempty"`
+	// The service discovery information for the virtual node.
+	// +optional
+	ServiceDiscovery *ServiceDiscovery `json:"serviceDiscovery,omitempty"`
+	// The backends that the virtual node is expected to send outbound traffic to.
+	// +optional
+	Backends []Backend `json:"backends,omitempty"`
+	// A reference to an object that represents the defaults for backends.
+	// +optional
+	BackendDefaults *BackendDefaults `json:"backendDefaults,omitempty"`
+	// The inbound and outbound access logging information for the virtual node.
+	// +optional
+	Logging *Logging `json:"logging,omitempty"`
 }
 
 // VirtualNodeStatus defines the observed state of VirtualNode
 type VirtualNodeStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// MeshArn is the AppMesh Mesh object's Amazon Resource Name
+	// +optional
+	MeshArn *string `json:"meshArn,omitempty"`
+	// VirtualNodeArn is the AppMesh VirtualNode object's Amazon Resource Name
+	// +optional
+	VirtualNodeArn *string `json:"virtualNodeArn,omitempty"`
+	// The current VirtualNode status.
+	// +optional
+	Conditions []VirtualNodeCondition `json:"conditions,omitempty"`
+	// AWSCloudMapServiceStatus is AWS CloudMap Service object's info
+	// +optional
+	AWSCloudMapServiceStatus *AwsCloudMapServiceStatus `json:"awsCloudMapServiceStatus,omitempty"`
 }
 
 // +kubebuilder:object:root=true
