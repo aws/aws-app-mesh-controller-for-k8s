@@ -1,0 +1,484 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.4
+  creationTimestamp: null
+  name: virtualnodes.appmesh.k8s.aws
+spec:
+  group: appmesh.k8s.aws
+  names:
+    kind: VirtualNode
+    listKind: VirtualNodeList
+    plural: virtualnodes
+    singular: virtualnode
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      description: VirtualNode is the Schema for the virtualnodes API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: VirtualNodeSpec defines the desired state of VirtualNode refers
+            to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html
+          properties:
+            awsName:
+              description: AWSName is the AppMesh VirtualNode object's name. If unspecified,
+                it defaults to be "${name}_${namespace}" of k8s VirtualNode
+              type: string
+            backendDefaults:
+              description: A reference to an object that represents the defaults for
+                backends.
+              properties:
+                clientPolicy:
+                  description: A reference to an object that represents a client policy.
+                  properties:
+                    tls:
+                      description: A reference to an object that represents a Transport
+                        Layer Security (TLS) client policy.
+                      properties:
+                        enforce:
+                          description: Whether the policy is enforced.
+                          type: boolean
+                        ports:
+                          description: One or more ports that the policy is enforced
+                            for.
+                          items:
+                            format: int64
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                          type: array
+                        validation:
+                          description: A reference to an object that represents a
+                            TLS validation context.
+                          properties:
+                            trust:
+                              description: A reference to an object that represents
+                                a TLS validation context trust
+                              properties:
+                                acm:
+                                  description: A reference to an object that represents
+                                    a TLS validation context trust for an AWS Certicate
+                                    Manager (ACM) certificate.
+                                  properties:
+                                    certificateAuthorityArns:
+                                      description: One or more ACM Amazon Resource
+                                        Name (ARN)s.
+                                      items:
+                                        type: string
+                                      maxItems: 3
+                                      minItems: 1
+                                      type: array
+                                  required:
+                                  - certificateAuthorityArns
+                                  type: object
+                                file:
+                                  description: An object that represents a TLS validation
+                                    context trust for a local file.
+                                  properties:
+                                    certificateChain:
+                                      description: The certificate trust chain for
+                                        a certificate stored on the file system of
+                                        the virtual node that the proxy is running
+                                        on.
+                                      maxLength: 255
+                                      minLength: 1
+                                      type: string
+                                  required:
+                                  - certificateChain
+                                  type: object
+                              type: object
+                          required:
+                          - trust
+                          type: object
+                      required:
+                      - validation
+                      type: object
+                  type: object
+              type: object
+            backends:
+              description: The backends that the virtual node is expected to send
+                outbound traffic to.
+              items:
+                description: Backend refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Backend.html
+                properties:
+                  virtualService:
+                    description: Specifies a virtual service to use as a backend for
+                      a virtual node.
+                    properties:
+                      clientPolicy:
+                        description: A reference to an object that represents the
+                          client policy for a backend.
+                        properties:
+                          tls:
+                            description: A reference to an object that represents
+                              a Transport Layer Security (TLS) client policy.
+                            properties:
+                              enforce:
+                                description: Whether the policy is enforced.
+                                type: boolean
+                              ports:
+                                description: One or more ports that the policy is
+                                  enforced for.
+                                items:
+                                  format: int64
+                                  maximum: 65535
+                                  minimum: 1
+                                  type: integer
+                                type: array
+                              validation:
+                                description: A reference to an object that represents
+                                  a TLS validation context.
+                                properties:
+                                  trust:
+                                    description: A reference to an object that represents
+                                      a TLS validation context trust
+                                    properties:
+                                      acm:
+                                        description: A reference to an object that
+                                          represents a TLS validation context trust
+                                          for an AWS Certicate Manager (ACM) certificate.
+                                        properties:
+                                          certificateAuthorityArns:
+                                            description: One or more ACM Amazon Resource
+                                              Name (ARN)s.
+                                            items:
+                                              type: string
+                                            maxItems: 3
+                                            minItems: 1
+                                            type: array
+                                        required:
+                                        - certificateAuthorityArns
+                                        type: object
+                                      file:
+                                        description: An object that represents a TLS
+                                          validation context trust for a local file.
+                                        properties:
+                                          certificateChain:
+                                            description: The certificate trust chain
+                                              for a certificate stored on the file
+                                              system of the virtual node that the
+                                              proxy is running on.
+                                            maxLength: 255
+                                            minLength: 1
+                                            type: string
+                                        required:
+                                        - certificateChain
+                                        type: object
+                                    type: object
+                                required:
+                                - trust
+                                type: object
+                            required:
+                            - validation
+                            type: object
+                        type: object
+                      virtualServiceRef:
+                        description: The VirtualService that is acting as a virtual
+                          node backend.
+                        properties:
+                          name:
+                            description: Name is the name of VirtualService CR
+                            type: string
+                          namespace:
+                            description: Namespace is the namespace of VirtualService
+                              CR. If unspecified, defaults to the referencing object's
+                              namespace
+                            type: string
+                        required:
+                        - name
+                        type: object
+                    required:
+                    - virtualServiceRef
+                    type: object
+                required:
+                - virtualService
+                type: object
+              type: array
+            listeners:
+              description: The listener that the virtual node is expected to receive
+                inbound traffic from
+              items:
+                description: Listener refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Listener.html
+                properties:
+                  healthCheck:
+                    description: The health check information for the listener.
+                    properties:
+                      healthyThreshold:
+                        description: The number of consecutive successful health checks
+                          that must occur before declaring listener healthy.
+                        format: int64
+                        maximum: 10
+                        minimum: 2
+                        type: integer
+                      intervalMillis:
+                        description: The time period in milliseconds between each
+                          health check execution.
+                        format: int64
+                        maximum: 300000
+                        minimum: 5000
+                        type: integer
+                      path:
+                        description: The destination path for the health check request.
+                        type: string
+                      port:
+                        description: The destination port for the health check request.
+                        format: int64
+                        maximum: 65535
+                        minimum: 1
+                        type: integer
+                      protocol:
+                        description: The protocol for the health check request
+                        enum:
+                        - grpc
+                        - http
+                        - http2
+                        - tcp
+                        type: string
+                      timeoutMillis:
+                        description: The amount of time to wait when receiving a response
+                          from the health check, in milliseconds.
+                        format: int64
+                        maximum: 60000
+                        minimum: 2000
+                        type: integer
+                      unhealthyThreshold:
+                        description: The number of consecutive failed health checks
+                          that must occur before declaring a virtual node unhealthy.
+                        format: int64
+                        maximum: 10
+                        minimum: 2
+                        type: integer
+                    type: object
+                  portMapping:
+                    description: The port mapping information for the listener.
+                    properties:
+                      port:
+                        description: The port used for the port mapping.
+                        format: int64
+                        maximum: 65535
+                        minimum: 1
+                        type: integer
+                      protocol:
+                        description: The protocol used for the port mapping.
+                        enum:
+                        - grpc
+                        - http
+                        - http2
+                        - tcp
+                        type: string
+                    required:
+                    - port
+                    - protocol
+                    type: object
+                  tls:
+                    description: A reference to an object that represents the Transport
+                      Layer Security (TLS) properties for a listener.
+                    properties:
+                      certificate:
+                        description: A reference to an object that represents a listener's
+                          TLS certificate.
+                        properties:
+                          acm:
+                            description: A reference to an object that represents
+                              an AWS Certicate Manager (ACM) certificate.
+                            properties:
+                              certificateArn:
+                                description: The Amazon Resource Name (ARN) for the
+                                  certificate.
+                                type: string
+                            required:
+                            - certificateArn
+                            type: object
+                          file:
+                            description: A reference to an object that represents
+                              a local file certificate.
+                            properties:
+                              certificateChain:
+                                description: The certificate chain for the certificate.
+                                maxLength: 255
+                                minLength: 1
+                                type: string
+                              privateKey:
+                                description: The private key for a certificate stored
+                                  on the file system of the virtual node that the
+                                  proxy is running on.
+                                maxLength: 255
+                                minLength: 1
+                                type: string
+                            required:
+                            - certificateChain
+                            - privateKey
+                            type: object
+                        type: object
+                      mode:
+                        description: ListenerTls mode
+                        enum:
+                        - DISABLED
+                        - PERMISSIVE
+                        - STRICT
+                        type: string
+                    required:
+                    - certificate
+                    - mode
+                    type: object
+                required:
+                - portMapping
+                type: object
+              maxItems: 1
+              minItems: 0
+              type: array
+            logging:
+              description: The inbound and outbound access logging information for
+                the virtual node.
+              properties:
+                accessLog:
+                  description: The access log configuration for a virtual node.
+                  properties:
+                    file:
+                      description: The file object to send virtual node access logs
+                        to.
+                      properties:
+                        path:
+                          description: The file path to write access logs to.
+                          maxLength: 255
+                          minLength: 1
+                          type: string
+                      required:
+                      - path
+                      type: object
+                  type: object
+              type: object
+            serviceDiscovery:
+              description: The service discovery information for the virtual node.
+              properties:
+                awsCloudMap:
+                  description: Specifies any AWS Cloud Map information for the virtual
+                    node.
+                  properties:
+                    attributes:
+                      description: A string map that contains attributes with values
+                        that you can use to filter instances by any custom attribute
+                        that you specified when you registered the instance
+                      items:
+                        description: AwsCloudMapInstanceAttribute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapInstanceAttribute.html
+                        properties:
+                          key:
+                            description: The name of an AWS Cloud Map service instance
+                              attribute key.
+                            maxLength: 255
+                            minLength: 1
+                            type: string
+                          value:
+                            description: The value of an AWS Cloud Map service instance
+                              attribute key.
+                            maxLength: 1024
+                            minLength: 1
+                            type: string
+                        required:
+                        - key
+                        - value
+                        type: object
+                      type: array
+                    namespaceName:
+                      description: The name of the AWS Cloud Map namespace to use.
+                      maxLength: 1024
+                      minLength: 1
+                      type: string
+                    serviceName:
+                      description: The name of the AWS Cloud Map service to use.
+                      maxLength: 1024
+                      minLength: 1
+                      type: string
+                  required:
+                  - namespaceName
+                  - serviceName
+                  type: object
+                dns:
+                  description: Specifies the DNS information for the virtual node.
+                  properties:
+                    hostname:
+                      description: Specifies the DNS service discovery hostname for
+                        the virtual node.
+                      type: string
+                  required:
+                  - hostname
+                  type: object
+              type: object
+          type: object
+        status:
+          description: VirtualNodeStatus defines the observed state of VirtualNode
+          properties:
+            awsCloudMapServiceStatus:
+              description: AWSCloudMapServiceStatus is AWS CloudMap Service object's
+                info
+              properties:
+                namespaceID:
+                  description: NamespaceID is AWS CloudMap Service object's namespace
+                    Id
+                  type: string
+                serviceID:
+                  description: ServiceID is AWS CloudMap Service object's Id
+                  type: string
+              type: object
+            conditions:
+              description: The current VirtualNode status.
+              items:
+                properties:
+                  lastTransitionTime:
+                    description: Last time the condition transitioned from one status
+                      to another.
+                    format: date-time
+                    type: string
+                  message:
+                    description: A human readable message indicating details about
+                      the transition.
+                    type: string
+                  reason:
+                    description: The reason for the condition's last transition.
+                    type: string
+                  status:
+                    description: Status of the condition, one of True, False, Unknown.
+                    type: string
+                  type:
+                    description: Type of VirtualNode condition.
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              type: array
+            meshArn:
+              description: MeshArn is the AppMesh Mesh object's Amazon Resource Name
+              type: string
+            virtualNodeArn:
+              description: VirtualNodeArn is the AppMesh VirtualNode object's Amazon
+                Resource Name
+              type: string
+          type: object
+      type: object
+  version: v1beta2
+  versions:
+  - name: v1beta2
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
