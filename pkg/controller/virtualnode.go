@@ -326,7 +326,7 @@ func vnodeLoggingNeedsUpdate(desired *appmeshv1beta1.VirtualNode, target *aws.Vi
 
 func (c *Controller) handleVNodeDelete(ctx context.Context, vnode *appmeshv1beta1.VirtualNode, copy *appmeshv1beta1.VirtualNode) error {
 	if yes, _ := containsFinalizer(vnode, virtualNodeDeletionFinalizerName); yes {
-		if err := c.deregisterInstancesForVirtualNode(ctx, vnode); err != nil {
+		if err := c.deregisterInstancesForVirtualNode(ctx, copy); err != nil {
 			return err
 		}
 
