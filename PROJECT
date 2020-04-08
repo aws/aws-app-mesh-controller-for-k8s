@@ -1,3 +1,17 @@
 domain: k8s.aws
+multigroup: true
 repo: github.com/aws/aws-app-mesh-controller-for-k8s
+resources:
+- group: appmesh
+  kind: Mesh
+  version: v1beta2
+- group: appmesh
+  kind: VirtualService
+  version: v1beta2
+- group: appmesh
+  kind: VirtualNode
+  version: v1beta2
+- group: appmesh
+  kind: VirtualRouter
+  version: v1beta2
 version: "2"

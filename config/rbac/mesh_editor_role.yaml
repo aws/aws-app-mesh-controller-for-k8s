@@ -1,0 +1,24 @@
+# permissions for end users to edit meshes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: mesh-editor-role
+rules:
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - meshes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - meshes/status
+  verbs:
+  - get

@@ -1,0 +1,24 @@
+# permissions for end users to edit virtualnodes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: virtualnode-editor-role
+rules:
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualnodes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualnodes/status
+  verbs:
+  - get

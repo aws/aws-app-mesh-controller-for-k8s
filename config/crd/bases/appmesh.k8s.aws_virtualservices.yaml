@@ -1,0 +1,138 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.4
+  creationTimestamp: null
+  name: virtualservices.appmesh.k8s.aws
+spec:
+  group: appmesh.k8s.aws
+  names:
+    kind: VirtualService
+    listKind: VirtualServiceList
+    plural: virtualservices
+    singular: virtualservice
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      description: VirtualService is the Schema for the virtualservices API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: VirtualServiceSpec defines the desired state of VirtualService
+          properties:
+            awsName:
+              description: AWSName is the AppMesh VirtualService object's name. If
+                unspecified, it defaults to be "${name}" of k8s VirtualService
+              type: string
+            provider:
+              description: The provider for virtual services. You can specify a single
+                virtual node or virtual router.
+              properties:
+                virtualNode:
+                  description: The virtual node associated with a virtual service.
+                  properties:
+                    virtualNodeRef:
+                      description: The virtual node that is acting as a service provider.
+                      properties:
+                        name:
+                          description: Name is the name of VirtualNode CR
+                          type: string
+                        namespace:
+                          description: Namespace is the namespace of VirtualNode CR.
+                            If unspecified, defaults to the referencing object's namespace
+                          type: string
+                      required:
+                      - name
+                      type: object
+                  required:
+                  - virtualNodeRef
+                  type: object
+                virtualRouter:
+                  description: The virtual router associated with a virtual service.
+                  properties:
+                    virtualRouterRef:
+                      description: The virtual router that is acting as a service
+                        provider.
+                      properties:
+                        name:
+                          description: Name is the name of VirtualRouter CR
+                          type: string
+                        namespace:
+                          description: Namespace is the namespace of VirtualRouter
+                            CR. If unspecified, defaults to the referencing object's
+                            namespace
+                          type: string
+                      required:
+                      - name
+                      type: object
+                  required:
+                  - virtualRouterRef
+                  type: object
+              type: object
+          required:
+          - provider
+          type: object
+        status:
+          description: VirtualServiceStatus defines the observed state of VirtualService
+          properties:
+            conditions:
+              description: The current VirtualService status.
+              items:
+                properties:
+                  lastTransitionTime:
+                    description: Last time the condition transitioned from one status
+                      to another.
+                    format: date-time
+                    type: string
+                  message:
+                    description: A human readable message indicating details about
+                      the transition.
+                    type: string
+                  reason:
+                    description: The reason for the condition's last transition.
+                    type: string
+                  status:
+                    description: Status of the condition, one of True, False, Unknown.
+                    type: string
+                  type:
+                    description: Type of VirtualService condition.
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              type: array
+            meshArn:
+              description: MeshArn is the AppMesh Mesh object's Amazon Resource Name.
+              type: string
+            virtualServiceArn:
+              description: VirtualServiceArn is the AppMesh VirtualService object's
+                Amazon Resource Name.
+              type: string
+          type: object
+      type: object
+  version: v1beta2
+  versions:
+  - name: v1beta2
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

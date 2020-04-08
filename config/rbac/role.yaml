@@ -1,0 +1,88 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - meshes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - meshes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualnodes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualnodes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualrouters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualrouters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualservices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualservices/status
+  verbs:
+  - get
+  - patch
+  - update

@@ -1,0 +1,24 @@
+# permissions for end users to edit virtualservices.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: virtualservice-editor-role
+rules:
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualservices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualservices/status
+  verbs:
+  - get
