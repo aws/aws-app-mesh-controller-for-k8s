@@ -326,6 +326,14 @@ type VirtualRouterSpec struct {
 	// The routes associated with VirtualRouter
 	// +optional
 	Routes []Route `json:"routes,omitempty"`
+
+	// A reference to k8s Mesh CR that this VirtualRouter belongs to.
+	// The admission controller populates it using Meshes's selector, and prevents users from setting this field.
+	//
+	// Populated by the system.
+	// Read-only.
+	// +optional
+	MeshRef *MeshReference `json:"meshRef,omitempty"`
 }
 
 // VirtualRouterStatus defines the observed state of VirtualRouter

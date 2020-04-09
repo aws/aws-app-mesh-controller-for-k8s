@@ -165,6 +165,14 @@ type VirtualNodeSpec struct {
 	// The inbound and outbound access logging information for the virtual node.
 	// +optional
 	Logging *Logging `json:"logging,omitempty"`
+
+	// A reference to k8s Mesh CR that this VirtualNode belongs to.
+	// The admission controller populates it using Meshes's selector, and prevents users from setting this field.
+	//
+	// Populated by the system.
+	// Read-only.
+	// +optional
+	MeshRef *MeshReference `json:"meshRef,omitempty"`
 }
 
 // VirtualNodeStatus defines the observed state of VirtualNode
