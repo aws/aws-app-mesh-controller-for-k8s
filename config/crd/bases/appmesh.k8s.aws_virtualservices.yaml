@@ -38,6 +38,22 @@ spec:
               description: AWSName is the AppMesh VirtualService object's name. If
                 unspecified, it defaults to be "${name}" of k8s VirtualService
               type: string
+            meshRef:
+              description: "A reference to k8s Mesh CR that this VirtualService belongs
+                to. The admission controller populates it using Meshes's selector,
+                and prevents users from setting this field. \n Populated by the system.
+                Read-only."
+              properties:
+                name:
+                  description: Name is the name of Mesh CR
+                  type: string
+                uid:
+                  description: UID is the UID of Mesh CR
+                  type: string
+              required:
+              - name
+              - uid
+              type: object
             provider:
               description: The provider for virtual services. You can specify a single
                 virtual node or virtual router.

@@ -75,6 +75,14 @@ type VirtualServiceSpec struct {
 
 	// The provider for virtual services. You can specify a single virtual node or virtual router.
 	Provider VirtualServiceProvider `json:"provider"`
+
+	// A reference to k8s Mesh CR that this VirtualService belongs to.
+	// The admission controller populates it using Meshes's selector, and prevents users from setting this field.
+	//
+	// Populated by the system.
+	// Read-only.
+	// +optional
+	MeshRef *MeshReference `json:"meshRef,omitempty"`
 }
 
 // VirtualServiceStatus defines the observed state of VirtualService

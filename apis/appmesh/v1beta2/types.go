@@ -1,5 +1,7 @@
 package v1beta2
 
+import "k8s.io/apimachinery/pkg/types"
+
 // +kubebuilder:validation:Enum=s;ms
 type DurationUnit string
 
@@ -207,4 +209,12 @@ type VirtualRouterReference struct {
 	Namespace *string `json:"namespace,omitempty"`
 	// Name is the name of VirtualRouter CR
 	Name string `json:"name"`
+}
+
+// MeshReference holds a reference to Mesh.appmesh.k8s.aws
+type MeshReference struct {
+	// Name is the name of Mesh CR
+	Name string `json:"name"`
+	// UID is the UID of Mesh CR
+	UID types.UID `json:"uid"`
 }
