@@ -148,6 +148,10 @@ type VirtualNodeSpec struct {
 	// If unspecified or empty, it defaults to be "${name}_${namespace}" of k8s VirtualNode
 	// +optional
 	AWSName *string `json:"awsName,omitempty"`
+	// PodSelector selects Pods using labels to designate VirtualNode membership.
+	// if unspecified or empty, it selects no pods.
+	// +optional
+	PodSelector *metav1.LabelSelector `json:"podSelector,omitempty"`
 	// The listener that the virtual node is expected to receive inbound traffic from
 	// +kubebuilder:validation:MinItems=0
 	// +kubebuilder:validation:MaxItems=1
