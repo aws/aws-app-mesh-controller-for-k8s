@@ -1254,6 +1254,11 @@ func (in *VirtualNodeSpec) DeepCopyInto(out *VirtualNodeSpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.PodSelector != nil {
+		in, out := &in.PodSelector, &out.PodSelector
+		*out = new(v1.LabelSelector)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Listeners != nil {
 		in, out := &in.Listeners, &out.Listeners
 		*out = make([]Listener, len(*in))
