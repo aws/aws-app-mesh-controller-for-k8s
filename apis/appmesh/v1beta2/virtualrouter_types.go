@@ -73,8 +73,8 @@ type HeaderMatchMethod struct {
 	Suffix *string `json:"suffix,omitempty"`
 }
 
-// HttpRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html
-type HttpRouteHeader struct {
+// HTTPRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html
+type HTTPRouteHeader struct {
 	// A name for the HTTP header in the client request that will be matched on.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=50
@@ -87,13 +87,13 @@ type HttpRouteHeader struct {
 	Invert *bool `json:"invert,omitempty"`
 }
 
-// HttpRouteMatch refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteMatch.html
-type HttpRouteMatch struct {
+// HTTPRouteMatch refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteMatch.html
+type HTTPRouteMatch struct {
 	// An object that represents the client request headers to match on.
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=10
 	// +optional
-	Headers []HttpRouteHeader `json:"headers,omitempty"`
+	Headers []HTTPRouteHeader `json:"headers,omitempty"`
 	// The client request method to match on.
 	// +kubebuilder:validation:Enum=CONNECT;DELETE;GET;HEAD;OPTIONS;PATCH;POST;PUT;TRACE
 	// +optional
@@ -106,8 +106,8 @@ type HttpRouteMatch struct {
 	Scheme *string `json:"scheme,omitempty"`
 }
 
-// HttpRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteAction.html
-type HttpRouteAction struct {
+// HTTPRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteAction.html
+type HTTPRouteAction struct {
 	// An object that represents the targets that traffic is routed to when a request matches the route.
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=10
@@ -115,58 +115,58 @@ type HttpRouteAction struct {
 }
 
 // +kubebuilder:validation:Enum=server-error;gateway-error;client-error;stream-error
-type HttpRetryPolicyEvent string
+type HTTPRetryPolicyEvent string
 
 // +kubebuilder:validation:Enum=connection-error
-type TcpRetryPolicyEvent string
+type TCPRetryPolicyEvent string
 
 // +kubebuilder:validation:Enum=cancelled;deadline-exceeded;internal;resource-exhausted;unavailable
-type GrpcRetryPolicyEvent string
+type GRPCRetryPolicyEvent string
 
-// HttpRetryPolicy refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRetryPolicy.html
-type HttpRetryPolicy struct {
+// HTTPRetryPolicy refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRetryPolicy.html
+type HTTPRetryPolicy struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=25
 	// +optional
-	HTTPRetryEvents []HttpRetryPolicyEvent `json:"httpRetryEvents,omitempty"`
+	HTTPRetryEvents []HTTPRetryPolicyEvent `json:"httpRetryEvents,omitempty"`
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=1
 	// +optional
-	TCPRetryEvents []TcpRetryPolicyEvent `json:"tcpRetryEvents,omitempty"`
+	TCPRetryEvents []TCPRetryPolicyEvent `json:"tcpRetryEvents,omitempty"`
 	// The maximum number of retry attempts.
 	// +kubebuilder:validation:Minimum=0
-	// +optional
-	MaxRetries *int64 `json:"maxRetries,omitempty"`
-	// +optional
-	PerRetryTimeout *Duration `json:"perRetryTimeout,omitempty"`
+	MaxRetries int64 `json:"maxRetries"`
+	// An object that represents a duration of time
+	PerRetryTimeout Duration `json:"perRetryTimeout"`
 }
 
-// HttpRoute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRoute.html
-type HttpRoute struct {
+// HTTPRoute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRoute.html
+type HTTPRoute struct {
 	// An object that represents the criteria for determining a request match.
-	Match HttpRouteMatch `json:"match"`
+	Match HTTPRouteMatch `json:"match"`
 	// An object that represents the action to take if a match is determined.
-	Action HttpRouteAction `json:"action"`
+	Action HTTPRouteAction `json:"action"`
 	// An object that represents a retry policy.
 	// +optional
-	RetryPolicy *HttpRetryPolicy `json:"retryPolicy,omitempty"`
+	RetryPolicy *HTTPRetryPolicy `json:"retryPolicy,omitempty"`
 }
 
-// TcpRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRouteAction.html
-type TcpRouteAction struct {
+// TCPRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRouteAction.html
+type TCPRouteAction struct {
 	// An object that represents the targets that traffic is routed to when a request matches the route.
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=10
 	WeightedTargets []WeightedTarget `json:"weightedTargets"`
 }
 
-// TcpRoute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRoute.html
-type TcpRoute struct {
+// TCPRoute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRoute.html
+type TCPRoute struct {
 	// The action to take if a match is determined.
-	Action TcpRouteAction `json:"action"`
+	Action TCPRouteAction `json:"action"`
 }
 
-type GrpcRouteMetadataMatchMethod struct {
+// GRPCRouteMetadataMatchMethod refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadataMatchMethod.html
+type GRPCRouteMetadataMatchMethod struct {
 	// The value sent by the client must match the specified value exactly.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=255
@@ -192,22 +192,22 @@ type GrpcRouteMetadataMatchMethod struct {
 	Suffix *string `json:"suffix,omitempty"`
 }
 
-// GrpcRouteMetadata refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadata.html
-type GrpcRouteMetadata struct {
+// GRPCRouteMetadata refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadata.html
+type GRPCRouteMetadata struct {
 	// The name of the route.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=50
 	Name string `json:"name"`
 	// An object that represents the data to match from the request.
 	// +optional
-	Match *GrpcRouteMetadataMatchMethod `json:"match,omitempty"`
+	Match *GRPCRouteMetadataMatchMethod `json:"match,omitempty"`
 	// Specify True to match anything except the match criteria. The default value is False.
 	// +optional
 	Invert *bool `json:"invert,omitempty"`
 }
 
-// GrpcRouteMatch refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMatch.html
-type GrpcRouteMatch struct {
+// GRPCRouteMatch refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMatch.html
+type GRPCRouteMatch struct {
 	// The method name to match from the request. If you specify a name, you must also specify a serviceName.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=50
@@ -220,48 +220,47 @@ type GrpcRouteMatch struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=10
 	// +optional
-	Metadata []GrpcRouteMetadata `json:"metadata,omitempty"`
+	Metadata []GRPCRouteMetadata `json:"metadata,omitempty"`
 }
 
-// GrpcRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteAction.html
-type GrpcRouteAction struct {
+// GRPCRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteAction.html
+type GRPCRouteAction struct {
 	// An object that represents the targets that traffic is routed to when a request matches the route.
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=10
 	WeightedTargets []WeightedTarget `json:"weightedTargets"`
 }
 
-// GrpcRetryPolicy refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRetryPolicy.html
-type GrpcRetryPolicy struct {
+// GRPCRetryPolicy refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRetryPolicy.html
+type GRPCRetryPolicy struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=5
 	// +optional
-	GRPCRetryEvents []GrpcRetryPolicyEvent `json:"grpcRetryEvents,omitempty"`
+	GRPCRetryEvents []GRPCRetryPolicyEvent `json:"grpcRetryEvents,omitempty"`
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=25
 	// +optional
-	HTTPRetryEvents []HttpRetryPolicyEvent `json:"httpRetryEvents,omitempty"`
+	HTTPRetryEvents []HTTPRetryPolicyEvent `json:"httpRetryEvents,omitempty"`
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=1
 	// +optional
-	TCPRetryEvents []TcpRetryPolicyEvent `json:"tcpRetryEvents,omitempty"`
+	TCPRetryEvents []TCPRetryPolicyEvent `json:"tcpRetryEvents,omitempty"`
 	// The maximum number of retry attempts.
 	// +kubebuilder:validation:Minimum=0
-	// +optional
-	MaxRetries *int64 `json:"maxRetries,omitempty"`
-	// +optional
-	PerRetryTimeout *Duration `json:"perRetryTimeout,omitempty"`
+	MaxRetries int64 `json:"maxRetries"`
+	// An object that represents a duration of time.
+	PerRetryTimeout Duration `json:"perRetryTimeout"`
 }
 
-// GrpcRoute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRoute.html
-type GrpcRoute struct {
+// GRPCRoute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRoute.html
+type GRPCRoute struct {
 	// An object that represents the criteria for determining a request match.
-	Match GrpcRouteMatch `json:"match"`
+	Match GRPCRouteMatch `json:"match"`
 	// An object that represents the action to take if a match is determined.
-	Action GrpcRouteAction `json:"action"`
+	Action GRPCRouteAction `json:"action"`
 	// An object that represents a retry policy.
 	// +optional
-	RetryPolicy *GrpcRetryPolicy `json:"retryPolicy,omitempty"`
+	RetryPolicy *GRPCRetryPolicy `json:"retryPolicy,omitempty"`
 }
 
 // Route refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_RouteSpec.html
@@ -271,16 +270,16 @@ type Route struct {
 	Name string `json:"name,omitempty"`
 	// An object that represents the specification of a gRPC route.
 	// +optional
-	GRPCRoute *GrpcRoute `json:"grpcRoute,omitempty"`
+	GRPCRoute *GRPCRoute `json:"grpcRoute,omitempty"`
 	// An object that represents the specification of an HTTP route.
 	// +optional
-	HTTPRoute *HttpRoute `json:"httpRoute,omitempty"`
+	HTTPRoute *HTTPRoute `json:"httpRoute,omitempty"`
 	// An object that represents the specification of an HTTP/2 route.
 	// +optional
-	HTTP2Route *HttpRoute `json:"http2Route,omitempty"`
+	HTTP2Route *HTTPRoute `json:"http2Route,omitempty"`
 	// An object that represents the specification of a TCP route.
 	// +optional
-	TCPRoute *TcpRoute `json:"tcpRoute,omitempty"`
+	TCPRoute *TCPRoute `json:"tcpRoute,omitempty"`
 	// The priority for the route.
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=1000
@@ -315,7 +314,7 @@ type VirtualRouterCondition struct {
 // refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualRouterSpec.html
 type VirtualRouterSpec struct {
 	// AWSName is the AppMesh VirtualRouter object's name.
-	// If unspecified, it defaults to be "${name}_${namespace}" of k8s VirtualRouter
+	// If unspecified or empty, it defaults to be "${name}_${namespace}" of k8s VirtualRouter
 	// +optional
 	AWSName *string `json:"awsName,omitempty"`
 	// The listeners that the virtual router is expected to receive inbound traffic from
@@ -338,15 +337,15 @@ type VirtualRouterSpec struct {
 
 // VirtualRouterStatus defines the observed state of VirtualRouter
 type VirtualRouterStatus struct {
-	// MeshArn is the AppMesh Mesh object's Amazon Resource Name
+	// MeshARN is the AppMesh Mesh object's Amazon Resource Name
 	// +optional
-	MeshArn *string `json:"meshArn,omitempty"`
-	// VirtualRouterArn is the AppMesh VirtualRouter object's Amazon Resource Name.
+	MeshARN *string `json:"meshARN,omitempty"`
+	// VirtualRouterARN is the AppMesh VirtualRouter object's Amazon Resource Name.
 	// +optional
-	VirtualRouterArn *string `json:"virtualRouterArn,omitempty"`
-	// RouteArns is a map of AppMesh Route objects' Amazon Resource Names, indexed by route name.
+	VirtualRouterARN *string `json:"virtualRouterARN,omitempty"`
+	// RouteARNs is a map of AppMesh Route objects' Amazon Resource Names, indexed by route name.
 	// +optional
-	RouteArns map[string]string `json:"routeArns,omitempty"`
+	RouteARNs map[string]string `json:"routeARNs,omitempty"`
 	// The current VirtualRouter status.
 	// +optional
 	Conditions []VirtualRouterCondition `json:"conditions,omitempty"`

@@ -43,95 +43,103 @@ type PortMapping struct {
 // HealthCheckPolicy refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HealthCheckPolicy.html
 type HealthCheckPolicy struct {
 	// The number of consecutive successful health checks that must occur before declaring listener healthy.
+	// If unspecified, defaults to be 10
 	// +kubebuilder:validation:Minimum=2
 	// +kubebuilder:validation:Maximum=10
 	// +optional
 	HealthyThreshold *int64 `json:"healthyThreshold,omitempty"`
 	// The time period in milliseconds between each health check execution.
+	// If unspecified, defaults to be 30000
 	// +kubebuilder:validation:Minimum=5000
 	// +kubebuilder:validation:Maximum=300000
 	// +optional
 	IntervalMillis *int64 `json:"intervalMillis,omitempty"`
 	// The destination path for the health check request.
+	// This value is only used if the specified protocol is http or http2. For any other protocol, this value is ignored.
 	// +optional
 	Path *string `json:"path,omitempty"`
 	// The destination port for the health check request.
+	// If unspecified, defaults to be same as port defined in the PortMapping for the listener.
 	// +optional
 	Port *PortNumber `json:"port,omitempty"`
 	// The protocol for the health check request
+	// If unspecified, defaults to be same as protocol defined in the PortMapping for the listener.
 	// +optional
 	Protocol *PortProtocol `json:"protocol,omitempty"`
 	// The amount of time to wait when receiving a response from the health check, in milliseconds.
+	// If unspecified, defaults to be 5000
 	// +kubebuilder:validation:Minimum=2000
 	// +kubebuilder:validation:Maximum=60000
 	// +optional
 	TimeoutMillis *int64 `json:"timeoutMillis,omitempty"`
 	// The number of consecutive failed health checks that must occur before declaring a virtual node unhealthy.
+	// If unspecified, defaults to be 2
 	// +kubebuilder:validation:Minimum=2
 	// +kubebuilder:validation:Maximum=10
 	// +optional
 	UnhealthyThreshold *int64 `json:"unhealthyThreshold,omitempty"`
 }
 
-// TlsValidationContextAcmTrust refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextAcmTrust.html
-type TlsValidationContextAcmTrust struct {
+// TLSValidationContextACMTrust refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextAcmTrust.html
+type TLSValidationContextACMTrust struct {
 	// One or more ACM Amazon Resource Name (ARN)s.
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=3
-	CertificateAuthorityArns []string `json:"certificateAuthorityArns"`
+	CertificateAuthorityARNs []string `json:"certificateAuthorityARNs"`
 }
 
-// TlsValidationContextFileTrust refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextFileTrust.html
-type TlsValidationContextFileTrust struct {
+// TLSValidationContextFileTrust refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextFileTrust.html
+type TLSValidationContextFileTrust struct {
 	// The certificate trust chain for a certificate stored on the file system of the virtual node that the proxy is running on.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=255
 	CertificateChain string `json:"certificateChain"`
 }
 
-// TlsValidationContextTrust refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextTrust.html
-type TlsValidationContextTrust struct {
+// TLSValidationContextTrust refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextTrust.html
+type TLSValidationContextTrust struct {
 	// A reference to an object that represents a TLS validation context trust for an AWS Certicate Manager (ACM) certificate.
 	// +optional
-	ACM *TlsValidationContextAcmTrust `json:"acm,omitempty"`
+	ACM *TLSValidationContextACMTrust `json:"acm,omitempty"`
 	// An object that represents a TLS validation context trust for a local file.
 	// +optional
-	File *TlsValidationContextFileTrust `json:"file,omitempty"`
+	File *TLSValidationContextFileTrust `json:"file,omitempty"`
 }
 
-// TlsValidationContext refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContext.html
-type TlsValidationContext struct {
+// TLSValidationContext refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContext.html
+type TLSValidationContext struct {
 	// A reference to an object that represents a TLS validation context trust
-	Trust TlsValidationContextTrust `json:"trust"`
+	Trust TLSValidationContextTrust `json:"trust"`
 }
 
-// ClientPolicyTls refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ClientPolicyTls.html
-type ClientPolicyTls struct {
+// ClientPolicyTLS refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ClientPolicyTls.html
+type ClientPolicyTLS struct {
 	// Whether the policy is enforced.
+	// If unspecified, default settings from AWS API will be applied. Refer to AWS Docs for default settings.
 	// +optional
 	Enforce *bool `json:"enforce,omitempty"`
-	// One or more ports that the policy is enforced for.
+	// The range of ports that the policy is enforced for.
 	// +optional
 	Ports []PortNumber `json:"ports,omitempty"`
 	// A reference to an object that represents a TLS validation context.
-	Validation TlsValidationContext `json:"validation"`
+	Validation TLSValidationContext `json:"validation"`
 }
 
 // ClientPolicy refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ClientPolicy.html
 type ClientPolicy struct {
 	// A reference to an object that represents a Transport Layer Security (TLS) client policy.
 	// +optional
-	TLS *ClientPolicyTls `json:"tls,omitempty"`
+	TLS *ClientPolicyTLS `json:"tls,omitempty"`
 }
 
-// ListenerTlsAcmCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsAcmCertificate.html
-type ListenerTlsAcmCertificate struct {
+// ListenerTLSACMCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsAcmCertificate.html
+type ListenerTLSACMCertificate struct {
 	// The Amazon Resource Name (ARN) for the certificate.
-	CertificateArn string `json:"certificateArn"`
+	CertificateARN string `json:"certificateARN"`
 }
 
-// ListenerTlsFileCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsFileCertificate.html
-type ListenerTlsFileCertificate struct {
+// ListenerTLSFileCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsFileCertificate.html
+type ListenerTLSFileCertificate struct {
 	// The certificate chain for the certificate.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=255
@@ -142,31 +150,31 @@ type ListenerTlsFileCertificate struct {
 	PrivateKey string `json:"privateKey"`
 }
 
-// ListenerTlsCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsCertificate.html
-type ListenerTlsCertificate struct {
-	// A reference to an object that represents an AWS Certicate Manager (ACM) certificate.
+// ListenerTLSCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsCertificate.html
+type ListenerTLSCertificate struct {
+	// A reference to an object that represents an AWS Certificate Manager (ACM) certificate.
 	// +optional
-	ACM *ListenerTlsAcmCertificate `json:"acm,omitempty"`
+	ACM *ListenerTLSACMCertificate `json:"acm,omitempty"`
 	// A reference to an object that represents a local file certificate.
 	// +optional
-	File *ListenerTlsFileCertificate `json:"file,omitempty"`
+	File *ListenerTLSFileCertificate `json:"file,omitempty"`
 }
 
 // +kubebuilder:validation:Enum=DISABLED;PERMISSIVE;STRICT
-type ListenerTlsMode string
+type ListenerTLSMode string
 
 const (
-	ListenerTlsModeDisabled   ListenerTlsMode = "DISABLED"
-	ListenerTlsModePermissive ListenerTlsMode = "PERMISSIVE"
-	ListenerTlsModeStrict     ListenerTlsMode = "STRICT"
+	ListenerTLSModeDisabled   ListenerTLSMode = "DISABLED"
+	ListenerTLSModePermissive ListenerTLSMode = "PERMISSIVE"
+	ListenerTLSModeStrict     ListenerTLSMode = "STRICT"
 )
 
-// ListenerTls refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTls.html
-type ListenerTls struct {
+// ListenerTLS refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTls.html
+type ListenerTLS struct {
 	// A reference to an object that represents a listener's TLS certificate.
-	Certificate ListenerTlsCertificate `json:"certificate"`
-	// ListenerTls mode
-	Mode ListenerTlsMode `json:"mode"`
+	Certificate ListenerTLSCertificate `json:"certificate"`
+	// ListenerTLS mode
+	Mode ListenerTLSMode `json:"mode"`
 }
 
 // Listener refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Listener.html
@@ -178,7 +186,7 @@ type Listener struct {
 	HealthCheck *HealthCheckPolicy `json:"healthCheck,omitempty"`
 	// A reference to an object that represents the Transport Layer Security (TLS) properties for a listener.
 	// +optional
-	TLS *ListenerTls `json:"tls,omitempty"`
+	TLS *ListenerTLS `json:"tls,omitempty"`
 }
 
 // VirtualNodeReference holds a reference to VirtualNode.appmesh.k8s.aws

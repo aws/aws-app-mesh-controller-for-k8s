@@ -43,8 +43,8 @@ type BackendDefaults struct {
 	ClientPolicy *ClientPolicy `json:"clientPolicy,omitempty"`
 }
 
-// AwsCloudMapInstanceAttribute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapInstanceAttribute.html
-type AwsCloudMapInstanceAttribute struct {
+// AWSCloudMapInstanceAttribute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapInstanceAttribute.html
+type AWSCloudMapInstanceAttribute struct {
 	// The name of an AWS Cloud Map service instance attribute key.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=255
@@ -55,8 +55,8 @@ type AwsCloudMapInstanceAttribute struct {
 	Value string `json:"value"`
 }
 
-// AwsCloudMapServiceDiscovery refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapServiceDiscovery.html
-type AwsCloudMapServiceDiscovery struct {
+// AWSCloudMapServiceDiscovery refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapServiceDiscovery.html
+type AWSCloudMapServiceDiscovery struct {
 	// The name of the AWS Cloud Map namespace to use.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=1024
@@ -67,11 +67,11 @@ type AwsCloudMapServiceDiscovery struct {
 	ServiceName string `json:"serviceName"`
 	// A string map that contains attributes with values that you can use to filter instances by any custom attribute that you specified when you registered the instance
 	// +optional
-	Attributes []AwsCloudMapInstanceAttribute `json:"attributes,omitempty"`
+	Attributes []AWSCloudMapInstanceAttribute `json:"attributes,omitempty"`
 }
 
-// DnsServiceDiscovery refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_DnsServiceDiscovery.html
-type DnsServiceDiscovery struct {
+// DNSServiceDiscovery refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_DnsServiceDiscovery.html
+type DNSServiceDiscovery struct {
 	// Specifies the DNS service discovery hostname for the virtual node.
 	Hostname string `json:"hostname"`
 }
@@ -80,10 +80,10 @@ type DnsServiceDiscovery struct {
 type ServiceDiscovery struct {
 	// Specifies any AWS Cloud Map information for the virtual node.
 	// +optional
-	AWSCloudMap *AwsCloudMapServiceDiscovery `json:"awsCloudMap,omitempty"`
+	AWSCloudMap *AWSCloudMapServiceDiscovery `json:"awsCloudMap,omitempty"`
 	// Specifies the DNS information for the virtual node.
 	// +optional
-	DNS *DnsServiceDiscovery `json:"dns,omitempty"`
+	DNS *DNSServiceDiscovery `json:"dns,omitempty"`
 }
 
 // FileAccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_FileAccessLog.html
@@ -131,8 +131,8 @@ type VirtualNodeCondition struct {
 	Message *string `json:"message,omitempty"`
 }
 
-// AwsCloudMapServiceStatus is AWS CloudMap Service object's info
-type AwsCloudMapServiceStatus struct {
+// AWSCloudMapServiceStatus is AWS CloudMap Service object's info
+type AWSCloudMapServiceStatus struct {
 	// NamespaceID is AWS CloudMap Service object's namespace Id
 	// +optional
 	NamespaceID *string `json:"namespaceID,omitempty"`
@@ -145,7 +145,7 @@ type AwsCloudMapServiceStatus struct {
 // refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html
 type VirtualNodeSpec struct {
 	// AWSName is the AppMesh VirtualNode object's name.
-	// If unspecified, it defaults to be "${name}_${namespace}" of k8s VirtualNode
+	// If unspecified or empty, it defaults to be "${name}_${namespace}" of k8s VirtualNode
 	// +optional
 	AWSName *string `json:"awsName,omitempty"`
 	// The listener that the virtual node is expected to receive inbound traffic from
@@ -177,18 +177,18 @@ type VirtualNodeSpec struct {
 
 // VirtualNodeStatus defines the observed state of VirtualNode
 type VirtualNodeStatus struct {
-	// MeshArn is the AppMesh Mesh object's Amazon Resource Name
+	// MeshARN is the AppMesh Mesh object's Amazon Resource Name
 	// +optional
-	MeshArn *string `json:"meshArn,omitempty"`
-	// VirtualNodeArn is the AppMesh VirtualNode object's Amazon Resource Name
+	MeshARN *string `json:"meshARN,omitempty"`
+	// VirtualNodeARN is the AppMesh VirtualNode object's Amazon Resource Name
 	// +optional
-	VirtualNodeArn *string `json:"virtualNodeArn,omitempty"`
+	VirtualNodeARN *string `json:"virtualNodeARN,omitempty"`
 	// The current VirtualNode status.
 	// +optional
 	Conditions []VirtualNodeCondition `json:"conditions,omitempty"`
 	// AWSCloudMapServiceStatus is AWS CloudMap Service object's info
 	// +optional
-	AWSCloudMapServiceStatus *AwsCloudMapServiceStatus `json:"awsCloudMapServiceStatus,omitempty"`
+	AWSCloudMapServiceStatus *AWSCloudMapServiceStatus `json:"awsCloudMapServiceStatus,omitempty"`
 }
 
 // +kubebuilder:object:root=true
