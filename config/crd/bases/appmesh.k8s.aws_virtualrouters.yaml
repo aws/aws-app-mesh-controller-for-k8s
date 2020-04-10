@@ -37,7 +37,8 @@ spec:
           properties:
             awsName:
               description: AWSName is the AppMesh VirtualRouter object's name. If
-                unspecified, it defaults to be "${name}_${namespace}" of k8s VirtualRouter
+                unspecified or empty, it defaults to be "${name}_${namespace}" of
+                k8s VirtualRouter
               type: string
             listeners:
               description: The listeners that the virtual router is expected to receive
@@ -148,7 +149,7 @@ spec:
                             description: An object that represents the data to match
                               from the request.
                             items:
-                              description: GrpcRouteMetadata refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadata.html
+                              description: GRPCRouteMetadata refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadata.html
                               properties:
                                 invert:
                                   description: Specify True to match anything except
@@ -250,6 +251,7 @@ spec:
                             minimum: 0
                             type: integer
                           perRetryTimeout:
+                            description: An object that represents a duration of time.
                             properties:
                               unit:
                                 description: A unit of time.
@@ -274,6 +276,9 @@ spec:
                             maxItems: 1
                             minItems: 1
                             type: array
+                        required:
+                        - maxRetries
+                        - perRetryTimeout
                         type: object
                     required:
                     - action
@@ -334,7 +339,7 @@ spec:
                             description: An object that represents the client request
                               headers to match on.
                             items:
-                              description: HttpRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html
+                              description: HTTPRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html
                               properties:
                                 invert:
                                   description: Specify True to match anything except
@@ -438,6 +443,7 @@ spec:
                             minimum: 0
                             type: integer
                           perRetryTimeout:
+                            description: An object that represents a duration of time
                             properties:
                               unit:
                                 description: A unit of time.
@@ -462,6 +468,9 @@ spec:
                             maxItems: 1
                             minItems: 1
                             type: array
+                        required:
+                        - maxRetries
+                        - perRetryTimeout
                         type: object
                     required:
                     - action
@@ -522,7 +531,7 @@ spec:
                             description: An object that represents the client request
                               headers to match on.
                             items:
-                              description: HttpRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html
+                              description: HTTPRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html
                               properties:
                                 invert:
                                   description: Specify True to match anything except
@@ -626,6 +635,7 @@ spec:
                             minimum: 0
                             type: integer
                           perRetryTimeout:
+                            description: An object that represents a duration of time
                             properties:
                               unit:
                                 description: A unit of time.
@@ -650,6 +660,9 @@ spec:
                             maxItems: 1
                             minItems: 1
                             type: array
+                        required:
+                        - maxRetries
+                        - perRetryTimeout
                         type: object
                     required:
                     - action
@@ -746,17 +759,17 @@ spec:
                 - type
                 type: object
               type: array
-            meshArn:
-              description: MeshArn is the AppMesh Mesh object's Amazon Resource Name
+            meshARN:
+              description: MeshARN is the AppMesh Mesh object's Amazon Resource Name
               type: string
-            routeArns:
+            routeARNs:
               additionalProperties:
                 type: string
-              description: RouteArns is a map of AppMesh Route objects' Amazon Resource
+              description: RouteARNs is a map of AppMesh Route objects' Amazon Resource
                 Names, indexed by route name.
               type: object
-            virtualRouterArn:
-              description: VirtualRouterArn is the AppMesh VirtualRouter object's
+            virtualRouterARN:
+              description: VirtualRouterARN is the AppMesh VirtualRouter object's
                 Amazon Resource Name.
               type: string
           type: object

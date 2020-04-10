@@ -35,14 +35,16 @@ spec:
           description: MeshSpec defines the desired state of Mesh refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_MeshSpec.html
           properties:
             awsName:
-              description: AWSName is the AppMesh Mesh object's name. If unspecified,
-                it defaults to be "${name}" of k8s Mesh
+              description: AWSName is the AppMesh Mesh object's name. If unspecified
+                or empty, it defaults to be "${name}" of k8s Mesh
               type: string
             egressFilter:
-              description: The egress filter rules for a service mesh
+              description: The egress filter rules for the service mesh. If unspecified,
+                default settings from AWS API will be applied. Refer to AWS Docs for
+                default settings.
               properties:
                 type:
-                  description: The egress filter type
+                  description: The egress filter type.
                   enum:
                   - ALLOW_ALL
                   - DROP_ALL
@@ -126,8 +128,8 @@ spec:
                 - type
                 type: object
               type: array
-            meshArn:
-              description: MeshArn is the AppMesh Mesh object's Amazon Resource Name
+            meshARN:
+              description: MeshARN is the AppMesh Mesh object's Amazon Resource Name
               type: string
           type: object
       type: object
