@@ -69,7 +69,7 @@ type VirtualServiceCondition struct {
 // VirtualServiceSpec defines the desired state of VirtualService
 type VirtualServiceSpec struct {
 	// AWSName is the AppMesh VirtualService object's name.
-	// If unspecified, it defaults to be "${name}" of k8s VirtualService
+	// If unspecified or empty, it defaults to be "${name}.${namespace}" of k8s VirtualService
 	// +optional
 	AWSName *string `json:"awsName,omitempty"`
 
@@ -87,12 +87,12 @@ type VirtualServiceSpec struct {
 
 // VirtualServiceStatus defines the observed state of VirtualService
 type VirtualServiceStatus struct {
-	// MeshArn is the AppMesh Mesh object's Amazon Resource Name.
+	// MeshARN is the AppMesh Mesh object's Amazon Resource Name.
 	// +optional
-	MeshArn *string `json:"meshArn,omitempty"`
-	// VirtualServiceArn is the AppMesh VirtualService object's Amazon Resource Name.
+	MeshARN *string `json:"meshARN,omitempty"`
+	// VirtualServiceARN is the AppMesh VirtualService object's Amazon Resource Name.
 	// +optional
-	VirtualServiceArn string `json:"virtualServiceArn,omitempty"`
+	VirtualServiceARN string `json:"virtualServiceARN,omitempty"`
 	// The current VirtualService status.
 	// +optional
 	Conditions []VirtualServiceCondition `json:"conditions,omitempty"`

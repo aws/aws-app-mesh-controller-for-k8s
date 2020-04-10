@@ -33,7 +33,7 @@ const (
 
 // EgressFilter refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_EgressFilter.html
 type EgressFilter struct {
-	// The egress filter type
+	// The egress filter type.
 	Type EgressFilterType `json:"type"`
 }
 
@@ -64,23 +64,24 @@ type MeshCondition struct {
 // refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_MeshSpec.html
 type MeshSpec struct {
 	// AWSName is the AppMesh Mesh object's name.
-	// If unspecified, it defaults to be "${name}" of k8s Mesh
+	// If unspecified or empty, it defaults to be "${name}" of k8s Mesh
 	// +optional
 	AWSName *string `json:"awsName,omitempty"`
 	// NamespaceSelector selects Namespaces using labels to designate mesh membership.
 	// This field follows standard label selector semantics; if present but empty, it selects all namespaces.
 	// +optional
 	NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector,omitempty"`
-	// The egress filter rules for a service mesh
+	// The egress filter rules for the service mesh.
+	// If unspecified, default settings from AWS API will be applied. Refer to AWS Docs for default settings.
 	// +optional
 	EgressFilter *EgressFilter `json:"egressFilter,omitempty"`
 }
 
 // MeshStatus defines the observed state of Mesh
 type MeshStatus struct {
-	// MeshArn is the AppMesh Mesh object's Amazon Resource Name
+	// MeshARN is the AppMesh Mesh object's Amazon Resource Name
 	// +optional
-	MeshArn *string `json:"meshArn,omitempty"`
+	MeshARN *string `json:"meshARN,omitempty"`
 	// The current Mesh status.
 	// +optional
 	Conditions []MeshCondition `json:"conditions,omitempty"`
