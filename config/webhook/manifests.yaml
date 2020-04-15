@@ -1,0 +1,177 @@
+
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: mutating-webhook-configuration
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-appmesh-k8s-aws-v1beta2-mesh
+  failurePolicy: Fail
+  name: mmesh.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - meshes
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-appmesh-k8s-aws-v1beta2-virtualnode
+  failurePolicy: Fail
+  name: mvirtualnode.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualnodes
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-appmesh-k8s-aws-v1beta2-virtualrouter
+  failurePolicy: Fail
+  name: mvirtualrouter.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualrouters
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-appmesh-k8s-aws-v1beta2-virtualservice
+  failurePolicy: Fail
+  name: mvirtualservice.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualservices
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-v1-pod
+  failurePolicy: Ignore
+  name: mpod.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    resources:
+    - pods
+
+---
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: validating-webhook-configuration
+webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-appmesh-k8s-aws-v1beta2-mesh
+  failurePolicy: Fail
+  name: vmesh.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - meshes
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-appmesh-k8s-aws-v1beta2-virtualnode
+  failurePolicy: Fail
+  name: vvirtualnode.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualnodes
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-appmesh-k8s-aws-v1beta2-virtualrouter
+  failurePolicy: Fail
+  name: vvirtualrouter.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualrouters
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-appmesh-k8s-aws-v1beta2-virtualservice
+  failurePolicy: Fail
+  name: vvirtualservice.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualservices

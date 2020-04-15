@@ -18,16 +18,19 @@ package main
 
 import (
 	"flag"
-	"os"
-
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	appmeshcontroller "github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh"
+	appmeshwebhook "github.com/aws/aws-app-mesh-controller-for-k8s/webhooks/appmesh"
+	corewebhook "github.com/aws/aws-app-mesh-controller-for-k8s/webhooks/core"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -98,6 +101,17 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualRouter")
 		os.Exit(1)
 	}
+
+	meshMembershipDesignator := mesh.NewMembershipDesignator(mgr.GetClient())
+	vnMembershipDesignator := virtualnode.NewMembershipDesignator(mgr.GetClient())
+	appmeshwebhook.NewMeshMutator().SetupWithManager(mgr)
+	appmeshwebhook.NewMeshValidator().SetupWithManager(mgr)
+	appmeshwebhook.NewVirtualNodeMutator(meshMembershipDesignator).SetupWithManager(mgr)
+	appmeshwebhook.NewVirtualNodeValidator().SetupWithManager(mgr)
+	appmeshwebhook.NewVirtualServiceMutator(meshMembershipDesignator).SetupWithManager(mgr)
+	appmeshwebhook.NewVirtualServiceValidator().SetupWithManager(mgr)
+	corewebhook.NewPodMutator(vnMembershipDesignator).SetupWithManager(mgr)
+
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
