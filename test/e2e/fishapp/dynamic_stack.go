@@ -3,6 +3,12 @@ package fishapp
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"sync"
+	"time"
+
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/fishapp/shared"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework"
@@ -17,23 +23,17 @@ import (
 	"go.uber.org/zap"
 	"gonum.org/v1/gonum/stat"
 	"gonum.org/v1/gonum/stat/distuv"
-	"io/ioutil"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"net/http"
-	"net/url"
-	"sync"
-	"time"
 )
 
 const (
 	connectivityCheckRate                  = time.Second / 100
 	connectivityCheckProxyPort             = 8899
 	connectivityCheckUniformDistributionSL = 0.001 // Significance level that traffic to targets are uniform distributed.
-	appMeshOperationRate                   = time.Second * 2
 )
 
 // A dynamic generated stack designed to test app mesh integration :D
@@ -169,7 +169,7 @@ func (s *DynamicStack) Check(ctx context.Context, f *framework.Framework) {
 		for _, backend := range vn.Spec.Backends {
 			vsList = append(vsList, vsByName[backend.VirtualService.VirtualServiceName])
 		}
-		if errs := s.checkDeploymentToVirtualServiceConnectivity(ctx, f, vn, dp, vsList); len(errs) != 0 {
+		if errs := s.checkDeploymentToVirtualServiceConnectivity(ctx, f, dp, vsList); len(errs) != 0 {
 			checkErrors = append(checkErrors, errs...)
 		}
 	}
@@ -388,7 +388,6 @@ func (s *DynamicStack) deleteCloudMapNamespace(ctx context.Context, f *framework
 }
 
 func (s *DynamicStack) createResourcesForNodes(ctx context.Context, f *framework.Framework, mb *shared.ManifestBuilder) {
-	throttle := time.Tick(appMeshOperationRate)
 	By("create all resources for nodes", func() {
 		s.createdNodeVNs = make([]*appmeshv1beta1.VirtualNode, s.VirtualNodesCount)
 		s.createdNodeDPs = make([]*appsv1.Deployment, s.VirtualNodesCount)
@@ -399,8 +398,6 @@ func (s *DynamicStack) createResourcesForNodes(ctx context.Context, f *framework
 			instanceName := fmt.Sprintf("node-%d", i)
 			By(fmt.Sprintf("create VirtualNode for node #%d", i), func() {
 				vn := mb.BuildNodeVirtualNode(instanceName, nil)
-
-				<-throttle
 				vn, err = f.K8sMeshClient.AppmeshV1beta1().VirtualNodes(s.namespace.Name).Create(vn)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdNodeVNs[i] = vn
@@ -476,7 +473,6 @@ func (s *DynamicStack) createResourcesForNodes(ctx context.Context, f *framework
 }
 
 func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework.Framework) []error {
-	throttle := time.Tick(appMeshOperationRate)
 	var deletionErrors []error
 	By("delete all resources for nodes", func() {
 		for i, svc := range s.createdNodeSVCs {
@@ -518,7 +514,6 @@ func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework
 				continue
 			}
 			By(fmt.Sprintf("delete VirtualNode for node #%d", i), func() {
-				<-throttle
 				if err := f.K8sMeshClient.AppmeshV1beta1().VirtualNodes(vn.Namespace).Delete(vn.Name, &metav1.DeleteOptions{}); err != nil {
 					f.Logger.Error("failed to delete VirtualNode",
 						zap.String("namespace", vn.Namespace),
@@ -588,8 +583,6 @@ func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework
 }
 
 func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framework.Framework, mb *shared.ManifestBuilder) {
-	throttle := time.Tick(appMeshOperationRate)
-
 	By("create all resources for services", func() {
 		s.createdServiceVSs = make([]*appmeshv1beta1.VirtualService, s.VirtualServicesCount)
 		s.createdServiceSVCs = make([]*corev1.Service, s.VirtualServicesCount)
@@ -615,7 +608,6 @@ func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framew
 					})
 				}
 				vs := mb.BuildServiceVirtualService(instanceName, routeCfgs)
-				<-throttle
 				vs, err := f.K8sMeshClient.AppmeshV1beta1().VirtualServices(s.namespace.Name).Create(vs)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdServiceVSs[i] = vs
@@ -657,8 +649,6 @@ func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framew
 }
 
 func (s *DynamicStack) deleteResourcesForServices(ctx context.Context, f *framework.Framework) []error {
-	throttle := time.Tick(appMeshOperationRate)
-
 	var deletionErrors []error
 	By("delete all resources for services", func() {
 		for i, svc := range s.createdServiceSVCs {
@@ -682,7 +672,6 @@ func (s *DynamicStack) deleteResourcesForServices(ctx context.Context, f *framew
 				continue
 			}
 			By(fmt.Sprintf("delete VirtualService for service #%d", i), func() {
-				<-throttle
 				if err := f.K8sMeshClient.AppmeshV1beta1().VirtualServices(vs.Namespace).Delete(vs.Name, &metav1.DeleteOptions{}); err != nil {
 					f.Logger.Error("failed to delete VirtualService",
 						zap.String("namespace", vs.Namespace),
@@ -725,8 +714,6 @@ func (s *DynamicStack) deleteResourcesForServices(ctx context.Context, f *framew
 }
 
 func (s *DynamicStack) grantVirtualNodesBackendAccess(ctx context.Context, f *framework.Framework) {
-	throttle := time.Tick(appMeshOperationRate)
-
 	By("granting VirtualNodes backend access", func() {
 		nextVirtualServiceIndex := 0
 		for i, vn := range s.createdNodeVNs {
@@ -748,7 +735,6 @@ func (s *DynamicStack) grantVirtualNodesBackendAccess(ctx context.Context, f *fr
 				vnNew.Spec.Backends = vnBackends
 				patch, err := k8s.CreateJSONMergePatch(vn, vnNew, appmeshv1beta1.VirtualNode{})
 				Expect(err).NotTo(HaveOccurred())
-				<-throttle
 				vnNew, err = f.K8sMeshClient.AppmeshV1beta1().VirtualNodes(vnNew.Namespace).Patch(vnNew.Name, types.MergePatchType, patch)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdNodeVNs[i] = vnNew
@@ -758,8 +744,6 @@ func (s *DynamicStack) grantVirtualNodesBackendAccess(ctx context.Context, f *fr
 }
 
 func (s *DynamicStack) revokeVirtualNodeBackendAccess(ctx context.Context, f *framework.Framework) []error {
-	throttle := time.Tick(appMeshOperationRate)
-
 	var deletionErrors []error
 	By("revoking VirtualNodes backend access", func() {
 		for i, vn := range s.createdNodeVNs {
@@ -779,7 +763,6 @@ func (s *DynamicStack) revokeVirtualNodeBackendAccess(ctx context.Context, f *fr
 					deletionErrors = append(deletionErrors, err)
 					return
 				}
-				<-throttle
 				vnNew, err = f.K8sMeshClient.AppmeshV1beta1().VirtualNodes(vnNew.Namespace).Patch(vnNew.Name, types.MergePatchType, patch)
 				if err != nil {
 					f.Logger.Error("failed to revoke VirtualNode backend access",
@@ -796,7 +779,7 @@ func (s *DynamicStack) revokeVirtualNodeBackendAccess(ctx context.Context, f *fr
 }
 
 func (s *DynamicStack) checkDeploymentToVirtualServiceConnectivity(ctx context.Context, f *framework.Framework,
-	vn *appmeshv1beta1.VirtualNode, dp *appsv1.Deployment, vsList []*appmeshv1beta1.VirtualService) []error {
+	dp *appsv1.Deployment, vsList []*appmeshv1beta1.VirtualService) []error {
 	sel := labels.Set(dp.Spec.Selector.MatchLabels)
 	opts := metav1.ListOptions{LabelSelector: sel.AsSelector().String()}
 	pods, err := f.K8sClient.CoreV1().Pods(dp.Namespace).List(opts)
@@ -811,7 +794,7 @@ func (s *DynamicStack) checkDeploymentToVirtualServiceConnectivity(ctx context.C
 	for i := range pods.Items {
 		pod := pods.Items[i].DeepCopy()
 		By(fmt.Sprintf("check pod %s/%s connectivity to services", pod.Namespace, pod.Name), func() {
-			if errs := s.checkPodToVirtualServiceConnectivity(ctx, f, vn, pod, vsList); len(errs) != 0 {
+			if errs := s.checkPodToVirtualServiceConnectivity(ctx, f, pod, vsList); len(errs) != 0 {
 				checkErrors = append(checkErrors, errs...)
 			}
 		})
@@ -820,8 +803,8 @@ func (s *DynamicStack) checkDeploymentToVirtualServiceConnectivity(ctx context.C
 }
 
 func (s *DynamicStack) checkPodToVirtualServiceConnectivity(ctx context.Context, f *framework.Framework,
-	vn *appmeshv1beta1.VirtualNode, pod *corev1.Pod, vsList []*appmeshv1beta1.VirtualService) []error {
-	connectivityCheckEntries, err := s.obtainPodToVirtualServiceConnectivityEntries(ctx, f, vn, pod, vsList)
+	pod *corev1.Pod, vsList []*appmeshv1beta1.VirtualService) []error {
+	connectivityCheckEntries, err := s.obtainPodToVirtualServiceConnectivityEntries(ctx, f, pod, vsList)
 	if err != nil {
 		return []error{err}
 	}
@@ -927,7 +910,7 @@ type connectivityCheckEntry struct {
 }
 
 func (s *DynamicStack) obtainPodToVirtualServiceConnectivityEntries(ctx context.Context, f *framework.Framework,
-	vn *appmeshv1beta1.VirtualNode, pod *corev1.Pod, vsList []*appmeshv1beta1.VirtualService) ([]connectivityCheckEntry, error) {
+	pod *corev1.Pod, vsList []*appmeshv1beta1.VirtualService) ([]connectivityCheckEntry, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 

@@ -2,7 +2,9 @@ package shared
 
 import (
 	"fmt"
+
 	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
+	"github.com/aws/aws-sdk-go/aws"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,6 +48,20 @@ func (b *ManifestBuilder) BuildNodeDeployment(instanceName string, replicas int3
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{MatchLabels: labels},
+			// https://docs.aws.amazon.com/app-mesh/latest/userguide/best-practices.html#reduce-deployment-velocity
+			Strategy: appsv1.DeploymentStrategy{
+				Type: appsv1.RollingUpdateDeploymentStrategyType,
+				RollingUpdate: &appsv1.RollingUpdateDeployment{
+					MaxSurge: &intstr.IntOrString{
+						Type:   intstr.String,
+						StrVal: "25%",
+					},
+					MaxUnavailable: &intstr.IntOrString{
+						Type:   intstr.Int,
+						IntVal: 0,
+					},
+				},
+			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels,
@@ -210,6 +226,13 @@ func (b *ManifestBuilder) BuildServiceVirtualService(instanceName string, routeC
 				},
 				Action: appmeshv1beta1.HttpRouteAction{
 					WeightedTargets: targets,
+				},
+				// https://docs.aws.amazon.com/app-mesh/latest/userguide/best-practices.html#route-retries
+				RetryPolicy: &appmeshv1beta1.HttpRetryPolicy{
+					PerRetryTimeoutMillis: aws.Int64(500),
+					MaxRetries:            aws.Int64(2),
+					HttpRetryPolicyEvents: []appmeshv1beta1.HttpRetryPolicyEvent{"stream-error", "gateway-error"},
+					TcpRetryPolicyEvents:  []appmeshv1beta1.TcpRetryPolicyEvent{"connection-error"},
 				},
 			},
 		})
