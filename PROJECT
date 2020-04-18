@@ -14,4 +14,7 @@ resources:
 - group: appmesh
   kind: VirtualRouter
   version: v1beta2
+- group: appmesh
+  kind: VirtualGateway
+  version: v1beta2
 version: "2"

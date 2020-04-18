@@ -1,0 +1,7 @@
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: VirtualGateway
+metadata:
+  name: virtualgateway-sample
+spec:
+  # Add fields here
+  foo: bar

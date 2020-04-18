@@ -18,14 +18,16 @@ package main
 
 import (
 	"flag"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
+	"os"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 
 	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	appmeshcontroller "github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh"
@@ -112,6 +114,14 @@ func main() {
 	appmeshwebhook.NewVirtualServiceValidator().SetupWithManager(mgr)
 	corewebhook.NewPodMutator(vnMembershipDesignator).SetupWithManager(mgr)
 
+	if err = (&appmeshcontroller.VirtualGatewayReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("VirtualGateway"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "VirtualGateway")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
