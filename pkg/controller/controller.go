@@ -55,6 +55,7 @@ type Controller struct {
 	podsLister corev1listers.PodLister
 	podsSynced cache.InformerSynced
 
+
 	meshLister           meshlisters.MeshLister
 	meshIndex            cache.Indexer
 	meshSynced           cache.InformerSynced
@@ -74,6 +75,8 @@ type Controller struct {
 	nq workqueue.RateLimitingInterface
 	sq workqueue.RateLimitingInterface
 	pq workqueue.RateLimitingInterface
+
+	cloudMapInstanceCache   cache.Store
 
 	// recorder is an event recorder for recording Event resources to the
 	// Kubernetes API.
@@ -132,6 +135,9 @@ func NewController(
 		nq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		sq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		pq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		cloudMapInstanceCache:    cache.NewTTLStore(func(obj interface{}) (string, error) {
+			                                  return obj.(*CloudMapInstanceCacheItem).key, nil
+		                                       }, 300*time.Second),
 		recorder:                recorder,
 		stats:                   stats,
 		leaderElection:          leaderElection,

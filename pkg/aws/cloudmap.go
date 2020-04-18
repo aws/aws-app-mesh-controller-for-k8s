@@ -29,6 +29,7 @@ const (
 	AttrK8sPod = "k8s.io/pod"
 	//AttrK8sNamespace is a custom attribute injected by app-mesh controller
 	AttrK8sNamespace = "k8s.io/namespace"
+	AttrK8sApp = "app"
 )
 
 //CloudMapAPI is wrapper util to invoke CloudMap API
@@ -172,8 +173,7 @@ func (c *Cloud) RegisterInstance(ctx context.Context, instanceID string, pod *co
 	}()
 
 	if pod.Status.Phase != corev1.PodRunning {
-		klog.V(4).Infof("Pod is in %s phase, skipping", pod.Status.Phase)
-		return nil
+		return fmt.Errorf("Pod is in %s phase, skipping", pod.Status.Phase)
 	}
 
 	serviceSummary, err := c.getService(ctx, cloudmapConfig)
@@ -182,7 +182,7 @@ func (c *Cloud) RegisterInstance(ctx context.Context, instanceID string, pod *co
 			awssdk.StringValue(cloudmapConfig.ServiceName),
 			awssdk.StringValue(cloudmapConfig.NamespaceName),
 			err)
-		return nil
+		return err
 	}
 
 	attr := make(map[string]*string)
