@@ -25,9 +25,9 @@ const (
 )
 
 
-type CloudMapInstanceCacheItem struct {
+type cloudMapInstanceCacheItem struct {
 	key             string
-	InstanceSummary map[string]bool
+	instanceSummary map[string]bool
 }
 
 func (c *Controller) handlePod(key string) error {
@@ -38,7 +38,7 @@ func (c *Controller) handlePod(key string) error {
 
 	ctx := context.Background()
 
-	klog.V(4).Info("processing pod %s", key)
+	klog.V(4).Infof("processing pod %s", key)
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -214,23 +214,22 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 		}
 	}
 
-	cloudMapServiceKey := *(awssdk.String(*cloudmapConfig.NamespaceName)) + "-" +
-		*(awssdk.String(*cloudmapConfig.ServiceName))
+	cloudMapServiceKey := *cloudmapConfig.NamespaceName + "-" + *cloudmapConfig.ServiceName
 
-	existingItem, exists, _ := c.cloudMapInstanceCache.Get(&CloudMapInstanceCacheItem{
+	existingItem, exists, _ := c.cloudMapInstanceCache.Get(&cloudMapInstanceCacheItem{
 		key: cloudMapServiceKey,
 	})
 
 	var serviceInstanceSummary map[string]bool
 
 	if exists {
-		if healthy, ok := existingItem.(*CloudMapInstanceCacheItem).InstanceSummary[pod.Status.PodIP]; ok {
+		if healthy, ok := existingItem.(*cloudMapInstanceCacheItem).instanceSummary[pod.Status.PodIP]; ok {
 			//Right now we're not logging pod/instance health info to CloudMap. So, if it is in cache then it is
 			//considered healthy. *TODO - v1.0* */
 			klog.V(4).Info("Pod Instance already registered. Nothing to do for this pod; Healthy?: ", healthy)
 			return nil
 		}
-		serviceInstanceSummary = existingItem.(*CloudMapInstanceCacheItem).InstanceSummary
+		serviceInstanceSummary = existingItem.(*cloudMapInstanceCacheItem).instanceSummary
 		if serviceInstanceSummary == nil { serviceInstanceSummary = make(map[string]bool) }
 		serviceInstanceSummary[pod.Status.PodIP] = true
 	} else {
@@ -239,8 +238,8 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 		registered := false
 
 		appmeshCloudMapConfig := &appmesh.AwsCloudMapServiceDiscovery{
-			NamespaceName: awssdk.String(*cloudmapConfig.NamespaceName),
-			ServiceName:   awssdk.String(*cloudmapConfig.ServiceName),
+			NamespaceName: cloudmapConfig.NamespaceName,
+			ServiceName:   cloudmapConfig.ServiceName,
 		}
 
 		if serviceInstances, _ := c.getServiceInstancesFromCloudMap(ctx, appmeshCloudMapConfig); len(serviceInstances) > 0 {
@@ -259,9 +258,9 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 				serviceInstanceSummary[instanceID] = true
 			}
 
-			serviceItem := &CloudMapInstanceCacheItem{
+			serviceItem := &cloudMapInstanceCacheItem{
 				key:             cloudMapServiceKey,
-				InstanceSummary: serviceInstanceSummary,
+				instanceSummary: serviceInstanceSummary,
 			}
 			_ = c.cloudMapInstanceCache.Add(serviceItem)
 
@@ -278,9 +277,9 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 		return err
 	}
 
-	serviceItem := &CloudMapInstanceCacheItem{
+	serviceItem := &cloudMapInstanceCacheItem{
 		key: cloudMapServiceKey,
-		InstanceSummary: serviceInstanceSummary,
+		instanceSummary: serviceInstanceSummary,
 	}
 
 	_ = c.cloudMapInstanceCache.Add(serviceItem)
