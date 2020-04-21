@@ -136,7 +136,7 @@ func NewController(
 		sq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		pq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		cloudMapInstanceCache:    cache.NewTTLStore(func(obj interface{}) (string, error) {
-			                                  return obj.(*CloudMapInstanceCacheItem).key, nil
+			                                  return obj.(*cloudMapInstanceCacheItem).key, nil
 		                                       }, 300*time.Second),
 		recorder:                recorder,
 		stats:                   stats,

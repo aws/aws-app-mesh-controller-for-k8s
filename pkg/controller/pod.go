@@ -26,7 +26,7 @@ const (
 )
 
 
-type CloudMapInstanceCacheItem struct {
+type cloudMapInstanceCacheItem struct {
 	key             string
 	instanceSummary map[string]bool
 }
@@ -212,11 +212,11 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 
 	cloudmapConfig := virtualNode.Data.Spec.ServiceDiscovery.AwsCloudMap
 
-	var serviceItem *CloudMapInstanceCacheItem
+	var serviceItem *cloudMapInstanceCacheItem
 	serviceInstanceSummary := make(map[string]bool)
 	cloudMapServiceKey := *cloudmapConfig.NamespaceName + "-" + *cloudmapConfig.ServiceName
 
-	existingItem, exists, _ := c.cloudMapInstanceCache.Get(&CloudMapInstanceCacheItem{
+	existingItem, exists, _ := c.cloudMapInstanceCache.Get(&cloudMapInstanceCacheItem{
 		key: cloudMapServiceKey,
 	})
 
@@ -228,13 +228,13 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 		}
 		//Clear the instance from Cache.
 		if exists {
-			delete(existingItem.(*CloudMapInstanceCacheItem).instanceSummary, pod.Status.PodIP)
+			delete(existingItem.(*cloudMapInstanceCacheItem).instanceSummary, pod.Status.PodIP)
 		}
 		return nil
 	}
 
 	if exists {
-		serviceItem = existingItem.(*CloudMapInstanceCacheItem)
+		serviceItem = existingItem.(*cloudMapInstanceCacheItem)
 	} else {
 		//Retrieve CloudMap instances for this service
 		appmeshCloudMapConfig := &appmesh.AwsCloudMapServiceDiscovery{
@@ -252,7 +252,7 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 				serviceInstanceSummary[instanceID] = true
 			}
 
-			serviceItem = &CloudMapInstanceCacheItem{
+			serviceItem = &cloudMapInstanceCacheItem{
 				key:             cloudMapServiceKey,
 				instanceSummary: serviceInstanceSummary,
 			}
@@ -280,7 +280,7 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 		return err
 	}
 
-	serviceItem = &CloudMapInstanceCacheItem{
+	serviceItem = &cloudMapInstanceCacheItem{
 		key: cloudMapServiceKey,
 		instanceSummary: serviceInstanceSummary,
 	}
