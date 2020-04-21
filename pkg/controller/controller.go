@@ -55,7 +55,6 @@ type Controller struct {
 	podsLister corev1listers.PodLister
 	podsSynced cache.InformerSynced
 
-
 	meshLister           meshlisters.MeshLister
 	meshIndex            cache.Indexer
 	meshSynced           cache.InformerSynced
@@ -76,7 +75,7 @@ type Controller struct {
 	sq workqueue.RateLimitingInterface
 	pq workqueue.RateLimitingInterface
 
-	cloudMapInstanceCache   cache.Store
+	cloudMapInstanceCache cache.Store
 
 	// recorder is an event recorder for recording Event resources to the
 	// Kubernetes API.
@@ -119,25 +118,25 @@ func NewController(
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
 	controller := &Controller{
-		name:                    controllerAgentName,
-		cloud:                   cloud,
-		kubeclientset:           kubeclientset,
-		meshclientset:           meshclientset,
-		podsLister:              podInformer.Lister(),
-		podsSynced:              podInformer.Informer().HasSynced,
-		meshLister:              meshInformer.Lister(),
-		meshSynced:              meshInformer.Informer().HasSynced,
-		virtualNodeLister:       virtualNodeInformer.Lister(),
-		virtualNodeSynced:       virtualNodeInformer.Informer().HasSynced,
-		virtualServiceLister:    virtualServiceInformer.Lister(),
-		virtualServiceSynced:    virtualServiceInformer.Informer().HasSynced,
-		mq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
-		nq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
-		sq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
-		pq:                      workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
-		cloudMapInstanceCache:    cache.NewTTLStore(func(obj interface{}) (string, error) {
-			                                  return obj.(*cloudMapInstanceCacheItem).key, nil
-		                                       }, 300*time.Second),
+		name:                 controllerAgentName,
+		cloud:                cloud,
+		kubeclientset:        kubeclientset,
+		meshclientset:        meshclientset,
+		podsLister:           podInformer.Lister(),
+		podsSynced:           podInformer.Informer().HasSynced,
+		meshLister:           meshInformer.Lister(),
+		meshSynced:           meshInformer.Informer().HasSynced,
+		virtualNodeLister:    virtualNodeInformer.Lister(),
+		virtualNodeSynced:    virtualNodeInformer.Informer().HasSynced,
+		virtualServiceLister: virtualServiceInformer.Lister(),
+		virtualServiceSynced: virtualServiceInformer.Informer().HasSynced,
+		mq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		nq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		sq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		pq:                   workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
+		cloudMapInstanceCache: cache.NewTTLStore(func(obj interface{}) (string, error) {
+			return obj.(*cloudMapInstanceCacheItem).key, nil
+		}, 300*time.Second),
 		recorder:                recorder,
 		stats:                   stats,
 		leaderElection:          leaderElection,
