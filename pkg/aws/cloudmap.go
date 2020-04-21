@@ -29,7 +29,7 @@ const (
 	AttrK8sPod = "k8s.io/pod"
 	//AttrK8sNamespace is a custom attribute injected by app-mesh controller
 	AttrK8sNamespace = "k8s.io/namespace"
-	AttrK8sApp = "app"
+	AttrK8sApp       = "app"
 )
 
 //CloudMapAPI is wrapper util to invoke CloudMap API
