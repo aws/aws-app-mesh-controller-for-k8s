@@ -1,5 +1,8 @@
 package aws
 
+import "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
+
 type CloudOptions struct {
-	Region string
+	Region               string
+	AWSAPIThrottleConfig *throttle.ServiceOperationsThrottleConfig
 }
