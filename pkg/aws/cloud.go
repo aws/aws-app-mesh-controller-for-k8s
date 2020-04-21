@@ -2,6 +2,7 @@ package aws
 
 import (
 	"fmt"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"time"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/metrics"
@@ -57,7 +58,7 @@ type CloudMapNamespaceSummary struct {
 func NewCloud(opts CloudOptions, stats *metrics.Recorder) (CloudAPI, error) {
 	cfg := &aws.Config{Region: aws.String(opts.Region)}
 
-	session, err := newAWSSession(cfg, stats)
+	session, err := newAWSSession(cfg, stats, opts.AWSAPIThrottleConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -85,11 +86,16 @@ func NewCloud(opts CloudOptions, stats *metrics.Recorder) (CloudAPI, error) {
 	}, nil
 }
 
-func newAWSSession(cfg *aws.Config, stats *metrics.Recorder) (*session.Session, error) {
+func newAWSSession(cfg *aws.Config, stats *metrics.Recorder, throttleCfg *throttle.ServiceOperationsThrottleConfig) (*session.Session, error) {
 	session, err := session.NewSession(cfg)
 	if err != nil {
 		stats.RecordAWSAPIRequestError("session", "NewSession", getAWSErrorCode(err))
 		return nil, err
+	}
+
+	if throttleCfg != nil {
+		throttler := throttle.NewThrottler(throttleCfg)
+		throttler.InjectHandlers(&session.Handlers)
 	}
 
 	session.Handlers.Send.PushFront(func(r *request.Request) {

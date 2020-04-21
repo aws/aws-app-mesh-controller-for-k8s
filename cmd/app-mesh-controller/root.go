@@ -3,6 +3,7 @@ package main
 import (
 	goflag "flag"
 	"fmt"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"os"
 	"strings"
 	"time"
@@ -31,6 +32,7 @@ var (
 	leaderElection          bool
 	leaderElectionID        string
 	leaderElectionNamespace string
+	awsAPIThrottleConfig    = throttle.NewDefaultServiceOperationsThrottleConfig()
 )
 
 func init() {
@@ -43,6 +45,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&leaderElection, "election", controller.DefaultElection, `Whether to do leader election for controller`)
 	rootCmd.Flags().StringVar(&leaderElectionID, "election-id", controller.DefaultElectionID, "Namespace of leader-election configmap for ingress controller")
 	rootCmd.Flags().StringVar(&leaderElectionNamespace, "election-namespace", controller.DefaultElectionNamespace, "Namespace of leader-election configmap for ingress controller. If unspecified, the namespace of this controller pod will be used")
+	rootCmd.Flags().Var(awsAPIThrottleConfig, "aws-api-throttle", "throttle settings for aws APIs, format: serviceID1:operationRegex1=rate:burst,serviceID2:operationRegex2=rate:burst")
 
 	viper.BindPFlag("master", rootCmd.Flags().Lookup("master"))
 	viper.BindPFlag("kubeconfig", rootCmd.Flags().Lookup("kubeconfig"))
@@ -166,7 +169,8 @@ func getConfig() (controllerConfig, error) {
 			Address: viper.GetString("listenAddress"),
 		},
 		aws: aws.CloudOptions{
-			Region: viper.GetString("aws-region"),
+			Region:               viper.GetString("aws-region"),
+			AWSAPIThrottleConfig: awsAPIThrottleConfig,
 		},
 	}, nil
 }
