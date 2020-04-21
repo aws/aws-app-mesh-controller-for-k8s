@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	"strings"
 	"time"
@@ -207,7 +206,8 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 
 	if virtualNode.Data.Spec.ServiceDiscovery.AwsCloudMap.NamespaceName == nil ||
 		virtualNode.Data.Spec.ServiceDiscovery.AwsCloudMap.ServiceName == nil {
-		return fmt.Errorf("CloudMap NamespaceName or ServiceName is null")
+		klog.Errorf("CloudMap NamespaceName or ServiceName is null")
+		return nil
 	}
 
 	cloudmapConfig := virtualNode.Data.Spec.ServiceDiscovery.AwsCloudMap
