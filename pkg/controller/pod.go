@@ -25,7 +25,7 @@ const (
 )
 
 
-type cloudMapInstanceCacheItem struct {
+type CloudMapInstanceCacheItem struct {
 	key             string
 	instanceSummary map[string]bool
 }
@@ -214,29 +214,18 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 		}
 	}
 
+	var serviceItem *CloudMapInstanceCacheItem
+	serviceInstanceSummary := make(map[string]bool)
 	cloudMapServiceKey := *cloudmapConfig.NamespaceName + "-" + *cloudmapConfig.ServiceName
 
-	existingItem, exists, _ := c.cloudMapInstanceCache.Get(&cloudMapInstanceCacheItem{
+	existingItem, exists, _ := c.cloudMapInstanceCache.Get(&CloudMapInstanceCacheItem{
 		key: cloudMapServiceKey,
 	})
 
-	var serviceInstanceSummary map[string]bool
-
-	if exists {
-		if healthy, ok := existingItem.(*cloudMapInstanceCacheItem).instanceSummary[pod.Status.PodIP]; ok {
-			//Right now we're not logging pod/instance health info to CloudMap. So, if it is in cache then it is
-			//considered healthy. *TODO - v1.0* */
-			klog.V(4).Info("Pod Instance already registered. Nothing to do for this pod; Healthy?: ", healthy)
-			return nil
-		}
-		serviceInstanceSummary = existingItem.(*cloudMapInstanceCacheItem).instanceSummary
-		if serviceInstanceSummary == nil { serviceInstanceSummary = make(map[string]bool) }
-		serviceInstanceSummary[pod.Status.PodIP] = true
+	if exists && existingItem !=nil {
+		serviceItem = existingItem.(*CloudMapInstanceCacheItem)
 	} else {
 		//Retrieve CloudMap instances for this service
-		serviceInstanceSummary := make(map[string]bool)
-		registered := false
-
 		appmeshCloudMapConfig := &appmesh.AwsCloudMapServiceDiscovery{
 			NamespaceName: cloudmapConfig.NamespaceName,
 			ServiceName:   cloudmapConfig.ServiceName,
@@ -249,26 +238,31 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 				instanceID := awssdk.StringValue(instance.Id)
 				serviceName := awssdk.StringValue(instance.Attributes[ctrlaws.AttrK8sApp])
 
-				if instanceID == pod.Status.PodIP {
-					klog.V(4).Info("Instance already registered for ServiceName: ", podName, serviceName)
-					registered = true
-				}
-
 				cloudMapServiceKey = podNamespace + ".pvt.aws.local" + "-" + serviceName
+				klog.V(4).Info("Pod: %s is currently registered with the service: %s", podName, serviceName)
 				serviceInstanceSummary[instanceID] = true
 			}
 
-			serviceItem := &cloudMapInstanceCacheItem{
+			serviceItem = &CloudMapInstanceCacheItem{
 				key:             cloudMapServiceKey,
 				instanceSummary: serviceInstanceSummary,
 			}
 			_ = c.cloudMapInstanceCache.Add(serviceItem)
-
-			if registered {
-				klog.V(4).Info("Instance already registered. Cache Refreshed. Move on")
-				return nil
-			}
 		}
+	}
+
+	if serviceItem != nil {
+	   if _, ok := serviceItem.instanceSummary[pod.Status.PodIP]; !ok {
+		   //Right now we're not logging pod/instance health info to CloudMap. So, if it is in cache then it is
+		   //considered healthy. *TODO - v1.0* */
+		   serviceInstanceSummary = serviceItem.instanceSummary
+		   serviceInstanceSummary[pod.Status.PodIP] = true
+	   } else {
+		   klog.V(4).Info("Instance already %s registered under service  %s", pod.Name, *cloudmapConfig.ServiceName)
+		   return nil
+	   }
+	} else {
+		serviceInstanceSummary[pod.Status.PodIP] = true
 	}
 
 	klog.Info("Registering instance %s under service %s", pod.Name, *cloudmapConfig.ServiceName)
@@ -277,7 +271,7 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 		return err
 	}
 
-	serviceItem := &cloudMapInstanceCacheItem{
+	serviceItem = &CloudMapInstanceCacheItem{
 		key: cloudMapServiceKey,
 		instanceSummary: serviceInstanceSummary,
 	}
@@ -290,13 +284,14 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 func (c *Controller) getServiceInstancesFromCloudMap(ctx context.Context,
 	           appmeshCloudMapConfig *appmesh.AwsCloudMapServiceDiscovery)([]*servicediscovery.InstanceSummary, error) {
 
-	klog.V(4).Info("Reach out to CloudMap for service: ", *appmeshCloudMapConfig.ServiceName)
 	instances, err := c.cloud.ListInstances(ctx, appmeshCloudMapConfig)
 	if err != nil {
 		klog.Errorf("Error obtaining instances for cloudmapConfig %v, %v", appmeshCloudMapConfig, err)
 		return instances, err
 	}
 
+	klog.V(4).Info(" Reach out to CloudMap for service: %s. Current Instance Count: ",
+		        *appmeshCloudMapConfig.ServiceName, len(instances))
 	return instances, nil
 }
 
