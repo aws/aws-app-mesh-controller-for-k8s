@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	"strings"
 	"time"
@@ -204,15 +205,12 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 		return nil
 	}
 
-	cloudmapConfig := virtualNode.Data.Spec.ServiceDiscovery.AwsCloudMap
-
-	if !pod.DeletionTimestamp.IsZero() {
-		klog.V(4).Infof("Deregistering instance %s under service %+v", pod.Name, cloudmapConfig)
-		err = c.cloud.DeregisterInstance(ctx, instanceID, cloudmapConfig)
-		if err != nil {
-			return err
-		}
+	if virtualNode.Data.Spec.ServiceDiscovery.AwsCloudMap.NamespaceName == nil ||
+		virtualNode.Data.Spec.ServiceDiscovery.AwsCloudMap.ServiceName == nil {
+		return fmt.Errorf("CloudMap NamespaceName or ServiceName is null")
 	}
+
+	cloudmapConfig := virtualNode.Data.Spec.ServiceDiscovery.AwsCloudMap
 
 	var serviceItem *CloudMapInstanceCacheItem
 	serviceInstanceSummary := make(map[string]bool)
@@ -222,7 +220,20 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 		key: cloudMapServiceKey,
 	})
 
-	if exists && existingItem !=nil {
+	if !pod.DeletionTimestamp.IsZero() {
+		klog.V(4).Infof("Deregistering instance %s under service %+v", pod.Name, cloudmapConfig)
+		err = c.cloud.DeregisterInstance(ctx, instanceID, cloudmapConfig)
+		if err != nil {
+			return err
+		}
+		//Clear the instance from Cache.
+		if exists {
+			delete(existingItem.(*CloudMapInstanceCacheItem).instanceSummary, pod.Status.PodIP)
+		}
+		return nil
+	}
+
+	if exists {
 		serviceItem = existingItem.(*CloudMapInstanceCacheItem)
 	} else {
 		//Retrieve CloudMap instances for this service
@@ -234,11 +245,9 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 		if serviceInstances, _ := c.getServiceInstancesFromCloudMap(ctx, appmeshCloudMapConfig); len(serviceInstances) > 0 {
 			for _, instance := range serviceInstances {
 				podName := awssdk.StringValue(instance.Attributes[ctrlaws.AttrK8sPod])
-				podNamespace := awssdk.StringValue(instance.Attributes[ctrlaws.AttrK8sNamespace])
 				instanceID := awssdk.StringValue(instance.Id)
 				serviceName := awssdk.StringValue(instance.Attributes[ctrlaws.AttrK8sApp])
 
-				cloudMapServiceKey = podNamespace + ".pvt.aws.local" + "-" + serviceName
 				klog.V(4).Info("Pod: %s is currently registered with the service: %s", podName, serviceName)
 				serviceInstanceSummary[instanceID] = true
 			}
