@@ -247,7 +247,7 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 				instanceID := awssdk.StringValue(instance.Id)
 				serviceName := awssdk.StringValue(instance.Attributes[ctrlaws.AttrK8sApp])
 
-				klog.V(4).Info("Pod: %s is currently registered with the service: %s", podName, serviceName)
+				klog.V(4).Infof("Pod: %s is currently registered with the service: %s", podName, serviceName)
 				serviceInstanceSummary[instanceID] = true
 			}
 
@@ -266,14 +266,15 @@ func (c *Controller) syncPod(ctx context.Context, pod *corev1.Pod) error {
 			serviceInstanceSummary = serviceItem.instanceSummary
 			serviceInstanceSummary[pod.Status.PodIP] = true
 		} else {
-			klog.V(4).Info("Instance already %s registered under service  %s", pod.Name, *cloudmapConfig.ServiceName)
+			klog.V(4).Infof("Instance already %s registered under service %s", pod.Name, *cloudmapConfig.ServiceName)
 			return nil
 		}
 	} else {
 		serviceInstanceSummary[pod.Status.PodIP] = true
 	}
 
-	klog.Info("Registering instance %s under service %s", pod.Name, *cloudmapConfig.ServiceName)
+	// FIXME emitting this log is confusing when we might short-circuit in RegisterInstance
+	klog.Infof("Registering instance %s under service %s", pod.Name, *cloudmapConfig.ServiceName)
 	err = c.cloud.RegisterInstance(ctx, instanceID, pod, cloudmapConfig)
 	if err != nil {
 		return err
@@ -298,7 +299,7 @@ func (c *Controller) getServiceInstancesFromCloudMap(ctx context.Context,
 		return instances, err
 	}
 
-	klog.V(4).Info("Reach out to CloudMap for service: %s. Current Instance Count: ",
+	klog.V(4).Infof("Reach out to CloudMap for service: %s. Current Instance Count: %d",
 		*appmeshCloudMapConfig.ServiceName, len(instances))
 	return instances, nil
 }

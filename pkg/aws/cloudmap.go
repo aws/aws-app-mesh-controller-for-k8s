@@ -167,6 +167,7 @@ func (c *Cloud) CloudMapGetService(ctx context.Context, serviceID string) (*Clou
 
 // RegisterInstance calls AWS ServiceDiscovery RegisterInstance API
 func (c *Cloud) RegisterInstance(ctx context.Context, instanceID string, pod *corev1.Pod, cloudmapConfig *appmesh.AwsCloudMapServiceDiscovery) error {
+	// FIXME we should only emit this if we're actually registering
 	begin := time.Now()
 	defer func() {
 		c.stats.RecordOperationDuration("cloudmap", "instance", "register", time.Since(begin))
