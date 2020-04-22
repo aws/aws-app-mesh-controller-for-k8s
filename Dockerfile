@@ -14,7 +14,11 @@ COPY . .
 RUN make
 
 FROM amazonlinux:2
-RUN yum install -y ca-certificates
+RUN yum update -y && \
+    yum install -y ca-certificates && \
+    yum clean all && \
+    rm -rf /var/cache/yum
+
 COPY --from=builder /go/src/github.com/aws/aws-app-mesh-controller-for-k8s/_output/bin/app-mesh-controller /bin/app-mesh-controller
 COPY --from=builder /go/src/github.com/aws/aws-app-mesh-controller-for-k8s/ATTRIBUTION.txt /ATTRIBUTION.txt
 
