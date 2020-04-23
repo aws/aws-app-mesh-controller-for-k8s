@@ -37,6 +37,26 @@ rules:
 - apiGroups:
   - appmesh.k8s.aws
   resources:
+  - virtualgateways
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualgateways/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
   - virtualnodes
   verbs:
   - create

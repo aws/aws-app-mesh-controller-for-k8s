@@ -6,18 +6,18 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.5
   creationTimestamp: null
-  name: virtualnodes.appmesh.k8s.aws
+  name: virtualgateways.appmesh.k8s.aws
 spec:
   group: appmesh.k8s.aws
   names:
-    kind: VirtualNode
-    listKind: VirtualNodeList
-    plural: virtualnodes
-    singular: virtualnode
+    kind: VirtualGateway
+    listKind: VirtualGatewayList
+    plural: virtualgateways
+    singular: virtualgateway
   scope: Namespaced
   validation:
     openAPIV3Schema:
-      description: VirtualNode is the Schema for the virtualnodes API
+      description: VirtualGateway is the Schema for the virtualgateways API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -32,16 +32,17 @@ spec:
         metadata:
           type: object
         spec:
-          description: VirtualNodeSpec defines the desired state of VirtualNode refers
-            to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html
+          description: VirtualGatewaySpec defines the desired state of VirtualGateway
+            refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
           properties:
             awsName:
-              description: AWSName is the AppMesh VirtualNode object's name. If unspecified
-                or empty, it defaults to be "${name}_${namespace}" of k8s VirtualNode
+              description: AWSName is the AppMesh VirtualGateway object's name. If
+                unspecified or empty, it defaults to be "${name}_${namespace}" of
+                k8s VirtualGateway
               type: string
             backendDefaults:
               description: A reference to an object that represents the defaults for
-                backends.
+                backend GatewayRoutes.
               properties:
                 clientPolicy:
                   description: A reference to an object that represents a client policy.
@@ -95,8 +96,7 @@ spec:
                                     certificateChain:
                                       description: The certificate trust chain for
                                         a certificate stored on the file system of
-                                        the virtual node that the proxy is running
-                                        on.
+                                        the virtual Gateway.
                                       maxLength: 255
                                       minLength: 1
                                       type: string
@@ -112,112 +112,11 @@ spec:
                       type: object
                   type: object
               type: object
-            backends:
-              description: The backends that the virtual node is expected to send
-                outbound traffic to.
-              items:
-                description: Backend refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Backend.html
-                properties:
-                  virtualService:
-                    description: Specifies a virtual service to use as a backend for
-                      a virtual node.
-                    properties:
-                      clientPolicy:
-                        description: A reference to an object that represents the
-                          client policy for a backend.
-                        properties:
-                          tls:
-                            description: A reference to an object that represents
-                              a Transport Layer Security (TLS) client policy.
-                            properties:
-                              enforce:
-                                description: Whether the policy is enforced. If unspecified,
-                                  default settings from AWS API will be applied. Refer
-                                  to AWS Docs for default settings.
-                                type: boolean
-                              ports:
-                                description: The range of ports that the policy is
-                                  enforced for.
-                                items:
-                                  format: int64
-                                  maximum: 65535
-                                  minimum: 1
-                                  type: integer
-                                type: array
-                              validation:
-                                description: A reference to an object that represents
-                                  a TLS validation context.
-                                properties:
-                                  trust:
-                                    description: A reference to an object that represents
-                                      a TLS validation context trust
-                                    properties:
-                                      acm:
-                                        description: A reference to an object that
-                                          represents a TLS validation context trust
-                                          for an AWS Certicate Manager (ACM) certificate.
-                                        properties:
-                                          certificateAuthorityARNs:
-                                            description: One or more ACM Amazon Resource
-                                              Name (ARN)s.
-                                            items:
-                                              type: string
-                                            maxItems: 3
-                                            minItems: 1
-                                            type: array
-                                        required:
-                                        - certificateAuthorityARNs
-                                        type: object
-                                      file:
-                                        description: An object that represents a TLS
-                                          validation context trust for a local file.
-                                        properties:
-                                          certificateChain:
-                                            description: The certificate trust chain
-                                              for a certificate stored on the file
-                                              system of the virtual node that the
-                                              proxy is running on.
-                                            maxLength: 255
-                                            minLength: 1
-                                            type: string
-                                        required:
-                                        - certificateChain
-                                        type: object
-                                    type: object
-                                required:
-                                - trust
-                                type: object
-                            required:
-                            - validation
-                            type: object
-                        type: object
-                      virtualServiceRef:
-                        description: The VirtualService that is acting as a virtual
-                          node backend.
-                        properties:
-                          name:
-                            description: Name is the name of VirtualService CR
-                            type: string
-                          namespace:
-                            description: Namespace is the namespace of VirtualService
-                              CR. If unspecified, defaults to the referencing object's
-                              namespace
-                            type: string
-                        required:
-                        - name
-                        type: object
-                    required:
-                    - virtualServiceRef
-                    type: object
-                required:
-                - virtualService
-                type: object
-              type: array
             listeners:
-              description: The listener that the virtual node is expected to receive
+              description: The listener that the virtual gateway is expected to receive
                 inbound traffic from
               items:
-                description: Listener refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Listener.html
+                description: VirtualGatewayListener refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
                 properties:
                   healthCheck:
                     description: The health check information for the listener.
@@ -258,7 +157,6 @@ spec:
                         - grpc
                         - http
                         - http2
-                        - tcp
                         type: string
                       timeoutMillis:
                         description: The amount of time to wait when receiving a response
@@ -270,12 +168,33 @@ spec:
                         type: integer
                       unhealthyThreshold:
                         description: The number of consecutive failed health checks
-                          that must occur before declaring a virtual node unhealthy.
+                          that must occur before declaring a virtual Gateway unhealthy.
                           If unspecified, defaults to be 2
                         format: int64
                         maximum: 10
                         minimum: 2
                         type: integer
+                    type: object
+                  logging:
+                    description: The inbound and outbound access logging information
+                      for the virtual gateway.
+                    properties:
+                      accessLog:
+                        description: The access log configuration for a virtual Gateway.
+                        properties:
+                          file:
+                            description: The file object to send virtual gateway access
+                              logs to.
+                            properties:
+                              path:
+                                description: The file path to write access logs to.
+                                maxLength: 255
+                                minLength: 1
+                                type: string
+                            required:
+                            - path
+                            type: object
+                        type: object
                     type: object
                   portMapping:
                     description: The port mapping information for the listener.
@@ -292,7 +211,6 @@ spec:
                         - grpc
                         - http
                         - http2
-                        - tcp
                         type: string
                     required:
                     - port
@@ -328,8 +246,7 @@ spec:
                                 type: string
                               privateKey:
                                 description: The private key for a certificate stored
-                                  on the file system of the virtual node that the
-                                  proxy is running on.
+                                  on the file system of the virtual Gateway.
                                 maxLength: 255
                                 minLength: 1
                                 type: string
@@ -355,29 +272,8 @@ spec:
               maxItems: 1
               minItems: 0
               type: array
-            logging:
-              description: The inbound and outbound access logging information for
-                the virtual node.
-              properties:
-                accessLog:
-                  description: The access log configuration for a virtual node.
-                  properties:
-                    file:
-                      description: The file object to send virtual node access logs
-                        to.
-                      properties:
-                        path:
-                          description: The file path to write access logs to.
-                          maxLength: 255
-                          minLength: 1
-                          type: string
-                      required:
-                      - path
-                      type: object
-                  type: object
-              type: object
             meshRef:
-              description: "A reference to k8s Mesh CR that this VirtualNode belongs
+              description: "A reference to k8s Mesh CR that this VirtualGateway belongs
                 to. The admission controller populates it using Meshes's selector,
                 and prevents users from setting this field. \n Populated by the system.
                 Read-only."
@@ -392,8 +288,53 @@ spec:
               - name
               - uid
               type: object
+            namespaceSelector:
+              description: NamespaceSelector selects Namespaces using labels to designate
+                GatewayRoute membership. This field follows standard label selector
+                semantics; if present but empty, it selects all namespaces.
+              properties:
+                matchExpressions:
+                  description: matchExpressions is a list of label selector requirements.
+                    The requirements are ANDed.
+                  items:
+                    description: A label selector requirement is a selector that contains
+                      values, a key, and an operator that relates the key and values.
+                    properties:
+                      key:
+                        description: key is the label key that the selector applies
+                          to.
+                        type: string
+                      operator:
+                        description: operator represents a key's relationship to a
+                          set of values. Valid operators are In, NotIn, Exists and
+                          DoesNotExist.
+                        type: string
+                      values:
+                        description: values is an array of string values. If the operator
+                          is In or NotIn, the values array must be non-empty. If the
+                          operator is Exists or DoesNotExist, the values array must
+                          be empty. This array is replaced during a strategic merge
+                          patch.
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - key
+                    - operator
+                    type: object
+                  type: array
+                matchLabels:
+                  additionalProperties:
+                    type: string
+                  description: matchLabels is a map of {key,value} pairs. A single
+                    {key,value} in the matchLabels map is equivalent to an element
+                    of matchExpressions, whose key field is "key", the operator is
+                    "In", and the values array contains only "value". The requirements
+                    are ANDed.
+                  type: object
+              type: object
             podSelector:
-              description: PodSelector selects Pods using labels to designate VirtualNode
+              description: PodSelector selects Pods using labels to designate VirtualGateway
                 membership. if unspecified or empty, it selects no pods.
               properties:
                 matchExpressions:
@@ -436,80 +377,12 @@ spec:
                     are ANDed.
                   type: object
               type: object
-            serviceDiscovery:
-              description: The service discovery information for the virtual node.
-              properties:
-                awsCloudMap:
-                  description: Specifies any AWS Cloud Map information for the virtual
-                    node.
-                  properties:
-                    attributes:
-                      description: A string map that contains attributes with values
-                        that you can use to filter instances by any custom attribute
-                        that you specified when you registered the instance
-                      items:
-                        description: AWSCloudMapInstanceAttribute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapInstanceAttribute.html
-                        properties:
-                          key:
-                            description: The name of an AWS Cloud Map service instance
-                              attribute key.
-                            maxLength: 255
-                            minLength: 1
-                            type: string
-                          value:
-                            description: The value of an AWS Cloud Map service instance
-                              attribute key.
-                            maxLength: 1024
-                            minLength: 1
-                            type: string
-                        required:
-                        - key
-                        - value
-                        type: object
-                      type: array
-                    namespaceName:
-                      description: The name of the AWS Cloud Map namespace to use.
-                      maxLength: 1024
-                      minLength: 1
-                      type: string
-                    serviceName:
-                      description: The name of the AWS Cloud Map service to use.
-                      maxLength: 1024
-                      minLength: 1
-                      type: string
-                  required:
-                  - namespaceName
-                  - serviceName
-                  type: object
-                dns:
-                  description: Specifies the DNS information for the virtual node.
-                  properties:
-                    hostname:
-                      description: Specifies the DNS service discovery hostname for
-                        the virtual node.
-                      type: string
-                  required:
-                  - hostname
-                  type: object
-              type: object
           type: object
         status:
-          description: VirtualNodeStatus defines the observed state of VirtualNode
+          description: VirtualGatewayStatus defines the observed state of VirtualGateway
           properties:
-            awsCloudMapServiceStatus:
-              description: AWSCloudMapServiceStatus is AWS CloudMap Service object's
-                info
-              properties:
-                namespaceID:
-                  description: NamespaceID is AWS CloudMap Service object's namespace
-                    Id
-                  type: string
-                serviceID:
-                  description: ServiceID is AWS CloudMap Service object's Id
-                  type: string
-              type: object
             conditions:
-              description: The current VirtualNode status.
+              description: The current VirtualGateway status.
               items:
                 properties:
                   lastTransitionTime:
@@ -528,7 +401,7 @@ spec:
                     description: Status of the condition, one of True, False, Unknown.
                     type: string
                   type:
-                    description: Type of VirtualNode condition.
+                    description: Type of VirtualGateway condition.
                     type: string
                 required:
                 - status
@@ -538,9 +411,9 @@ spec:
             meshARN:
               description: MeshARN is the AppMesh Mesh object's Amazon Resource Name
               type: string
-            virtualNodeARN:
-              description: VirtualNodeARN is the AppMesh VirtualNode object's Amazon
-                Resource Name
+            virtualGatewayARN:
+              description: VirtualGatewayARN is the AppMesh VirtualGateway object's
+                Amazon Resource Name
               type: string
           type: object
       type: object
