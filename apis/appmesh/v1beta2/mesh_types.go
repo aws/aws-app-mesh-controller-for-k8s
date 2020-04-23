@@ -75,6 +75,10 @@ type MeshSpec struct {
 	// If unspecified, default settings from AWS API will be applied. Refer to AWS Docs for default settings.
 	// +optional
 	EgressFilter *EgressFilter `json:"egressFilter,omitempty"`
+	// The AWS IAM account ID of the service mesh owner.
+	// Required if the account ID is not your own.
+	// +optional
+	MeshOwner *string `json:"meshOwner,omitempty"`
 }
 
 // MeshStatus defines the observed state of Mesh
