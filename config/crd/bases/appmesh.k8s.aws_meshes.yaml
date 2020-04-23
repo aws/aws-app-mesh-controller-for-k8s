@@ -52,6 +52,10 @@ spec:
               required:
               - type
               type: object
+            meshOwner:
+              description: The AWS IAM account ID of the service mesh owner. Required
+                if the account ID is not your own.
+              type: string
             namespaceSelector:
               description: NamespaceSelector selects Namespaces using labels to designate
                 mesh membership. This field follows standard label selector semantics;
