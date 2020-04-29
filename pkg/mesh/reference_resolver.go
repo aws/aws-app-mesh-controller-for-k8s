@@ -11,7 +11,7 @@ import (
 
 // ReferenceResolver resolves references to mesh CR.
 type ReferenceResolver interface {
-	// Resolve returns an mesh CR based on meshRef
+	// Resolve returns a mesh CR based on meshRef
 	Resolve(ctx context.Context, meshRef appmesh.MeshReference) (*appmesh.Mesh, error)
 }
 

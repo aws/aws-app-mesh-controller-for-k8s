@@ -16,6 +16,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -232,10 +233,19 @@ func (m *defaultResourceManager) updateCRDVirtualNode(ctx context.Context, vn *a
 	oldVN := vn.DeepCopy()
 	needsUpdate := false
 	if aws.StringValue(vn.Status.VirtualNodeARN) != aws.StringValue(sdkVN.Metadata.Arn) {
-		vn.Status.MeshARN = sdkVN.Metadata.Arn
+		vn.Status.VirtualNodeARN = sdkVN.Metadata.Arn
 		needsUpdate = true
 	}
-	if needsUpdate {
+
+	vnActiveConditionStatus := corev1.ConditionFalse
+	if sdkVN.Status != nil && aws.StringValue(sdkVN.Status.Status) == appmeshsdk.VirtualNodeStatusCodeActive {
+		vnActiveConditionStatus = corev1.ConditionTrue
+	}
+	if updateCondition(vn, appmesh.VirtualNodeActive, vnActiveConditionStatus, nil, nil) {
+		needsUpdate = true
+	}
+
+	if !needsUpdate {
 		return nil
 	}
 	return m.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN))
