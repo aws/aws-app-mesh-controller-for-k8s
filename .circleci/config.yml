@@ -1,0 +1,38 @@
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@0.1.22
+  k8s: circleci/kubernetes@0.11.0
+
+commands:
+  checkout_and_cache_dependencies:
+    description: "checkout code and cache go dependencies"
+    steps:
+      - checkout
+      - restore_cache:
+          key: go-mod-{{ checksum "go.sum" }}
+      - run:
+          name: go mod download
+          command: go mod download
+      - save_cache:
+          key: go-mod-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod/"
+jobs:
+  build-test-run:
+    docker:
+      - image: circleci/golang:1.13
+    working_directory: ~/build
+    steps:
+      - checkout_and_cache_dependencies
+      - run:
+          name: Build
+          command: make manager
+      - run:
+          name: Run
+          command: ./bin/manager -h || true
+workflows:
+  version: 2
+  check:
+    jobs:
+      - build-test-run
