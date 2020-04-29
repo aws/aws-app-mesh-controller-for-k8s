@@ -12,7 +12,7 @@ import (
 
 // ReferenceResolver resolves references to virtualService CR.
 type ReferenceResolver interface {
-	// Resolve returns an virtualService CR based on vsRef
+	// Resolve returns a virtualService CR based on vsRef
 	Resolve(ctx context.Context, obj metav1.Object, vsRef appmesh.VirtualServiceReference) (*appmesh.VirtualService, error)
 }
 

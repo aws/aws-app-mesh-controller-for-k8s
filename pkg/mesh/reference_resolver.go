@@ -30,7 +30,7 @@ type defaultReferenceResolver struct {
 	log       logr.Logger
 }
 
-// Resolve returns an mesh CR based on meshRef
+// Resolve returns a mesh CR based on meshRef
 func (r *defaultReferenceResolver) Resolve(ctx context.Context, meshRef appmesh.MeshReference) (*appmesh.Mesh, error) {
 	mesh := &appmesh.Mesh{}
 	if err := r.k8sClient.Get(ctx, types.NamespacedName{Name: meshRef.Name}, mesh); err != nil {

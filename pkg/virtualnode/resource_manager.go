@@ -195,10 +195,13 @@ func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN
 		return nil, err
 	}
 
-	if cmp.Equal(desiredSDKVNSpec, actualSDKVNSpec, equality.IgnoreLeftHandUnset()) {
+	// If an optional field is not set, AWS will provide default settings that will be in actualSDKVNSpec.
+	// We use IgnoreLeftHandUnset when doing the equality check here to allow AWS sever-side to provide default settings.
+	opts := equality.IgnoreLeftHandUnset()
+	if cmp.Equal(desiredSDKVNSpec, actualSDKVNSpec, opts) {
 		return sdkVN, nil
 	}
-	diff := cmp.Diff(desiredSDKVNSpec, actualSDKVNSpec, equality.IgnoreLeftHandUnset())
+	diff := cmp.Diff(desiredSDKVNSpec, actualSDKVNSpec, opts)
 	m.log.V(2).Info("virtualNodeSpec changed",
 		"virtualNode", k8s.NamespacedName(vn),
 		"actualSDKVNSpec", actualSDKVNSpec,
