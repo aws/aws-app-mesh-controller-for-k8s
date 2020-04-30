@@ -87,9 +87,6 @@ type VirtualServiceSpec struct {
 
 // VirtualServiceStatus defines the observed state of VirtualService
 type VirtualServiceStatus struct {
-	// MeshARN is the AppMesh Mesh object's Amazon Resource Name.
-	// +optional
-	MeshARN *string `json:"meshARN,omitempty"`
 	// VirtualServiceARN is the AppMesh VirtualService object's Amazon Resource Name.
 	// +optional
 	VirtualServiceARN string `json:"virtualServiceARN,omitempty"`
