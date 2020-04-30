@@ -17,8 +17,6 @@ type Cloud interface {
 	AppMesh() services.AppMesh
 	// CloudMap provides API to AWS CloudMap
 	CloudMap() services.CloudMap
-	// STS provides API to AWS STS
-	STS() services.STS
 
 	// AccountID provides AccountID for the kubernetes cluster
 	AccountID() string
@@ -50,8 +48,8 @@ func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, 
 
 	awsCfg := aws.NewConfig().WithRegion(cfg.Region).WithSTSRegionalEndpoint(endpoints.RegionalSTSEndpoint)
 	sess = sess.Copy(awsCfg)
-	sts := services.NewSTS(sess)
 	if len(cfg.AccountID) == 0 {
+		sts := services.NewSTS(sess)
 		accountID, err := sts.AccountID(context.Background())
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to introspect accountID from STS, specify --aws-account-id instead if STS is unavailable")
@@ -62,7 +60,6 @@ func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, 
 		cfg:      cfg,
 		appMesh:  services.NewAppMesh(sess),
 		cloudMap: services.NewCloudMap(sess),
-		sts:      sts,
 	}, nil
 }
 
@@ -73,7 +70,6 @@ type defaultCloud struct {
 
 	appMesh  services.AppMesh
 	cloudMap services.CloudMap
-	sts      services.STS
 }
 
 func (c *defaultCloud) AppMesh() services.AppMesh {
@@ -82,10 +78,6 @@ func (c *defaultCloud) AppMesh() services.AppMesh {
 
 func (c *defaultCloud) CloudMap() services.CloudMap {
 	return c.cloudMap
-}
-
-func (c *defaultCloud) STS() services.STS {
-	return c.sts
 }
 
 func (c *defaultCloud) AccountID() string {
