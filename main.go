@@ -18,13 +18,15 @@ package main
 
 import (
 	"flag"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"os"
+
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+
+	zapraw "go.uber.org/zap"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
-	zapraw "go.uber.org/zap"
-	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -141,6 +143,14 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualGateway")
+		os.Exit(1)
+	}
+	if err = (&appmeshcontroller.GatewayRouteReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("GatewayRoute"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GatewayRoute")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
