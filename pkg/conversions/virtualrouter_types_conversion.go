@@ -38,9 +38,14 @@ func Convert_CRD_HeaderMatchMethod_To_SDK_HeaderMatchMethod(crdObj *appmesh.Head
 	sdkObj.Exact = crdObj.Exact
 	sdkObj.Prefix = crdObj.Prefix
 
-	sdkObj.Range = &appmeshsdk.MatchRange{}
-	if err := Convert_CRD_MatchRange_To_SDK_MatchRange(crdObj.Range, sdkObj.Range, scope); err != nil {
-		return err
+	if crdObj.Range != nil {
+
+		sdkObj.Range = &appmeshsdk.MatchRange{}
+		if err := Convert_CRD_MatchRange_To_SDK_MatchRange(crdObj.Range, sdkObj.Range, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Range = nil
 	}
 
 	sdkObj.Regex = crdObj.Regex
@@ -53,9 +58,13 @@ func Convert_CRD_HTTPRouteHeader_To_SDK_HttpRouteHeader(crdObj *appmesh.HTTPRout
 
 	sdkObj.Name = aws.String(crdObj.Name)
 
-	sdkObj.Match = &appmeshsdk.HeaderMatchMethod{}
-	if err := Convert_CRD_HeaderMatchMethod_To_SDK_HeaderMatchMethod(crdObj.Match, sdkObj.Match, scope); err != nil {
-		return err
+	if crdObj.Match != nil {
+		sdkObj.Match = &appmeshsdk.HeaderMatchMethod{}
+		if err := Convert_CRD_HeaderMatchMethod_To_SDK_HeaderMatchMethod(crdObj.Match, sdkObj.Match, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Match = nil
 	}
 
 	sdkObj.Invert = crdObj.Invert
@@ -146,8 +155,16 @@ func Convert_CRD_HTTPRoute_To_SDK_HttpRoute(crdObj *appmesh.HTTPRoute,
 		return err
 	}
 
-	sdkObj.RetryPolicy = &appmeshsdk.HttpRetryPolicy{}
-	return Convert_CRD_HTTPRetryPolicy_To_SDK_HttpRetryPolicy(crdObj.RetryPolicy, sdkObj.RetryPolicy, scope)
+	if crdObj.RetryPolicy != nil {
+		sdkObj.RetryPolicy = &appmeshsdk.HttpRetryPolicy{}
+		if err := Convert_CRD_HTTPRetryPolicy_To_SDK_HttpRetryPolicy(crdObj.RetryPolicy, sdkObj.RetryPolicy, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.RetryPolicy = nil
+
+	}
+	return nil
 }
 
 func Convert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(crdObj *appmesh.TCPRouteAction,
@@ -181,9 +198,13 @@ func Convert_CRD_GRPCRouteMetadataMatchMethod_To_SDK_GrpcRouteMetadataMatchMetho
 	sdkObj.Exact = crdObj.Exact
 	sdkObj.Prefix = crdObj.Prefix
 
-	sdkObj.Range = &appmeshsdk.MatchRange{}
-	if err := Convert_CRD_MatchRange_To_SDK_MatchRange(crdObj.Range, sdkObj.Range, scope); err != nil {
-		return err
+	if crdObj.Range != nil {
+		sdkObj.Range = &appmeshsdk.MatchRange{}
+		if err := Convert_CRD_MatchRange_To_SDK_MatchRange(crdObj.Range, sdkObj.Range, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Range = nil
 	}
 
 	sdkObj.Regex = crdObj.Regex
@@ -196,9 +217,13 @@ func Convert_CRD_GRPCRouteMetadata_To_SDK_GrpcRouteMetadata(crdObj *appmesh.GRPC
 
 	sdkObj.Name = aws.String(crdObj.Name)
 
-	sdkObj.Match = &appmeshsdk.GrpcRouteMetadataMatchMethod{}
-	if err := Convert_CRD_GRPCRouteMetadataMatchMethod_To_SDK_GrpcRouteMetadataMatchMethod(crdObj.Match, sdkObj.Match, scope); err != nil {
-		return err
+	if crdObj != nil {
+		sdkObj.Match = &appmeshsdk.GrpcRouteMetadataMatchMethod{}
+		if err := Convert_CRD_GRPCRouteMetadataMatchMethod_To_SDK_GrpcRouteMetadataMatchMethod(crdObj.Match, sdkObj.Match, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Match = nil
 	}
 
 	sdkObj.Invert = crdObj.Invert
@@ -297,29 +322,53 @@ func Convert_CRD_GRPCRoute_To_SDK_GrpcRoute(crdObj *appmesh.GRPCRoute,
 		return err
 	}
 
-	sdkObj.RetryPolicy = &appmeshsdk.GrpcRetryPolicy{}
-	return Convert_CRD_GRPCRetryPolicy_To_SDK_GrpcRetryPolicy(crdObj.RetryPolicy, sdkObj.RetryPolicy, scope)
+	if crdObj.RetryPolicy != nil {
+		sdkObj.RetryPolicy = &appmeshsdk.GrpcRetryPolicy{}
+		if err := Convert_CRD_GRPCRetryPolicy_To_SDK_GrpcRetryPolicy(crdObj.RetryPolicy, sdkObj.RetryPolicy, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.RetryPolicy = nil
+	}
+	return nil
 }
 
 func Convert_CRD_Route_To_SDK_RouteSpec(crdObj *appmesh.Route, sdkObj *appmeshsdk.RouteSpec, scope conversion.Scope) error {
 
-	sdkObj.GrpcRoute = &appmeshsdk.GrpcRoute{}
-	if err := Convert_CRD_GRPCRoute_To_SDK_GrpcRoute(crdObj.GRPCRoute, sdkObj.GrpcRoute, scope); err != nil {
-		return err
+	if crdObj.GRPCRoute != nil {
+		sdkObj.GrpcRoute = &appmeshsdk.GrpcRoute{}
+		if err := Convert_CRD_GRPCRoute_To_SDK_GrpcRoute(crdObj.GRPCRoute, sdkObj.GrpcRoute, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.GrpcRoute = nil
 	}
 
-	sdkObj.HttpRoute = &appmeshsdk.HttpRoute{}
-	if err := Convert_CRD_HTTPRoute_To_SDK_HttpRoute(crdObj.HTTPRoute, sdkObj.HttpRoute, scope); err != nil {
-		return err
-	}
-	sdkObj.Http2Route = &appmeshsdk.HttpRoute{}
-	if err := Convert_CRD_HTTPRoute_To_SDK_HttpRoute(crdObj.HTTP2Route, sdkObj.Http2Route, scope); err != nil {
-		return err
+	if crdObj.HTTPRoute != nil {
+		sdkObj.HttpRoute = &appmeshsdk.HttpRoute{}
+		if err := Convert_CRD_HTTPRoute_To_SDK_HttpRoute(crdObj.HTTPRoute, sdkObj.HttpRoute, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.HttpRoute = nil
 	}
 
-	sdkObj.TcpRoute = &appmeshsdk.TcpRoute{}
-	if err := Convert_CRD_TCPRoute_To_SDK_TcpRoute(crdObj.TCPRoute, sdkObj.TcpRoute, scope); err != nil {
-		return err
+	if crdObj.HTTP2Route != nil {
+		sdkObj.Http2Route = &appmeshsdk.HttpRoute{}
+		if err := Convert_CRD_HTTPRoute_To_SDK_HttpRoute(crdObj.HTTP2Route, sdkObj.Http2Route, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Http2Route = nil
+	}
+
+	if crdObj.TCPRoute != nil {
+		sdkObj.TcpRoute = &appmeshsdk.TcpRoute{}
+		if err := Convert_CRD_TCPRoute_To_SDK_TcpRoute(crdObj.TCPRoute, sdkObj.TcpRoute, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.TcpRoute = nil
 	}
 
 	sdkObj.Priority = crdObj.Priority
