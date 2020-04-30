@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"os"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
@@ -89,16 +90,17 @@ func main() {
 		setupLog.Error(err, "unable to initialize AWS cloud")
 		os.Exit(1)
 	}
+
+	finalizerManager := k8s.NewDefaultFinalizerManager(mgr.GetClient(), ctrl.Log)
+	meshMembersFinalizer := mesh.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("mesh-members"), ctrl.Log)
 	meshRefResolver := mesh.NewDefaultReferenceResolver(mgr.GetClient(), ctrl.Log)
+	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
 	vsRefResolver := virtualservice.NewDefaultReferenceResolver(mgr.GetClient(), ctrl.Log)
 	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), meshRefResolver, vsRefResolver, ctrl.Log)
+	msReconciler := appmeshcontroller.NewMeshReconciler(mgr.GetClient(), finalizerManager, meshMembersFinalizer, meshResManager, ctrl.Log.WithName("controllers").WithName("Mesh"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
 
-	if err = (&appmeshcontroller.MeshReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Mesh"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = msReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Mesh")
 		os.Exit(1)
 	}
