@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	appmeshinject "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/appmeshinject"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	corev1 "k8s.io/api/core/v1"
@@ -50,13 +51,7 @@ func (m *podMutator) MutateUpdate(ctx context.Context, obj runtime.Object, oldOb
 }
 
 func (m *podMutator) injectAppMeshPatches(ctx context.Context, vn *appmesh.VirtualNode, pod *corev1.Pod) error {
-	// TODO: change this to real implementation of appMesh-Injector.
-	annotations := map[string]string{"appmesh.k8s.aws/virtualNode": vn.Name}
-	for k, v := range pod.Annotations {
-		annotations[k] = v
-	}
-	pod.Annotations = annotations
-	return nil
+	return appmeshinject.InjectAppMeshPatches(vn, pod)
 }
 
 // +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=ignore,groups="",resources=pods,verbs=create,versions=v1,name=mpod.appmesh.k8s.aws

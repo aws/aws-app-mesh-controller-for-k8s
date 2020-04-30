@@ -21,6 +21,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
+	zapraw "go.uber.org/zap"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -28,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/appmeshinject"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 
@@ -58,9 +64,15 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	var injectConfig appmeshinject.Config
+	injectConfig.BindFlags()
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	// TODO: make level configurable
+	lvl := zapraw.NewAtomicLevelAt(-2)
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.Level(&lvl)))
+
+	appmeshinject.New(injectConfig)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -73,6 +85,17 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+
+	// TODO: organize component initialization below
+	cloud, err := aws.NewCloud(aws.CloudConfig{}, metrics.Registry)
+	if err != nil {
+		setupLog.Error(err, "unable to initialize AWS cloud")
+		os.Exit(1)
+	}
+	meshRefResolver := mesh.NewDefaultReferenceResolver(mgr.GetClient(), ctrl.Log)
+	vsRefResolver := virtualservice.NewDefaultReferenceResolver(mgr.GetClient(), ctrl.Log)
+	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), meshRefResolver, vsRefResolver, ctrl.Log)
+	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
 
 	if err = (&appmeshcontroller.MeshReconciler{
 		Client: mgr.GetClient(),
@@ -90,11 +113,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualService")
 		os.Exit(1)
 	}
-	if err = (&appmeshcontroller.VirtualNodeReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("VirtualNode"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = vnReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualNode")
 		os.Exit(1)
 	}

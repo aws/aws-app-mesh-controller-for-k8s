@@ -18,36 +18,104 @@ package controllers
 
 import (
 	"context"
-
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 )
 
-// VirtualNodeReconciler reconciles a VirtualNode object
-type VirtualNodeReconciler struct {
-	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+// NewVirtualNodeReconciler constructs new virtualNodeReconciler
+func NewVirtualNodeReconciler(k8sClient client.Client, vnResManager virtualnode.ResourceManager, log logr.Logger) *virtualNodeReconciler {
+	return &virtualNodeReconciler{
+		k8sClient:                    k8sClient,
+		vnResManager:                 vnResManager,
+		enqueueRequestsForMeshEvents: virtualnode.NewEnqueueRequestsForMeshEvents(k8sClient, log),
+		log:                          log,
+	}
+}
+
+// virtualNodeReconciler reconciles a VirtualNode object
+type virtualNodeReconciler struct {
+	k8sClient    client.Client
+	vnResManager virtualnode.ResourceManager
+
+	enqueueRequestsForMeshEvents handler.EventHandler
+	log                          logr.Logger
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes/status,verbs=get;update;patch
 
-func (r *VirtualNodeReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
-	_ = r.Log.WithValues("virtualnode", req.NamespacedName)
-
-	// your logic here
-
-	return ctrl.Result{}, nil
+func (r *virtualNodeReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+	return runtime.HandleReconcileError(r.reconcile(req), r.log)
 }
 
-func (r *VirtualNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *virtualNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&appmeshv1beta2.VirtualNode{}).
+		For(&appmesh.VirtualNode{}).
+		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
 		Complete(r)
+}
+
+func (r *virtualNodeReconciler) reconcile(req ctrl.Request) error {
+	ctx := context.Background()
+	vn := &appmesh.VirtualNode{}
+	if err := r.k8sClient.Get(ctx, req.NamespacedName, vn); err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	if !vn.DeletionTimestamp.IsZero() {
+		return r.cleanupVirtualNode(ctx, vn)
+	}
+	return r.reconcileVirtualNode(ctx, vn)
+}
+
+func (r *virtualNodeReconciler) reconcileVirtualNode(ctx context.Context, vn *appmesh.VirtualNode) error {
+	if err := r.addFinalizers(ctx, vn); err != nil {
+		return err
+	}
+	if err := r.vnResManager.Reconcile(ctx, vn); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *virtualNodeReconciler) cleanupVirtualNode(ctx context.Context, vn *appmesh.VirtualNode) error {
+	if err := r.vnResManager.Cleanup(ctx, vn); err != nil {
+		return err
+	}
+	if err := r.removeFinalizers(ctx, vn); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *virtualNodeReconciler) addFinalizers(ctx context.Context, vn *appmesh.VirtualNode) error {
+	if k8s.HasFinalizer(vn, k8s.FinalizerAWSResources) {
+		return nil
+	}
+	oldVN := vn.DeepCopy()
+	controllerutil.AddFinalizer(vn, k8s.FinalizerAWSResources)
+	if err := r.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *virtualNodeReconciler) removeFinalizers(ctx context.Context, vn *appmesh.VirtualNode) error {
+	if !k8s.HasFinalizer(vn, k8s.FinalizerAWSResources) {
+		return nil
+	}
+	oldVN := vn.DeepCopy()
+	controllerutil.RemoveFinalizer(vn, k8s.FinalizerAWSResources)
+	if err := r.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN)); err != nil {
+		return err
+	}
+	return nil
 }
