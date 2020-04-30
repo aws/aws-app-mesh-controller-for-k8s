@@ -9,11 +9,43 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - events
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - namespaces
   verbs:
   - get
   - list
   - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - gatewayroutes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - gatewayroutes/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - appmesh.k8s.aws
   resources:
