@@ -17,25 +17,132 @@ limitations under the License.
 package v1beta2
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// GatewayRouteVirtualService refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+type GatewayRouteVirtualService struct {
+	// The virtual service reference to associate with the gateway route virtual service target.
+	VirtualServiceRef VirtualServiceReference `json:"virtualServiceRef"`
+}
+
+// GatewayRouteTarget refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+type GatewayRouteTarget struct {
+	// The virtual service to associate with the gateway route target.
+	VirtualService GatewayRouteVirtualService `json:"virtualService"`
+}
+
+// GRPCGatewayRouteMatch refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+type GRPCGatewayRouteMatch struct {
+	// The fully qualified domain name for the service to match from the request.
+	// +optional
+	ServiceName *string `json:"serviceName,omitempty"`
+}
+
+// GRPCGatewayRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+type GRPCGatewayRouteAction struct {
+	// An object that represents the target that traffic is routed to when a request matches the route.
+	Target GatewayRouteTarget `json:"target"`
+}
+
+// GRPCGatewayRoute refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+type GRPCGatewayRoute struct {
+	// An object that represents the criteria for determining a request match.
+	Match GRPCGatewayRouteMatch `json:"match"`
+	// An object that represents the action to take if a match is determined.
+	Action GRPCGatewayRouteAction `json:"action"`
+}
+
+// HTTPGatewayRouteMatch refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+type HTTPGatewayRouteMatch struct {
+	// Specifies the path to match requests with
+	Prefix string `json:"prefix"`
+}
+
+// HTTPGatewayRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+type HTTPGatewayRouteAction struct {
+	// An object that represents the target that traffic is routed to when a request matches the route.
+	Target GatewayRouteTarget `json:"target"`
+}
+
+// HTTPGatewayRoute refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+type HTTPGatewayRoute struct {
+	// An object that represents the criteria for determining a request match.
+	Match HTTPGatewayRouteMatch `json:"match"`
+	// An object that represents the action to take if a match is determined.
+	Action HTTPGatewayRouteAction `json:"action"`
+}
 
 // GatewayRouteSpec defines the desired state of GatewayRoute
+// refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
 type GatewayRouteSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// AWSName is the AppMesh GatewayRoute object's name.
+	// If unspecified or empty, it defaults to be "${name}_${namespace}" of k8s GatewayRoute
+	// +optional
+	AWSName *string `json:"awsName,omitempty"`
+	// An object that represents the specification of a gRPC gatewayRoute.
+	// +optional
+	GRPCRoute *GRPCGatewayRoute `json:"grpcRoute,omitempty"`
+	// An object that represents the specification of an HTTP gatewayRoute.
+	// +optional
+	HTTPRoute *HTTPGatewayRoute `json:"httpRoute,omitempty"`
+	// An object that represents the specification of an HTTP/2 gatewayRoute.
+	// +optional
+	HTTP2Route *HTTPGatewayRoute `json:"http2Route,omitempty"`
+	// A reference to k8s VirtualGateway CR that this GatewayRoute belongs to.
+	// The admission controller populates it using VirtualGateway's selector, and prevents users from setting this field.
+	//
+	// Populated by the system.
+	// Read-only.
+	// +optional
+	VirtualGatewayRef *VirtualGatewayReference `json:"virtualGatewayRef,omitempty"`
+	// A reference to k8s Mesh CR that this GatewayRoute belongs to.
+	// The admission controller populates it using Meshes's selector, and prevents users from setting this field.
+	//
+	// Populated by the system.
+	// Read-only.
+	// +optional
+	MeshRef *MeshReference `json:"meshRef,omitempty"`
+}
 
-	// Foo is an example field of GatewayRoute. Edit GatewayRoute_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+type GatewayRouteConditionType string
+
+const (
+	// GatewayRouteActive is True when the AppMesh GatewayRoute has been created or found via the API
+	GatewayRouteActive GatewayRouteConditionType = "GatewayRouteActive"
+)
+
+type GatewayRouteCondition struct {
+	// Type of GatewayRoute condition.
+	Type GatewayRouteConditionType `json:"type"`
+	// Status of the condition, one of True, False, Unknown.
+	Status corev1.ConditionStatus `json:"status"`
+	// Last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime *metav1.Time `json:"lastTransitionTime,omitempty"`
+	// The reason for the condition's last transition.
+	// +optional
+	Reason *string `json:"reason,omitempty"`
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message *string `json:"message,omitempty"`
 }
 
 // GatewayRouteStatus defines the observed state of GatewayRoute
 type GatewayRouteStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// MeshARN is the AppMesh Mesh object's Amazon Resource Name
+	// +optional
+	MeshARN *string `json:"meshARN,omitempty"`
+	// VirtualGatewayARN is the AppMesh VirtualGateway object's Amazon Resource Name.
+	// +optional
+	VirtualGatewayARN *string `json:"virtualGatewayARN,omitempty"`
+	// GatewayRouteARNs is a map of AppMesh GatewayRoute objects' Amazon Resource Names, indexed by gatewayRoute name.
+	// +optional
+	GatewayRouteARN *string `json:"gatewayRouteARN,omitempty"`
+	// The current GatewayRoute status.
+	// +optional
+	Conditions []GatewayRouteCondition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
