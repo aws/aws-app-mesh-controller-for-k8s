@@ -19,12 +19,14 @@ package main
 import (
 	"flag"
 	"os"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"k8s.io/client-go/tools/cache"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
@@ -32,6 +34,7 @@ import (
 	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	appmeshcontroller "github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh"
 	appmeshwebhook "github.com/aws/aws-app-mesh-controller-for-k8s/webhooks/appmesh"
+	appmeshcontrollers "github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh"
 	corewebhook "github.com/aws/aws-app-mesh-controller-for-k8s/webhooks/core"
 	// +kubebuilder:scaffold:imports
 )
@@ -93,6 +96,17 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualNode")
+		os.Exit(1)
+	}
+	if err = (&appmeshcontroller.CloudMapReconciler{
+		K8SClient: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("CloudMap"),
+		Scheme: mgr.GetScheme(),
+		CloudMapInstanceCache: cache.NewTTLStore(func(obj interface{}) (string, error) {
+			return obj.(*appmeshcontrollers.CloudMapInstanceCacheItem).key, nil
+		}, 300*time.Second),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "CloudMap")
 		os.Exit(1)
 	}
 	if err = (&appmeshcontroller.VirtualRouterReconciler{
