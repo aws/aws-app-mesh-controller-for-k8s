@@ -12,3 +12,10 @@ func Convert_CRD_PortMapping_To_SDK_PortMapping(crdObj *appmesh.PortMapping, sdk
 	sdkObj.Protocol = aws.String((string)(crdObj.Protocol))
 	return nil
 }
+
+func Convert_CRD_Duration_To_SDK_Duration(crdObj *appmesh.Duration, sdkObj *appmeshsdk.Duration,
+	scope conversion.Scope) error {
+	sdkObj.Unit = aws.String((string)(crdObj.Unit))
+	sdkObj.Value = aws.Int64((int64)(crdObj.Value))
+	return nil
+}
