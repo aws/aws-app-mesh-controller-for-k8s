@@ -1,0 +1,24 @@
+# permissions for end users to edit gatewayroutes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gatewayroute-editor-role
+rules:
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - gatewayroutes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - gatewayroutes/status
+  verbs:
+  - get
