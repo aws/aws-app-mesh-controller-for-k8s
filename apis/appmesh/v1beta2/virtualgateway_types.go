@@ -270,9 +270,6 @@ type VirtualGatewaySpec struct {
 
 // VirtualGatewayStatus defines the observed state of VirtualGateway
 type VirtualGatewayStatus struct {
-	// MeshARN is the AppMesh Mesh object's Amazon Resource Name
-	// +optional
-	MeshARN *string `json:"meshARN,omitempty"`
 	// VirtualGatewayARN is the AppMesh VirtualGateway object's Amazon Resource Name
 	// +optional
 	VirtualGatewayARN *string `json:"virtualGatewayARN,omitempty"`

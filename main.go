@@ -21,10 +21,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+
 	zapraw "go.uber.org/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -92,16 +95,18 @@ func main() {
 		setupLog.Error(err, "unable to initialize AWS cloud")
 		os.Exit(1)
 	}
+
+	finalizerManager := k8s.NewDefaultFinalizerManager(mgr.GetClient(), ctrl.Log)
+	meshMembersFinalizer := mesh.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("mesh-members"), ctrl.Log)
 	meshRefResolver := mesh.NewDefaultReferenceResolver(mgr.GetClient(), ctrl.Log)
+	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
 	vsRefResolver := virtualservice.NewDefaultReferenceResolver(mgr.GetClient(), ctrl.Log)
 	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), meshRefResolver, vsRefResolver, ctrl.Log)
+	msReconciler := appmeshcontroller.NewMeshReconciler(mgr.GetClient(), finalizerManager, meshMembersFinalizer, meshResManager, ctrl.Log.WithName("controllers").WithName("Mesh"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
     cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log.WithName("controllers").WithName("VirtualNode"))
-	if err = (&appmeshcontroller.MeshReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Mesh"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+
+	if err = msReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Mesh")
 		os.Exit(1)
 	}
@@ -146,6 +151,14 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualGateway")
+		os.Exit(1)
+	}
+	if err = (&appmeshcontroller.GatewayRouteReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("GatewayRoute"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "GatewayRoute")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

@@ -267,7 +267,7 @@ type GRPCRoute struct {
 type Route struct {
 	// Route's name
 	// +optional
-	Name string `json:"name,omitempty"`
+	Name *string `json:"name,omitempty"`
 	// An object that represents the specification of a gRPC route.
 	// +optional
 	GRPCRoute *GRPCRoute `json:"grpcRoute,omitempty"`
@@ -337,9 +337,6 @@ type VirtualRouterSpec struct {
 
 // VirtualRouterStatus defines the observed state of VirtualRouter
 type VirtualRouterStatus struct {
-	// MeshARN is the AppMesh Mesh object's Amazon Resource Name
-	// +optional
-	MeshARN *string `json:"meshARN,omitempty"`
 	// VirtualRouterARN is the AppMesh VirtualRouter object's Amazon Resource Name.
 	// +optional
 	VirtualRouterARN *string `json:"virtualRouterARN,omitempty"`

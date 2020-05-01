@@ -18,36 +18,92 @@ package controllers
 
 import (
 	"context"
-
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 )
 
-// MeshReconciler reconciles a Mesh object
-type MeshReconciler struct {
-	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+func NewMeshReconciler(
+	k8sClient client.Client,
+	finalizerManager k8s.FinalizerManager,
+	meshMembersFinalizer mesh.MembersFinalizer,
+	meshResManager mesh.ResourceManager,
+	log logr.Logger) *meshReconciler {
+	return &meshReconciler{
+		k8sClient:            k8sClient,
+		finalizerManager:     finalizerManager,
+		meshMembersFinalizer: meshMembersFinalizer,
+		meshResManager:       meshResManager,
+		log:                  log,
+	}
+}
+
+// meshReconciler reconciles a Mesh object
+type meshReconciler struct {
+	k8sClient            client.Client
+	finalizerManager     k8s.FinalizerManager
+	meshMembersFinalizer mesh.MembersFinalizer
+	meshResManager       mesh.ResourceManager
+	log                  logr.Logger
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=meshes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=meshes/status,verbs=get;update;patch
 
-func (r *MeshReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
-	_ = r.Log.WithValues("mesh", req.NamespacedName)
-
-	// your logic here
-
-	return ctrl.Result{}, nil
+func (r *meshReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+	return runtime.HandleReconcileError(r.reconcile(req), r.log)
 }
 
-func (r *MeshReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *meshReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&appmeshv1beta2.Mesh{}).
+		For(&appmesh.Mesh{}).
 		Complete(r)
+}
+
+func (r *meshReconciler) reconcile(req ctrl.Request) error {
+	ctx := context.Background()
+	ms := &appmesh.Mesh{}
+	if err := r.k8sClient.Get(ctx, req.NamespacedName, ms); err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	if !ms.DeletionTimestamp.IsZero() {
+		return r.cleanupMesh(ctx, ms)
+	}
+	return r.reconcileMesh(ctx, ms)
+}
+
+func (r *meshReconciler) reconcileMesh(ctx context.Context, ms *appmesh.Mesh) error {
+	if err := r.finalizerManager.AddFinalizers(ctx, ms, k8s.FinalizerMeshMembers, k8s.FinalizerAWSResources); err != nil {
+		return err
+	}
+	if err := r.meshResManager.Reconcile(ctx, ms); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *meshReconciler) cleanupMesh(ctx context.Context, ms *appmesh.Mesh) error {
+	if k8s.HasFinalizer(ms, k8s.FinalizerMeshMembers) {
+		if err := r.meshMembersFinalizer.Finalize(ctx, ms); err != nil {
+			return err
+		}
+		if err := r.finalizerManager.RemoveFinalizers(ctx, ms, k8s.FinalizerMeshMembers); err != nil {
+			return err
+		}
+	}
+
+	if k8s.HasFinalizer(ms, k8s.FinalizerAWSResources) {
+		if err := r.meshResManager.Cleanup(ctx, ms); err != nil {
+			return err
+		}
+		if err := r.finalizerManager.RemoveFinalizers(ctx, ms, k8s.FinalizerAWSResources); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -1,0 +1,288 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.4
+  creationTimestamp: null
+  name: gatewayroutes.appmesh.k8s.aws
+spec:
+  group: appmesh.k8s.aws
+  names:
+    kind: GatewayRoute
+    listKind: GatewayRouteList
+    plural: gatewayroutes
+    singular: gatewayroute
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      description: GatewayRoute is the Schema for the gatewayroutes API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: GatewayRouteSpec defines the desired state of GatewayRoute
+            refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+          properties:
+            awsName:
+              description: AWSName is the AppMesh GatewayRoute object's name. If unspecified
+                or empty, it defaults to be "${name}_${namespace}" of k8s GatewayRoute
+              type: string
+            grpcRoute:
+              description: An object that represents the specification of a gRPC gatewayRoute.
+              properties:
+                action:
+                  description: An object that represents the action to take if a match
+                    is determined.
+                  properties:
+                    target:
+                      description: An object that represents the target that traffic
+                        is routed to when a request matches the route.
+                      properties:
+                        virtualService:
+                          description: The virtual service to associate with the gateway
+                            route target.
+                          properties:
+                            virtualServiceRef:
+                              description: The virtual service reference to associate
+                                with the gateway route virtual service target.
+                              properties:
+                                name:
+                                  description: Name is the name of VirtualService
+                                    CR
+                                  type: string
+                                namespace:
+                                  description: Namespace is the namespace of VirtualService
+                                    CR. If unspecified, defaults to the referencing
+                                    object's namespace
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                          required:
+                          - virtualServiceRef
+                          type: object
+                      required:
+                      - virtualService
+                      type: object
+                  required:
+                  - target
+                  type: object
+                match:
+                  description: An object that represents the criteria for determining
+                    a request match.
+                  properties:
+                    serviceName:
+                      description: The fully qualified domain name for the service
+                        to match from the request.
+                      type: string
+                  type: object
+              required:
+              - action
+              - match
+              type: object
+            http2Route:
+              description: An object that represents the specification of an HTTP/2
+                gatewayRoute.
+              properties:
+                action:
+                  description: An object that represents the action to take if a match
+                    is determined.
+                  properties:
+                    target:
+                      description: An object that represents the target that traffic
+                        is routed to when a request matches the route.
+                      properties:
+                        virtualService:
+                          description: The virtual service to associate with the gateway
+                            route target.
+                          properties:
+                            virtualServiceRef:
+                              description: The virtual service reference to associate
+                                with the gateway route virtual service target.
+                              properties:
+                                name:
+                                  description: Name is the name of VirtualService
+                                    CR
+                                  type: string
+                                namespace:
+                                  description: Namespace is the namespace of VirtualService
+                                    CR. If unspecified, defaults to the referencing
+                                    object's namespace
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                          required:
+                          - virtualServiceRef
+                          type: object
+                      required:
+                      - virtualService
+                      type: object
+                  required:
+                  - target
+                  type: object
+                match:
+                  description: An object that represents the criteria for determining
+                    a request match.
+                  properties:
+                    prefix:
+                      description: Specifies the path to match requests with
+                      type: string
+                  required:
+                  - prefix
+                  type: object
+              required:
+              - action
+              - match
+              type: object
+            httpRoute:
+              description: An object that represents the specification of an HTTP
+                gatewayRoute.
+              properties:
+                action:
+                  description: An object that represents the action to take if a match
+                    is determined.
+                  properties:
+                    target:
+                      description: An object that represents the target that traffic
+                        is routed to when a request matches the route.
+                      properties:
+                        virtualService:
+                          description: The virtual service to associate with the gateway
+                            route target.
+                          properties:
+                            virtualServiceRef:
+                              description: The virtual service reference to associate
+                                with the gateway route virtual service target.
+                              properties:
+                                name:
+                                  description: Name is the name of VirtualService
+                                    CR
+                                  type: string
+                                namespace:
+                                  description: Namespace is the namespace of VirtualService
+                                    CR. If unspecified, defaults to the referencing
+                                    object's namespace
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                          required:
+                          - virtualServiceRef
+                          type: object
+                      required:
+                      - virtualService
+                      type: object
+                  required:
+                  - target
+                  type: object
+                match:
+                  description: An object that represents the criteria for determining
+                    a request match.
+                  properties:
+                    prefix:
+                      description: Specifies the path to match requests with
+                      type: string
+                  required:
+                  - prefix
+                  type: object
+              required:
+              - action
+              - match
+              type: object
+            meshRef:
+              description: "A reference to k8s Mesh CR that this GatewayRoute belongs
+                to. The admission controller populates it using Meshes's selector,
+                and prevents users from setting this field. \n Populated by the system.
+                Read-only."
+              properties:
+                name:
+                  description: Name is the name of Mesh CR
+                  type: string
+                uid:
+                  description: UID is the UID of Mesh CR
+                  type: string
+              required:
+              - name
+              - uid
+              type: object
+            virtualGatewayRef:
+              description: "A reference to k8s VirtualGateway CR that this GatewayRoute
+                belongs to. The admission controller populates it using VirtualGateway's
+                selector, and prevents users from setting this field. \n Populated
+                by the system. Read-only."
+              properties:
+                name:
+                  description: Name is the name of VirtualGateway CR
+                  type: string
+                namespace:
+                  description: Namespace is the namespace of VirtualGateway CR. If
+                    unspecified, defaults to the referencing object's namespace
+                  type: string
+                uid:
+                  description: UID is the UID of VirtualGateway CR
+                  type: string
+              required:
+              - name
+              - uid
+              type: object
+          type: object
+        status:
+          description: GatewayRouteStatus defines the observed state of GatewayRoute
+          properties:
+            conditions:
+              description: The current GatewayRoute status.
+              items:
+                properties:
+                  lastTransitionTime:
+                    description: Last time the condition transitioned from one status
+                      to another.
+                    format: date-time
+                    type: string
+                  message:
+                    description: A human readable message indicating details about
+                      the transition.
+                    type: string
+                  reason:
+                    description: The reason for the condition's last transition.
+                    type: string
+                  status:
+                    description: Status of the condition, one of True, False, Unknown.
+                    type: string
+                  type:
+                    description: Type of GatewayRoute condition.
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              type: array
+            gatewayRouteARN:
+              description: GatewayRouteARNs is a map of AppMesh GatewayRoute objects'
+                Amazon Resource Names, indexed by gatewayRoute name.
+              type: string
+          type: object
+      type: object
+  version: v1beta2
+  versions:
+  - name: v1beta2
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

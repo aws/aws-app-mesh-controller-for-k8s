@@ -86,4 +86,6 @@ type VirtualGatewayReference struct {
 	Namespace *string `json:"namespace,omitempty"`
 	// Name is the name of VirtualGateway CR
 	Name string `json:"name"`
+	// UID is the UID of VirtualGateway CR
+	UID types.UID `json:"uid"`
 }

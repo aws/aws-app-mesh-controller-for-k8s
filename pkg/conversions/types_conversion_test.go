@@ -49,3 +49,44 @@ func TestConvert_CRD_PortMapping_To_SDK_PortMapping(t *testing.T) {
 		})
 	}
 }
+
+func TestConvert_CRD_Duration_To_SDK_Duration(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.Duration
+		sdkObj *appmeshsdk.Duration
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.Duration
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.Duration{
+					Unit:  "ms",
+					Value: int64(200),
+				},
+				sdkObj: &appmeshsdk.Duration{},
+			},
+			wantSDKObj: &appmeshsdk.Duration{
+				Unit:  aws.String("ms"),
+				Value: aws.Int64(200),
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_Duration_To_SDK_Duration(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
