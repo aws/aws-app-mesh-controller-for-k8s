@@ -134,7 +134,7 @@ func main() {
 	appmeshwebhook.NewVirtualNodeValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualServiceMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualServiceValidator().SetupWithManager(mgr)
-	corewebhook.NewPodMutator(vnMembershipDesignator, sidecarInjector).SetupWithManager(mgr)
+	corewebhook.NewPodMutator(meshRefResolver, vnMembershipDesignator, sidecarInjector).SetupWithManager(mgr)
 
 	if err = (&appmeshcontroller.VirtualGatewayReconciler{
 		Client: mgr.GetClient(),

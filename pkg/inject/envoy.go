@@ -3,7 +3,7 @@ package inject
 import (
 	"encoding/json"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-sdk-go/aws"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -71,7 +71,8 @@ const envoyContainerTemplate = `
 `
 
 type EnvoyMutator struct {
-	vn     appmesh.VirtualNode
+	vn     *appmesh.VirtualNode
+	ms     *appmesh.Mesh
 	config *Config
 }
 
@@ -91,13 +92,17 @@ type EnvoyMeta struct {
 	EnableStatsD         bool
 }
 
-func NewEnvoyMutator(Config *Config, vn appmesh.VirtualNode) *EnvoyMutator {
-	return &EnvoyMutator{vn: vn, config: Config}
+func NewEnvoyMutator(Config *Config, ms *appmesh.Mesh, vn *appmesh.VirtualNode) *EnvoyMutator {
+	return &EnvoyMutator{
+		vn:     vn,
+		ms:     ms,
+		config: Config,
+	}
 }
 
 func (m *EnvoyMutator) Meta(pod *corev1.Pod) *EnvoyMeta {
-	meshName := m.vn.Spec.MeshRef.Name
-	virtualNodeName := k8s.NamespacedName(&m.vn).String()
+	meshName := aws.StringValue(m.ms.Spec.AWSName)
+	virtualNodeName := aws.StringValue(m.vn.Spec.AWSName)
 	preview := "0"
 
 	if v, ok := pod.ObjectMeta.Annotations[AppMeshPreviewAnnotation]; ok {

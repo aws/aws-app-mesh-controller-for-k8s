@@ -36,7 +36,7 @@ func NewSidecarInjector(cfg *Config, region string) *SidecarInjector {
 	}
 }
 
-func (m *SidecarInjector) InjectAppMeshPatches(vn *appmesh.VirtualNode, pod *corev1.Pod) error {
+func (m *SidecarInjector) InjectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.VirtualNode, pod *corev1.Pod) error {
 	if !ShouldInject(m.config, pod) {
 		injectLogger.Info("Not injecting sidecars for pod ", pod.Name)
 		return nil
@@ -60,8 +60,8 @@ func (m *SidecarInjector) InjectAppMeshPatches(vn *appmesh.VirtualNode, pod *cor
 	// List out all the mutators in sequence
 	var mutators = []PodMutator{
 		NewAppMeshCNIMutator(m.config),
-		NewProxyInitMutator(m.config),
-		NewEnvoyMutator(m.config, *vn),
+		NewProxyInitMutator(m.config, vn),
+		NewEnvoyMutator(m.config, ms, vn),
 		NewXrayMutator(m.config),
 		NewDatadogMutator(m.config),
 		NewJaegerMutator(m.config),

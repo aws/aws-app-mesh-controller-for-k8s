@@ -59,8 +59,8 @@ func getPod(annotations map[string]string) *corev1.Pod {
 	return pod
 }
 
-func getVn() *appmesh.VirtualNode {
-	return &appmesh.VirtualNode{
+func getVn(ports []int) *appmesh.VirtualNode {
+	vn := &appmesh.VirtualNode{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "awesome-ns",
 			Name:      "my-vn",
@@ -73,10 +73,27 @@ func getVn() *appmesh.VirtualNode {
 			},
 		},
 	}
+	for _, p := range ports {
+		listener := appmesh.Listener{PortMapping: appmesh.PortMapping{Port: appmesh.PortNumber(p)}}
+		vn.Spec.Listeners = append(vn.Spec.Listeners, listener)
+	}
+	return vn
+}
+
+func getMesh() *appmesh.Mesh {
+	return &appmesh.Mesh{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-mesh",
+		},
+		Spec: appmesh.MeshSpec{
+			AWSName: aws.String("my-mesh"),
+		},
+	}
 }
 
 func Test_InjectEnvoyContainer(t *testing.T) {
 	type args struct {
+		ms  *appmesh.Mesh
 		vn  *appmesh.VirtualNode
 		pod *corev1.Pod
 	}
@@ -97,7 +114,8 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 			name: "Inject Envoy container with proxyinit",
 			conf: getConfig(nil),
 			args: args{
-				vn:  getVn(),
+				ms:  getMesh(),
+				vn:  getVn(nil),
 				pod: getPod(nil),
 			},
 			want: expected{
@@ -114,7 +132,8 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 				return cnf
 			}),
 			args: args{
-				vn:  getVn(),
+				ms:  getMesh(),
+				vn:  getVn(nil),
 				pod: getPod(nil),
 			},
 			want: expected{
@@ -128,7 +147,8 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 			name: "Disable sidecar inject",
 			conf: getConfig(nil),
 			args: args{
-				vn: getVn(),
+				ms: getMesh(),
+				vn: getVn(nil),
 				pod: getPod(map[string]string{
 					AppMeshSidecarInjectAnnotation: "disabled",
 				}),
@@ -144,7 +164,8 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 			name: "AppMesh CNI Enabled",
 			conf: getConfig(nil),
 			args: args{
-				vn: getVn(),
+				ms: getMesh(),
+				vn: getVn(nil),
 				pod: getPod(map[string]string{
 					AppMeshCNIAnnotation: "enabled",
 				}),
@@ -165,7 +186,8 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 				return cnf
 			}),
 			args: args{
-				vn:  getVn(),
+				ms:  getMesh(),
+				vn:  getVn(nil),
 				pod: getPod(nil),
 			},
 			want: expected{
@@ -184,7 +206,8 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 				return cnf
 			}),
 			args: args{
-				vn:  getVn(),
+				ms:  getMesh(),
+				vn:  getVn(nil),
 				pod: getPod(nil),
 			},
 			want: expected{
@@ -198,7 +221,8 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 			name: "With Pod Annotations",
 			conf: getConfig(nil),
 			args: args{
-				vn: getVn(),
+				ms: getMesh(),
+				vn: getVn(nil),
 				pod: getPod(map[string]string{
 					AppMeshCpuRequestAnnotation:         "20m",
 					AppMeshMemoryRequestAnnotation:      "64Mi",
@@ -218,7 +242,7 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			inj := NewSidecarInjector(&tt.conf, "")
 			pod := tt.args.pod
-			inj.InjectAppMeshPatches(tt.args.vn, pod)
+			inj.InjectAppMeshPatches(tt.args.ms, tt.args.vn, pod)
 			assert.Equal(t, tt.want.init, len(pod.Spec.InitContainers), "Numbers of init containers mismatch")
 			assert.Equal(t, tt.want.containers, len(pod.Spec.Containers), "Numbers of containers mismatch")
 			if tt.want.xray {

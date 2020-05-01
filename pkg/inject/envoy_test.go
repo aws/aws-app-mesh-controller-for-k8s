@@ -2,7 +2,7 @@ package inject
 
 import (
 	"fmt"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"testing"
@@ -48,7 +48,7 @@ func Test_Sidecar_WithJaeger(t *testing.T) {
 }
 
 func checkSidecars(t *testing.T, cfg Config) {
-	x := NewEnvoyMutator(&cfg, *getVn())
+	x := NewEnvoyMutator(&cfg, getMesh(), getVn(nil))
 	pod := getPod(nil)
 	assert.NoError(t, x.mutate(pod))
 	var sidecar *corev1.Container
@@ -59,13 +59,15 @@ func checkSidecars(t *testing.T, cfg Config) {
 	}
 	assert.NotNil(t, sidecar)
 	assert.Equal(t, "envoy", sidecar.Name, "Unexpected container found with name %s", sidecar.Name)
-	assert.Equal(t, k8s.NamespacedName(&x.vn).String(), pod.Annotations[AppMeshVirtualNodeNameAnnotation])
+	assert.Equal(t, aws.StringValue(x.vn.Spec.AWSName), pod.Annotations[AppMeshVirtualNodeNameAnnotation])
 	checkEnvoy(t, sidecar, x)
 }
 
 func checkEnvoy(t *testing.T, sidecar *corev1.Container, m *EnvoyMutator) {
+	meshName := aws.StringValue(m.ms.Spec.AWSName)
+	vnName := aws.StringValue(m.vn.Spec.AWSName)
 	expectedEnvs := map[string]string{
-		"APPMESH_VIRTUAL_NODE_NAME": fmt.Sprintf("mesh/%s/virtualNode/%s", m.vn.Spec.MeshRef.Name, k8s.NamespacedName(&m.vn)),
+		"APPMESH_VIRTUAL_NODE_NAME": fmt.Sprintf("mesh/%s/virtualNode/%s", meshName, vnName),
 		"AWS_REGION":                m.config.Region,
 		"ENVOY_LOG_LEVEL":           m.config.LogLevel,
 		"APPMESH_PREVIEW":           "0",

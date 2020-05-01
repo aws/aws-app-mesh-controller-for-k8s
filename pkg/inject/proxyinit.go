@@ -2,7 +2,10 @@ package inject
 
 import (
 	"encoding/json"
+	"fmt"
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	corev1 "k8s.io/api/core/v1"
+	"strings"
 )
 
 const initContainerTemplate = `
@@ -56,6 +59,7 @@ const initContainerTemplate = `
 `
 
 type ProxyinitMutator struct {
+	vn     *appmesh.VirtualNode
 	config *Config
 }
 
@@ -68,14 +72,24 @@ type ProxyInitMeta struct {
 	SidecarMemory      string
 }
 
-func NewProxyInitMutator(Config *Config) *ProxyinitMutator {
-	return &ProxyinitMutator{config: Config}
+func NewProxyInitMutator(Config *Config, vn *appmesh.VirtualNode) *ProxyinitMutator {
+	return &ProxyinitMutator{
+		vn:     vn,
+		config: Config,
+	}
 }
 
 func (m *ProxyinitMutator) Meta(pod *corev1.Pod) *ProxyInitMeta {
+	var ports []string
+	for _, listener := range m.vn.Spec.Listeners {
+		ports = append(ports, fmt.Sprintf("%v", listener.PortMapping.Port))
+	}
+	if len(ports) == 0 {
+		ports = []string{"0"}
+	}
 	return &ProxyInitMeta{
 		InitImage:          m.config.InitImage,
-		Ports:              GetPortsFromContainers(pod.Spec.Containers),
+		Ports:              strings.Join(ports, ","),
 		IgnoredIPs:         m.config.IgnoredIPs,
 		EgressIgnoredPorts: GetEgressIgnoredPorts(pod),
 		SidecarCpu:         GetSidecarCpu(m.config, pod),
