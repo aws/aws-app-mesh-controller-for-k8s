@@ -1,12 +1,8 @@
 /*
-
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +20,6 @@ import (
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
@@ -32,9 +27,10 @@ import (
 )
 
 // NewVirtualNodeReconciler constructs new virtualNodeReconciler
-func NewVirtualNodeReconciler(k8sClient client.Client, vnResManager virtualnode.ResourceManager, log logr.Logger) *virtualNodeReconciler {
+func NewVirtualNodeReconciler(k8sClient client.Client, finalizerManager k8s.FinalizerManager, vnResManager virtualnode.ResourceManager, log logr.Logger) *virtualNodeReconciler {
 	return &virtualNodeReconciler{
 		k8sClient:                    k8sClient,
+		finalizerManager:             finalizerManager,
 		vnResManager:                 vnResManager,
 		enqueueRequestsForMeshEvents: virtualnode.NewEnqueueRequestsForMeshEvents(k8sClient, log),
 		log:                          log,
@@ -43,8 +39,9 @@ func NewVirtualNodeReconciler(k8sClient client.Client, vnResManager virtualnode.
 
 // virtualNodeReconciler reconciles a VirtualNode object
 type virtualNodeReconciler struct {
-	k8sClient    client.Client
-	vnResManager virtualnode.ResourceManager
+	k8sClient        client.Client
+	finalizerManager k8s.FinalizerManager
+	vnResManager     virtualnode.ResourceManager
 
 	enqueueRequestsForMeshEvents handler.EventHandler
 	log                          logr.Logger
@@ -77,7 +74,7 @@ func (r *virtualNodeReconciler) reconcile(req ctrl.Request) error {
 }
 
 func (r *virtualNodeReconciler) reconcileVirtualNode(ctx context.Context, vn *appmesh.VirtualNode) error {
-	if err := r.addFinalizers(ctx, vn); err != nil {
+	if err := r.finalizerManager.AddFinalizers(ctx, vn, k8s.FinalizerAWSAppMeshResources); err != nil {
 		return err
 	}
 	if err := r.vnResManager.Reconcile(ctx, vn); err != nil {
@@ -87,35 +84,13 @@ func (r *virtualNodeReconciler) reconcileVirtualNode(ctx context.Context, vn *ap
 }
 
 func (r *virtualNodeReconciler) cleanupVirtualNode(ctx context.Context, vn *appmesh.VirtualNode) error {
-	if err := r.vnResManager.Cleanup(ctx, vn); err != nil {
-		return err
-	}
-	if err := r.removeFinalizers(ctx, vn); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *virtualNodeReconciler) addFinalizers(ctx context.Context, vn *appmesh.VirtualNode) error {
 	if k8s.HasFinalizer(vn, k8s.FinalizerAWSAppMeshResources) {
-		return nil
-	}
-	oldVN := vn.DeepCopy()
-	controllerutil.AddFinalizer(vn, k8s.FinalizerAWSAppMeshResources)
-	if err := r.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN)); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *virtualNodeReconciler) removeFinalizers(ctx context.Context, vn *appmesh.VirtualNode) error {
-	if !k8s.HasFinalizer(vn, k8s.FinalizerAWSAppMeshResources) {
-		return nil
-	}
-	oldVN := vn.DeepCopy()
-	controllerutil.RemoveFinalizer(vn, k8s.FinalizerAWSAppMeshResources)
-	if err := r.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN)); err != nil {
-		return err
+		if err := r.vnResManager.Cleanup(ctx, vn); err != nil {
+			return err
+		}
+		if err := r.finalizerManager.RemoveFinalizers(ctx, vn, k8s.FinalizerAWSAppMeshResources); err != nil {
+			return err
+		}
 	}
 	return nil
 }

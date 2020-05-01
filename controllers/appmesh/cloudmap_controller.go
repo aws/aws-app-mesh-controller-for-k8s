@@ -49,6 +49,7 @@ type cloudMapReconciler struct {
 	k8sClient                   client.Client
 	log                         logr.Logger
 	cloudMapSDK                 awsservices.CloudMap
+	finalizerManager            k8s.FinalizerManager
 	cloudMapInstanceCache       cache.Store
 	nameSpaceIDCache            cache.Store
 	serviceIDCache              cache.Store
@@ -88,12 +89,13 @@ type CloudMapServiceSummary struct {
 	ServiceID   string
 }
 
-func NewCloudMapReconciler(k8sClient client.Client, cloudMapSDK awsservices.CloudMap, log logr.Logger) *cloudMapReconciler {
+func NewCloudMapReconciler(k8sClient client.Client, finalizerManager k8s.FinalizerManager, cloudMapSDK awsservices.CloudMap, log logr.Logger) *cloudMapReconciler {
 
 	return &cloudMapReconciler{
-		k8sClient:   k8sClient,
-		log:         log,
-		cloudMapSDK: cloudMapSDK,
+		k8sClient:        k8sClient,
+		log:              log,
+		cloudMapSDK:      cloudMapSDK,
+		finalizerManager: finalizerManager,
 		cloudMapInstanceCache: cache.NewTTLStore(func(obj interface{}) (string, error) {
 			return obj.(*cloudMapInstanceCacheItem).key, nil
 		}, 300*time.Second),
@@ -892,7 +894,7 @@ func (r *cloudMapReconciler) podReadinessMonitor(ctx context.Context, c chan clo
 		}
 	}
 
-	return nil
+	//return nil
 }
 
 func (r *cloudMapReconciler) addAWSCloudMapResourceFinalizers(ctx context.Context, vn *appmesh.VirtualNode) error {

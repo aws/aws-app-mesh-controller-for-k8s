@@ -98,10 +98,10 @@ func main() {
 	meshRefResolver := mesh.NewDefaultReferenceResolver(mgr.GetClient(), ctrl.Log)
 	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
 	vsRefResolver := virtualservice.NewDefaultReferenceResolver(mgr.GetClient(), ctrl.Log)
-	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), meshRefResolver, vsRefResolver, ctrl.Log)
+	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), meshRefResolver, vsRefResolver, cloud.AccountID(), ctrl.Log)
 	msReconciler := appmeshcontroller.NewMeshReconciler(mgr.GetClient(), finalizerManager, meshMembersFinalizer, meshResManager, ctrl.Log.WithName("controllers").WithName("Mesh"))
-	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
-	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log.WithName("controllers").WithName("VirtualNode"))
+	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
+	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), finalizerManager, cloud.CloudMap(), ctrl.Log.WithName("controllers").WithName("VirtualNode"))
 
 	if err = msReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Mesh")
