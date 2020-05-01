@@ -100,8 +100,6 @@ spec:
                   - virtualRouterRef
                   type: object
               type: object
-          required:
-          - provider
           type: object
         status:
           description: VirtualServiceStatus defines the observed state of VirtualService
