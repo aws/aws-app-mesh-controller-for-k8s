@@ -56,6 +56,14 @@ func Convert_CRD_VirtualServiceProvider_To_SDK_VirtualServiceProvider(crdObj *ap
 func Convert_CRD_VirtualServiceSpec_To_SDK_VirtualServiceSpec(crdObj *appmesh.VirtualServiceSpec,
 	sdkObj *appmeshsdk.VirtualServiceSpec, scope conversion.Scope) error {
 
-	return Convert_CRD_VirtualServiceProvider_To_SDK_VirtualServiceProvider(&crdObj.Provider, sdkObj.Provider, scope)
+	if crdObj.Provider != nil {
+		sdkObj.Provider = &appmeshsdk.VirtualServiceProvider{}
+		if err := Convert_CRD_VirtualServiceProvider_To_SDK_VirtualServiceProvider(crdObj.Provider, sdkObj.Provider, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Provider = nil
+	}
+	return nil
 
 }
