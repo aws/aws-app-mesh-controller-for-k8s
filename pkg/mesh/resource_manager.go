@@ -140,7 +140,7 @@ func (m *defaultResourceManager) updateSDKMesh(ctx context.Context, sdkMS *appme
 		"diff", diff,
 	)
 	resp, err := m.appMeshSDK.UpdateMeshWithContext(ctx, &appmeshsdk.UpdateMeshInput{
-		MeshName: ms.Spec.AWSName,
+		MeshName: sdkMS.MeshName,
 		Spec:     desiredSDKMSSpec,
 	})
 	if err != nil {
@@ -159,7 +159,7 @@ func (m *defaultResourceManager) deleteSDKMesh(ctx context.Context, sdkMS *appme
 	}
 
 	_, err := m.appMeshSDK.DeleteMeshWithContext(ctx, &appmeshsdk.DeleteMeshInput{
-		MeshName: ms.Spec.AWSName,
+		MeshName: sdkMS.MeshName,
 	})
 	if err != nil {
 		return err

@@ -78,7 +78,7 @@ func (r *meshReconciler) reconcile(req ctrl.Request) error {
 }
 
 func (r *meshReconciler) reconcileMesh(ctx context.Context, ms *appmesh.Mesh) error {
-	if err := r.finalizerManager.AddFinalizers(ctx, ms, k8s.FinalizerMeshMembers, k8s.FinalizerAWSResources); err != nil {
+	if err := r.finalizerManager.AddFinalizers(ctx, ms, k8s.FinalizerMeshMembers, k8s.FinalizerAWSAppMeshResources); err != nil {
 		return err
 	}
 	if err := r.meshResManager.Reconcile(ctx, ms); err != nil {
@@ -97,11 +97,11 @@ func (r *meshReconciler) cleanupMesh(ctx context.Context, ms *appmesh.Mesh) erro
 		}
 	}
 
-	if k8s.HasFinalizer(ms, k8s.FinalizerAWSResources) {
+	if k8s.HasFinalizer(ms, k8s.FinalizerAWSAppMeshResources) {
 		if err := r.meshResManager.Cleanup(ctx, ms); err != nil {
 			return err
 		}
-		if err := r.finalizerManager.RemoveFinalizers(ctx, ms, k8s.FinalizerAWSResources); err != nil {
+		if err := r.finalizerManager.RemoveFinalizers(ctx, ms, k8s.FinalizerAWSAppMeshResources); err != nil {
 			return err
 		}
 	}

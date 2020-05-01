@@ -35,6 +35,7 @@ func NewDefaultResourceManager(
 	appMeshSDK services.AppMesh,
 	meshRefResolver mesh.ReferenceResolver,
 	virtualServiceRefResolver virtualservice.ReferenceResolver,
+	accountID string,
 	log logr.Logger) ResourceManager {
 
 	return &defaultResourceManager{
@@ -42,6 +43,7 @@ func NewDefaultResourceManager(
 		appMeshSDK:                appMeshSDK,
 		meshRefResolver:           meshRefResolver,
 		virtualServiceRefResolver: virtualServiceRefResolver,
+		accountID:                 accountID,
 		log:                       log,
 	}
 }
@@ -52,8 +54,8 @@ type defaultResourceManager struct {
 	appMeshSDK                services.AppMesh
 	meshRefResolver           mesh.ReferenceResolver
 	virtualServiceRefResolver virtualservice.ReferenceResolver
-
-	log logr.Logger
+	accountID                 string
+	log                       logr.Logger
 }
 
 func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.VirtualNode) error {
@@ -105,7 +107,7 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vn *appmesh.Virtua
 		return nil
 	}
 
-	return m.deleteSDKVirtualNode(ctx, ms, vn)
+	return m.deleteSDKVirtualNode(ctx, sdkVN, ms, vn)
 }
 
 // findMeshDependency find the Mesh dependency for this virtualNode.
@@ -201,6 +203,14 @@ func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN
 	if cmp.Equal(desiredSDKVNSpec, actualSDKVNSpec, opts) {
 		return sdkVN, nil
 	}
+	if !m.isSDKVirtualNodeControlledByCRDVirtualNode(ctx, sdkVN, vn) {
+		m.log.V(2).Info("skip virtualNode update since it's not controlled",
+			"virtualNode", k8s.NamespacedName(vn),
+			"virtualNodeARN", aws.StringValue(sdkVN.Metadata.Arn),
+		)
+		return sdkVN, nil
+	}
+
 	diff := cmp.Diff(desiredSDKVNSpec, actualSDKVNSpec, opts)
 	m.log.V(2).Info("virtualNodeSpec changed",
 		"virtualNode", k8s.NamespacedName(vn),
@@ -212,7 +222,7 @@ func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN
 		MeshName:        ms.Spec.AWSName,
 		MeshOwner:       ms.Spec.MeshOwner,
 		Spec:            desiredSDKVNSpec,
-		VirtualNodeName: vn.Spec.AWSName,
+		VirtualNodeName: sdkVN.VirtualNodeName,
 	})
 	if err != nil {
 		return nil, err
@@ -220,11 +230,19 @@ func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN
 	return resp.VirtualNode, nil
 }
 
-func (m *defaultResourceManager) deleteSDKVirtualNode(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode) error {
+func (m *defaultResourceManager) deleteSDKVirtualNode(ctx context.Context, sdkVN *appmeshsdk.VirtualNodeData, ms *appmesh.Mesh, vn *appmesh.VirtualNode) error {
+	if !m.isSDKVirtualNodeOwnedByCRDVirtualNode(ctx, sdkVN, vn) {
+		m.log.V(2).Info("skip mesh virtualNode since its not owned",
+			"virtualNode", k8s.NamespacedName(vn),
+			"virtualNodeARN", aws.StringValue(sdkVN.Metadata.Arn),
+		)
+		return nil
+	}
+
 	_, err := m.appMeshSDK.DeleteVirtualNodeWithContext(ctx, &appmeshsdk.DeleteVirtualNodeInput{
 		MeshName:        ms.Spec.AWSName,
 		MeshOwner:       ms.Spec.MeshOwner,
-		VirtualNodeName: vn.Spec.AWSName,
+		VirtualNodeName: sdkVN.VirtualNodeName,
 	})
 	if err != nil {
 		return err
@@ -286,4 +304,25 @@ func (m *defaultResourceManager) buildSDKVirtualServiceReferenceConvertFunc(ctx 
 		*vsAWSName = aws.StringValue(vs.Spec.AWSName)
 		return nil
 	}
+}
+
+// isSDKVirtualNodeControlledByCRDVirtualNode checks whether an AppMesh virtualNode is controlled by CRD virtualNode
+// if it's controlled, CRD virtualNode update is responsible for update AppMesh virtualNode.
+func (m *defaultResourceManager) isSDKVirtualNodeControlledByCRDVirtualNode(ctx context.Context, sdkVN *appmeshsdk.VirtualNodeData, vn *appmesh.VirtualNode) bool {
+	if aws.StringValue(sdkVN.Metadata.ResourceOwner) != m.accountID {
+		return false
+	}
+	return true
+}
+
+// isSDKVirtualNodeOwnedByCRDVirtualNode checks whether an AppMesh virtualNode is owned by CRD virtualNode.
+// if it's owned, CRD virtualNode deletion is responsible for delete AppMesh virtualNode.
+func (m *defaultResourceManager) isSDKVirtualNodeOwnedByCRDVirtualNode(ctx context.Context, sdkVN *appmeshsdk.VirtualNodeData, vn *appmesh.VirtualNode) bool {
+	if !m.isSDKVirtualNodeControlledByCRDVirtualNode(ctx, sdkVN, vn) {
+		return false
+	}
+
+	// TODO: Adding tagging support, so a existing virtualNode in owner account but not ownership can be support.
+	// currently, virtualNode controllership == ownership, but it don't have to be so once we add tagging support.
+	return true
 }
