@@ -241,3 +241,111 @@ func Test_defaultResourceManager_buildSDKVirtualServiceReferenceConvertFunc(t *t
 		})
 	}
 }
+
+func Test_defaultResourceManager_isSDKVirtualNodeControlledByCRDVirtualNode(t *testing.T) {
+	type fields struct {
+		accountID string
+	}
+	type args struct {
+		sdkVN *appmeshsdk.VirtualNodeData
+		vn    *appmesh.VirtualNode
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "sdkVN is controlled by crdVN",
+			fields: fields{accountID: "222222222"},
+			args: args{
+				sdkVN: &appmeshsdk.VirtualNodeData{
+					Metadata: &appmeshsdk.ResourceMetadata{
+						ResourceOwner: aws.String("222222222"),
+					},
+				},
+				vn: &appmesh.VirtualNode{},
+			},
+			want: true,
+		},
+		{
+			name:   "sdkVN isn't controlled by crdVN",
+			fields: fields{accountID: "222222222"},
+			args: args{
+				sdkVN: &appmeshsdk.VirtualNodeData{
+					Metadata: &appmeshsdk.ResourceMetadata{
+						ResourceOwner: aws.String("33333333"),
+					},
+				},
+				vn: &appmesh.VirtualNode{},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			m := &defaultResourceManager{
+				accountID: tt.fields.accountID,
+				log:       &log.NullLogger{},
+			}
+			got := m.isSDKVirtualNodeControlledByCRDVirtualNode(ctx, tt.args.sdkVN, tt.args.vn)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_defaultResourceManager_isSDKVirtualNodeOwnedByCRDVirtualNode(t *testing.T) {
+	type fields struct {
+		accountID string
+	}
+	type args struct {
+		sdkVN *appmeshsdk.VirtualNodeData
+		vn    *appmesh.VirtualNode
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "sdkVN is owned by crdVN",
+			fields: fields{accountID: "222222222"},
+			args: args{
+				sdkVN: &appmeshsdk.VirtualNodeData{
+					Metadata: &appmeshsdk.ResourceMetadata{
+						ResourceOwner: aws.String("222222222"),
+					},
+				},
+				vn: &appmesh.VirtualNode{},
+			},
+			want: true,
+		},
+		{
+			name:   "sdkVN isn't owned by crdVN",
+			fields: fields{accountID: "222222222"},
+			args: args{
+				sdkVN: &appmeshsdk.VirtualNodeData{
+					Metadata: &appmeshsdk.ResourceMetadata{
+						ResourceOwner: aws.String("33333333"),
+					},
+				},
+				vn: &appmesh.VirtualNode{},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			m := &defaultResourceManager{
+				accountID: tt.fields.accountID,
+				log:       &log.NullLogger{},
+			}
+			got := m.isSDKVirtualNodeOwnedByCRDVirtualNode(ctx, tt.args.sdkVN, tt.args.vn)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
