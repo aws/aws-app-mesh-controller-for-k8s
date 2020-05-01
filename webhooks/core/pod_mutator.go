@@ -3,7 +3,7 @@ package core
 import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
-	appmeshinject "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/appmeshinject"
+	appmeshinject "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	corev1 "k8s.io/api/core/v1"
@@ -15,9 +15,10 @@ import (
 const apiPathMutatePod = "/mutate-v1-pod"
 
 // NewPodMutator returns a mutator for Pod.
-func NewPodMutator(vnMembershipDesignator virtualnode.MembershipDesignator) *podMutator {
+func NewPodMutator(vnMembershipDesignator virtualnode.MembershipDesignator, injector *appmeshinject.SidecarInjector) *podMutator {
 	return &podMutator{
 		vnMembershipDesignator: vnMembershipDesignator,
+		sidecarInjector:        injector,
 	}
 }
 
@@ -25,6 +26,7 @@ var _ webhook.Mutator = &podMutator{}
 
 type podMutator struct {
 	vnMembershipDesignator virtualnode.MembershipDesignator
+	sidecarInjector        *appmeshinject.SidecarInjector
 }
 
 func (m *podMutator) Prototype(req admission.Request) (runtime.Object, error) {
@@ -51,7 +53,7 @@ func (m *podMutator) MutateUpdate(ctx context.Context, obj runtime.Object, oldOb
 }
 
 func (m *podMutator) injectAppMeshPatches(ctx context.Context, vn *appmesh.VirtualNode, pod *corev1.Pod) error {
-	return appmeshinject.InjectAppMeshPatches(vn, pod)
+	return m.sidecarInjector.InjectAppMeshPatches(vn, pod)
 }
 
 // +kubebuilder:webhook:path=/mutate-v1-pod,mutating=true,failurePolicy=ignore,groups="",resources=pods,verbs=create,versions=v1,name=mpod.appmesh.k8s.aws

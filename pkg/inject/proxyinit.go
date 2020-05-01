@@ -1,4 +1,4 @@
-package appmeshinject
+package inject
 
 import (
 	"encoding/json"
@@ -56,20 +56,38 @@ const initContainerTemplate = `
 `
 
 type ProxyinitMutator struct {
+	config *Config
+}
+
+type ProxyInitMeta struct {
+	InitImage          string
+	Ports              string
+	IgnoredIPs         string
+	EgressIgnoredPorts string
+	SidecarCpu         string
+	SidecarMemory      string
+}
+
+func NewProxyInitMutator(Config *Config) *ProxyinitMutator {
+	return &ProxyinitMutator{config: Config}
+}
+
+func (m *ProxyinitMutator) Meta(pod *corev1.Pod) *ProxyInitMeta {
+	return &ProxyInitMeta{
+		InitImage:          m.config.InitImage,
+		Ports:              GetPortsFromContainers(pod.Spec.Containers),
+		IgnoredIPs:         m.config.IgnoredIPs,
+		EgressIgnoredPorts: GetEgressIgnoredPorts(pod),
+		SidecarCpu:         GetSidecarCpu(m.config, pod),
+		SidecarMemory:      GetSidecarMemory(m.config, pod),
+	}
 }
 
 func (m *ProxyinitMutator) mutate(pod *corev1.Pod) error {
-	if isAppMeshCNIEnabled(pod) {
+	if IsAppMeshCNIEnabled(pod) {
 		return nil
 	}
-	meta := struct {
-		Config
-		Ports string
-	}{
-		Config: updateConfigFromPodAnnotations(config, pod),
-		Ports:  getPortsFromContainers(pod.Spec.Containers),
-	}
-
+	meta := m.Meta(pod)
 	proxyInit, err := renderTemplate("init", initContainerTemplate, meta)
 	if err != nil {
 		return err

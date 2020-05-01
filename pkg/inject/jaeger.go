@@ -1,4 +1,4 @@
-package appmeshinject
+package inject
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -35,7 +35,7 @@ const injectJaegerTemplate = `
   "command": [
     "sh",
     "-c",
-    "cat <<EOF >> /tmp/envoy/envoyconf.yaml{{ .Config }}EOF\n\ncat /tmp/envoy/envoyconf.yaml\n"
+    "cat <<EOF >> /tmp/envoy/envoyconf.yaml{{ .EnvoyConfig }}EOF\n\ncat /tmp/envoy/envoyconf.yaml\n"
   ],
   "image": "busybox",
   "imagePullPolicy": "IfNotPresent",
@@ -60,13 +60,31 @@ const injectJaegerTemplate = `
 `
 
 type JaegerMutator struct {
+	config *Config
+}
+
+type JaegerMeta struct {
+	JaegerAddress string
+	JaegerPort    string
+}
+
+func NewJaegerMutator(Config *Config) *JaegerMutator {
+	return &JaegerMutator{config: Config}
+}
+
+func (j *JaegerMutator) Meta(pod *corev1.Pod) *JaegerMeta {
+	return &JaegerMeta{
+		JaegerAddress: j.config.JaegerAddress,
+		JaegerPort:    j.config.JaegerPort,
+	}
 }
 
 func (j *JaegerMutator) mutate(pod *corev1.Pod) error {
-	if !config.EnableJaegerTracing {
+	if !j.config.EnableJaegerTracing {
 		return nil
 	}
-	init, err := renderInitContainer("jaeger", jaegerTemplate, injectJaegerTemplate, config)
+	jaegerMeta := j.Meta(pod)
+	init, err := renderInitContainer("jaeger", jaegerTemplate, injectJaegerTemplate, jaegerMeta)
 	if err != nil {
 		return err
 	}

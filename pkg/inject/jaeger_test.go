@@ -1,4 +1,4 @@
-package appmeshinject
+package inject
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func Test_RenderDatadogInitContainer(t *testing.T) {
+func Test_RenderJaegerInitContainer(t *testing.T) {
 	tests := []struct {
 		name string
 		conf Config
@@ -17,16 +17,16 @@ func Test_RenderDatadogInitContainer(t *testing.T) {
 		{
 			name: "Enable Jaeger inject",
 			conf: getConfig(func(cnf Config) Config {
-				cnf.EnableDatadogTracing = true
-				cnf.DatadogAddress = "datadog.appmesh-system"
-				cnf.DatadogPort = "8126"
+				cnf.EnableJaegerTracing = true
+				cnf.JaegerAddress = "appmesh-jaeger.appmesh-system"
+				cnf.JaegerPort = "9411"
 				return cnf
 			}),
 			pod:  getPod(nil),
 			want: true,
 		},
 		{
-			name: "No Datadog inject",
+			name: "No Jaeger inject",
 			conf: getConfig(nil),
 			pod:  getPod(nil),
 			want: false,
@@ -35,32 +35,31 @@ func Test_RenderDatadogInitContainer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			New(tt.conf)
-			d := DatadogMutator{}
+			j := NewJaegerMutator(&tt.conf)
 			before := len(tt.pod.Spec.InitContainers)
-			err := d.mutate(tt.pod)
+			err := j.mutate(tt.pod)
 			var init *corev1.Container
 			assert.NoError(t, err, "Unexpected error")
 			found := false
 			for _, v := range tt.pod.Spec.InitContainers {
-				if v.Name == "inject-datadog-config" {
+				if v.Name == "inject-jaeger-config" {
 					found = true
 					init = &v
 				}
 			}
-			assert.True(t, found == tt.want, "Unexpected datadog container")
+			assert.True(t, found == tt.want, "Unexpected jaeger container")
 			if tt.want {
 				assert.NotNil(t, init)
 				assert.Equal(t, "busybox", init.Image)
 				if len(init.Command) < 1 {
-					t.Error("Datadog init container does not contain command")
+					t.Error("Jaeger init container does not contain command")
 				}
 				allCommands := strings.Join(init.Command, " ")
-				if !strings.Contains(allCommands, config.DatadogPort) {
-					t.Errorf("Datadog port did not get configured correctly")
+				if !strings.Contains(allCommands, tt.conf.JaegerPort) {
+					t.Errorf("Jaeger port did not get configured correctly")
 				}
-				if !strings.Contains(allCommands, config.DatadogAddress) {
-					t.Errorf("Datadog address did not get configured correctly")
+				if !strings.Contains(allCommands, tt.conf.JaegerAddress) {
+					t.Errorf("Jaeger address did not get configured correctly")
 				}
 				assert.True(t, len(tt.pod.Spec.Volumes) > 0)
 				assert.Greater(t, len(tt.pod.Spec.InitContainers), before)

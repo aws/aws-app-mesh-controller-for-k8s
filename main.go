@@ -34,7 +34,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/appmeshinject"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 
@@ -64,15 +64,13 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	var injectConfig appmeshinject.Config
+	var injectConfig inject.Config
 	injectConfig.BindFlags()
 	flag.Parse()
 
 	// TODO: make level configurable
 	lvl := zapraw.NewAtomicLevelAt(-2)
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.Level(&lvl)))
-
-	appmeshinject.New(injectConfig)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -129,13 +127,14 @@ func main() {
 
 	meshMembershipDesignator := mesh.NewMembershipDesignator(mgr.GetClient())
 	vnMembershipDesignator := virtualnode.NewMembershipDesignator(mgr.GetClient())
+	sidecarInjector := inject.NewSidecarInjector(&injectConfig, cloud.Region())
 	appmeshwebhook.NewMeshMutator().SetupWithManager(mgr)
 	appmeshwebhook.NewMeshValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualNodeMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualNodeValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualServiceMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualServiceValidator().SetupWithManager(mgr)
-	corewebhook.NewPodMutator(vnMembershipDesignator).SetupWithManager(mgr)
+	corewebhook.NewPodMutator(vnMembershipDesignator, sidecarInjector).SetupWithManager(mgr)
 
 	if err = (&appmeshcontroller.VirtualGatewayReconciler{
 		Client: mgr.GetClient(),

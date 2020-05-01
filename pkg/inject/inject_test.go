@@ -1,4 +1,4 @@
-package appmeshinject
+package inject
 
 import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
@@ -21,7 +21,6 @@ func getConfig(fp func(Config) Config) Config {
 		SidecarMemory:               "32Mi",
 		SidecarCpu:                  "10m",
 		EnableIAMForServiceAccounts: true,
-		EgressIgnoredPorts:          "22",
 	}
 	if fp != nil {
 		conf = fp(conf)
@@ -111,7 +110,7 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 		{
 			name: "Inject Envoy container with xray",
 			conf: getConfig(func(cnf Config) Config {
-				cnf.InjectXraySidecar = true
+				cnf.EnableXrayTracing = true
 				return cnf
 			}),
 			args: args{
@@ -217,9 +216,9 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			New(tt.conf)
+			inj := NewSidecarInjector(&tt.conf, "")
 			pod := tt.args.pod
-			InjectAppMeshPatches(tt.args.vn, pod)
+			inj.InjectAppMeshPatches(tt.args.vn, pod)
 			assert.Equal(t, tt.want.init, len(pod.Spec.InitContainers), "Numbers of init containers mismatch")
 			assert.Equal(t, tt.want.containers, len(pod.Spec.Containers), "Numbers of containers mismatch")
 			if tt.want.xray {

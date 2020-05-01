@@ -1,4 +1,4 @@
-package appmeshinject
+package inject
 
 import (
 	"encoding/json"
@@ -40,8 +40,8 @@ const envoyContainerTemplate = `
     }{{ end }},
     {
       "name": "AWS_REGION",
-      "value": "{{ .Region }}"
-    }{{ if .InjectXraySidecar }},
+      "value": "{{ .AWSRegion }}"
+    }{{ if .EnableXrayTracing }},
     {
       "name": "ENABLE_ENVOY_XRAY_TRACING",
       "value": "1"
@@ -71,35 +71,64 @@ const envoyContainerTemplate = `
 `
 
 type EnvoyMutator struct {
-	vn appmesh.VirtualNode
+	vn     appmesh.VirtualNode
+	config *Config
 }
 
-func (m *EnvoyMutator) mutate(pod *corev1.Pod) error {
+type EnvoyMeta struct {
+	AWSRegion            string
+	SidecarImage         string
+	MeshName             string
+	VirtualNodeName      string
+	AppMeshPreview       string
+	LogLevel             string
+	SidecarCpu           string
+	SidecarMemory        string
+	EnableXrayTracing    bool
+	EnableJaegerTracing  bool
+	EnableDatadogTracing bool
+	EnableStatsTags      bool
+	EnableStatsD         bool
+}
+
+func NewEnvoyMutator(Config *Config, vn appmesh.VirtualNode) *EnvoyMutator {
+	return &EnvoyMutator{vn: vn, config: Config}
+}
+
+func (m *EnvoyMutator) Meta(pod *corev1.Pod) *EnvoyMeta {
 	meshName := m.vn.Spec.MeshRef.Name
 	virtualNodeName := k8s.NamespacedName(&m.vn).String()
-	sidecarMeta := struct {
-		Config
-		MeshName        string
-		VirtualNodeName string
-		AppMeshPreview  string
-	}{
-		Config:          updateConfigFromPodAnnotations(config, pod),
-		MeshName:        meshName,
-		VirtualNodeName: virtualNodeName,
-		AppMeshPreview:  "0",
-	}
+	preview := "0"
 
 	if v, ok := pod.ObjectMeta.Annotations[AppMeshPreviewAnnotation]; ok {
 		if v == "true" {
-			sidecarMeta.AppMeshPreview = "1"
+			preview = "1"
 		}
 	} else {
-		if config.Preview {
-			sidecarMeta.AppMeshPreview = "1"
+		if m.config.Preview {
+			preview = "1"
 		}
 	}
+	return &EnvoyMeta{
+		AWSRegion:            m.config.Region,
+		SidecarImage:         m.config.SidecarImage,
+		MeshName:             meshName,
+		VirtualNodeName:      virtualNodeName,
+		AppMeshPreview:       preview,
+		LogLevel:             m.config.LogLevel,
+		SidecarCpu:           GetSidecarCpu(m.config, pod),
+		SidecarMemory:        GetSidecarMemory(m.config, pod),
+		EnableXrayTracing:    m.config.EnableXrayTracing,
+		EnableJaegerTracing:  m.config.EnableJaegerTracing,
+		EnableDatadogTracing: m.config.EnableDatadogTracing,
+		EnableStatsTags:      m.config.EnableStatsTags,
+		EnableStatsD:         m.config.EnableStatsD,
+	}
+}
 
-	envoySidecar, err := renderTemplate("envoy", envoyContainerTemplate, sidecarMeta)
+func (m *EnvoyMutator) mutate(pod *corev1.Pod) error {
+	envoyMeta := m.Meta(pod)
+	envoySidecar, err := renderTemplate("envoy", envoyContainerTemplate, envoyMeta)
 	if err != nil {
 		return err
 	}
@@ -109,6 +138,6 @@ func (m *EnvoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
-	pod.Annotations[AppMeshVirtualNodeNameAnnotation] = virtualNodeName
+	pod.Annotations[AppMeshVirtualNodeNameAnnotation] = envoyMeta.VirtualNodeName
 	return nil
 }
