@@ -1314,7 +1314,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 			name: "normal case",
 			args: args{
 				crdObj: &appmesh.Route{
-					Name: aws.String("route1"),
+					Name: "route1",
 					GRPCRoute: &appmesh.GRPCRoute{
 						Match: appmesh.GRPCRouteMatch{
 							Metadata: []appmesh.GRPCRouteMetadata{

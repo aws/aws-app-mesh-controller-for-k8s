@@ -90,7 +90,7 @@ type VirtualServiceSpec struct {
 type VirtualServiceStatus struct {
 	// VirtualServiceARN is the AppMesh VirtualService object's Amazon Resource Name.
 	// +optional
-	VirtualServiceARN string `json:"virtualServiceARN,omitempty"`
+	VirtualServiceARN *string `json:"virtualServiceARN,omitempty"`
 	// The current VirtualService status.
 	// +optional
 	Conditions []VirtualServiceCondition `json:"conditions,omitempty"`
