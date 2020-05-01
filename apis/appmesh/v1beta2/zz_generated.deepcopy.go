@@ -2559,7 +2559,11 @@ func (in *VirtualServiceSpec) DeepCopyInto(out *VirtualServiceSpec) {
 		*out = new(string)
 		**out = **in
 	}
-	in.Provider.DeepCopyInto(&out.Provider)
+	if in.Provider != nil {
+		in, out := &in.Provider, &out.Provider
+		*out = new(VirtualServiceProvider)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.MeshRef != nil {
 		in, out := &in.MeshRef, &out.MeshRef
 		*out = new(MeshReference)

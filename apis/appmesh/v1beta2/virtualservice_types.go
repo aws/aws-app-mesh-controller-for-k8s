@@ -74,7 +74,8 @@ type VirtualServiceSpec struct {
 	AWSName *string `json:"awsName,omitempty"`
 
 	// The provider for virtual services. You can specify a single virtual node or virtual router.
-	Provider VirtualServiceProvider `json:"provider"`
+	// +optional
+	Provider *VirtualServiceProvider `json:"provider,omitempty"`
 
 	// A reference to k8s Mesh CR that this VirtualService belongs to.
 	// The admission controller populates it using Meshes's selector, and prevents users from setting this field.
