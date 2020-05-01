@@ -96,7 +96,7 @@ func main() {
 	vsRefResolver := virtualservice.NewDefaultReferenceResolver(mgr.GetClient(), ctrl.Log)
 	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), meshRefResolver, vsRefResolver, ctrl.Log)
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
-
+    cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log.WithName("controllers").WithName("VirtualNode"))
 	if err = (&appmeshcontroller.MeshReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Mesh"),
@@ -117,14 +117,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualNode")
 		os.Exit(1)
 	}
-	if err = (&appmeshcontroller.CloudMapReconciler{
-		K8SClient: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("CloudMap"),
-		Scheme: mgr.GetScheme(),
-		CloudMapInstanceCache: cache.NewTTLStore(func(obj interface{}) (string, error) {
-			return obj.(*appmeshcontrollers.CloudMapInstanceCacheItem).key, nil
-		}, 300*time.Second),
-	}).SetupWithManager(mgr); err != nil {
+	if err = cloudMapReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CloudMap")
 		os.Exit(1)
 	}

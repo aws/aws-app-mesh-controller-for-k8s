@@ -97,11 +97,11 @@ func (r *virtualNodeReconciler) cleanupVirtualNode(ctx context.Context, vn *appm
 }
 
 func (r *virtualNodeReconciler) addFinalizers(ctx context.Context, vn *appmesh.VirtualNode) error {
-	if k8s.HasFinalizer(vn, k8s.FinalizerAWSResources) {
+	if k8s.HasFinalizer(vn, k8s.FinalizerAWSAppMeshResources) {
 		return nil
 	}
 	oldVN := vn.DeepCopy()
-	controllerutil.AddFinalizer(vn, k8s.FinalizerAWSResources)
+	controllerutil.AddFinalizer(vn, k8s.FinalizerAWSAppMeshResources)
 	if err := r.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN)); err != nil {
 		return err
 	}
@@ -109,11 +109,11 @@ func (r *virtualNodeReconciler) addFinalizers(ctx context.Context, vn *appmesh.V
 }
 
 func (r *virtualNodeReconciler) removeFinalizers(ctx context.Context, vn *appmesh.VirtualNode) error {
-	if !k8s.HasFinalizer(vn, k8s.FinalizerAWSResources) {
+	if !k8s.HasFinalizer(vn, k8s.FinalizerAWSAppMeshResources) {
 		return nil
 	}
 	oldVN := vn.DeepCopy()
-	controllerutil.RemoveFinalizer(vn, k8s.FinalizerAWSResources)
+	controllerutil.RemoveFinalizer(vn, k8s.FinalizerAWSAppMeshResources)
 	if err := r.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN)); err != nil {
 		return err
 	}

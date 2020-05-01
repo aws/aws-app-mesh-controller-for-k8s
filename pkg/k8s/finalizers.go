@@ -6,7 +6,8 @@ import (
 
 const (
 	FinalizerMeshMembers  = "finalizers.appmesh.k8s.aws/mesh-members"
-	FinalizerAWSResources = "finalizers.appmesh.k8s.aws/aws-resources"
+	FinalizerAWSAppMeshResources = "finalizers.appmesh.k8s.aws/aws-appmesh-resources"
+	FinalizerAWSCloudMapResources = "finalizers.appmesh.k8s.aws/aws-cloudmap-resources"
 )
 
 // HasFinalizer tests whether k8s object has specified finalizer

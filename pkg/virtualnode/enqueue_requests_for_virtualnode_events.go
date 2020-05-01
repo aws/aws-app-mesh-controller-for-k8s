@@ -5,66 +5,71 @@ import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
-func NewEnqueueRequestsForVirtualNodeEvents(k8sClient client.Client, log logr.Logger) *enqueueRequestsForVirtualNodeEvents {
-	return &enqueueRequestsForVirtualNodeEvents{
+func NewEnqueueRequestsForPodEvents(k8sClient client.Client, log logr.Logger) *enqueueRequestsForPodEvents {
+	return &enqueueRequestsForPodEvents{
 		k8sClient: k8sClient,
 		log:       log,
 	}
 }
 
-var _ handler.EventHandler = (*enqueueRequestsForVirtualNodeEvents)(nil)
+var _ handler.EventHandler = (*enqueueRequestsForPodEvents)(nil)
 
-type enqueueRequestsForVirtualNodeEvents struct {
+type enqueueRequestsForPodEvents struct {
 	k8sClient client.Client
 	log       logr.Logger
 }
 
 // Create is called in response to an create event
-func (h *enqueueRequestsForVirtualNodeEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
-	// no-op
+func (h *enqueueRequestsForPodEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
+	h.enqueueVirtualNodesForPods(context.Background(), queue, e.Object.(*corev1.Pod))
 }
 
 // Update is called in response to an update event
-func (h *enqueueRequestsForVirtualNodeEvents) Update(e event.UpdateEvent, queue workqueue.RateLimitingInterface) {
-	// virtualNode reconcile depends on mesh is active or not.
-	// so we only need to trigger virtualNode reconcile if mesh's active status changed.
-	msOld := e.ObjectOld.(*appmesh.Mesh)
-	msNew := e.ObjectNew.(*appmesh.Mesh)
-
-	if vNode.IsVirtualNodeActive(msOld) != vNode.IsVirtualNodeActive(msNew) {
-		h.enqueueVirtualNodesForPods(context.Background(), queue, msNew)
-	}
+func (h *enqueueRequestsForPodEvents) Update(e event.UpdateEvent, queue workqueue.RateLimitingInterface) {
+	// cloudmap reconcile depends Virtualnode Pod Selector labels and if there is an update to a Pod
+	// we need to check if there is any change w.r.t VirtualNode it belongs.
+	h.enqueueVirtualNodesForPods(context.Background(), queue, e.ObjectNew.(*corev1.Pod))
 }
 
 // Delete is called in response to a delete event
-func (h *enqueueRequestsForVirtualNodeEvents) Delete(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
-	// no-op
+func (h *enqueueRequestsForPodEvents) Delete(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
+	//On a VirtualNode delete, we need to clean up corresponding CloudMap Service along with
+	//deregistering all the service instances from CloudMap.
+	h.enqueueVirtualNodesForPods(context.Background(), queue, e.Object.(*corev1.Pod))
 }
 
 // Generic is called in response to an event of an unknown type or a synthetic event triggered as a cron or
 // external trigger request
-func (h *enqueueRequestsForVirtualNodeEvents) Generic(e event.GenericEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForPodEvents) Generic(e event.GenericEvent, queue workqueue.RateLimitingInterface) {
 	// no-op
 }
 
-func (h *enqueueRequestsForVirtualNodeEvents) enqueueVirtualNodesForPods(ctx context.Context, queue workqueue.RateLimitingInterface, ms *appmesh.Mesh) {
+func (h *enqueueRequestsForPodEvents) enqueueVirtualNodesForPods(ctx context.Context, queue workqueue.RateLimitingInterface,
+	pod *corev1.Pod) {
 	vnList := &appmesh.VirtualNodeList{}
 	if err := h.k8sClient.List(ctx, vnList); err != nil {
-		h.log.Error(err, "failed to enqueue virtualNodes for mesh events",
-			"mesh", k8s.NamespacedName(ms))
+		h.log.Error(err, "failed to enqueue virtualNodes for pod events",
+			"Pod", k8s.NamespacedName(pod))
 		return
 	}
+
 	for _, vn := range vnList.Items {
-		if vn.Spec.MeshRef == nil || !vNode.IsVirtualNodeReferenced(ms, *vn.Spec.MeshRef) {
-			continue
+		if vn.Spec.PodSelector == nil {
+			return
 		}
-		queue.Add(ctrl.Request{NamespacedName: k8s.NamespacedName(&vn)})
+		selector, _ := metav1.LabelSelectorAsSelector(vn.Spec.PodSelector)
+		if selector.Matches(labels.Set(pod.Labels)) {
+			queue.Add(ctrl.Request{NamespacedName: k8s.NamespacedName(&vn)})
+		}
 	}
 }
