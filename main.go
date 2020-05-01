@@ -19,7 +19,6 @@ package main
 import (
 	"flag"
 	"os"
-	"time"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 
@@ -34,7 +33,6 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"k8s.io/client-go/tools/cache"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/appmeshinject"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
@@ -43,7 +41,6 @@ import (
 	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	appmeshcontroller "github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh"
 	appmeshwebhook "github.com/aws/aws-app-mesh-controller-for-k8s/webhooks/appmesh"
-	appmeshcontrollers "github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh"
 	corewebhook "github.com/aws/aws-app-mesh-controller-for-k8s/webhooks/core"
 	// +kubebuilder:scaffold:imports
 )
@@ -104,7 +101,7 @@ func main() {
 	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), meshRefResolver, vsRefResolver, ctrl.Log)
 	msReconciler := appmeshcontroller.NewMeshReconciler(mgr.GetClient(), finalizerManager, meshMembersFinalizer, meshResManager, ctrl.Log.WithName("controllers").WithName("Mesh"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
-    cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log.WithName("controllers").WithName("VirtualNode"))
+	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log.WithName("controllers").WithName("VirtualNode"))
 
 	if err = msReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Mesh")
