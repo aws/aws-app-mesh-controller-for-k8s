@@ -330,9 +330,6 @@ type VirtualNodeSpec struct {
 
 // VirtualNodeStatus defines the observed state of VirtualNode
 type VirtualNodeStatus struct {
-	// MeshARN is the AppMesh Mesh object's Amazon Resource Name
-	// +optional
-	MeshARN *string `json:"meshARN,omitempty"`
 	// VirtualNodeARN is the AppMesh VirtualNode object's Amazon Resource Name
 	// +optional
 	VirtualNodeARN *string `json:"virtualNodeARN,omitempty"`

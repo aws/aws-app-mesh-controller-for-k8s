@@ -131,12 +131,6 @@ type GatewayRouteCondition struct {
 
 // GatewayRouteStatus defines the observed state of GatewayRoute
 type GatewayRouteStatus struct {
-	// MeshARN is the AppMesh Mesh object's Amazon Resource Name
-	// +optional
-	MeshARN *string `json:"meshARN,omitempty"`
-	// VirtualGatewayARN is the AppMesh VirtualGateway object's Amazon Resource Name.
-	// +optional
-	VirtualGatewayARN *string `json:"virtualGatewayARN,omitempty"`
 	// GatewayRouteARNs is a map of AppMesh GatewayRoute objects' Amazon Resource Names, indexed by gatewayRoute name.
 	// +optional
 	GatewayRouteARN *string `json:"gatewayRouteARN,omitempty"`
