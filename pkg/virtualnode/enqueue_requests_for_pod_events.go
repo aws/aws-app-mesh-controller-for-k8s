@@ -38,7 +38,29 @@ func (h *enqueueRequestsForPodEvents) Create(e event.CreateEvent, queue workqueu
 func (h *enqueueRequestsForPodEvents) Update(e event.UpdateEvent, queue workqueue.RateLimitingInterface) {
 	// cloudmap reconcile depends Virtualnode Pod Selector labels and if there is an update to a Pod
 	// we need to check if there is any change w.r.t VirtualNode it belongs.
-	h.enqueueVirtualNodesForPods(context.Background(), queue, e.ObjectNew.(*corev1.Pod))
+	oldPod := e.ObjectOld.(*corev1.Pod)
+	newPod := e.ObjectNew.(*corev1.Pod)
+
+	oldPodIsReady := false
+	newPodIsReady := false
+
+	conditions := (&oldPod.Status).Conditions
+	for i := range conditions {
+		if conditions[i].Type == corev1.PodReady && conditions[i].Status == corev1.ConditionTrue {
+			oldPodIsReady = true
+		}
+	}
+
+	conditions = (&newPod.Status).Conditions
+	for i := range conditions {
+		if conditions[i].Type == corev1.PodReady && conditions[i].Status == corev1.ConditionTrue {
+			newPodIsReady = true
+		}
+	}
+
+	if oldPodIsReady != newPodIsReady {
+		h.enqueueVirtualNodesForPods(context.Background(), queue, e.ObjectNew.(*corev1.Pod))
+	}
 }
 
 // Delete is called in response to a delete event
