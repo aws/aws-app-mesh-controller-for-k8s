@@ -4,7 +4,7 @@ import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	appmeshinject "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	corev1 "k8s.io/api/core/v1"
@@ -16,9 +16,9 @@ import (
 const apiPathMutatePod = "/mutate-v1-pod"
 
 // NewPodMutator returns a mutator for Pod.
-func NewPodMutator(meshRefResolver mesh.ReferenceResolver, vnMembershipDesignator virtualnode.MembershipDesignator, injector *appmeshinject.SidecarInjector) *podMutator {
+func NewPodMutator(referenceResolver references.Resolver, vnMembershipDesignator virtualnode.MembershipDesignator, injector *appmeshinject.SidecarInjector) *podMutator {
 	return &podMutator{
-		meshRefResolver:        meshRefResolver,
+		referenceResolver:      referenceResolver,
 		vnMembershipDesignator: vnMembershipDesignator,
 		sidecarInjector:        injector,
 	}
@@ -27,7 +27,7 @@ func NewPodMutator(meshRefResolver mesh.ReferenceResolver, vnMembershipDesignato
 var _ webhook.Mutator = &podMutator{}
 
 type podMutator struct {
-	meshRefResolver        mesh.ReferenceResolver
+	referenceResolver      references.Resolver
 	vnMembershipDesignator virtualnode.MembershipDesignator
 	sidecarInjector        *appmeshinject.SidecarInjector
 }
@@ -45,7 +45,7 @@ func (m *podMutator) MutateCreate(ctx context.Context, obj runtime.Object) (runt
 	if vn == nil || vn.Spec.MeshRef == nil {
 		return obj, nil
 	}
-	ms, err := m.meshRefResolver.Resolve(ctx, *vn.Spec.MeshRef)
+	ms, err := m.referenceResolver.ResolveMeshReference(ctx, *vn.Spec.MeshRef)
 	if err != nil {
 		return nil, err
 	}
