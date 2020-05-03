@@ -1,4 +1,4 @@
-package appmeshinject
+package inject
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -34,7 +34,7 @@ const injectDatadogTemplate = `
   "command": [
     "sh",
     "-c",
-    "cat <<EOF >> /tmp/envoy/envoyconf.yaml{{ .Config }}EOF\n\ncat /tmp/envoy/envoyconf.yaml\n"
+    "cat <<EOF >> /tmp/envoy/envoyconf.yaml{{ .EnvoyConfig }}EOF\n\ncat /tmp/envoy/envoyconf.yaml\n"
   ],
   "image": "busybox",
   "imagePullPolicy": "IfNotPresent",
@@ -59,13 +59,31 @@ const injectDatadogTemplate = `
 `
 
 type DatadogMutator struct {
+	config *Config
+}
+
+type DatadogMeta struct {
+	DatadogAddress string
+	DatadogPort    string
+}
+
+func NewDatadogMutator(Config *Config) *DatadogMutator {
+	return &DatadogMutator{config: Config}
+}
+
+func (d *DatadogMutator) Meta() *DatadogMeta {
+	return &DatadogMeta{
+		DatadogAddress: d.config.DatadogAddress,
+		DatadogPort:    d.config.DatadogPort,
+	}
 }
 
 func (d *DatadogMutator) mutate(pod *corev1.Pod) error {
-	if !config.EnableDatadogTracing {
+	if !d.config.EnableDatadogTracing {
 		return nil
 	}
-	init, err := renderInitContainer("datadog", datadogTemplate, injectDatadogTemplate, config)
+	datadogMeta := d.Meta()
+	init, err := renderInitContainer("datadog", datadogTemplate, injectDatadogTemplate, datadogMeta)
 	if err != nil {
 		return err
 	}

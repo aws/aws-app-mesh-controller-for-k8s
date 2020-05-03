@@ -1,8 +1,8 @@
-package appmeshinject
+package inject
 
 import (
 	"fmt"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"testing"
@@ -15,7 +15,7 @@ func Test_Sidecar(t *testing.T) {
 
 func Test_Sidecar_WithXray(t *testing.T) {
 	sc := getConfig(nil)
-	sc.InjectXraySidecar = true
+	sc.EnableXrayTracing = true
 	checkSidecars(t, sc)
 }
 
@@ -48,8 +48,7 @@ func Test_Sidecar_WithJaeger(t *testing.T) {
 }
 
 func checkSidecars(t *testing.T, cfg Config) {
-	New(cfg)
-	x := EnvoyMutator{vn: *getVn()}
+	x := NewEnvoyMutator(&cfg, getMesh(), getVn(nil))
 	pod := getPod(nil)
 	assert.NoError(t, x.mutate(pod))
 	var sidecar *corev1.Container
@@ -60,18 +59,21 @@ func checkSidecars(t *testing.T, cfg Config) {
 	}
 	assert.NotNil(t, sidecar)
 	assert.Equal(t, "envoy", sidecar.Name, "Unexpected container found with name %s", sidecar.Name)
+	assert.Equal(t, aws.StringValue(x.vn.Spec.AWSName), pod.Annotations[AppMeshVirtualNodeNameAnnotation])
 	checkEnvoy(t, sidecar, x)
 }
 
-func checkEnvoy(t *testing.T, sidecar *corev1.Container, meta EnvoyMutator) {
+func checkEnvoy(t *testing.T, sidecar *corev1.Container, m *EnvoyMutator) {
+	meshName := aws.StringValue(m.ms.Spec.AWSName)
+	vnName := aws.StringValue(m.vn.Spec.AWSName)
 	expectedEnvs := map[string]string{
-		"APPMESH_VIRTUAL_NODE_NAME": fmt.Sprintf("mesh/%s/virtualNode/%s", meta.vn.Spec.MeshRef.Name, k8s.NamespacedName(&meta.vn)),
-		"AWS_REGION":                config.Region,
-		"ENVOY_LOG_LEVEL":           config.LogLevel,
+		"APPMESH_VIRTUAL_NODE_NAME": fmt.Sprintf("mesh/%s/virtualNode/%s", meshName, vnName),
+		"AWS_REGION":                m.config.Region,
+		"ENVOY_LOG_LEVEL":           m.config.LogLevel,
 		"APPMESH_PREVIEW":           "0",
 	}
 
-	if config.EnableJaegerTracing || config.EnableDatadogTracing {
+	if m.config.EnableJaegerTracing || m.config.EnableDatadogTracing {
 		expectedEnvs["ENVOY_STATS_CONFIG_FILE"] = "/tmp/envoy/envoyconf.yaml"
 
 		mounts := sidecar.VolumeMounts
@@ -93,20 +95,20 @@ func checkEnvoy(t *testing.T, sidecar *corev1.Container, meta EnvoyMutator) {
 		}
 	}
 
-	if config.InjectXraySidecar {
+	if m.config.EnableXrayTracing {
 		expectedEnvs["ENABLE_ENVOY_XRAY_TRACING"] = "1"
 	}
 
-	if config.EnableStatsTags {
+	if m.config.EnableStatsTags {
 		expectedEnvs["ENABLE_ENVOY_STATS_TAGS"] = "1"
 	}
 
-	if config.EnableStatsD {
+	if m.config.EnableStatsD {
 		expectedEnvs["ENABLE_ENVOY_DOG_STATSD"] = "1"
 	}
 
-	if sidecar.Image != config.SidecarImage {
-		t.Errorf("Envoy container image is not set to %s", config.SidecarImage)
+	if sidecar.Image != m.config.SidecarImage {
+		t.Errorf("Envoy container image is not set to %s", m.config.SidecarImage)
 	}
 	assert.Equal(t, "10m", sidecar.Resources.Requests.Cpu().String(), "CPU request mismatch")
 	assert.Equal(t, "32Mi", sidecar.Resources.Requests.Memory().String(), "Memory request mismatch")

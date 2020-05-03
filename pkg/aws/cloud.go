@@ -20,6 +20,9 @@ type Cloud interface {
 
 	// AccountID provides AccountID for the kubernetes cluster
 	AccountID() string
+
+	// Region for the kubernetes cluster
+	Region() string
 }
 
 // NewCloud constructs new Cloud implementation.
@@ -82,4 +85,8 @@ func (c *defaultCloud) CloudMap() services.CloudMap {
 
 func (c *defaultCloud) AccountID() string {
 	return c.cfg.AccountID
+}
+
+func (c *defaultCloud) Region() string {
+	return c.cfg.Region
 }
