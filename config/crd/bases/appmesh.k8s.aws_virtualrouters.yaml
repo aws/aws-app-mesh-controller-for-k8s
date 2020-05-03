@@ -726,6 +726,8 @@ spec:
                     required:
                     - action
                     type: object
+                required:
+                - name
                 type: object
               type: array
           type: object
