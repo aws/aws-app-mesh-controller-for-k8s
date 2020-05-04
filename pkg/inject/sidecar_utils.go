@@ -1,4 +1,4 @@
-package appmeshinject
+package inject
 
 import (
 	"bufio"
@@ -61,7 +61,7 @@ func renderInitContainer(name string, confTmpl string, injectTmpl string, meta i
 		return nil, err
 	}
 	initModel := struct {
-		Config string
+		EnvoyConfig string
 	}{
 		config,
 	}
@@ -78,13 +78,8 @@ func renderInitContainer(name string, confTmpl string, injectTmpl string, meta i
 
 }
 
-func renderConfigVolume() (*corev1.Volume, error) {
-	vol := corev1.Volume{Name: tracingConfigVolumeName}
-	return &vol, nil
-}
-
 // get all the ports from containers
-func getPortsFromContainers(containers []corev1.Container) string {
+func GetPortsFromContainers(containers []corev1.Container) string {
 	parts := make([]string, 0)
 	for _, container := range containers {
 		parts = append(parts, getPortsForContainer(container)...)
@@ -101,17 +96,27 @@ func getPortsForContainer(container corev1.Container) []string {
 	return parts
 }
 
-func shouldInject(pod *corev1.Pod) bool {
+func ShouldInject(cfg *Config, pod *corev1.Pod) bool {
 	if v, ok := pod.ObjectMeta.Annotations[AppMeshSidecarInjectAnnotation]; ok {
-		return strings.ToLower(v) == "enabled"
+		switch strings.ToLower(v) {
+		case "enabled":
+			return true
+		case "disabled":
+			return false
+		}
 	}
-	return config.InjectDefault
+	return cfg.InjectDefault
 }
 
-func isAppMeshCNIEnabled(pod *corev1.Pod) bool {
+func IsAppMeshCNIEnabled(pod *corev1.Pod) bool {
 	annotations := pod.GetAnnotations()
 	if v, ok := annotations[AppMeshCNIAnnotation]; ok {
-		return v == "enabled"
+		switch strings.ToLower(v) {
+		case "enabled":
+			return true
+		case "disabled":
+			return false
+		}
 	}
 	//Fargate platform has appmesh-cni enabled by default
 	if v, ok := pod.GetLabels()[FargateProfileLabel]; ok {
@@ -120,17 +125,24 @@ func isAppMeshCNIEnabled(pod *corev1.Pod) bool {
 	return false
 }
 
-func updateConfigFromPodAnnotations(config Config, pod *corev1.Pod) Config {
+func GetEgressIgnoredPorts(pod *corev1.Pod) string {
 	egressIgnoredPorts := "22"
 	if v, ok := pod.ObjectMeta.Annotations[AppMeshEgressIgnoredPortsAnnotation]; ok {
 		egressIgnoredPorts = v
 	}
-	config.EgressIgnoredPorts = egressIgnoredPorts
+	return egressIgnoredPorts
+}
+
+func GetSidecarCpu(config *Config, pod *corev1.Pod) string {
 	if v, ok := pod.ObjectMeta.Annotations[AppMeshCpuRequestAnnotation]; ok {
-		config.SidecarCpu = v
+		return v
 	}
+	return config.SidecarCpu
+}
+
+func GetSidecarMemory(config *Config, pod *corev1.Pod) string {
 	if v, ok := pod.ObjectMeta.Annotations[AppMeshMemoryRequestAnnotation]; ok {
-		config.SidecarMemory = v
+		return v
 	}
-	return config
+	return config.SidecarMemory
 }

@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"os"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
@@ -26,15 +27,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/appmeshinject"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 
@@ -64,15 +63,13 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	var injectConfig appmeshinject.Config
+	var injectConfig inject.Config
 	injectConfig.BindFlags()
 	flag.Parse()
 
 	// TODO: make level configurable
 	lvl := zapraw.NewAtomicLevelAt(-2)
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.Level(&lvl)))
-
-	appmeshinject.New(injectConfig)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -95,10 +92,9 @@ func main() {
 
 	finalizerManager := k8s.NewDefaultFinalizerManager(mgr.GetClient(), ctrl.Log)
 	meshMembersFinalizer := mesh.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("mesh-members"), ctrl.Log)
-	meshRefResolver := mesh.NewDefaultReferenceResolver(mgr.GetClient(), ctrl.Log)
+	referencesResolver := references.NewDefaultResolver(mgr.GetClient(), ctrl.Log)
 	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
-	vsRefResolver := virtualservice.NewDefaultReferenceResolver(mgr.GetClient(), ctrl.Log)
-	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), meshRefResolver, vsRefResolver, cloud.AccountID(), ctrl.Log)
+	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	msReconciler := appmeshcontroller.NewMeshReconciler(mgr.GetClient(), finalizerManager, meshMembersFinalizer, meshResManager, ctrl.Log.WithName("controllers").WithName("Mesh"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
 	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), finalizerManager, cloud.CloudMap(), ctrl.Log.WithName("controllers").WithName("VirtualNode"))
@@ -134,13 +130,14 @@ func main() {
 
 	meshMembershipDesignator := mesh.NewMembershipDesignator(mgr.GetClient())
 	vnMembershipDesignator := virtualnode.NewMembershipDesignator(mgr.GetClient())
+	sidecarInjector := inject.NewSidecarInjector(&injectConfig, cloud.Region())
 	appmeshwebhook.NewMeshMutator().SetupWithManager(mgr)
 	appmeshwebhook.NewMeshValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualNodeMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualNodeValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualServiceMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualServiceValidator().SetupWithManager(mgr)
-	corewebhook.NewPodMutator(vnMembershipDesignator).SetupWithManager(mgr)
+	corewebhook.NewPodMutator(referencesResolver, vnMembershipDesignator, sidecarInjector).SetupWithManager(mgr)
 
 	if err = (&appmeshcontroller.VirtualGatewayReconciler{
 		Client: mgr.GetClient(),

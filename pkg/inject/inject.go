@@ -1,4 +1,4 @@
-package appmeshinject
+package inject
 
 import (
 	"errors"
@@ -17,47 +17,34 @@ const (
 	defaultFSGroup int64 = 1337
 )
 
-var (
-	config    Config
-	injectLog = ctrl.Log.WithName("appmesh_inject")
-)
+var injectLogger = ctrl.Log.WithName("appmesh_inject")
 
 type PodMutator interface {
 	mutate(*corev1.Pod) error
 }
 
-func New(cfg Config) {
-	config = cfg
+type SidecarInjector struct {
+	config *Config
 }
 
-type AppMeshCNIMutator struct{}
-
-func (c *AppMeshCNIMutator) mutate(pod *corev1.Pod) error {
-	if !isAppMeshCNIEnabled(pod) {
-		return nil
+func NewSidecarInjector(cfg *Config, region string) *SidecarInjector {
+	if len(cfg.Region) == 0 {
+		cfg.Region = region
 	}
-	cfg := updateConfigFromPodAnnotations(config, pod)
-	annotations := pod.GetAnnotations()
-	annotations[AppMeshEgressIgnoredIPsAnnotation] = cfg.IgnoredIPs
-	annotations[AppMeshEgressIgnoredPortsAnnotation] = cfg.EgressIgnoredPorts
-	annotations[AppMeshPortsAnnotation] = getPortsFromContainers(pod.Spec.Containers)
-	annotations[AppMeshSidecarInjectAnnotation] = "enabled"
-	annotations[AppMeshIgnoredUIDAnnotation] = AppMeshProxyUID
-	annotations[AppMeshProxyEgressPortAnnotation] = AppMeshProxyEgressPort
-	annotations[AppMeshProxyIngressPortAnnotation] = AppMeshProxyIngressPort
-	pod.SetAnnotations(annotations)
-	return nil
+	return &SidecarInjector{
+		config: cfg,
+	}
 }
 
-func InjectAppMeshPatches(vn *appmesh.VirtualNode, pod *corev1.Pod) error {
-	if !shouldInject(pod) {
-		injectLog.Info("Not injecting sidecars for pod ", pod.Name)
+func (m *SidecarInjector) InjectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.VirtualNode, pod *corev1.Pod) error {
+	if !ShouldInject(m.config, pod) {
+		injectLogger.Info("Not injecting sidecars for pod ", pod.Name)
 		return nil
 	}
-	if MultipleTracer(&config) {
+	if MultipleTracer(m.config) {
 		return errors.New("Unable to apply patches with multiple tracers. Please choose between Jaeger, Datadog or X-Ray.")
 	}
-	if config.EnableIAMForServiceAccounts && (pod.Spec.SecurityContext == nil || pod.Spec.SecurityContext.FSGroup == nil) {
+	if m.config.EnableIAMForServiceAccounts && (pod.Spec.SecurityContext == nil || pod.Spec.SecurityContext.FSGroup == nil) {
 		dfsgroup := defaultFSGroup
 		if pod.Spec.SecurityContext == nil {
 			pod.Spec.SecurityContext = new(corev1.PodSecurityContext)
@@ -65,19 +52,19 @@ func InjectAppMeshPatches(vn *appmesh.VirtualNode, pod *corev1.Pod) error {
 		pod.Spec.SecurityContext.FSGroup = &dfsgroup
 	}
 	// Has image pull secret
-	if config.EcrSecret {
+	if m.config.EcrSecret {
 		ecrS := corev1.LocalObjectReference{Name: ecrSecret}
 		pod.Spec.ImagePullSecrets = append(pod.Spec.ImagePullSecrets, ecrS)
 	}
 
 	// List out all the mutators in sequence
 	var mutators = []PodMutator{
-		&AppMeshCNIMutator{},
-		&ProxyinitMutator{},
-		&EnvoyMutator{vn: *vn},
-		&XrayMutator{},
-		&DatadogMutator{},
-		&JaegerMutator{},
+		NewAppMeshCNIMutator(m.config),
+		NewProxyInitMutator(m.config, vn),
+		NewEnvoyMutator(m.config, ms, vn),
+		NewXrayMutator(m.config),
+		NewDatadogMutator(m.config),
+		NewJaegerMutator(m.config),
 	}
 
 	for _, mutator := range mutators {

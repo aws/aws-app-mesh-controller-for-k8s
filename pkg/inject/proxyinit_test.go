@@ -1,6 +1,7 @@
-package appmeshinject
+package inject
 
 import (
+	"github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"testing"
@@ -11,6 +12,7 @@ func Test_RenderInitContainer(t *testing.T) {
 		name   string
 		conf   Config
 		pod    *corev1.Pod
+		vn     *v1beta2.VirtualNode
 		expect bool
 	}{
 		{
@@ -18,14 +20,13 @@ func Test_RenderInitContainer(t *testing.T) {
 			conf:   getConfig(nil),
 			expect: true,
 			pod:    getPod(nil),
+			vn:     getVn([]int{80, 443}),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			New(tt.conf)
-			p := ProxyinitMutator{}
+			p := NewProxyInitMutator(&tt.conf, tt.vn)
 			pod := tt.pod
 
 			err := p.mutate(pod)
@@ -39,11 +40,11 @@ func Test_RenderInitContainer(t *testing.T) {
 				}
 				assert.NotNil(t, init)
 				assert.Equal(t, init.Name, "proxyinit")
-				assert.Equal(t, init.Image, config.InitImage)
+				assert.Equal(t, init.Image, tt.conf.InitImage)
 				expected := map[string]string{
 					"APPMESH_APP_PORTS":            "80,443",
-					"APPMESH_EGRESS_IGNORED_PORTS": config.EgressIgnoredPorts,
-					"APPMESH_EGRESS_IGNORED_IP":    config.IgnoredIPs,
+					"APPMESH_EGRESS_IGNORED_PORTS": GetEgressIgnoredPorts(pod),
+					"APPMESH_EGRESS_IGNORED_IP":    tt.conf.IgnoredIPs,
 				}
 				for _, v := range init.Env {
 					if val, ok := expected[v.Name]; ok {

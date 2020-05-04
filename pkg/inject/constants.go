@@ -1,4 +1,4 @@
-package appmeshinject
+package inject
 
 const (
 	//Pod Annotations

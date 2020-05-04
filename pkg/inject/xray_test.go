@@ -1,4 +1,4 @@
-package appmeshinject
+package inject
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-func checkXrayDaemon(t *testing.T, sidecar *corev1.Container, meta XrayMutator) {
-	if !config.InjectXraySidecar {
-		t.Errorf("Xray daemon is added when InjectXraySidecar is false")
+func checkXrayDaemon(t *testing.T, sidecar *corev1.Container, meta *XrayMutator) {
+	if !meta.config.EnableXrayTracing {
+		t.Errorf("Xray daemon is added when EnableXrayTracing is false")
 		return
 	}
 
@@ -17,7 +17,7 @@ func checkXrayDaemon(t *testing.T, sidecar *corev1.Container, meta XrayMutator) 
 	}
 
 	expectedEnvs := map[string]string{
-		"AWS_REGION": config.Region,
+		"AWS_REGION": meta.config.Region,
 	}
 	assert.Equal(t, "10m", sidecar.Resources.Requests.Cpu().String(), "CPU request mismatch")
 	assert.Equal(t, "32Mi", sidecar.Resources.Requests.Memory().String(), "Memory request mismatch")
@@ -33,7 +33,7 @@ func Test_XrayInject(t *testing.T) {
 		{
 			name: "Inject X-ray container",
 			conf: getConfig(func(cnf Config) Config {
-				cnf.InjectXraySidecar = true
+				cnf.EnableXrayTracing = true
 				return cnf
 			}),
 			expect: true,
@@ -41,7 +41,7 @@ func Test_XrayInject(t *testing.T) {
 		{
 			name: "No X-ray inject configured",
 			conf: getConfig(func(cnf Config) Config {
-				cnf.InjectXraySidecar = false
+				cnf.EnableXrayTracing = false
 				return cnf
 			}),
 			expect: false,
@@ -50,8 +50,7 @@ func Test_XrayInject(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			New(tt.conf)
-			x := XrayMutator{}
+			x := NewXrayMutator(&tt.conf)
 			pod := getPod(nil)
 
 			err := x.mutate(pod)

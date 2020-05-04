@@ -1,4 +1,4 @@
-package appmeshinject
+package inject
 
 import (
 	"encoding/json"
@@ -22,27 +22,46 @@ const xrayDaemonContainerTemplate = `
   "env": [
     {
       "name": "AWS_REGION",
-      "value": "{{ .Region }}"
+      "value": "{{ .AWSRegion }}"
     }
   ],
   "resources": {
     "requests": {
-      "cpu": "{{ .SidecarCpu }}",
-      "memory": "{{ .SidecarMemory }}"
+      "cpu": "{{ .XraySidecarCpu }}",
+      "memory": "{{ .XraySidecarMemory }}"
     }
   }
 }
 `
 
 type XrayMutator struct {
+	config *Config
+}
+
+type XrayMeta struct {
+	AWSRegion         string
+	XraySidecarCpu    string
+	XraySidecarMemory string
+}
+
+func NewXrayMutator(Config *Config) *XrayMutator {
+	return &XrayMutator{config: Config}
+}
+
+func (m *XrayMutator) Meta(pod *corev1.Pod) *XrayMeta {
+	return &XrayMeta{
+		AWSRegion:         m.config.Region,
+		XraySidecarCpu:    GetSidecarCpu(m.config, pod),
+		XraySidecarMemory: GetSidecarMemory(m.config, pod),
+	}
 }
 
 func (m *XrayMutator) mutate(pod *corev1.Pod) error {
-	if !config.InjectXraySidecar {
+	if !m.config.EnableXrayTracing {
 		return nil
 	}
-	newConfig := updateConfigFromPodAnnotations(config, pod)
-	xrayDaemonSidecar, err := renderTemplate("xray-daemon", xrayDaemonContainerTemplate, newConfig)
+	xrayMeta := m.Meta(pod)
+	xrayDaemonSidecar, err := renderTemplate("xray-daemon", xrayDaemonContainerTemplate, xrayMeta)
 	if err != nil {
 		return err
 	}
