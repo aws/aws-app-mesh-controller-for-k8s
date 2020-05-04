@@ -20,6 +20,8 @@ const (
 	RegisterInstanceTimeout    = 10
 
 	HealthStatusFailureThreshold = 2
+	InstanceHealthy              = "HEALTHY"
+	InstanceUnHealthy            = "UNHEALTHY"
 
 	//AttrAwsInstanceIPV4 is a special attribute expected by CloudMap.
 	//See https://github.com/aws/aws-sdk-go/blob/fd304fe4cb2ea1027e7fc7e21062beb768915fcc/service/servicediscovery/api.go#L5161

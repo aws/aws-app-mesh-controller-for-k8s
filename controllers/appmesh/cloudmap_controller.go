@@ -26,9 +26,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	"github.com/prometheus/common/log"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/klog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -63,7 +66,8 @@ type cloudMapInstanceInfo struct {
 	namespace       string
 	virtualNodeName string
 	meshName        string
-	isHealthy       bool
+	healthStatus    string
+	labels          map[string]string
 }
 
 type cloudmapNamespaceCacheItem struct {
@@ -84,6 +88,14 @@ type cloudmapServiceCacheItem struct {
 type CloudMapServiceSummary struct {
 	NamespaceID string
 	ServiceID   string
+}
+
+var cloudMapBackoff = wait.Backoff{
+	Steps:    4,
+	Duration: 15 * time.Second,
+	Factor:   1.0,
+	Jitter:   0.1,
+	Cap:      60 * time.Second,
 }
 
 func NewCloudMapReconciler(k8sClient client.Client, finalizerManager k8s.FinalizerManager, cloudMapSDK awsservices.CloudMap, log logr.Logger) *cloudMapReconciler {
@@ -201,9 +213,9 @@ func (r *cloudMapReconciler) reconcileVirtualNodeWithCloudMap(ctx context.Contex
 		instanceInfo := &cloudMapInstanceInfo{}
 		r.log.Info("vNode: ", "Instance ID of Pod:", instanceId)
 		if r.isPodReady(&pod) {
-			instanceInfo.isHealthy = true
+			instanceInfo.healthStatus = awsservices.InstanceHealthy
 		} else if r.shouldPodBeRegisteredWithCloudMapService(&pod) {
-			instanceInfo.isHealthy = false
+			instanceInfo.healthStatus = awsservices.InstanceUnHealthy
 		} else {
 			continue
 		}
@@ -211,7 +223,10 @@ func (r *cloudMapReconciler) reconcileVirtualNodeWithCloudMap(ctx context.Contex
 		instanceInfo.namespace = pod.Namespace
 		instanceInfo.virtualNodeName = vNode.Name
 		instanceInfo.meshName = vNode.Name
-
+		instanceInfo.labels = make(map[string]string)
+		for k, v := range pod.Labels {
+			instanceInfo.labels[k] = v
+		}
 		serviceInstanceSummary[instanceId] = instanceInfo
 	}
 
@@ -299,7 +314,6 @@ func (r *cloudMapReconciler) getRegisteredCloudMapServiceInstances(ctx context.C
 		}
 
 		cacheServiceInstanceSummary = make(map[string]*cloudMapInstanceInfo)
-		var isHealthy bool
 		for _, instance := range serviceInstances {
 			registeredInstanceInfo := &cloudMapInstanceInfo{}
 			podName := awssdk.StringValue(instance.Attributes[awsservices.AttrK8sPod])
@@ -308,15 +322,10 @@ func (r *cloudMapReconciler) getRegisteredCloudMapServiceInstances(ctx context.C
 			serviceName := awssdk.StringValue(instance.Attributes["app"])
 			healthStatus := awssdk.StringValue(instance.Attributes[awsservices.AttrAwsInstanceHealthStatus])
 
-			if healthStatus == "Healthy" {
-				isHealthy = true
-			} else {
-				isHealthy = false
-			}
 			r.log.Info("Pod: %s is currently registered with the service: %s", podName, serviceName)
 			registeredInstanceInfo.podName = podName
 			registeredInstanceInfo.namespace = namespace
-			registeredInstanceInfo.isHealthy = isHealthy
+			registeredInstanceInfo.healthStatus = healthStatus
 
 			cacheServiceInstanceSummary[instanceID] = registeredInstanceInfo
 		}
@@ -340,12 +349,12 @@ func (r *cloudMapReconciler) updateCloudMapServiceInstances(ctx context.Context,
 		currInstanceInfo.virtualNodeName = instanceInfo.virtualNodeName
 		if _, ok := cacheServiceInstanceSummary[instanceId]; ok {
 			//Check if there is a change in health status
-			if instanceInfo.isHealthy != cacheServiceInstanceSummary[instanceId].isHealthy {
-				if err := r.updateCloudMapInstanceHealthStatus(ctx, cloudmapConfig, instanceId, instanceInfo.isHealthy); err != nil {
+			if instanceInfo.healthStatus != cacheServiceInstanceSummary[instanceId].healthStatus {
+				if err := r.updateCloudMapInstanceHealthStatus(ctx, cloudmapConfig, instanceId, instanceInfo.healthStatus); err != nil {
 					r.log.Error(err, "Error Updating Instance: ", instanceId, " Health Status in CloudMap")
 				}
 			}
-			currInstanceInfo.isHealthy = instanceInfo.isHealthy
+			currInstanceInfo.healthStatus = instanceInfo.healthStatus
 			delete(cacheServiceInstanceSummary, instanceId)
 		} else {
 			//Instance Missing in CloudMap. Register it.
@@ -353,7 +362,7 @@ func (r *cloudMapReconciler) updateCloudMapServiceInstances(ctx context.Context,
 				r.log.Error(err, "Error Registering Instance: ", instanceId, " to CloudMap")
 				continue
 			}
-			currInstanceInfo.isHealthy = instanceInfo.isHealthy
+			currInstanceInfo.healthStatus = instanceInfo.healthStatus
 		}
 		updatedCacheServiceInstanceSummary[instanceId] = currInstanceInfo
 	}
@@ -392,7 +401,7 @@ func (r *cloudMapReconciler) removeCloudMapServiceInstances(ctx context.Context,
 
 func (r *cloudMapReconciler) updateCloudMapInstanceHealthStatus(ctx context.Context,
 	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery,
-	instanceId string, isHealthy bool) error {
+	instanceId string, healthStatus string) error {
 
 	//Check if we have the service in CloudMap
 	serviceSummary, err := r.getCloudMapService(ctx, cloudmapConfig)
@@ -400,11 +409,6 @@ func (r *cloudMapReconciler) updateCloudMapInstanceHealthStatus(ctx context.Cont
 		r.log.Error(err, "Couldn't update health status for instance: ", instanceId, " Service: ",
 			cloudmapConfig.ServiceName, " not found")
 		return err
-	}
-
-	healthStatus := "HEALTHY"
-	if !isHealthy {
-		healthStatus = "UNHEALTHY"
 	}
 
 	r.log.Info("vNode", "Updating Health status of Service", *awssdk.String(serviceSummary.ServiceID),
@@ -415,23 +419,19 @@ func (r *cloudMapReconciler) updateCloudMapInstanceHealthStatus(ctx context.Cont
 		Status:     awssdk.String(healthStatus),
 	}
 
-	_, err = r.cloudMapSDK.UpdateInstanceCustomHealthStatusWithContext(ctx, updateRequest)
-	if err != nil {
-		r.log.Error(err, "Failed to update custom health status for ", "InstanceID: ", instanceId)
+	if err := retry.OnError(cloudMapBackoff, func(err error) bool {
 		if awsErr, ok := err.(awserr.Error); ok &&
 			(awsErr.Code() == servicediscovery.ErrCodeServiceNotFound || awsErr.Code() == servicediscovery.ErrCodeInstanceNotFound) {
-			r.log.Info("Waiting 20 secs to allow CloudMap to Sync and then retry....")
-			time.Sleep(20 * time.Second)
-			_, err = r.cloudMapSDK.UpdateInstanceCustomHealthStatusWithContext(ctx, updateRequest)
-			if err != nil {
-				r.log.Error(err, "Failed to update custom health status even with retry for ", "InstanceID: ", instanceId)
-			} else {
-				return nil
-			}
+			r.log.Info("Waiting 15 secs to allow CloudMap to Sync and then retry....")
+			return true
 		}
+		return false
+	}, func() error {
+		_, err := r.cloudMapSDK.UpdateInstanceCustomHealthStatusWithContext(ctx, updateRequest)
+		return err
+	}); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -457,18 +457,16 @@ func (r *cloudMapReconciler) registerCloudMapInstance(ctx context.Context,
 	}
 
 	attr := make(map[string]*string)
-	/*
-		for label, v := range pod.Labels {
-			attr[k] = awssdk.String(v)
-		}
-	*/
+	for label, v := range instanceInfo.labels {
+		attr[label] = awssdk.String(v)
+	}
 	attr[awsservices.AttrAwsInstanceIPV4] = awssdk.String(instanceId)
 	attr[awsservices.AttrK8sPod] = awssdk.String(instanceInfo.podName)
 	attr[awsservices.AttrK8sNamespace] = awssdk.String(instanceInfo.namespace)
-	if instanceInfo.isHealthy {
-		attr[awsservices.AttrAwsInstanceHealthStatus] = awssdk.String("HEALTHY")
+	if instanceInfo.healthStatus == awsservices.InstanceHealthy {
+		attr[awsservices.AttrAwsInstanceHealthStatus] = awssdk.String(awsservices.InstanceHealthy)
 	} else {
-		attr[awsservices.AttrAwsInstanceHealthStatus] = awssdk.String("UNHEALTHY")
+		attr[awsservices.AttrAwsInstanceHealthStatus] = awssdk.String(awsservices.InstanceUnHealthy)
 	}
 
 	//copy the attributes specified on virtual-node
@@ -803,9 +801,17 @@ func (r *cloudMapReconciler) deleteAWSCloudMapService(ctx context.Context, servi
 		Id: awssdk.String(serviceID),
 	}
 
-	time.Sleep(20 * time.Second)
-	if _, err := r.cloudMapSDK.DeleteServiceWithContext(ctx, deleteServiceInput); err != nil {
-		r.log.Error(err, "Delete from CloudMap failed for ", " service: ", serviceID, " Reason: ", err)
+	if err := retry.OnError(cloudMapBackoff, func(err error) bool {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == servicediscovery.ErrCodeResourceInUse {
+			log.Info("Waiting 15 secs and retrying to allow cloudMap to sync....")
+			return true
+		}
+		return false
+	}, func() error {
+		_, err := r.cloudMapSDK.DeleteServiceWithContext(ctx, deleteServiceInput)
+		return err
+	}); err != nil {
+		return err
 	}
 
 	return nil
@@ -845,17 +851,9 @@ func (r *cloudMapReconciler) deleteCloudMapService(ctx context.Context, vNode *a
 	}
 
 	r.log.Info("vNode: ", "serviceSummary: ", serviceSummary)
+
 	if err := r.deleteAWSCloudMapService(ctx, serviceSummary.ServiceID, cloudmapConfig); err != nil {
-		r.log.Error(err, "CloudMap delete failed for service: ", cloudmapConfig.ServiceName)
-		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == servicediscovery.ErrCodeResourceInUse {
-			time.Sleep(20 * time.Second)
-			if err := r.deleteAWSCloudMapService(ctx, serviceSummary.ServiceID, cloudmapConfig); err != nil {
-				r.log.Error(err, "Retry: Failed to delete CloudMap service: ", cloudmapConfig.ServiceName)
-				return err
-			}
-		} else {
-			return err
-		}
+		return err
 	}
 
 	if err := r.deleteCloudMapServiceFromCache(ctx, cloudmapConfig); err != nil {
