@@ -1751,3 +1751,68 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 		})
 	}
 }
+
+func TestConvert_CRD_VirtualRouterSpec_To_SDK__VirtualRouterSpec(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.VirtualRouterSpec
+		sdkObj *appmeshsdk.VirtualRouterSpec
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.VirtualRouterSpec
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.VirtualRouterSpec{
+					Listeners: []appmesh.VirtualRouterListener{
+						{
+							PortMapping: appmesh.PortMapping{
+								Port:     80,
+								Protocol: "http",
+							},
+						},
+						{
+							PortMapping: appmesh.PortMapping{
+								Port:     443,
+								Protocol: "http",
+							},
+						},
+					},
+				},
+				sdkObj: &appmeshsdk.VirtualRouterSpec{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualRouterSpec{
+				Listeners: []*appmeshsdk.VirtualRouterListener{
+					{
+						PortMapping: &appmeshsdk.PortMapping{
+							Port:     aws.Int64(80),
+							Protocol: aws.String("http"),
+						},
+					},
+					{
+						PortMapping: &appmeshsdk.PortMapping{
+							Port:     aws.Int64(443),
+							Protocol: aws.String("http"),
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_VirtualRouterSpec_To_SDK__VirtualRouterSpec(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
