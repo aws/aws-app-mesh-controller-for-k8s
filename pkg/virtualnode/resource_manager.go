@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
@@ -33,29 +33,26 @@ type ResourceManager interface {
 func NewDefaultResourceManager(
 	k8sClient client.Client,
 	appMeshSDK services.AppMesh,
-	meshRefResolver mesh.ReferenceResolver,
-	virtualServiceRefResolver virtualservice.ReferenceResolver,
+	referencesResolver references.Resolver,
 	accountID string,
 	log logr.Logger) ResourceManager {
 
 	return &defaultResourceManager{
-		k8sClient:                 k8sClient,
-		appMeshSDK:                appMeshSDK,
-		meshRefResolver:           meshRefResolver,
-		virtualServiceRefResolver: virtualServiceRefResolver,
-		accountID:                 accountID,
-		log:                       log,
+		k8sClient:          k8sClient,
+		appMeshSDK:         appMeshSDK,
+		referencesResolver: referencesResolver,
+		accountID:          accountID,
+		log:                log,
 	}
 }
 
 // defaultResourceManager implements ResourceManager
 type defaultResourceManager struct {
-	k8sClient                 client.Client
-	appMeshSDK                services.AppMesh
-	meshRefResolver           mesh.ReferenceResolver
-	virtualServiceRefResolver virtualservice.ReferenceResolver
-	accountID                 string
-	log                       logr.Logger
+	k8sClient          client.Client
+	appMeshSDK         services.AppMesh
+	referencesResolver references.Resolver
+	accountID          string
+	log                logr.Logger
 }
 
 func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.VirtualNode) error {
@@ -115,7 +112,7 @@ func (m *defaultResourceManager) findMeshDependency(ctx context.Context, vn *app
 	if vn.Spec.MeshRef == nil {
 		return nil, errors.Errorf("meshRef shouldn't be nil, please check webhook setup")
 	}
-	ms, err := m.meshRefResolver.Resolve(ctx, *vn.Spec.MeshRef)
+	ms, err := m.referencesResolver.ResolveMeshReference(ctx, *vn.Spec.MeshRef)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to resolve meshRef")
 	}
@@ -135,7 +132,7 @@ func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Cont
 	vsByRef := make(map[appmesh.VirtualServiceReference]*appmesh.VirtualService, len(vn.Spec.Backends))
 	for _, backend := range vn.Spec.Backends {
 		vsRef := backend.VirtualService.VirtualServiceRef
-		vs, err := m.virtualServiceRefResolver.Resolve(ctx, vn, vsRef)
+		vs, err := m.referencesResolver.ResolveVirtualServiceReference(ctx, vn, vsRef)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to resolve virtualServiceRef")
 		}
