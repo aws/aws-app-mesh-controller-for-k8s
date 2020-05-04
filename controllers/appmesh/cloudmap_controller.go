@@ -122,7 +122,6 @@ func NewCloudMapReconciler(k8sClient client.Client, finalizerManager k8s.Finaliz
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
 
 func (r *cloudMapReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	//return ctrl.Result{RequeueAfter: time.Minute * 4}, r.reconcile(req)
 	return runtime.HandleReconcileError(r.reconcile(req), r.log)
 }
 
@@ -135,13 +134,12 @@ func (r *cloudMapReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *cloudMapReconciler) reconcile(req ctrl.Request) error {
 	ctx := context.Background()
-	log := r.log.WithValues("virtualnode", req.NamespacedName)
+	log := r.log.WithValues("Virtualnode", req.NamespacedName)
 
 	log.V(1).Info("In VirtualNode Reconciler", "vNode-Name: ", req.Name, "vNode-NameSpace: ", req.Namespace,
 		"vNode-NamespacedName: ", req.NamespacedName)
 
 	vNode := &appmesh.VirtualNode{}
-
 	if err := r.k8sClient.Get(ctx, req.NamespacedName, vNode); err != nil {
 		log.Error(err, "vNode")
 		return client.IgnoreNotFound(err)
@@ -153,7 +151,6 @@ func (r *cloudMapReconciler) reconcile(req ctrl.Request) error {
 	if !vNode.DeletionTimestamp.IsZero() {
 		return r.deleteCloudMapResources(ctx, vNode)
 	}
-
 	return r.reconcileVirtualNodeWithCloudMap(ctx, vNode)
 }
 
@@ -164,7 +161,7 @@ func (r *cloudMapReconciler) reconcileVirtualNodeWithCloudMap(ctx context.Contex
 	}
 
 	if !r.isPodSelectorDefinedForVirtualNode(vNode) {
-		return errors.Errorf("PodSelector not definedd for virtualNode: %s", vNode.Name)
+		return errors.Errorf("PodSelector not defined for virtualNode: %s", vNode.Name)
 	}
 
 	cloudmapConfig := vNode.Spec.ServiceDiscovery.AWSCloudMap
@@ -172,12 +169,11 @@ func (r *cloudMapReconciler) reconcileVirtualNodeWithCloudMap(ctx context.Contex
 
 	var podsList corev1.PodList
 	var listOptions client.ListOptions
-
 	listOptions.LabelSelector, _ = metav1.LabelSelectorAsSelector(vNode.Spec.PodSelector)
 	listOptions.Namespace = vNode.Namespace
 
 	if err := r.k8sClient.List(ctx, &podsList, &listOptions); err != nil {
-		r.log.Error(err, "No Active Pods found for VirtualNode")
+		r.log.Error(err, "Couldn't retrieve pods for VirtualNode")
 		return err
 	}
 
@@ -222,8 +218,8 @@ func (r *cloudMapReconciler) reconcileVirtualNodeWithCloudMap(ctx context.Contex
 		instanceInfo.virtualNodeName = vNode.Name
 		instanceInfo.meshName = vNode.Name
 		instanceInfo.labels = make(map[string]string)
-		for k, v := range pod.Labels {
-			instanceInfo.labels[k] = v
+		for label, v := range pod.Labels {
+			instanceInfo.labels[label] = v
 		}
 		serviceInstanceSummary[instanceId] = instanceInfo
 	}
@@ -232,7 +228,6 @@ func (r *cloudMapReconciler) reconcileVirtualNodeWithCloudMap(ctx context.Contex
 		r.log.Error(err, " Failed to Update/Register instances to CloudMap")
 		return err
 	}
-
 	return nil
 }
 
@@ -249,47 +244,7 @@ func (r *cloudMapReconciler) deleteCloudMapResources(ctx context.Context, vNode 
 	return nil
 }
 
-func (r *cloudMapReconciler) isCloudMapEnabledForVirtualNode(vNode *appmesh.VirtualNode) bool {
-	if vNode.Spec.ServiceDiscovery == nil || vNode.Spec.ServiceDiscovery.AWSCloudMap == nil {
-		return false
-	}
 
-	if vNode.Spec.ServiceDiscovery.AWSCloudMap.NamespaceName == "" ||
-		vNode.Spec.ServiceDiscovery.AWSCloudMap.ServiceName == "" {
-		klog.Errorf("CloudMap NamespaceName or ServiceName is null")
-		return false
-	}
-	return true
-}
-
-func (r *cloudMapReconciler) isPodSelectorDefinedForVirtualNode(vNode *appmesh.VirtualNode) bool {
-	if vNode.Spec.PodSelector == nil {
-		return false
-	}
-	return true
-}
-
-func (r *cloudMapReconciler) isPodReady(pod *corev1.Pod) bool {
-
-	conditions := (&pod.Status).Conditions
-	for i := range conditions {
-		if conditions[i].Type == corev1.PodReady && conditions[i].Status == corev1.ConditionTrue {
-			return true
-		}
-	}
-	return false
-}
-
-func (r *cloudMapReconciler) shouldPodBeRegisteredWithCloudMapService(pod *corev1.Pod) bool {
-	switch pod.Spec.RestartPolicy {
-	case corev1.RestartPolicyNever:
-		return pod.Status.Phase != corev1.PodFailed && pod.Status.Phase != corev1.PodSucceeded
-	case corev1.RestartPolicyOnFailure:
-		return pod.Status.Phase != corev1.PodSucceeded
-	default:
-		return true
-	}
-}
 
 func (r *cloudMapReconciler) getRegisteredCloudMapServiceInstances(ctx context.Context,
 	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery) (map[string]*cloudMapInstanceInfo, error) {
@@ -328,7 +283,6 @@ func (r *cloudMapReconciler) getRegisteredCloudMapServiceInstances(ctx context.C
 			cacheServiceInstanceSummary[instanceID] = registeredInstanceInfo
 		}
 	}
-
 	return cacheServiceInstanceSummary, nil
 }
 
@@ -378,7 +332,6 @@ func (r *cloudMapReconciler) updateCloudMapServiceInstances(ctx context.Context,
 
 	//Update the Cache with the latest info
 	_ = r.cloudMapInstanceCache.Add(serviceItem)
-
 	return nil
 }
 
@@ -393,7 +346,6 @@ func (r *cloudMapReconciler) removeCloudMapServiceInstances(ctx context.Context,
 			r.log.Error(err, "Couldn't deregister instance: ", instanceId)
 		}
 	}
-
 	return nil
 }
 
@@ -416,7 +368,6 @@ func (r *cloudMapReconciler) updateCloudMapInstanceHealthStatus(ctx context.Cont
 		ServiceId:  awssdk.String(serviceSummary.ServiceID),
 		Status:     awssdk.String(healthStatus),
 	}
-
 	if err := retry.OnError(cloudMapBackoff, func(err error) bool {
 		if awsErr, ok := err.(awserr.Error); ok &&
 			(awsErr.Code() == servicediscovery.ErrCodeServiceNotFound || awsErr.Code() == servicediscovery.ErrCodeInstanceNotFound) {
@@ -577,7 +528,7 @@ func (r *cloudMapReconciler) getCloudMapNameSpace(ctx context.Context,
 		return namespaceSummary, nil
 	}
 
-	//Namespace Info missing in Cache. Reach out to AWS Cloudmap for relevant info.
+	//Namespace info missing in Cache. Reach out to AWS Cloudmap for relevant info.
 	namespaceItem, err := r.getCloudMapNameSpaceFromAWS(ctx, key, cloudmapConfig)
 	if err != nil {
 		return nil, err
@@ -652,7 +603,7 @@ func (r *cloudMapReconciler) getCloudMapService(ctx context.Context,
 	}
 
 	r.log.Info("vNode: ", "Service missing in Cache: ", cloudmapConfig.ServiceName)
-	//Service Info missing in Cache. Reach out to AWS CloudMap for Service Info.
+	//Service info missing in Cache. Reach out to AWS CloudMap for Service Info.
 	namespaceSummary, err := r.getCloudMapNameSpace(ctx, cloudmapConfig)
 	if err != nil {
 		return nil, err
@@ -896,6 +847,47 @@ func (r *cloudMapReconciler) podToInstanceID(pod *corev1.Pod) string {
 	return pod.Status.PodIP
 }
 
+func (r *cloudMapReconciler) isCloudMapEnabledForVirtualNode(vNode *appmesh.VirtualNode) bool {
+	if vNode.Spec.ServiceDiscovery == nil || vNode.Spec.ServiceDiscovery.AWSCloudMap == nil {
+		return false
+	}
+	if vNode.Spec.ServiceDiscovery.AWSCloudMap.NamespaceName == "" ||
+		vNode.Spec.ServiceDiscovery.AWSCloudMap.ServiceName == "" {
+		klog.Errorf("CloudMap NamespaceName or ServiceName is null")
+		return false
+	}
+	return true
+}
+
+func (r *cloudMapReconciler) isPodSelectorDefinedForVirtualNode(vNode *appmesh.VirtualNode) bool {
+	if vNode.Spec.PodSelector == nil {
+		return false
+	}
+	return true
+}
+
+func (r *cloudMapReconciler) isPodReady(pod *corev1.Pod) bool {
+
+	conditions := (&pod.Status).Conditions
+	for i := range conditions {
+		if conditions[i].Type == corev1.PodReady && conditions[i].Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *cloudMapReconciler) shouldPodBeRegisteredWithCloudMapService(pod *corev1.Pod) bool {
+	switch pod.Spec.RestartPolicy {
+	case corev1.RestartPolicyNever:
+		return pod.Status.Phase != corev1.PodFailed && pod.Status.Phase != corev1.PodSucceeded
+	case corev1.RestartPolicyOnFailure:
+		return pod.Status.Phase != corev1.PodSucceeded
+	default:
+		return true
+	}
+}
+
 func (r *cloudMapReconciler) serviceCacheKey(cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery) string {
 	return awssdk.StringValue(&cloudmapConfig.ServiceName) + "@" + awssdk.StringValue(&cloudmapConfig.NamespaceName)
 }
@@ -908,6 +900,7 @@ func (r *cloudMapReconciler) serviceInstanceCacheKey(cloudmapConfig *appmesh.AWS
 	return awssdk.StringValue(&cloudmapConfig.NamespaceName) + "-" + awssdk.StringValue(&cloudmapConfig.ServiceName)
 }
 
+/* TODO - To be used for Pod Readiness Gate */
 func (r *cloudMapReconciler) updateCloudMapPodReadinessConditionForPod(ctx context.Context,
 	instanceInfo *cloudMapInstanceInfo) error {
 	pod := &corev1.Pod{}
@@ -927,29 +920,7 @@ func (r *cloudMapReconciler) updateCloudMapPodReadinessConditionForPod(ctx conte
 	pod.Status.Conditions = append(pod.Status.Conditions, podCloudMapCondition)
 	err := r.k8sClient.Status().Update(ctx, pod)
 	if err != nil {
-
 		return err
 	}
 	return nil
 }
-
-/* TODO
-func (r *cloudMapReconciler) podReadinessMonitor(ctx context.Context, c chan cloudMapInstanceInfo) error {
-
-	for {
-		select {
-		case instanceInfo := <-c:
-			time.Sleep(20 * time.Second)
-			err := r.updateCloudMapPodReadinessConditionForPod(ctx, &instanceInfo)
-			if err != nil {
-				r.log.Error(err,"Failed to update CloudMap Pod Readiness condition for: ", instanceInfo.podName)
-				return err
-			}
-		default:
-			r.log.Info("No Activity")
-		}
-	}
-
-	//return nil
-}
-*/
