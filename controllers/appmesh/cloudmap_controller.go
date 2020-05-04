@@ -1,6 +1,4 @@
 /*
-
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -72,20 +70,20 @@ type cloudMapInstanceInfo struct {
 
 type cloudmapNamespaceCacheItem struct {
 	key   string
-	value CloudMapNamespaceSummary
+	value cloudMapNamespaceSummary
 }
 
-type CloudMapNamespaceSummary struct {
+type cloudMapNamespaceSummary struct {
 	NamespaceID   string
 	NamespaceType string
 }
 
 type cloudmapServiceCacheItem struct {
 	key   string
-	value CloudMapServiceSummary
+	value cloudMapServiceSummary
 }
 
-type CloudMapServiceSummary struct {
+type cloudMapServiceSummary struct {
 	NamespaceID string
 	ServiceID   string
 }
@@ -522,7 +520,7 @@ func (r *cloudMapReconciler) deregisterCloudMapInstance(ctx context.Context, ins
 }
 
 func (r *cloudMapReconciler) getCloudMapNameSpaceFromCache(ctx context.Context,
-	key string) (*CloudMapNamespaceSummary, error) {
+	key string) (*cloudMapNamespaceSummary, error) {
 	existingItem, exists, _ := r.nameSpaceIDCache.Get(&cloudmapNamespaceCacheItem{
 		key: key,
 	})
@@ -533,7 +531,7 @@ func (r *cloudMapReconciler) getCloudMapNameSpaceFromCache(ctx context.Context,
 }
 
 func (r *cloudMapReconciler) getCloudMapNameSpaceFromAWS(ctx context.Context,
-	key string, cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery) (*CloudMapNamespaceSummary, error) {
+	key string, cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery) (*cloudMapNamespaceSummary, error) {
 	listNamespacesInput := &servicediscovery.ListNamespacesInput{}
 	var namespaceItem *cloudmapNamespaceCacheItem
 
@@ -547,7 +545,7 @@ func (r *cloudMapReconciler) getCloudMapNameSpaceFromAWS(ctx context.Context,
 				if awssdk.StringValue(ns.Name) == awssdk.StringValue(&cloudmapConfig.NamespaceName) {
 					namespaceItem = &cloudmapNamespaceCacheItem{
 						key: key,
-						value: CloudMapNamespaceSummary{
+						value: cloudMapNamespaceSummary{
 							NamespaceID:   awssdk.StringValue(ns.Id),
 							NamespaceType: awssdk.StringValue(ns.Type),
 						},
@@ -572,7 +570,7 @@ func (r *cloudMapReconciler) getCloudMapNameSpaceFromAWS(ctx context.Context,
 }
 
 func (r *cloudMapReconciler) getCloudMapNameSpace(ctx context.Context,
-	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery) (*CloudMapNamespaceSummary, error) {
+	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery) (*cloudMapNamespaceSummary, error) {
 	key := r.namespaceCacheKey(cloudmapConfig)
 
 	if namespaceSummary, _ := r.getCloudMapNameSpaceFromCache(ctx, key); namespaceSummary != nil {
@@ -588,7 +586,7 @@ func (r *cloudMapReconciler) getCloudMapNameSpace(ctx context.Context,
 }
 
 func (r *cloudMapReconciler) getCloudMapServiceFromCache(ctx context.Context,
-	key string) (*CloudMapServiceSummary, error) {
+	key string) (*cloudMapServiceSummary, error) {
 	//Get from Cache
 	existingItem, exists, _ := r.serviceIDCache.Get(&cloudmapServiceCacheItem{
 		key: key,
@@ -645,7 +643,7 @@ func (r *cloudMapReconciler) getCloudMapServiceFromAWS(ctx context.Context, name
 }
 
 func (r *cloudMapReconciler) getCloudMapService(ctx context.Context,
-	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery) (*CloudMapServiceSummary, error) {
+	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery) (*cloudMapServiceSummary, error) {
 	key := r.serviceCacheKey(cloudmapConfig)
 
 	if serviceSummary, _ := r.getCloudMapServiceFromCache(ctx, key); serviceSummary != nil {
@@ -673,7 +671,7 @@ func (r *cloudMapReconciler) getCloudMapService(ctx context.Context,
 
 	serviceItem := &cloudmapServiceCacheItem{
 		key: key,
-		value: CloudMapServiceSummary{
+		value: cloudMapServiceSummary{
 			NamespaceID: namespaceSummary.NamespaceID,
 			ServiceID:   awssdk.StringValue(cloudmapService.Id),
 		},
@@ -683,7 +681,7 @@ func (r *cloudMapReconciler) getCloudMapService(ctx context.Context,
 }
 
 func (r *cloudMapReconciler) createCloudMapService(ctx context.Context,
-	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery, creatorRequestID string) (*CloudMapServiceSummary, error) {
+	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery, creatorRequestID string) (*cloudMapServiceSummary, error) {
 
 	key := r.serviceCacheKey(cloudmapConfig)
 
@@ -719,7 +717,7 @@ func (r *cloudMapReconciler) createCloudMapService(ctx context.Context,
 
 func (r *cloudMapReconciler) createServiceUnderPrivateDNSNamespace(ctx context.Context,
 	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery, creatorRequestID string,
-	namespaceSummary *CloudMapNamespaceSummary) (*CloudMapServiceSummary, error) {
+	namespaceSummary *cloudMapNamespaceSummary) (*cloudMapServiceSummary, error) {
 
 	var failureThresholdValue int64 = awsservices.HealthStatusFailureThreshold
 	createServiceInput := &servicediscovery.CreateServiceInput{
@@ -743,7 +741,7 @@ func (r *cloudMapReconciler) createServiceUnderPrivateDNSNamespace(ctx context.C
 }
 
 func (r *cloudMapReconciler) createServiceUnderHTTPNamespace(ctx context.Context, cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery,
-	creatorRequestID string, namespaceSummary *CloudMapNamespaceSummary) (*CloudMapServiceSummary, error) {
+	creatorRequestID string, namespaceSummary *cloudMapNamespaceSummary) (*cloudMapServiceSummary, error) {
 	createServiceInput := &servicediscovery.CreateServiceInput{
 		CreatorRequestId: awssdk.String(creatorRequestID),
 		Name:             &cloudmapConfig.ServiceName,
@@ -753,8 +751,8 @@ func (r *cloudMapReconciler) createServiceUnderHTTPNamespace(ctx context.Context
 }
 
 func (r *cloudMapReconciler) createAWSCloudMapService(ctx context.Context,
-	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery, namespaceSummary *CloudMapNamespaceSummary,
-	createServiceInput *servicediscovery.CreateServiceInput) (*CloudMapServiceSummary, error) {
+	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery, namespaceSummary *cloudMapNamespaceSummary,
+	createServiceInput *servicediscovery.CreateServiceInput) (*cloudMapServiceSummary, error) {
 
 	key := r.serviceCacheKey(cloudmapConfig)
 	createServiceOutput, err := r.cloudMapSDK.CreateServiceWithContext(ctx, createServiceInput)
@@ -770,7 +768,7 @@ func (r *cloudMapReconciler) createAWSCloudMapService(ctx context.Context,
 
 	serviceItem := &cloudmapServiceCacheItem{
 		key: key,
-		value: CloudMapServiceSummary{
+		value: cloudMapServiceSummary{
 			NamespaceID: namespaceSummary.NamespaceID,
 			ServiceID:   awssdk.StringValue(createServiceOutput.Service.Id),
 		},
@@ -828,7 +826,7 @@ func (r *cloudMapReconciler) deleteCloudMapServiceFromCache(ctx context.Context,
 	}
 	serviceItem := &cloudmapServiceCacheItem{
 		key: key,
-		value: CloudMapServiceSummary{
+		value: cloudMapServiceSummary{
 			NamespaceID: serviceSummary.NamespaceID,
 			ServiceID:   serviceSummary.ServiceID,
 		},
@@ -843,7 +841,7 @@ func (r *cloudMapReconciler) deleteCloudMapServiceFromCache(ctx context.Context,
 
 func (r *cloudMapReconciler) deleteCloudMapService(ctx context.Context, vNode *appmesh.VirtualNode,
 	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery) error {
-	var serviceSummary *CloudMapServiceSummary
+	var serviceSummary *cloudMapServiceSummary
 	var err error
 	if serviceSummary, err = r.getCloudMapService(ctx, cloudmapConfig); serviceSummary == nil {
 		r.log.Error(err, "Service: ", cloudmapConfig.ServiceName, " not found")
