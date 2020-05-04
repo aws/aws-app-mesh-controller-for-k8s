@@ -292,16 +292,13 @@ func (m *defaultResourceManager) updateCRDVirtualRouter(ctx context.Context, vr 
 }
 
 // isSDKVirtualRouterControlledByCRDVirtualRouter checks whether an AppMesh virtualRouter is controlled by CRD VirtualRouter.
-// if it's controlled, CRD VirtualRouter update is responsible for update AppMesh virtualRouter.
+// if it's controlled, CRD VirtualRouter update is responsible for updating the AppMesh virtualRouter.
 func (m *defaultResourceManager) isSDKVirtualRouterControlledByCRDVirtualRouter(ctx context.Context, sdkVR *appmeshsdk.VirtualRouterData, vr *appmesh.VirtualRouter) bool {
-	if aws.StringValue(sdkVR.Metadata.ResourceOwner) != m.accountID {
-		return false
-	}
-	return true
+	return aws.StringValue(sdkVR.Metadata.ResourceOwner) == m.accountID
 }
 
 // isSDKVirtualRouterOwnedByCRDVirtualRouter checks whether an AppMesh virtualRouter is owned by CRD VirtualRouter.
-// if it's owned, CRD VirtualRouter deletion is responsible for delete AppMesh virtualRouter.
+// if it's owned, CRD VirtualRouter deletion is responsible for deleting the AppMesh virtualRouter.
 func (m *defaultResourceManager) isSDKVirtualRouterOwnedByCRDVirtualRouter(ctx context.Context, sdkVR *appmeshsdk.VirtualRouterData, vr *appmesh.VirtualRouter) bool {
 	if !m.isSDKVirtualRouterControlledByCRDVirtualRouter(ctx, sdkVR, vr) {
 		return false

@@ -303,16 +303,13 @@ func (m *defaultResourceManager) updateCRDVirtualService(ctx context.Context, vs
 }
 
 // isSDKVirtualServiceControlledByCRDVirtualService checks whether an AppMesh VirtualService is controlled by CRD VirtualService.
-// if it's controlled, CRD VirtualService update is responsible for update AppMesh VirtualService.
+// if it's controlled, CRD VirtualService update is responsible for updating the AppMesh VirtualService.
 func (m *defaultResourceManager) isSDKVirtualServiceControlledByCRDVirtualService(ctx context.Context, sdkVS *appmeshsdk.VirtualServiceData, vs *appmesh.VirtualService) bool {
-	if aws.StringValue(sdkVS.Metadata.ResourceOwner) != m.accountID {
-		return false
-	}
-	return true
+	return aws.StringValue(sdkVS.Metadata.ResourceOwner) == m.accountID
 }
 
 // isSDKVirtualServiceOwnedByCRDVirtualService checks whether an AppMesh VirtualService is owned by CRD VirtualService.
-// if it's owned, CRD VirtualService deletion is responsible for delete AppMesh VirtualService.
+// if it's owned, CRD VirtualService deletion is responsible for deleting the AppMesh VirtualService.
 func (m *defaultResourceManager) isSDKVirtualServiceOwnedByCRDVirtualService(ctx context.Context, sdkVS *appmeshsdk.VirtualServiceData, vs *appmesh.VirtualService) bool {
 	if !m.isSDKVirtualServiceControlledByCRDVirtualService(ctx, sdkVS, vs) {
 		return false
@@ -324,15 +321,15 @@ func (m *defaultResourceManager) isSDKVirtualServiceOwnedByCRDVirtualService(ctx
 }
 
 func buildSDKVirtualServiceSpec(vs *appmesh.VirtualService, vnByKey map[types.NamespacedName]*appmesh.VirtualNode, vrByKey map[types.NamespacedName]*appmesh.VirtualRouter) (*appmeshsdk.VirtualServiceSpec, error) {
-	sdkVNRefConvertFunc := references.BuildSDKVirtualNodeReferenceConvertFunc(vs, vnByKey)
-	sdkVRRefConvertFunc := references.BuildSDKVirtualRouterReferenceConvertFunc(vs, vrByKey)
 	converter := conversion.NewConverter(conversion.DefaultNameFunc)
 	converter.RegisterUntypedConversionFunc((*appmesh.VirtualServiceSpec)(nil), (*appmeshsdk.VirtualServiceSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return conversions.Convert_CRD_VirtualServiceSpec_To_SDK_VirtualServiceSpec(a.(*appmesh.VirtualServiceSpec), b.(*appmeshsdk.VirtualServiceSpec), scope)
 	})
+	sdkVNRefConvertFunc := references.BuildSDKVirtualNodeReferenceConvertFunc(vs, vnByKey)
 	converter.RegisterUntypedConversionFunc((*appmesh.VirtualNodeReference)(nil), (*string)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return sdkVNRefConvertFunc(a.(*appmesh.VirtualNodeReference), b.(*string), scope)
 	})
+	sdkVRRefConvertFunc := references.BuildSDKVirtualRouterReferenceConvertFunc(vs, vrByKey)
 	converter.RegisterUntypedConversionFunc((*appmesh.VirtualRouterReference)(nil), (*string)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return sdkVRRefConvertFunc(a.(*appmesh.VirtualRouterReference), b.(*string), scope)
 	})
