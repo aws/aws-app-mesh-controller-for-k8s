@@ -65,8 +65,6 @@ func (h *enqueueRequestsForPodEvents) Update(e event.UpdateEvent, queue workqueu
 
 // Delete is called in response to a delete event
 func (h *enqueueRequestsForPodEvents) Delete(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
-	//On a VirtualNode delete, we need to clean up corresponding CloudMap Service along with
-	//deregistering all the service instances from CloudMap.
 	h.enqueueVirtualNodesForPods(context.Background(), queue, e.Object.(*corev1.Pod))
 }
 

@@ -24,7 +24,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"github.com/prometheus/common/log"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -97,7 +96,6 @@ var cloudMapBackoff = wait.Backoff{
 }
 
 func NewCloudMapReconciler(k8sClient client.Client, finalizerManager k8s.FinalizerManager, cloudMapSDK awsservices.CloudMap, log logr.Logger) *cloudMapReconciler {
-
 	return &cloudMapReconciler{
 		k8sClient:        k8sClient,
 		log:              log,
@@ -114,7 +112,6 @@ func NewCloudMapReconciler(k8sClient client.Client, finalizerManager k8s.Finaliz
 		}, 60*time.Second),
 		enqueueRequestsForPodEvents: virtualnode.NewEnqueueRequestsForPodEvents(k8sClient, log),
 	}
-
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes,verbs=get;list;watch
@@ -136,18 +133,13 @@ func (r *cloudMapReconciler) reconcile(req ctrl.Request) error {
 	ctx := context.Background()
 	log := r.log.WithValues("Virtualnode", req.NamespacedName)
 
-	log.V(1).Info("In VirtualNode Reconciler", "vNode-Name: ", req.Name, "vNode-NameSpace: ", req.Namespace,
-		"vNode-NamespacedName: ", req.NamespacedName)
-
 	vNode := &appmesh.VirtualNode{}
 	if err := r.k8sClient.Get(ctx, req.NamespacedName, vNode); err != nil {
-		log.Error(err, "vNode")
 		return client.IgnoreNotFound(err)
 	}
 
-	log.V(1).Info("Found VNode: ", "vNode.creationtimestamp: ", vNode.CreationTimestamp, "awsName: ", vNode.Spec.AWSName,
+	log.V(2).Info("VNode: ", "awsName: ", vNode.Spec.AWSName,
 		"vNode.PodSelector: ", vNode.Spec.PodSelector)
-
 	if !vNode.DeletionTimestamp.IsZero() {
 		return r.deleteCloudMapResources(ctx, vNode)
 	}
@@ -177,7 +169,7 @@ func (r *cloudMapReconciler) reconcileVirtualNodeWithCloudMap(ctx context.Contex
 		return err
 	}
 
-	r.log.Info("Pods found matching this VNode: ", "Total Pods: ", len(podsList.Items))
+	r.log.V(2).Info("Pods found matching this VNode: ", "Total Pods: ", len(podsList.Items))
 	if err := r.finalizerManager.AddFinalizers(ctx, vNode, k8s.FinalizerAWSCloudMapResources); err != nil {
 		r.log.Error(err, "..while adding cloudmap resource finalizer")
 		return err
@@ -191,8 +183,6 @@ func (r *cloudMapReconciler) reconcileVirtualNodeWithCloudMap(ctx context.Contex
 
 	serviceInstanceSummary := make(map[string]*cloudMapInstanceInfo)
 	for _, pod := range podsList.Items {
-		r.log.Info("Processing Pod: ", "Pod-Name:", pod.Name)
-
 		if pod.DeletionTimestamp != nil {
 			r.log.Info("vNode:", "Pod is being deleted: ", pod.Name)
 			continue
@@ -205,7 +195,6 @@ func (r *cloudMapReconciler) reconcileVirtualNodeWithCloudMap(ctx context.Contex
 		}
 
 		instanceInfo := &cloudMapInstanceInfo{}
-		r.log.Info("vNode: ", "Instance ID of Pod:", instanceId)
 		if r.isPodReady(&pod) {
 			instanceInfo.healthStatus = awsservices.InstanceHealthy
 		} else if r.shouldPodBeRegisteredWithCloudMapService(&pod) {
@@ -255,7 +244,6 @@ func (r *cloudMapReconciler) getRegisteredCloudMapServiceInstances(ctx context.C
 	})
 
 	if exists {
-		//Service Present but instance might be missing. Update the cache and register the instance.
 		cacheServiceInstanceSummary = existingItem.(*cloudMapInstanceCacheItem).instanceSummary
 	} else {
 		//UpdateCache from CloudMap for this service
@@ -270,14 +258,11 @@ func (r *cloudMapReconciler) getRegisteredCloudMapServiceInstances(ctx context.C
 			podName := awssdk.StringValue(instance.Attributes[awsservices.AttrK8sPod])
 			namespace := awssdk.StringValue(instance.Attributes[awsservices.AttrK8sNamespace])
 			instanceID := awssdk.StringValue(instance.Id)
-			serviceName := awssdk.StringValue(instance.Attributes["app"])
 			healthStatus := awssdk.StringValue(instance.Attributes[awsservices.AttrAwsInstanceHealthStatus])
 
-			r.log.Info("Pod: %s is currently registered with the service: %s", podName, serviceName)
 			registeredInstanceInfo.podName = podName
 			registeredInstanceInfo.namespace = namespace
 			registeredInstanceInfo.healthStatus = healthStatus
-
 			cacheServiceInstanceSummary[instanceID] = registeredInstanceInfo
 		}
 	}
@@ -301,7 +286,7 @@ func (r *cloudMapReconciler) updateCloudMapServiceInstances(ctx context.Context,
 			//Check if there is a change in health status
 			if instanceInfo.healthStatus != cacheServiceInstanceSummary[instanceId].healthStatus {
 				if err := r.updateCloudMapInstanceHealthStatus(ctx, cloudmapConfig, instanceId, instanceInfo.healthStatus); err != nil {
-					r.log.Error(err, "Error Updating Instance: ", instanceId, " Health Status in CloudMap")
+					r.log.Error(err, "Error Updating Instance: ", instanceId, " health Status in CloudMap")
 				}
 			}
 			currInstanceInfo.healthStatus = instanceInfo.healthStatus
@@ -335,7 +320,7 @@ func (r *cloudMapReconciler) removeCloudMapServiceInstances(ctx context.Context,
 	serviceInstancesToBeRemoved map[string]*cloudMapInstanceInfo, cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery) error {
 
 	for instanceId, _ := range serviceInstancesToBeRemoved {
-		r.log.Info("De-registering pod: ", "InstanceID: ", instanceId)
+		r.log.V(1).Info("De-registering pod: ", "InstanceID: ", instanceId)
 		err := r.deregisterCloudMapInstance(ctx, instanceId, cloudmapConfig)
 		if err != nil {
 			//Log an error and continue
@@ -357,8 +342,8 @@ func (r *cloudMapReconciler) updateCloudMapInstanceHealthStatus(ctx context.Cont
 		return err
 	}
 
-	r.log.Info("vNode", "Updating Health status of Service", *awssdk.String(serviceSummary.ServiceID),
-		"instance: ", *awssdk.String(instanceId), " to: ", *awssdk.String(healthStatus))
+	r.log.Info("vNode", "Updating Health status of instance: ", *awssdk.String(instanceId),
+		" to: ", *awssdk.String(healthStatus))
 	updateRequest := &servicediscovery.UpdateInstanceCustomHealthStatusInput{
 		InstanceId: awssdk.String(instanceId),
 		ServiceId:  awssdk.String(serviceSummary.ServiceID),
@@ -414,13 +399,6 @@ func (r *cloudMapReconciler) registerCloudMapInstance(ctx context.Context,
 		attr[awsservices.AttrAwsInstanceHealthStatus] = awssdk.String(awsservices.InstanceUnHealthy)
 	}
 
-	//copy the attributes specified on virtual-node
-	/*TODO
-	for _, a := range cloudmapConfig.Attributes {
-		attr[awssdk.StringValue(&a.Key)] = &a.Value
-	}
-	*/
-
 	input := &servicediscovery.RegisterInstanceInput{
 		ServiceId:        awssdk.String(serviceSummary.ServiceID),
 		InstanceId:       awssdk.String(instanceId),
@@ -428,7 +406,7 @@ func (r *cloudMapReconciler) registerCloudMapInstance(ctx context.Context,
 		Attributes:       attr,
 	}
 
-	r.log.Info("Registering Instance ", " ID: ", instanceId, " against Service: ", serviceSummary.ServiceID)
+	r.log.V(1).Info("Registering Instance ", " ID: ", instanceId, " against Service: ", serviceSummary.ServiceID)
 	_, err = r.cloudMapSDK.RegisterInstanceWithContext(ctx, input)
 	if aerr, ok := err.(awserr.Error); ok {
 		if aerr.Code() == servicediscovery.ErrCodeDuplicateRequest {
@@ -436,7 +414,6 @@ func (r *cloudMapReconciler) registerCloudMapInstance(ctx context.Context,
 		}
 		return err
 	}
-	r.log.Info("Successfully Registered Instance ", " ID: ", instanceId, " against Service: ", serviceSummary.ServiceID)
 	return nil
 }
 
@@ -559,9 +536,6 @@ func (r *cloudMapReconciler) getCloudMapServiceFromAWS(ctx context.Context, name
 	}
 
 	var svcSummary *servicediscovery.ServiceSummary
-
-	r.log.Info("vNode: ", "NameSpace ID: ", namespaceID, "serviceName: ", serviceName)
-
 	ctx, cancel := context.WithTimeout(ctx, time.Second*awsservices.ListServicesPagesTimeout)
 	defer cancel()
 
@@ -598,19 +572,16 @@ func (r *cloudMapReconciler) getCloudMapService(ctx context.Context,
 		return serviceSummary, nil
 	}
 
-	r.log.Info("vNode: ", "Service missing in Cache: ", cloudmapConfig.ServiceName)
 	//Service info missing in Cache. Reach out to AWS CloudMap for Service Info.
 	namespaceSummary, err := r.getCloudMapNameSpace(ctx, cloudmapConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	r.log.Info("vNode: ", "NameSpace ID...", namespaceSummary.NamespaceID)
 	if namespaceSummary == nil {
 		return nil, fmt.Errorf("Could not find namespace in cloudmap with name %s", awssdk.StringValue(&cloudmapConfig.NamespaceName))
 	}
 
-	r.log.Info("vNode: ", "Reaching out to CloudMap for...", cloudmapConfig.ServiceName)
 	cloudmapService, err := r.getCloudMapServiceFromAWS(ctx, namespaceSummary.NamespaceID, awssdk.StringValue(&cloudmapConfig.ServiceName))
 	if err != nil {
 		return nil, err
@@ -726,13 +697,13 @@ func (r *cloudMapReconciler) deleteAWSCloudMapService(ctx context.Context, servi
 
 	//Deregister instances from CloudMap
 	cloudMapServiceKey := cloudmapConfig.NamespaceName + "-" + cloudmapConfig.ServiceName
-	cacheServiceInstanceSummary, err := r.getRegisteredCloudMapServiceInstances(ctx, cloudmapConfig)
+	registeredServiceInstanceSummary, err := r.getRegisteredCloudMapServiceInstances(ctx, cloudmapConfig)
 	if err != nil {
 		r.log.Error(err, "Couldn't get registered set of instances for service: ", cloudmapConfig.ServiceName)
 		return err
 	}
 
-	err = r.removeCloudMapServiceInstances(ctx, cloudMapServiceKey, cacheServiceInstanceSummary, cloudmapConfig)
+	err = r.removeCloudMapServiceInstances(ctx, cloudMapServiceKey, registeredServiceInstanceSummary, cloudmapConfig)
 	if err != nil {
 		return err
 	}
@@ -745,7 +716,6 @@ func (r *cloudMapReconciler) deleteAWSCloudMapService(ctx context.Context, servi
 
 	if err := retry.OnError(cloudMapBackoff, func(err error) bool {
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == servicediscovery.ErrCodeResourceInUse {
-			log.Info("Waiting 15 secs and retrying to allow cloudMap to sync....")
 			return true
 		}
 		return false
@@ -792,8 +762,8 @@ func (r *cloudMapReconciler) deleteCloudMapService(ctx context.Context, vNode *a
 		return nil
 	}
 
-	r.log.Info("vNode: ", "serviceSummary: ", serviceSummary)
 	if err := r.deleteAWSCloudMapService(ctx, serviceSummary.ServiceID, cloudmapConfig); err != nil {
+		r.log.Error(err, "Delete from CloudMap failed for: ", cloudmapConfig.ServiceName)
 		return err
 	}
 
