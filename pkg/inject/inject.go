@@ -59,8 +59,14 @@ func (m *SidecarInjector) InjectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 
 	// List out all the mutators in sequence
 	var mutators = []PodMutator{
-		NewAppMeshCNIMutator(m.config),
-		NewProxyInitMutator(m.config, vn),
+		newProxyMutator(proxyMutatorConfig{
+			egressIgnoredIPs: m.config.IgnoredIPs,
+			initProxyMutatorConfig: initProxyMutatorConfig{
+				containerImage: m.config.InitImage,
+				cpuRequests:    m.config.SidecarCpu,
+				memoryRequests: m.config.SidecarMemory,
+			},
+		}, vn),
 		NewEnvoyMutator(m.config, ms, vn),
 		NewXrayMutator(m.config),
 		NewDatadogMutator(m.config),
