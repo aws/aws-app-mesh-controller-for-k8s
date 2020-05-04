@@ -244,8 +244,6 @@ func (r *cloudMapReconciler) deleteCloudMapResources(ctx context.Context, vNode 
 	return nil
 }
 
-
-
 func (r *cloudMapReconciler) getRegisteredCloudMapServiceInstances(ctx context.Context,
 	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery) (map[string]*cloudMapInstanceInfo, error) {
 
@@ -329,8 +327,6 @@ func (r *cloudMapReconciler) updateCloudMapServiceInstances(ctx context.Context,
 		key:             cloudMapServiceKey,
 		instanceSummary: updatedCacheServiceInstanceSummary,
 	}
-
-	//Update the Cache with the latest info
 	_ = r.cloudMapInstanceCache.Add(serviceItem)
 	return nil
 }
@@ -635,8 +631,6 @@ func (r *cloudMapReconciler) createCloudMapService(ctx context.Context,
 	cloudmapConfig *appmesh.AWSCloudMapServiceDiscovery, creatorRequestID string) (*cloudMapServiceSummary, error) {
 
 	key := r.serviceCacheKey(cloudmapConfig)
-
-	//Check in Cache.
 	if serviceSummary, _ := r.getCloudMapServiceFromCache(ctx, key); serviceSummary != nil {
 		return serviceSummary, nil
 	}
@@ -708,7 +702,6 @@ func (r *cloudMapReconciler) createAWSCloudMapService(ctx context.Context,
 	key := r.serviceCacheKey(cloudmapConfig)
 	createServiceOutput, err := r.cloudMapSDK.CreateServiceWithContext(ctx, createServiceInput)
 	if err != nil {
-		//ignore already exists error
 		if aerr, ok := err.(awserr.Error); ok {
 			if aerr.Code() == servicediscovery.ErrCodeServiceAlreadyExists {
 				return r.getCloudMapService(ctx, cloudmapConfig)
@@ -800,7 +793,6 @@ func (r *cloudMapReconciler) deleteCloudMapService(ctx context.Context, vNode *a
 	}
 
 	r.log.Info("vNode: ", "serviceSummary: ", serviceSummary)
-
 	if err := r.deleteAWSCloudMapService(ctx, serviceSummary.ServiceID, cloudmapConfig); err != nil {
 		return err
 	}
