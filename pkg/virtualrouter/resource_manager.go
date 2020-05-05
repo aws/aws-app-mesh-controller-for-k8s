@@ -312,7 +312,7 @@ func (m *defaultResourceManager) isSDKVirtualRouterOwnedByCRDVirtualRouter(ctx c
 func buildSDKVirtualRouterSpec(vr *appmesh.VirtualRouter) (*appmeshsdk.VirtualRouterSpec, error) {
 	converter := conversion.NewConverter(conversion.DefaultNameFunc)
 	converter.RegisterUntypedConversionFunc((*appmesh.VirtualRouterSpec)(nil), (*appmeshsdk.VirtualRouterSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return conversions.Convert_CRD_VirtualRouterSpec_To_SDK__VirtualRouterSpec(a.(*appmesh.VirtualRouterSpec), b.(*appmeshsdk.VirtualRouterSpec), scope)
+		return conversions.Convert_CRD_VirtualRouterSpec_To_SDK_VirtualRouterSpec(a.(*appmesh.VirtualRouterSpec), b.(*appmeshsdk.VirtualRouterSpec), scope)
 	})
 	sdkVRSpec := &appmeshsdk.VirtualRouterSpec{}
 	if err := converter.Convert(&vr.Spec, sdkVRSpec, conversion.DestFromSource, nil); err != nil {
