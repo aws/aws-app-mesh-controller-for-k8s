@@ -1,8 +1,10 @@
 package inject
 
 const (
-	//AppMeshCpuRequestAnnotation specifies the CPU requests for proxy
-	AppMeshCpuRequestAnnotation = "appmesh.k8s.aws/cpuRequest"
+	//AppMeshCPURequestAnnotation specifies the CPU requests for proxy
+	AppMeshCPURequestAnnotation = "appmesh.k8s.aws/cpuRequest"
+	//AppMeshMemoryRequestAnnotation specifies the memory requests for proxy
+	AppMeshMemoryRequestAnnotation = "appmesh.k8s.aws/memoryRequest"
 
 	// === begin proxy settings annotations ===
 	//AppMeshCNIAnnotation specifies that CNI will be used to configure traffic interception
@@ -23,15 +25,10 @@ const (
 	AppMeshProxyIngressPortAnnotation = "appmesh.k8s.aws/proxyIngressPort"
 	// == end proxy settings annotations ===
 
-	//AppMeshMemoryRequestAnnotation specifies the memory requests for proxy
-	AppMeshMemoryRequestAnnotation = "appmesh.k8s.aws/memoryRequest"
 	//AppMeshPreviewAnnotation specifies that proxy should use App Mesh preview endpoint
 	AppMeshPreviewAnnotation = "appmesh.k8s.aws/preview"
-
 	//AppMeshSidecarInjectAnnotation specifies proxy should be injected for pod. Other systems can use this annotation on pod to determine if proxy is injected or not
 	AppMeshSidecarInjectAnnotation = "appmesh.k8s.aws/sidecarInjectorWebhook"
-	//AppMeshVirtualNodeNameAnnotation specifies the App Mesh VirtualNode used by proxy
-	AppMeshVirtualNodeNameAnnotation = "appmesh.k8s.aws/virtualNode"
 
 	//Pod Labels
 

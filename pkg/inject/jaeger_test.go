@@ -1,71 +1,146 @@
 package inject
 
 import (
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	"strings"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"testing"
 )
 
-func Test_RenderJaegerInitContainer(t *testing.T) {
+func Test_jaegerMutator_mutate(t *testing.T) {
+	cpuLimits, _ := resource.ParseQuantity("100m")
+	cpuRequests, _ := resource.ParseQuantity("10m")
+	memoryLimits, _ := resource.ParseQuantity("64Mi")
+	memoryRequests, _ := resource.ParseQuantity("32Mi")
+	type fields struct {
+		mutatorConfig jaegerMutatorConfig
+		enabled       bool
+	}
+	type args struct {
+		pod *corev1.Pod
+	}
 	tests := []struct {
-		name string
-		conf Config
-		pod  *corev1.Pod
-		want bool
+		name    string
+		fields  fields
+		args    args
+		wantPod *corev1.Pod
+		wantErr error
 	}{
 		{
-			name: "Enable Jaeger inject",
-			conf: getConfig(func(cnf Config) Config {
-				cnf.EnableJaegerTracing = true
-				cnf.JaegerAddress = "appmesh-jaeger.appmesh-system"
-				cnf.JaegerPort = "9411"
-				return cnf
-			}),
-			pod:  getPod(nil),
-			want: true,
+			name: "no-op when disabled",
+			fields: fields{
+				mutatorConfig: jaegerMutatorConfig{
+					jaegerAddress: "127.0.0.1",
+					jaegerPort:    "8080",
+				},
+				enabled: false,
+			},
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{},
+				},
+			},
+			wantPod: &corev1.Pod{
+				Spec: corev1.PodSpec{},
+			},
 		},
 		{
-			name: "No Jaeger inject",
-			conf: getConfig(nil),
-			pod:  getPod(nil),
-			want: false,
+			name: "inject sidecar and volume",
+			fields: fields{
+				mutatorConfig: jaegerMutatorConfig{
+					jaegerAddress: "127.0.0.1",
+					jaegerPort:    "8080",
+				},
+				enabled: true,
+			},
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{},
+				},
+			},
+			wantPod: &corev1.Pod{
+				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Name:            "inject-jaeger-config",
+							Image:           "busybox",
+							ImagePullPolicy: "IfNotPresent",
+							Command: []string{
+								"sh",
+								"-c",
+								`cat <<EOF >> /tmp/envoy/envoyconf.yaml
+tracing:
+ http:
+  name: envoy.zipkin
+  typed_config:
+   "@type": type.googleapis.com/envoy.config.trace.v2.ZipkinConfig
+   collector_cluster: jaeger
+   collector_endpoint: "/api/v1/spans"
+   shared_span_context: false
+static_resources:
+  clusters:
+  - name: jaeger
+    connect_timeout: 1s
+    type: strict_dns
+    lb_policy: round_robin
+    load_assignment:
+      cluster_name: jaeger
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+           address:
+            socket_address:
+             address: 127.0.0.1
+             port_value: 8080
+EOF
+
+cat /tmp/envoy/envoyconf.yaml
+`,
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      envoyTracingConfigVolumeName,
+									MountPath: "/tmp/envoy",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									"cpu":    cpuLimits,
+									"memory": memoryLimits,
+								},
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: envoyTracingConfigVolumeName,
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			j := NewJaegerMutator(&tt.conf)
-			before := len(tt.pod.Spec.InitContainers)
-			err := j.mutate(tt.pod)
-			var init *corev1.Container
-			assert.NoError(t, err, "Unexpected error")
-			found := false
-			for _, v := range tt.pod.Spec.InitContainers {
-				if v.Name == "inject-jaeger-config" {
-					found = true
-					init = &v
-				}
+			m := &jaegerMutator{
+				mutatorConfig: tt.fields.mutatorConfig,
+				enabled:       tt.fields.enabled,
 			}
-			assert.True(t, found == tt.want, "Unexpected jaeger container")
-			if tt.want {
-				assert.NotNil(t, init)
-				assert.Equal(t, "busybox", init.Image)
-				if len(init.Command) < 1 {
-					t.Error("Jaeger init container does not contain command")
-				}
-				allCommands := strings.Join(init.Command, " ")
-				if !strings.Contains(allCommands, tt.conf.JaegerPort) {
-					t.Errorf("Jaeger port did not get configured correctly")
-				}
-				if !strings.Contains(allCommands, tt.conf.JaegerAddress) {
-					t.Errorf("Jaeger address did not get configured correctly")
-				}
-				assert.True(t, len(tt.pod.Spec.Volumes) > 0)
-				assert.Greater(t, len(tt.pod.Spec.InitContainers), before)
+			pod := tt.args.pod.DeepCopy()
+			err := m.mutate(pod)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
-				assert.Nil(t, init)
-				assert.Equal(t, before, len(tt.pod.Spec.InitContainers))
+				assert.NoError(t, err)
+				assert.True(t, cmp.Equal(tt.wantPod, pod), "diff", cmp.Diff(tt.wantPod, pod))
 			}
 		})
 	}

@@ -27,49 +27,59 @@ const xrayDaemonContainerTemplate = `
   ],
   "resources": {
     "requests": {
-      "cpu": "{{ .XraySidecarCpu }}",
-      "memory": "{{ .XraySidecarMemory }}"
+      "cpu": "{{ .SidecarCPURequests }}",
+      "memory": "{{ .SidecarMemoryRequests }}"
     }
   }
 }
 `
 
-type XrayMutator struct {
-	config *Config
+type XrayTemplateVariables struct {
+	AWSRegion             string
+	SidecarCPURequests    string
+	SidecarMemoryRequests string
 }
 
-type XrayMeta struct {
-	AWSRegion         string
-	XraySidecarCpu    string
-	XraySidecarMemory string
+type xrayMutatorConfig struct {
+	awsRegion             string
+	sidecarCPURequests    string
+	sidecarMemoryRequests string
 }
 
-func NewXrayMutator(Config *Config) *XrayMutator {
-	return &XrayMutator{config: Config}
-}
-
-func (m *XrayMutator) Meta(pod *corev1.Pod) *XrayMeta {
-	return &XrayMeta{
-		AWSRegion:         m.config.Region,
-		XraySidecarCpu:    GetSidecarCpu(m.config, pod),
-		XraySidecarMemory: GetSidecarMemory(m.config, pod),
+func newXrayMutator(mutatorConfig xrayMutatorConfig, enabled bool) *xrayMutator {
+	return &xrayMutator{
+		mutatorConfig: mutatorConfig,
+		enabled:       enabled,
 	}
 }
 
-func (m *XrayMutator) mutate(pod *corev1.Pod) error {
-	if !m.config.EnableXrayTracing {
+type xrayMutator struct {
+	mutatorConfig xrayMutatorConfig
+	enabled       bool
+}
+
+func (m *xrayMutator) mutate(pod *corev1.Pod) error {
+	if !m.enabled {
 		return nil
 	}
-	xrayMeta := m.Meta(pod)
-	xrayDaemonSidecar, err := renderTemplate("xray-daemon", xrayDaemonContainerTemplate, xrayMeta)
+	variables := m.buildTemplateVariables(pod)
+	xrayDaemonSidecar, err := renderTemplate("xray-daemon", xrayDaemonContainerTemplate, variables)
 	if err != nil {
 		return err
 	}
-	var container corev1.Container
+	container := corev1.Container{}
 	err = json.Unmarshal([]byte(xrayDaemonSidecar), &container)
 	if err != nil {
 		return err
 	}
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
 	return nil
+}
+
+func (m *xrayMutator) buildTemplateVariables(pod *corev1.Pod) XrayTemplateVariables {
+	return XrayTemplateVariables{
+		AWSRegion:             m.mutatorConfig.awsRegion,
+		SidecarCPURequests:    getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
+		SidecarMemoryRequests: getSidecarMemoryRequest(m.mutatorConfig.sidecarMemoryRequests, pod),
+	}
 }

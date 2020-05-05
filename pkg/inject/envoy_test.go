@@ -1,136 +1,697 @@
 package inject
 
 import (
-	"fmt"
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
 
-func Test_Sidecar(t *testing.T) {
-	sc := getConfig(nil)
-	checkSidecars(t, sc)
-}
-
-func Test_Sidecar_WithXray(t *testing.T) {
-	sc := getConfig(nil)
-	sc.EnableXrayTracing = true
-	checkSidecars(t, sc)
-}
-
-func Test_Sidecar_WithStatsTags(t *testing.T) {
-	sc := getConfig(nil)
-	sc.EnableStatsTags = true
-	checkSidecars(t, sc)
-}
-
-func Test_Sidecar_WithStatsD(t *testing.T) {
-	sc := getConfig(nil)
-	sc.EnableStatsD = true
-	checkSidecars(t, sc)
-}
-
-func Test_Sidecar_WithDatadog(t *testing.T) {
-	sc := getConfig(nil)
-	sc.EnableDatadogTracing = true
-	sc.DatadogAddress = "datadog.appmesh-system"
-	sc.DatadogPort = "8126"
-	checkSidecars(t, sc)
-}
-
-func Test_Sidecar_WithJaeger(t *testing.T) {
-	sc := getConfig(nil)
-	sc.EnableJaegerTracing = true
-	sc.JaegerAddress = "appmesh-jaeger.appmesh-system"
-	sc.JaegerPort = "9411"
-	checkSidecars(t, sc)
-}
-
-func checkSidecars(t *testing.T, cfg Config) {
-	x := NewEnvoyMutator(&cfg, getMesh(), getVn(nil))
-	pod := getPod(nil)
-	assert.NoError(t, x.mutate(pod))
-	var sidecar *corev1.Container
-	for _, v := range pod.Spec.Containers {
-		if v.Name == "envoy" {
-			sidecar = &v
-		}
+func Test_envoyMutator_mutate(t *testing.T) {
+	cpuRequests, _ := resource.ParseQuantity("32Mi")
+	memoryRequests, _ := resource.ParseQuantity("10m")
+	ms := &appmesh.Mesh{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "mesh",
+		},
+		Spec: appmesh.MeshSpec{
+			AWSName: aws.String("my-mesh"),
+		},
 	}
-	assert.NotNil(t, sidecar)
-	assert.Equal(t, "envoy", sidecar.Name, "Unexpected container found with name %s", sidecar.Name)
-	assert.Equal(t, aws.StringValue(x.vn.Spec.AWSName), pod.Annotations[AppMeshVirtualNodeNameAnnotation])
-	checkEnvoy(t, sidecar, x)
-}
-
-func checkEnvoy(t *testing.T, sidecar *corev1.Container, m *EnvoyMutator) {
-	meshName := aws.StringValue(m.ms.Spec.AWSName)
-	vnName := aws.StringValue(m.vn.Spec.AWSName)
-	expectedEnvs := map[string]string{
-		"APPMESH_VIRTUAL_NODE_NAME": fmt.Sprintf("mesh/%s/virtualNode/%s", meshName, vnName),
-		"AWS_REGION":                m.config.Region,
-		"ENVOY_LOG_LEVEL":           m.config.LogLevel,
-		"APPMESH_PREVIEW":           "0",
+	vn := &appmesh.VirtualNode{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "my-vn",
+		},
+		Spec: appmesh.VirtualNodeSpec{
+			AWSName: aws.String("my-vn_my-ns"),
+		},
 	}
-
-	if m.config.EnableJaegerTracing || m.config.EnableDatadogTracing {
-		expectedEnvs["ENVOY_STATS_CONFIG_FILE"] = "/tmp/envoy/envoyconf.yaml"
-
-		mounts := sidecar.VolumeMounts
-		if len(mounts) < 1 {
-			t.Errorf("no volume mounts found")
-		}
-
-		mount := mounts[0]
-		mountName := mount.Name
-		expectedMountName := "envoy-tracing-config"
-		if mountName != expectedMountName {
-			t.Errorf("volume mount name is set to %s instead of %s", mountName, expectedMountName)
-		}
-
-		mountPath := mount.MountPath
-		expectedMountPath := "/tmp/envoy"
-		if mountPath != expectedMountPath {
-			t.Errorf("volume mount path is set to %s instead of %s", mountPath, expectedMountPath)
-		}
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "my-pod",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "app",
+					Image: "app/v1",
+				},
+			},
+		},
 	}
-
-	if m.config.EnableXrayTracing {
-		expectedEnvs["ENABLE_ENVOY_XRAY_TRACING"] = "1"
+	type fields struct {
+		vn            *appmesh.VirtualNode
+		ms            *appmesh.Mesh
+		mutatorConfig envoyMutatorConfig
 	}
-
-	if m.config.EnableStatsTags {
-		expectedEnvs["ENABLE_ENVOY_STATS_TAGS"] = "1"
+	type args struct {
+		pod *corev1.Pod
 	}
-
-	if m.config.EnableStatsD {
-		expectedEnvs["ENABLE_ENVOY_DOG_STATSD"] = "1"
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantPod *corev1.Pod
+		wantErr error
+	}{
+		{
+			name: "no tracing",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:             "us-west-2",
+					preview:               false,
+					logLevel:              "debug",
+					sidecarImage:          "envoy:v2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no tracing + enable preview",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:             "us-west-2",
+					preview:               true,
+					logLevel:              "debug",
+					sidecarImage:          "envoy:v2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "1",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no tracing + enable xray tracing",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:             "us-west-2",
+					preview:               false,
+					logLevel:              "debug",
+					sidecarImage:          "envoy:v2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					enableXrayTracing:     true,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "ENABLE_ENVOY_XRAY_TRACING",
+									Value: "1",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no tracing + enable Jaeger tracing",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:             "us-west-2",
+					preview:               false,
+					logLevel:              "debug",
+					sidecarImage:          "envoy:v2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					enableJaegerTracing:   true,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_STATS_CONFIG_FILE",
+									Value: "/tmp/envoy/envoyconf.yaml",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "envoy-tracing-config",
+									MountPath: "/tmp/envoy",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no tracing + enable Datadog tracing",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:             "us-west-2",
+					preview:               false,
+					logLevel:              "debug",
+					sidecarImage:          "envoy:v2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					enableDatadogTracing:  true,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_STATS_CONFIG_FILE",
+									Value: "/tmp/envoy/envoyconf.yaml",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "envoy-tracing-config",
+									MountPath: "/tmp/envoy",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no tracing + enable Stats tags",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:             "us-west-2",
+					preview:               false,
+					logLevel:              "debug",
+					sidecarImage:          "envoy:v2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					enableStatsTags:       true,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "ENABLE_ENVOY_STATS_TAGS",
+									Value: "1",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no tracing + enable Stats D",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:             "us-west-2",
+					preview:               false,
+					logLevel:              "debug",
+					sidecarImage:          "envoy:v2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					enableStatsD:          true,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "ENABLE_ENVOY_DOG_STATSD",
+									Value: "1",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
-
-	if sidecar.Image != m.config.SidecarImage {
-		t.Errorf("Envoy container image is not set to %s", m.config.SidecarImage)
-	}
-	assert.Equal(t, "10m", sidecar.Resources.Requests.Cpu().String(), "CPU request mismatch")
-	assert.Equal(t, "32Mi", sidecar.Resources.Requests.Memory().String(), "Memory request mismatch")
-
-	checkEnv(t, sidecar, expectedEnvs)
-}
-
-func checkEnv(t *testing.T, sidecar *corev1.Container, expectedEnvs map[string]string) {
-	envs := sidecar.Env
-	for _, u := range envs {
-		name := u.Name
-		if expected, ok := expectedEnvs[name]; ok {
-			val := u.Value
-			if val != expected {
-				t.Errorf("%s env is set %s instead of %s", name, val, expected)
-			} else {
-				delete(expectedEnvs, name)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &envoyMutator{
+				vn:            tt.fields.vn,
+				ms:            tt.fields.ms,
+				mutatorConfig: tt.fields.mutatorConfig,
 			}
-		}
+			pod := tt.args.pod.DeepCopy()
+			err := m.mutate(pod)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.True(t, cmp.Equal(tt.wantPod, pod), "diff", cmp.Diff(tt.wantPod, pod))
+			}
+		})
 	}
+}
 
-	for k := range expectedEnvs {
-		t.Errorf("%s env is not set", k)
+func Test_envoyMutator_getPreview(t *testing.T) {
+	type fields struct {
+		mutatorConfig envoyMutatorConfig
+	}
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+		{
+			name: "enabled preview by annotation",
+			fields: fields{
+				mutatorConfig: envoyMutatorConfig{
+					preview: false,
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/preview": "true",
+						},
+					},
+				},
+			},
+			want: "1",
+		},
+		{
+			name: "disable preview by annotation",
+			fields: fields{
+				mutatorConfig: envoyMutatorConfig{
+					preview: true,
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/preview": "false",
+						},
+					},
+				},
+			},
+			want: "0",
+		},
+		{
+			name: "enabled preview by default",
+			fields: fields{
+				mutatorConfig: envoyMutatorConfig{
+					preview: true,
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{},
+				},
+			},
+			want: "1",
+		},
+		{
+			name: "disable preview by default",
+			fields: fields{
+				mutatorConfig: envoyMutatorConfig{
+					preview: false,
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{},
+				},
+			},
+			want: "0",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &envoyMutator{
+				mutatorConfig: tt.fields.mutatorConfig,
+			}
+			got := m.getPreview(tt.args.pod)
+			assert.Equal(t, tt.want, got)
+		})
 	}
 }

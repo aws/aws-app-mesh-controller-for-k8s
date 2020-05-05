@@ -1,10 +1,11 @@
 package inject
 
 import (
+	"encoding/json"
 	corev1 "k8s.io/api/core/v1"
 )
 
-const jaegerTemplate = `
+const jaegerEnvoyConfigTemplate = `
 tracing:
  http:
   name: envoy.zipkin
@@ -30,7 +31,7 @@ static_resources:
              port_value: {{ .JaegerPort }}
 `
 
-const injectJaegerTemplate = `
+const jaegerInitContainerTemplate = `
 {
   "command": [
     "sh",
@@ -43,7 +44,7 @@ const injectJaegerTemplate = `
   "volumeMounts": [
     {
       "mountPath": "/tmp/envoy",
-      "name": "envoy-tracing-config"
+      "name": "{{ .EnvoyTracingConfigVolumeName }}"
     }
   ],
   "resources": {
@@ -59,36 +60,78 @@ const injectJaegerTemplate = `
 }
 `
 
-type JaegerMutator struct {
-	config *Config
-}
-
-type JaegerMeta struct {
+type JaegerEnvoyConfigTemplateVariables struct {
 	JaegerAddress string
 	JaegerPort    string
 }
 
-func NewJaegerMutator(Config *Config) *JaegerMutator {
-	return &JaegerMutator{config: Config}
+type JaegerInitContainerTemplateVariables struct {
+	EnvoyConfig                  string
+	EnvoyTracingConfigVolumeName string
 }
 
-func (j *JaegerMutator) Meta(pod *corev1.Pod) *JaegerMeta {
-	return &JaegerMeta{
-		JaegerAddress: j.config.JaegerAddress,
-		JaegerPort:    j.config.JaegerPort,
+type jaegerMutatorConfig struct {
+	jaegerAddress string
+	jaegerPort    string
+}
+
+func newJaegerMutator(mutatorConfig jaegerMutatorConfig, enabled bool) *jaegerMutator {
+	return &jaegerMutator{
+		mutatorConfig: mutatorConfig,
+		enabled:       enabled,
 	}
 }
 
-func (j *JaegerMutator) mutate(pod *corev1.Pod) error {
-	if !j.config.EnableJaegerTracing {
+type jaegerMutator struct {
+	mutatorConfig jaegerMutatorConfig
+	enabled       bool
+}
+
+func (m *jaegerMutator) mutate(pod *corev1.Pod) error {
+	if !m.enabled {
 		return nil
 	}
-	jaegerMeta := j.Meta(pod)
-	init, err := renderInitContainer("jaeger", jaegerTemplate, injectJaegerTemplate, jaegerMeta)
+
+	variables, err := m.buildInitContainerTemplateVariables()
 	if err != nil {
 		return err
 	}
-	pod.Spec.InitContainers = append(pod.Spec.InitContainers, *init)
-	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{Name: tracingConfigVolumeName})
+	initContainer, err := renderTemplate("jaeger-init-container", jaegerInitContainerTemplate, variables)
+	if err != nil {
+		return err
+	}
+	container := corev1.Container{}
+	err = json.Unmarshal([]byte(initContainer), &container)
+	if err != nil {
+		return err
+	}
+	pod.Spec.InitContainers = append(pod.Spec.InitContainers, container)
+	volume := corev1.Volume{Name: envoyTracingConfigVolumeName, VolumeSource: corev1.VolumeSource{
+		EmptyDir: &corev1.EmptyDirVolumeSource{},
+	}}
+	pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
 	return nil
+}
+
+func (m *jaegerMutator) buildEnvoyConfigTemplateVariables() JaegerEnvoyConfigTemplateVariables {
+	return JaegerEnvoyConfigTemplateVariables{
+		JaegerAddress: m.mutatorConfig.jaegerAddress,
+		JaegerPort:    m.mutatorConfig.jaegerPort,
+	}
+}
+
+func (m *jaegerMutator) buildInitContainerTemplateVariables() (JaegerInitContainerTemplateVariables, error) {
+	envoyConfigVariables := m.buildEnvoyConfigTemplateVariables()
+	envoyConfig, err := renderTemplate("jaeger-envoy-config", jaegerEnvoyConfigTemplate, envoyConfigVariables)
+	if err != nil {
+		return JaegerInitContainerTemplateVariables{}, err
+	}
+	envoyConfig, err = escapeYaml(envoyConfig)
+	if err != nil {
+		return JaegerInitContainerTemplateVariables{}, err
+	}
+	return JaegerInitContainerTemplateVariables{
+		EnvoyConfig:                  envoyConfig,
+		EnvoyTracingConfigVolumeName: envoyTracingConfigVolumeName,
+	}, nil
 }
