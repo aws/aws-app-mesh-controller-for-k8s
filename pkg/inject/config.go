@@ -8,10 +8,10 @@ import (
 const (
 	flagInjectDefault               = "inject-default"
 	flagEnableIAMForServiceAccounts = "enable-iam-for-service-accounts"
+	flagEnableECRSecret             = "enable-ecr-secret"
 	flagAWSRegion                   = "aws-region"
 	flagEnvoyPreview                = "preview"
 	flagLogLevel                    = "log-level"
-	flagECRSecret                   = "ecr-secret"
 	flagSidecarImage                = "sidecar-image"
 	flagSidecarCpuRequests          = "sidecar-cpu-requests"
 	flagSidecarMemoryRequests       = "sidecar-memory-requests"
@@ -35,6 +35,8 @@ type Config struct {
 	// If enabled, an fsGroup: 1337 will be injected in the absence of it within pod securityContext
 	// see https://github.com/aws/amazon-eks-pod-identity-webhook/issues/8 for more details
 	EnableIAMForServiceAccounts bool
+	// If enabled, additional image pull secret(appmesh-ecr-secret) will be injected.
+	EnableECRSecret bool
 
 	// Sidecar settings
 	SidecarImage  string
@@ -43,7 +45,6 @@ type Config struct {
 	Region        string
 	Preview       bool
 	LogLevel      string
-	EcrSecret     bool
 
 	// Init container settings
 	InitImage  string
@@ -74,15 +75,15 @@ func (cfg *Config) BindFlags() {
 	flag.BoolVar(&cfg.InjectDefault, flagInjectDefault, true,
 		`If enabled, sidecars will be injected in the absence of the corresponding pod annotation`)
 	flag.BoolVar(&cfg.EnableIAMForServiceAccounts, flagEnableIAMForServiceAccounts, true,
-		`If enabled, an fsGroup: 1337 will be injected in the absence of it within pod securityContext`)
+		`If enabled, a fsGroup: 1337 will be injected in the absence of it within pod securityContext`)
+	flag.BoolVar(&cfg.EnableECRSecret, flagEnableECRSecret, false,
+		"If enabled, 'appmesh-ecr-secret' secret will be injected in the absence of it within pod imagePullSecrets")
 	flag.StringVar(&cfg.Region, flagAWSRegion, "",
 		"AWS App Mesh region")
 	flag.BoolVar(&cfg.Preview, flagEnvoyPreview, false,
 		"Enable preview channel")
 	flag.StringVar(&cfg.LogLevel, flagLogLevel, "info",
 		"AWS App Mesh envoy log level")
-	flag.BoolVar(&cfg.EcrSecret, flagECRSecret, false,
-		"Inject AWS app mesh pull secrets")
 	flag.StringVar(&cfg.SidecarImage, flagSidecarImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.12.3.0-prod",
 		"Envoy sidecar container image.")
 	flag.StringVar(&cfg.SidecarCpu, flagSidecarCpuRequests, "10m",
