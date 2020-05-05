@@ -71,7 +71,7 @@ func (r *virtualRouterReconciler) reconcile(req ctrl.Request) error {
 		return client.IgnoreNotFound(err)
 	}
 	if !vr.DeletionTimestamp.IsZero() {
-		return r.reconcileVirtualRouter(ctx, vr)
+		return r.cleanupVirtualRouter(ctx, vr)
 	}
 	return r.reconcileVirtualRouter(ctx, vr)
 }

@@ -103,10 +103,6 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vr *appmesh.Virtua
 	if err != nil {
 		return err
 	}
-	if err := m.validateMeshDependencies(ctx, ms); err != nil {
-		return err
-	}
-
 	sdkVR, err := m.findSDKVirtualRouter(ctx, ms, vr)
 	if sdkVR == nil {
 		return nil

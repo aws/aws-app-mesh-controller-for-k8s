@@ -133,6 +133,8 @@ func main() {
 	appmeshwebhook.NewVirtualNodeValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualServiceMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualServiceValidator().SetupWithManager(mgr)
+	appmeshwebhook.NewVirtualRouterMutator(meshMembershipDesignator).SetupWithManager(mgr)
+	appmeshwebhook.NewVirtualRouterValidator().SetupWithManager(mgr)
 	corewebhook.NewPodMutator(referencesResolver, vnMembershipDesignator, sidecarInjector).SetupWithManager(mgr)
 
 	if err = (&appmeshcontroller.VirtualGatewayReconciler{
