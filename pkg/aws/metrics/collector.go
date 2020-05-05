@@ -28,7 +28,7 @@ func NewCollector(registerer prometheus.Registerer) (*collector, error) {
 }
 
 func (c *collector) InjectHandlers(handlers *request.Handlers) {
-	handlers.Complete.PushFrontNamed(request.NamedHandler{
+	handlers.CompleteAttempt.PushFrontNamed(request.NamedHandler{
 		Name: sdkHandlerCollectAPIRequestMetric,
 		Fn:   c.collectAPIRequestMetric,
 	})
