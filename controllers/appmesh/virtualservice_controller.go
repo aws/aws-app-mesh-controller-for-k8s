@@ -18,36 +18,82 @@ package controllers
 
 import (
 	"context"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 )
 
-// VirtualServiceReconciler reconciles a VirtualService object
-type VirtualServiceReconciler struct {
-	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+// NewVirtualServiceReconciler constructs new virtualServiceReconciler
+func NewVirtualServiceReconciler(k8sClient client.Client, finalizerManager k8s.FinalizerManager, vsResManager virtualservice.ResourceManager, log logr.Logger) *virtualServiceReconciler {
+	return &virtualServiceReconciler{
+		k8sClient:                    k8sClient,
+		finalizerManager:             finalizerManager,
+		vsResManager:                 vsResManager,
+		enqueueRequestsForMeshEvents: virtualservice.NewEnqueueRequestsForMeshEvents(k8sClient, log),
+		log:                          log,
+	}
+}
+
+// virtualServiceReconciler reconciles a VirtualService object
+type virtualServiceReconciler struct {
+	k8sClient        client.Client
+	finalizerManager k8s.FinalizerManager
+	vsResManager     virtualservice.ResourceManager
+
+	enqueueRequestsForMeshEvents handler.EventHandler
+	log                          logr.Logger
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualservices,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualservices/status,verbs=get;update;patch
 
-func (r *VirtualServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
-	_ = r.Log.WithValues("virtualservice", req.NamespacedName)
-
-	// your logic here
-
-	return ctrl.Result{}, nil
+func (r *virtualServiceReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+	return runtime.HandleReconcileError(r.reconcile(req), r.log)
 }
 
-func (r *VirtualServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *virtualServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&appmeshv1beta2.VirtualService{}).
+		For(&appmesh.VirtualService{}).
 		Complete(r)
+}
+
+func (r *virtualServiceReconciler) reconcile(req ctrl.Request) error {
+	ctx := context.Background()
+	vs := &appmesh.VirtualService{}
+	if err := r.k8sClient.Get(ctx, req.NamespacedName, vs); err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	if !vs.DeletionTimestamp.IsZero() {
+		return r.cleanupVirtualService(ctx, vs)
+	}
+	return r.reconcileVirtualService(ctx, vs)
+}
+
+func (r *virtualServiceReconciler) reconcileVirtualService(ctx context.Context, vs *appmesh.VirtualService) error {
+	if err := r.finalizerManager.AddFinalizers(ctx, vs, k8s.FinalizerAWSAppMeshResources); err != nil {
+		return err
+	}
+	if err := r.vsResManager.Reconcile(ctx, vs); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *virtualServiceReconciler) cleanupVirtualService(ctx context.Context, vs *appmesh.VirtualService) error {
+	if k8s.HasFinalizer(vs, k8s.FinalizerAWSAppMeshResources) {
+		if err := r.vsResManager.Cleanup(ctx, vs); err != nil {
+			return err
+		}
+		if err := r.finalizerManager.RemoveFinalizers(ctx, vs, k8s.FinalizerAWSAppMeshResources); err != nil {
+			return err
+		}
+	}
+	return nil
 }

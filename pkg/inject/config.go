@@ -6,63 +6,64 @@ import (
 )
 
 const (
-	flagInjectDefault               = "inject-default"
-	flagEnableIAMForServiceAccounts = "enable-iam-for-service-accounts"
-	flagAWSRegion                   = "aws-region"
-	flagEnvoyPreview                = "preview"
-	flagLogLevel                    = "log-level"
-	flagECRSecret                   = "ecr-secret"
-	flagSidecarImage                = "sidecar-image"
-	flagSidecarCpuRequests          = "sidecar-cpu-requests"
-	flagSidecarMemoryRequests       = "sidecar-memory-requests"
-	flagInitImage                   = "init-image"
-	flagIgnoredIPs                  = "ignored-ips"
-	flagEnableJaegerTracing         = "enable-jaeger-tracing"
-	flagJaegerAddress               = "jaeger-address"
-	flagJaegerPort                  = "jaeger-port"
-	flagEnableDatadogTracing        = "enable-datadog-tracing"
-	flagDatadogAddress              = "datadog-address"
-	flagDatadogPort                 = "datadog-port"
-	flagEnableXrayTracing           = "enable-xray-tracing"
-	flagEnableStatsTags             = "enable-stats-tags"
-	flagEnableStatsD                = "enable-statsd"
+	flagEnableSidecarInjectorWebhook = "enable-sidecar-injector-webhook"
+	flagEnableIAMForServiceAccounts  = "enable-iam-for-service-accounts"
+	flagEnableECRSecret              = "enable-ecr-secret"
+
+	flagSidecarImage          = "sidecar-image"
+	flagSidecarCpuRequests    = "sidecar-cpu-requests"
+	flagSidecarMemoryRequests = "sidecar-memory-requests"
+	flagPreview               = "preview"
+	flagLogLevel              = "log-level"
+
+	flagInitImage  = "init-image"
+	flagIgnoredIPs = "ignored-ips"
+
+	flagEnableJaegerTracing  = "enable-jaeger-tracing"
+	flagJaegerAddress        = "jaeger-address"
+	flagJaegerPort           = "jaeger-port"
+	flagEnableDatadogTracing = "enable-datadog-tracing"
+	flagDatadogAddress       = "datadog-address"
+	flagDatadogPort          = "datadog-port"
+	flagEnableXrayTracing    = "enable-xray-tracing"
+	flagEnableStatsTags      = "enable-stats-tags"
+	flagEnableStatsD         = "enable-statsd"
 )
 
 type Config struct {
-	// Injection Settings
-	InjectDefault bool
-
+	// whether enable pod injection webhook
+	EnableSidecarInjectorWebhook bool
 	// If enabled, an fsGroup: 1337 will be injected in the absence of it within pod securityContext
 	// see https://github.com/aws/amazon-eks-pod-identity-webhook/issues/8 for more details
 	EnableIAMForServiceAccounts bool
+	// If enabled, additional image pull secret(appmesh-ecr-secret) will be injected.
+	EnableECRSecret bool
 
 	// Sidecar settings
 	SidecarImage  string
 	SidecarCpu    string
 	SidecarMemory string
-	Region        string
 	Preview       bool
 	LogLevel      string
-	EcrSecret     bool
 
 	// Init container settings
 	InitImage  string
 	IgnoredIPs string
 
 	// Observability settings
-	EnableXrayTracing    bool
-	EnableStatsTags      bool
-	EnableStatsD         bool
 	EnableJaegerTracing  bool
 	JaegerAddress        string
 	JaegerPort           string
 	EnableDatadogTracing bool
 	DatadogAddress       string
 	DatadogPort          string
+	EnableXrayTracing    bool
+	EnableStatsTags      bool
+	EnableStatsD         bool
 }
 
 // MultipleTracer checks if more than one tracer is configured.
-func MultipleTracer(config *Config) bool {
+func multipleTracer(config *Config) bool {
 	j := config.EnableJaegerTracing
 	d := config.EnableDatadogTracing
 	x := config.EnableXrayTracing
@@ -71,24 +72,22 @@ func MultipleTracer(config *Config) bool {
 }
 
 func (cfg *Config) BindFlags() {
-	flag.BoolVar(&cfg.InjectDefault, flagInjectDefault, true,
+	flag.BoolVar(&cfg.EnableSidecarInjectorWebhook, flagEnableSidecarInjectorWebhook, true,
 		`If enabled, sidecars will be injected in the absence of the corresponding pod annotation`)
 	flag.BoolVar(&cfg.EnableIAMForServiceAccounts, flagEnableIAMForServiceAccounts, true,
-		`If enabled, an fsGroup: 1337 will be injected in the absence of it within pod securityContext`)
-	flag.StringVar(&cfg.Region, flagAWSRegion, "",
-		"AWS App Mesh region")
-	flag.BoolVar(&cfg.Preview, flagEnvoyPreview, false,
-		"Enable preview channel")
-	flag.StringVar(&cfg.LogLevel, flagLogLevel, "info",
-		"AWS App Mesh envoy log level")
-	flag.BoolVar(&cfg.EcrSecret, flagECRSecret, false,
-		"Inject AWS app mesh pull secrets")
+		`If enabled, a fsGroup: 1337 will be injected in the absence of it within pod securityContext`)
+	flag.BoolVar(&cfg.EnableECRSecret, flagEnableECRSecret, false,
+		"If enabled, 'appmesh-ecr-secret' secret will be injected in the absence of it within pod imagePullSecrets")
 	flag.StringVar(&cfg.SidecarImage, flagSidecarImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.12.3.0-prod",
 		"Envoy sidecar container image.")
 	flag.StringVar(&cfg.SidecarCpu, flagSidecarCpuRequests, "10m",
 		"Envoy sidecar CPU resources requests.")
 	flag.StringVar(&cfg.SidecarMemory, flagSidecarMemoryRequests, "32Mi",
 		"Envoy sidecar memory resources requests.")
+	flag.BoolVar(&cfg.Preview, flagPreview, false,
+		"Enable preview channel")
+	flag.StringVar(&cfg.LogLevel, flagLogLevel, "info",
+		"AWS App Mesh envoy log level")
 	flag.StringVar(&cfg.InitImage, flagInitImage, "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
 		"Init container image.")
 	flag.StringVar(&cfg.IgnoredIPs, flagIgnoredIPs, "169.254.169.254",
@@ -118,7 +117,7 @@ func (cfg *Config) BindEnv() error {
 }
 
 func (cfg *Config) Validate() error {
-	if MultipleTracer(cfg) {
+	if multipleTracer(cfg) {
 		return errors.New("Envoy only supports a single tracer instance. Please choose between Jaeger, Datadog or X-Ray.")
 	}
 	return nil

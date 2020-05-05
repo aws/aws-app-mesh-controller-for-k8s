@@ -53,12 +53,7 @@ func (r *defaultResolver) ResolveMeshReference(ctx context.Context, ref appmesh.
 }
 
 func (r *defaultResolver) ResolveVirtualNodeReference(ctx context.Context, obj metav1.Object, ref appmesh.VirtualNodeReference) (*appmesh.VirtualNode, error) {
-	namespace := obj.GetNamespace()
-	if ref.Namespace != nil && len(*ref.Namespace) != 0 {
-		namespace = *ref.Namespace
-	}
-
-	vnKey := types.NamespacedName{Namespace: namespace, Name: ref.Name}
+	vnKey := ObjectKeyForVirtualNodeReference(obj, ref)
 	vn := &appmesh.VirtualNode{}
 	if err := r.k8sClient.Get(ctx, vnKey, vn); err != nil {
 		return nil, errors.Wrapf(err, "unable to fetch virtualNode: %v", vnKey)
@@ -67,11 +62,7 @@ func (r *defaultResolver) ResolveVirtualNodeReference(ctx context.Context, obj m
 }
 
 func (r *defaultResolver) ResolveVirtualServiceReference(ctx context.Context, obj metav1.Object, ref appmesh.VirtualServiceReference) (*appmesh.VirtualService, error) {
-	namespace := obj.GetNamespace()
-	if ref.Namespace != nil && len(*ref.Namespace) != 0 {
-		namespace = *ref.Namespace
-	}
-	vsKey := types.NamespacedName{Namespace: namespace, Name: ref.Name}
+	vsKey := ObjectKeyForVirtualServiceReference(obj, ref)
 	vs := &appmesh.VirtualService{}
 	if err := r.k8sClient.Get(ctx, vsKey, vs); err != nil {
 		return nil, errors.Wrapf(err, "unable to fetch virtualService: %v", vsKey)
@@ -80,12 +71,7 @@ func (r *defaultResolver) ResolveVirtualServiceReference(ctx context.Context, ob
 }
 
 func (r *defaultResolver) ResolveVirtualRouterReference(ctx context.Context, obj metav1.Object, ref appmesh.VirtualRouterReference) (*appmesh.VirtualRouter, error) {
-	namespace := obj.GetNamespace()
-	if ref.Namespace != nil && len(*ref.Namespace) != 0 {
-		namespace = *ref.Namespace
-	}
-
-	vrKey := types.NamespacedName{Namespace: namespace, Name: ref.Name}
+	vrKey := ObjectKeyForVirtualRouterReference(obj, ref)
 	vr := &appmesh.VirtualRouter{}
 	if err := r.k8sClient.Get(ctx, vrKey, vr); err != nil {
 		return nil, errors.Wrapf(err, "unable to fetch virtualRouter: %v", vrKey)

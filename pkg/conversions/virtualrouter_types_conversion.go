@@ -217,7 +217,7 @@ func Convert_CRD_GRPCRouteMetadata_To_SDK_GrpcRouteMetadata(crdObj *appmesh.GRPC
 
 	sdkObj.Name = aws.String(crdObj.Name)
 
-	if crdObj != nil {
+	if crdObj.Match != nil {
 		sdkObj.Match = &appmeshsdk.GrpcRouteMetadataMatchMethod{}
 		if err := Convert_CRD_GRPCRouteMetadataMatchMethod_To_SDK_GrpcRouteMetadataMatchMethod(crdObj.Match, sdkObj.Match, scope); err != nil {
 			return err
@@ -372,5 +372,18 @@ func Convert_CRD_Route_To_SDK_RouteSpec(crdObj *appmesh.Route, sdkObj *appmeshsd
 	}
 
 	sdkObj.Priority = crdObj.Priority
+	return nil
+}
+
+func Convert_CRD_VirtualRouterSpec_To_SDK_VirtualRouterSpec(crdObj *appmesh.VirtualRouterSpec, sdkObj *appmeshsdk.VirtualRouterSpec, scope conversion.Scope) error {
+	var sdkListeners []*appmeshsdk.VirtualRouterListener
+	for _, crdListener := range crdObj.Listeners {
+		sdkListener := &appmeshsdk.VirtualRouterListener{}
+		if err := Convert_CRD_VirtualRouterListener_To_SDK_VirtualRouterListener(&crdListener, sdkListener, scope); err != nil {
+			return err
+		}
+		sdkListeners = append(sdkListeners, sdkListener)
+	}
+	sdkObj.Listeners = sdkListeners
 	return nil
 }

@@ -1,4 +1,4 @@
-package virtualnode
+package virtualrouter
 
 import (
 	"context"
@@ -20,24 +20,24 @@ import (
 )
 
 func Test_enqueueRequestsForMeshEvents_Update(t *testing.T) {
-	vn1 := &appmesh.VirtualNode{
+	vr1 := &appmesh.VirtualRouter{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "my-ns",
-			Name:      "vn-1",
+			Name:      "vr-1",
 		},
-		Spec: appmesh.VirtualNodeSpec{
+		Spec: appmesh.VirtualRouterSpec{
 			MeshRef: &appmesh.MeshReference{
 				Name: "my-mesh",
 				UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
 			},
 		},
 	}
-	vn2 := &appmesh.VirtualNode{
+	vr2 := &appmesh.VirtualRouter{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "my-ns",
-			Name:      "vn-2",
+			Name:      "vr-2",
 		},
-		Spec: appmesh.VirtualNodeSpec{
+		Spec: appmesh.VirtualRouterSpec{
 			MeshRef: &appmesh.MeshReference{
 				Name: "my-mesh",
 				UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
@@ -46,7 +46,7 @@ func Test_enqueueRequestsForMeshEvents_Update(t *testing.T) {
 	}
 
 	type env struct {
-		virtualNodes []*appmesh.VirtualNode
+		virtualRouters []*appmesh.VirtualRouter
 	}
 	type args struct {
 		e event.UpdateEvent
@@ -60,7 +60,7 @@ func Test_enqueueRequestsForMeshEvents_Update(t *testing.T) {
 		{
 			name: "meshActive status un-changed",
 			env: env{
-				virtualNodes: []*appmesh.VirtualNode{vn1, vn2},
+				virtualRouters: []*appmesh.VirtualRouter{vr1, vr2},
 			},
 			args: args{
 				e: event.UpdateEvent{
@@ -91,7 +91,7 @@ func Test_enqueueRequestsForMeshEvents_Update(t *testing.T) {
 		{
 			name: "meshActive status changed",
 			env: env{
-				virtualNodes: []*appmesh.VirtualNode{vn1, vn2},
+				virtualRouters: []*appmesh.VirtualRouter{vr1, vr2},
 			},
 			args: args{
 				e: event.UpdateEvent{
@@ -119,10 +119,10 @@ func Test_enqueueRequestsForMeshEvents_Update(t *testing.T) {
 			},
 			wantRequests: []reconcile.Request{
 				{
-					NamespacedName: k8s.NamespacedName(vn1),
+					NamespacedName: k8s.NamespacedName(vr1),
 				},
 				{
-					NamespacedName: k8s.NamespacedName(vn2),
+					NamespacedName: k8s.NamespacedName(vr2),
 				},
 			},
 		},
@@ -140,8 +140,8 @@ func Test_enqueueRequestsForMeshEvents_Update(t *testing.T) {
 				log:       &log.NullLogger{},
 			}
 
-			for _, vn := range tt.env.virtualNodes {
-				err := k8sClient.Create(ctx, vn.DeepCopy())
+			for _, vr := range tt.env.virtualRouters {
+				err := k8sClient.Create(ctx, vr.DeepCopy())
 				assert.NoError(t, err)
 			}
 
@@ -155,7 +155,6 @@ func Test_enqueueRequestsForMeshEvents_Update(t *testing.T) {
 
 			opt := cmpopts.SortSlices(compareReconcileRequest)
 			assert.True(t, cmp.Equal(tt.wantRequests, gotRequests, opt), "diff: %v", cmp.Diff(tt.wantRequests, gotRequests, opt))
-
 		})
 	}
 }
@@ -175,43 +174,43 @@ func Test_enqueueRequestsForMeshEvents_enqueueVirtualNodesForMesh(t *testing.T) 
 			},
 		},
 	}
-	vnWithoutMeshRef := &appmesh.VirtualNode{
+	vrWithoutMeshRef := &appmesh.VirtualRouter{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "my-ns",
-			Name:      "vn-without-mesh-ref",
+			Name:      "vr-without-mesh-ref",
 		},
-		Spec: appmesh.VirtualNodeSpec{},
+		Spec: appmesh.VirtualRouterSpec{},
 	}
-	vnWithNonMatchingMeshRef := &appmesh.VirtualNode{
+	vrWithNonMatchingMeshRef := &appmesh.VirtualRouter{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "my-ns",
-			Name:      "vn-with-non-matching-mesh-ref",
+			Name:      "vr-with-non-matching-mesh-ref",
 		},
-		Spec: appmesh.VirtualNodeSpec{
+		Spec: appmesh.VirtualRouterSpec{
 			MeshRef: &appmesh.MeshReference{
 				Name: "my-mesh",
 				UID:  "0d65db83-1b4c-40aa-90ba-57064dd73c98",
 			},
 		},
 	}
-	vnWithMatchingMeshRef_1 := &appmesh.VirtualNode{
+	vrWithMatchingMeshRef_1 := &appmesh.VirtualRouter{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "my-ns",
-			Name:      "vn-with-non-matching-mesh-ref-1",
+			Name:      "vr-with-non-matching-mesh-ref-1",
 		},
-		Spec: appmesh.VirtualNodeSpec{
+		Spec: appmesh.VirtualRouterSpec{
 			MeshRef: &appmesh.MeshReference{
 				Name: "my-mesh",
 				UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
 			},
 		},
 	}
-	vnWithMatchingMeshRef_2 := &appmesh.VirtualNode{
+	vrWithMatchingMeshRef_2 := &appmesh.VirtualRouter{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "my-ns",
-			Name:      "vn-with-non-matching-mesh-ref-2",
+			Name:      "vr-with-non-matching-mesh-ref-2",
 		},
-		Spec: appmesh.VirtualNodeSpec{
+		Spec: appmesh.VirtualRouterSpec{
 			MeshRef: &appmesh.MeshReference{
 				Name: "my-mesh",
 				UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
@@ -220,7 +219,7 @@ func Test_enqueueRequestsForMeshEvents_enqueueVirtualNodesForMesh(t *testing.T) 
 	}
 
 	type env struct {
-		virtualNodes []*appmesh.VirtualNode
+		virtualRouters []*appmesh.VirtualRouter
 	}
 	type args struct {
 		ms *appmesh.Mesh
@@ -232,10 +231,10 @@ func Test_enqueueRequestsForMeshEvents_enqueueVirtualNodesForMesh(t *testing.T) 
 		wantRequests []reconcile.Request
 	}{
 		{
-			name: "vn without meshRef shouldn't be enqueued",
+			name: "vr without meshRef shouldn't be enqueued",
 			env: env{
-				virtualNodes: []*appmesh.VirtualNode{
-					vnWithoutMeshRef,
+				virtualRouters: []*appmesh.VirtualRouter{
+					vrWithoutMeshRef,
 				},
 			},
 			args: args{
@@ -244,10 +243,10 @@ func Test_enqueueRequestsForMeshEvents_enqueueVirtualNodesForMesh(t *testing.T) 
 			wantRequests: nil,
 		},
 		{
-			name: "vn with non-matching meshRef shouldn't be enqueued",
+			name: "vr with non-matching meshRef shouldn't be enqueued",
 			env: env{
-				virtualNodes: []*appmesh.VirtualNode{
-					vnWithNonMatchingMeshRef,
+				virtualRouters: []*appmesh.VirtualRouter{
+					vrWithNonMatchingMeshRef,
 				},
 			},
 			args: args{
@@ -256,10 +255,10 @@ func Test_enqueueRequestsForMeshEvents_enqueueVirtualNodesForMesh(t *testing.T) 
 			wantRequests: nil,
 		},
 		{
-			name: "vn with matching meshRef should be enqueued",
+			name: "vr with matching meshRef should be enqueued",
 			env: env{
-				virtualNodes: []*appmesh.VirtualNode{
-					vnWithMatchingMeshRef_1,
+				virtualRouters: []*appmesh.VirtualRouter{
+					vrWithMatchingMeshRef_1,
 				},
 			},
 			args: args{
@@ -267,18 +266,18 @@ func Test_enqueueRequestsForMeshEvents_enqueueVirtualNodesForMesh(t *testing.T) 
 			},
 			wantRequests: []reconcile.Request{
 				{
-					NamespacedName: k8s.NamespacedName(vnWithMatchingMeshRef_1),
+					NamespacedName: k8s.NamespacedName(vrWithMatchingMeshRef_1),
 				},
 			},
 		},
 		{
-			name: "multiple vn should enqueue correctly",
+			name: "multiple vr should enqueue correctly",
 			env: env{
-				virtualNodes: []*appmesh.VirtualNode{
-					vnWithoutMeshRef,
-					vnWithNonMatchingMeshRef,
-					vnWithMatchingMeshRef_1,
-					vnWithMatchingMeshRef_2,
+				virtualRouters: []*appmesh.VirtualRouter{
+					vrWithoutMeshRef,
+					vrWithNonMatchingMeshRef,
+					vrWithMatchingMeshRef_1,
+					vrWithMatchingMeshRef_2,
 				},
 			},
 			args: args{
@@ -286,10 +285,10 @@ func Test_enqueueRequestsForMeshEvents_enqueueVirtualNodesForMesh(t *testing.T) 
 			},
 			wantRequests: []reconcile.Request{
 				{
-					NamespacedName: k8s.NamespacedName(vnWithMatchingMeshRef_1),
+					NamespacedName: k8s.NamespacedName(vrWithMatchingMeshRef_1),
 				},
 				{
-					NamespacedName: k8s.NamespacedName(vnWithMatchingMeshRef_2),
+					NamespacedName: k8s.NamespacedName(vrWithMatchingMeshRef_2),
 				},
 			},
 		},
@@ -307,12 +306,12 @@ func Test_enqueueRequestsForMeshEvents_enqueueVirtualNodesForMesh(t *testing.T) 
 				log:       &log.NullLogger{},
 			}
 
-			for _, vn := range tt.env.virtualNodes {
-				err := k8sClient.Create(ctx, vn.DeepCopy())
+			for _, vr := range tt.env.virtualRouters {
+				err := k8sClient.Create(ctx, vr.DeepCopy())
 				assert.NoError(t, err)
 			}
 
-			h.enqueueVirtualNodesForMesh(ctx, queue, tt.args.ms)
+			h.enqueueVirtualRoutersForMesh(ctx, queue, tt.args.ms)
 			var gotRequests []reconcile.Request
 			queueLen := queue.Len()
 			for i := 0; i < queueLen; i++ {

@@ -11,16 +11,15 @@ import (
 
 func getConfig(fp func(Config) Config) Config {
 	conf := Config{
-		IgnoredIPs:                  "169.254.169.254",
-		LogLevel:                    "debug",
-		Region:                      "us-west-2",
-		Preview:                     false,
-		SidecarImage:                "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:latest",
-		InitImage:                   "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
-		InjectDefault:               true,
-		SidecarMemory:               "32Mi",
-		SidecarCpu:                  "10m",
-		EnableIAMForServiceAccounts: true,
+		IgnoredIPs:                   "169.254.169.254",
+		LogLevel:                     "debug",
+		Preview:                      false,
+		SidecarImage:                 "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:latest",
+		InitImage:                    "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
+		EnableSidecarInjectorWebhook: true,
+		SidecarMemory:                "32Mi",
+		SidecarCpu:                   "10m",
+		EnableIAMForServiceAccounts:  true,
 	}
 	if fp != nil {
 		conf = fp(conf)
@@ -224,7 +223,7 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 				ms: getMesh(),
 				vn: getVn(nil),
 				pod: getPod(map[string]string{
-					AppMeshCpuRequestAnnotation:         "20m",
+					AppMeshCPURequestAnnotation:         "20m",
 					AppMeshMemoryRequestAnnotation:      "64Mi",
 					AppMeshPreviewAnnotation:            "0",
 					AppMeshEgressIgnoredPortsAnnotation: "33",
@@ -240,7 +239,7 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			inj := NewSidecarInjector(&tt.conf, "")
+			inj := NewSidecarInjector(tt.conf, "us-west-2")
 			pod := tt.args.pod
 			inj.InjectAppMeshPatches(tt.args.ms, tt.args.vn, pod)
 			assert.Equal(t, tt.want.init, len(pod.Spec.InitContainers), "Numbers of init containers mismatch")

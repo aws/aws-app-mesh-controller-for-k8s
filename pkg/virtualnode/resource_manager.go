@@ -95,10 +95,6 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vn *appmesh.Virtua
 	if err != nil {
 		return err
 	}
-	if err := m.validateMeshDependencies(ctx, ms); err != nil {
-		return err
-	}
-
 	sdkVN, err := m.findSDKVirtualNode(ctx, ms, vn)
 	if sdkVN == nil {
 		return nil
@@ -270,11 +266,11 @@ func (m *defaultResourceManager) updateCRDVirtualNode(ctx context.Context, vn *a
 }
 
 func (m *defaultResourceManager) buildSDKVirtualNodeSpec(ctx context.Context, vn *appmesh.VirtualNode, vsByRef map[appmesh.VirtualServiceReference]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeSpec, error) {
-	sdkVSRefConvertFunc := m.buildSDKVirtualServiceReferenceConvertFunc(ctx, vsByRef)
 	converter := conversion.NewConverter(conversion.DefaultNameFunc)
 	converter.RegisterUntypedConversionFunc((*appmesh.VirtualNodeSpec)(nil), (*appmeshsdk.VirtualNodeSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return conversions.Convert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(a.(*appmesh.VirtualNodeSpec), b.(*appmeshsdk.VirtualNodeSpec), scope)
 	})
+	sdkVSRefConvertFunc := m.buildSDKVirtualServiceReferenceConvertFunc(ctx, vsByRef)
 	converter.RegisterUntypedConversionFunc((*appmesh.VirtualServiceReference)(nil), (*string)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return sdkVSRefConvertFunc(a.(*appmesh.VirtualServiceReference), b.(*string), scope)
 	})
@@ -304,16 +300,13 @@ func (m *defaultResourceManager) buildSDKVirtualServiceReferenceConvertFunc(ctx 
 }
 
 // isSDKVirtualNodeControlledByCRDVirtualNode checks whether an AppMesh virtualNode is controlled by CRD virtualNode
-// if it's controlled, CRD virtualNode update is responsible for update AppMesh virtualNode.
+// if it's controlled, CRD virtualNode update is responsible for updating the AppMesh virtualNode.
 func (m *defaultResourceManager) isSDKVirtualNodeControlledByCRDVirtualNode(ctx context.Context, sdkVN *appmeshsdk.VirtualNodeData, vn *appmesh.VirtualNode) bool {
-	if aws.StringValue(sdkVN.Metadata.ResourceOwner) != m.accountID {
-		return false
-	}
-	return true
+	return aws.StringValue(sdkVN.Metadata.ResourceOwner) == m.accountID
 }
 
 // isSDKVirtualNodeOwnedByCRDVirtualNode checks whether an AppMesh virtualNode is owned by CRD virtualNode.
-// if it's owned, CRD virtualNode deletion is responsible for delete AppMesh virtualNode.
+// if it's owned, CRD virtualNode deletion is responsible for deleting the AppMesh virtualNode.
 func (m *defaultResourceManager) isSDKVirtualNodeOwnedByCRDVirtualNode(ctx context.Context, sdkVN *appmeshsdk.VirtualNodeData, vn *appmesh.VirtualNode) bool {
 	if !m.isSDKVirtualNodeControlledByCRDVirtualNode(ctx, sdkVN, vn) {
 		return false

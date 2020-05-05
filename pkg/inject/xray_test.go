@@ -1,68 +1,140 @@
 package inject
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
 
-func checkXrayDaemon(t *testing.T, sidecar *corev1.Container, meta *XrayMutator) {
-	if !meta.config.EnableXrayTracing {
-		t.Errorf("Xray daemon is added when EnableXrayTracing is false")
-		return
+func Test_xrayMutator_mutate(t *testing.T) {
+	cpuRequests, _ := resource.ParseQuantity("32Mi")
+	memoryRequests, _ := resource.ParseQuantity("10m")
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "my-pod",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "app",
+					Image: "app/v1",
+				},
+			},
+		},
 	}
-
-	if sidecar.Image != "amazon/aws-xray-daemon" {
-		t.Errorf("Xray daemon container image is not set to amazon/aws-xray-daemon")
+	mutatorConfig := xrayMutatorConfig{
+		awsRegion:             "us-west-2",
+		sidecarCPURequests:    cpuRequests.String(),
+		sidecarMemoryRequests: memoryRequests.String(),
 	}
-
-	expectedEnvs := map[string]string{
-		"AWS_REGION": meta.config.Region,
+	type fields struct {
+		enabled       bool
+		mutatorConfig xrayMutatorConfig
 	}
-	assert.Equal(t, "10m", sidecar.Resources.Requests.Cpu().String(), "CPU request mismatch")
-	assert.Equal(t, "32Mi", sidecar.Resources.Requests.Memory().String(), "Memory request mismatch")
-	checkEnv(t, sidecar, expectedEnvs)
-}
-
-func Test_XrayInject(t *testing.T) {
+	type args struct {
+		pod *corev1.Pod
+	}
 	tests := []struct {
-		name   string
-		conf   Config
-		expect bool
+		name    string
+		fields  fields
+		args    args
+		wantPod *corev1.Pod
+		wantErr error
 	}{
 		{
-			name: "Inject X-ray container",
-			conf: getConfig(func(cnf Config) Config {
-				cnf.EnableXrayTracing = true
-				return cnf
-			}),
-			expect: true,
+			name: "no-op when disabled",
+			fields: fields{
+				enabled:       false,
+				mutatorConfig: mutatorConfig,
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+					},
+				},
+			},
 		},
 		{
-			name: "No X-ray inject configured",
-			conf: getConfig(func(cnf Config) Config {
-				cnf.EnableXrayTracing = false
-				return cnf
-			}),
-			expect: false,
+			name: "inject sidecar when enabled",
+			fields: fields{
+				enabled:       true,
+				mutatorConfig: mutatorConfig,
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "xray-daemon",
+							Image: "amazon/aws-xray-daemon",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "xray",
+									ContainerPort: 2000,
+									Protocol:      "UDP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			x := NewXrayMutator(&tt.conf)
-			pod := getPod(nil)
-
-			err := x.mutate(pod)
-			assert.NoError(t, err, "Unexpected error")
-			found := false
-			for _, v := range pod.Spec.Containers {
-				if v.Name == "xray-daemon" {
-					checkXrayDaemon(t, &v, x)
-					found = true
-				}
+			m := &xrayMutator{
+				enabled:       tt.fields.enabled,
+				mutatorConfig: tt.fields.mutatorConfig,
 			}
-			assert.True(t, found == tt.expect, "Unexpected x-ray container")
+			pod := tt.args.pod.DeepCopy()
+			err := m.mutate(pod)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.True(t, cmp.Equal(tt.wantPod, pod), "diff", cmp.Diff(tt.wantPod, pod))
+			}
 		})
 	}
 }

@@ -20,6 +20,8 @@ import (
 	"flag"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualrouter"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
 	"os"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
@@ -67,6 +69,10 @@ func main() {
 	var injectConfig inject.Config
 	injectConfig.BindFlags()
 	flag.Parse()
+	if err := injectConfig.Validate(); err != nil {
+		setupLog.Error(err, "invalid flags")
+		os.Exit(1)
+	}
 
 	// TODO: make level configurable
 	lvl := zapraw.NewAtomicLevelAt(-2)
@@ -96,21 +102,20 @@ func main() {
 	referencesResolver := references.NewDefaultResolver(mgr.GetClient(), ctrl.Log)
 	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
 	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
+	vsResManager := virtualservice.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
+	vrResManager := virtualrouter.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	msReconciler := appmeshcontroller.NewMeshReconciler(mgr.GetClient(), finalizerManager, meshMembersFinalizer, meshResManager, ctrl.Log.WithName("controllers").WithName("Mesh"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
 	cloudMapEndPointResolver := cloudmap.NewEndPointResolver(mgr.GetClient(), ctrl.Log)
 	cloudMapInstanceResolver := cloudmap.NewCloudMapInstanceResolver(cloud.CloudMap(), ctrl.Log)
 	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), finalizerManager, cloud.CloudMap(), cloudMapEndPointResolver, cloudMapInstanceResolver, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
-
+	vsReconciler := appmeshcontroller.NewVirtualServiceReconciler(mgr.GetClient(), finalizerManager, vsResManager, ctrl.Log.WithName("controllers").WithName("VirtualService"))
+	vrReconciler := appmeshcontroller.NewVirtualRouterReconciler(mgr.GetClient(), finalizerManager, vrResManager, ctrl.Log.WithName("controllers").WithName("VirtualRouter"))
 	if err = msReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Mesh")
 		os.Exit(1)
 	}
-	if err = (&appmeshcontroller.VirtualServiceReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("VirtualService"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = vsReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualService")
 		os.Exit(1)
 	}
@@ -118,28 +123,26 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualNode")
 		os.Exit(1)
 	}
-	if err = cloudMapReconciler.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CloudMap")
+	if err = vrReconciler.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "VirtualRouter")
 		os.Exit(1)
 	}
-	if err = (&appmeshcontroller.VirtualRouterReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("VirtualRouter"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "VirtualRouter")
+	if err = cloudMapReconciler.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "CloudMap")
 		os.Exit(1)
 	}
 
 	meshMembershipDesignator := mesh.NewMembershipDesignator(mgr.GetClient())
 	vnMembershipDesignator := virtualnode.NewMembershipDesignator(mgr.GetClient())
-	sidecarInjector := inject.NewSidecarInjector(&injectConfig, cloud.Region())
+	sidecarInjector := inject.NewSidecarInjector(injectConfig, cloud.Region())
 	appmeshwebhook.NewMeshMutator().SetupWithManager(mgr)
 	appmeshwebhook.NewMeshValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualNodeMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualNodeValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualServiceMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualServiceValidator().SetupWithManager(mgr)
+	appmeshwebhook.NewVirtualRouterMutator(meshMembershipDesignator).SetupWithManager(mgr)
+	appmeshwebhook.NewVirtualRouterValidator().SetupWithManager(mgr)
 	corewebhook.NewPodMutator(referencesResolver, vnMembershipDesignator, sidecarInjector).SetupWithManager(mgr)
 
 	if err = (&appmeshcontroller.VirtualGatewayReconciler{
