@@ -1,4 +1,4 @@
-package virtualnode
+package cloudmap
 
 import (
 	"context"
@@ -41,23 +41,8 @@ func (h *enqueueRequestsForPodEvents) Update(e event.UpdateEvent, queue workqueu
 	oldPod := e.ObjectOld.(*corev1.Pod)
 	newPod := e.ObjectNew.(*corev1.Pod)
 
-	oldPodIsReady := false
-	newPodIsReady := false
-
-	conditions := (&oldPod.Status).Conditions
-	for i := range conditions {
-		if conditions[i].Type == corev1.PodReady && conditions[i].Status == corev1.ConditionTrue {
-			oldPodIsReady = true
-		}
-	}
-
-	conditions = (&newPod.Status).Conditions
-	for i := range conditions {
-		if conditions[i].Type == corev1.PodReady && conditions[i].Status == corev1.ConditionTrue {
-			newPodIsReady = true
-		}
-	}
-
+	oldPodIsReady := IsPodReady(oldPod)
+	newPodIsReady := IsPodReady(newPod)
 	if oldPodIsReady != newPodIsReady {
 		h.enqueueVirtualNodesForPods(context.Background(), queue, e.ObjectNew.(*corev1.Pod))
 	}

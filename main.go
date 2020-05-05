@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"os"
 
@@ -97,7 +98,8 @@ func main() {
 	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	msReconciler := appmeshcontroller.NewMeshReconciler(mgr.GetClient(), finalizerManager, meshMembersFinalizer, meshResManager, ctrl.Log.WithName("controllers").WithName("Mesh"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
-	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), finalizerManager, cloud.CloudMap(), ctrl.Log.WithName("controllers").WithName("VirtualNode"))
+	cloudMapEndPointResolver := cloudmap.NewEndPointResolver(mgr.GetClient(), cloud.CloudMap(), ctrl.Log)
+	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), finalizerManager, cloud.CloudMap(), cloudMapEndPointResolver, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
 
 	if err = msReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Mesh")

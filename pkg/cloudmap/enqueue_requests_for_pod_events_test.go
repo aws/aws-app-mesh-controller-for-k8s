@@ -1,4 +1,4 @@
-package virtualnode
+package cloudmap
 
 import (
 	"context"
@@ -351,4 +351,8 @@ func Test_enqueueRequestsForPodEvents_Delete(t *testing.T) {
 
 		})
 	}
+}
+
+func compareReconcileRequest(a reconcile.Request, b reconcile.Request) bool {
+	return a.String() < b.String()
 }
