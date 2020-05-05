@@ -8,7 +8,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
-	awsservices "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 )
 
 type VirtualNodeEndpointResolver interface {
@@ -16,22 +15,19 @@ type VirtualNodeEndpointResolver interface {
 		vn *appmesh.VirtualNode) (corev1.PodList, corev1.PodList, corev1.PodList, error)
 }
 
-type EndPointResolver struct {
-	k8sClient   client.Client
-	cloudMapSDK awsservices.CloudMap
-	log         logr.Logger
+type EndpointResolver struct {
+	k8sClient client.Client
+	log       logr.Logger
 }
 
-func NewEndPointResolver(k8sClient client.Client, cloudMapSDK awsservices.CloudMap,
-	log logr.Logger) *EndPointResolver {
-	return &EndPointResolver{
-		k8sClient:   k8sClient,
-		cloudMapSDK: cloudMapSDK,
-		log:         log,
+func NewEndPointResolver(k8sClient client.Client, log logr.Logger) *EndpointResolver {
+	return &EndpointResolver{
+		k8sClient: k8sClient,
+		log:       log,
 	}
 }
 
-func (e *EndPointResolver) ResolveCloudMapEndPoints(ctx context.Context,
+func (e *EndpointResolver) ResolveCloudMapEndPoints(ctx context.Context,
 	vNode *appmesh.VirtualNode) (corev1.PodList, corev1.PodList, corev1.PodList, error) {
 	var readyPods corev1.PodList
 	var notReadyPods corev1.PodList
@@ -54,16 +50,15 @@ func (e *EndPointResolver) ResolveCloudMapEndPoints(ctx context.Context,
 			continue
 		}
 
-		instanceId := PodToInstanceID(&pod)
-		if instanceId == "" {
+		if pod.Status.PodIP == "" {
 			ignoredPods.Items = append(ignoredPods.Items, pod)
 			e.log.Info("No IP Address assigned to Pod:", pod.Name, "..Skipping for now")
 			continue
 		}
 
-		if IsPodReady(&pod) {
+		if ArePodContainersReady(&pod) {
 			readyPods.Items = append(readyPods.Items, pod)
-		} else if ShouldPodBeRegisteredWithCloudMapService(&pod) {
+		} else if ShouldPodBeInEndpoints(&pod) {
 			notReadyPods.Items = append(notReadyPods.Items, pod)
 		} else {
 			continue

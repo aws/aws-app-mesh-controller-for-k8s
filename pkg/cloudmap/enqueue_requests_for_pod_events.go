@@ -41,9 +41,9 @@ func (h *enqueueRequestsForPodEvents) Update(e event.UpdateEvent, queue workqueu
 	oldPod := e.ObjectOld.(*corev1.Pod)
 	newPod := e.ObjectNew.(*corev1.Pod)
 
-	oldPodIsReady := IsPodReady(oldPod)
-	newPodIsReady := IsPodReady(newPod)
-	if oldPodIsReady != newPodIsReady {
+	oldPodIsReady := ArePodContainersReady(oldPod)
+	newPodIsReady := ArePodContainersReady(newPod)
+	if oldPodIsReady != newPodIsReady || newPod.DeletionTimestamp != nil {
 		h.enqueueVirtualNodesForPods(context.Background(), queue, e.ObjectNew.(*corev1.Pod))
 	}
 }
@@ -61,18 +61,20 @@ func (h *enqueueRequestsForPodEvents) Generic(e event.GenericEvent, queue workqu
 
 func (h *enqueueRequestsForPodEvents) enqueueVirtualNodesForPods(ctx context.Context, queue workqueue.RateLimitingInterface,
 	pod *corev1.Pod) {
+	var listOptions client.ListOptions
+	listOptions.Namespace = pod.Namespace
 	vnList := &appmesh.VirtualNodeList{}
-	if err := h.k8sClient.List(ctx, vnList); err != nil {
+	if err := h.k8sClient.List(ctx, vnList, &listOptions); err != nil {
 		h.log.Error(err, "failed to enqueue virtualNodes for pod events",
 			"Pod", k8s.NamespacedName(pod))
 		return
 	}
 
 	for _, vn := range vnList.Items {
-		if vn.Spec.PodSelector == nil {
-			return
+		selector, err := metav1.LabelSelectorAsSelector(vn.Spec.PodSelector)
+		if err != nil {
+			continue
 		}
-		selector, _ := metav1.LabelSelectorAsSelector(vn.Spec.PodSelector)
 		if selector.Matches(labels.Set(pod.Labels)) {
 			queue.Add(ctrl.Request{NamespacedName: k8s.NamespacedName(&vn)})
 		}

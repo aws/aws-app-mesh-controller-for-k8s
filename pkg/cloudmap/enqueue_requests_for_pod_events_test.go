@@ -208,7 +208,7 @@ func Test_enqueueRequestsForPodEvents_Update(t *testing.T) {
 							Phase: corev1.PodRunning,
 							Conditions: []corev1.PodCondition{
 								{
-									Type:   corev1.PodReady,
+									Type:   corev1.ContainersReady,
 									Status: corev1.ConditionTrue,
 								},
 							},
