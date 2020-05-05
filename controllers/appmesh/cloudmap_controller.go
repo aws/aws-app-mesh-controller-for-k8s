@@ -122,15 +122,12 @@ func (r *cloudMapReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *cloudMapReconciler) reconcile(req ctrl.Request) error {
 	ctx := context.Background()
-	log := r.log.WithValues("Virtualnode", req.NamespacedName)
 
 	vNode := &appmesh.VirtualNode{}
 	if err := r.k8sClient.Get(ctx, req.NamespacedName, vNode); err != nil {
 		return client.IgnoreNotFound(err)
 	}
 
-	log.V(2).Info("VNode: ", "awsName: ", vNode.Spec.AWSName,
-		"vNode.PodSelector: ", vNode.Spec.PodSelector)
 	if !vNode.DeletionTimestamp.IsZero() {
 		return r.deleteCloudMapResources(ctx, vNode)
 	}
@@ -193,7 +190,7 @@ func (r *cloudMapReconciler) deleteCloudMapResources(ctx context.Context, vNode 
 	return nil
 }
 
-func (r *cloudMapReconciler) getCloudMapNameSpaceFromCache(ctx context.Context,
+func (r *cloudMapReconciler) getCloudMapNamespaceFromCache(ctx context.Context,
 	key string) (cloudMapNamespaceSummary, error) {
 	existingItem, exists := r.nameSpaceIDCache.Get(key)
 	var namespaceSummary cloudMapNamespaceSummary
@@ -247,7 +244,7 @@ func (r *cloudMapReconciler) getCloudMapNameSpace(ctx context.Context,
 	cloudMapConfig *appmesh.AWSCloudMapServiceDiscovery) (cloudMapNamespaceSummary, error) {
 	key := r.namespaceCacheKey(cloudMapConfig)
 
-	if namespaceSummary, _ := r.getCloudMapNameSpaceFromCache(ctx, key); namespaceSummary.NamespaceID != "" {
+	if namespaceSummary, _ := r.getCloudMapNamespaceFromCache(ctx, key); namespaceSummary.NamespaceID != "" {
 		return namespaceSummary, nil
 	}
 
