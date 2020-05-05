@@ -5,7 +5,10 @@ import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	corev1 "k8s.io/api/core/v1"
+	"strings"
 )
+
+const envoyTracingConfigVolumeName = "envoy-tracing-config"
 
 const envoyContainerTemplate = `
 {
@@ -28,7 +31,7 @@ const envoyContainerTemplate = `
     },
     {
       "name": "APPMESH_PREVIEW",
-      "value": "{{ .AppMeshPreview }}"
+      "value": "{{ .Preview }}"
     },
     {
       "name": "ENVOY_LOG_LEVEL",
@@ -58,91 +61,108 @@ const envoyContainerTemplate = `
   "volumeMounts": [
     {
       "mountPath": "/tmp/envoy",
-      "name": "envoy-tracing-config"
+      "name": "{{ .EnvoyTracingConfigVolumeName }}"
     }
   ]{{ end }},
   "resources": {
     "requests": {
-      "cpu": "{{ .SidecarCpu }}",
-      "memory": "{{ .SidecarMemory }}"
+      "cpu": "{{ .SidecarCPURequests }}",
+      "memory": "{{ .SidecarMemoryRequests }}"
     }
   }
 }
 `
 
-type EnvoyMutator struct {
-	vn     *appmesh.VirtualNode
-	ms     *appmesh.Mesh
-	config *Config
+type EnvoyTemplateVariables struct {
+	AWSRegion                    string
+	MeshName                     string
+	VirtualNodeName              string
+	Preview                      string
+	LogLevel                     string
+	SidecarImage                 string
+	SidecarCPURequests           string
+	SidecarMemoryRequests        string
+	EnvoyTracingConfigVolumeName string
+	EnableXrayTracing            bool
+	EnableJaegerTracing          bool
+	EnableDatadogTracing         bool
+	EnableStatsTags              bool
+	EnableStatsD                 bool
 }
 
-type EnvoyMeta struct {
-	AWSRegion            string
-	SidecarImage         string
-	MeshName             string
-	VirtualNodeName      string
-	AppMeshPreview       string
-	LogLevel             string
-	SidecarCpu           string
-	SidecarMemory        string
-	EnableXrayTracing    bool
-	EnableJaegerTracing  bool
-	EnableDatadogTracing bool
-	EnableStatsTags      bool
-	EnableStatsD         bool
+type envoyMutatorConfig struct {
+	awsRegion             string
+	preview               bool
+	logLevel              string
+	sidecarImage          string
+	sidecarCPURequests    string
+	sidecarMemoryRequests string
+	enableXrayTracing     bool
+	enableJaegerTracing   bool
+	enableDatadogTracing  bool
+	enableStatsTags       bool
+	enableStatsD          bool
 }
 
-func NewEnvoyMutator(Config *Config, ms *appmesh.Mesh, vn *appmesh.VirtualNode) *EnvoyMutator {
-	return &EnvoyMutator{
-		vn:     vn,
-		ms:     ms,
-		config: Config,
+func newEnvoyMutator(mutatorConfig envoyMutatorConfig, ms *appmesh.Mesh, vn *appmesh.VirtualNode) *envoyMutator {
+	return &envoyMutator{
+		vn:            vn,
+		ms:            ms,
+		mutatorConfig: mutatorConfig,
 	}
 }
 
-func (m *EnvoyMutator) Meta(pod *corev1.Pod) *EnvoyMeta {
-	meshName := aws.StringValue(m.ms.Spec.AWSName)
-	virtualNodeName := aws.StringValue(m.vn.Spec.AWSName)
-	preview := "0"
-
-	if v, ok := pod.ObjectMeta.Annotations[AppMeshPreviewAnnotation]; ok {
-		if v == "true" {
-			preview = "1"
-		}
-	} else {
-		if m.config.Preview {
-			preview = "1"
-		}
-	}
-	return &EnvoyMeta{
-		AWSRegion:            m.config.Region,
-		SidecarImage:         m.config.SidecarImage,
-		MeshName:             meshName,
-		VirtualNodeName:      virtualNodeName,
-		AppMeshPreview:       preview,
-		LogLevel:             m.config.LogLevel,
-		SidecarCpu:           GetSidecarCpu(m.config, pod),
-		SidecarMemory:        GetSidecarMemory(m.config, pod),
-		EnableXrayTracing:    m.config.EnableXrayTracing,
-		EnableJaegerTracing:  m.config.EnableJaegerTracing,
-		EnableDatadogTracing: m.config.EnableDatadogTracing,
-		EnableStatsTags:      m.config.EnableStatsTags,
-		EnableStatsD:         m.config.EnableStatsD,
-	}
+type envoyMutator struct {
+	vn            *appmesh.VirtualNode
+	ms            *appmesh.Mesh
+	mutatorConfig envoyMutatorConfig
 }
 
-func (m *EnvoyMutator) mutate(pod *corev1.Pod) error {
-	envoyMeta := m.Meta(pod)
-	envoySidecar, err := renderTemplate("envoy", envoyContainerTemplate, envoyMeta)
+func (m *envoyMutator) mutate(pod *corev1.Pod) error {
+	variables := m.buildTemplateVariables(pod)
+	envoySidecar, err := renderTemplate("envoy", envoyContainerTemplate, variables)
 	if err != nil {
 		return err
 	}
-	var container corev1.Container
+	container := corev1.Container{}
 	err = json.Unmarshal([]byte(envoySidecar), &container)
 	if err != nil {
 		return err
 	}
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
-	pod.Annotations[AppMeshVirtualNodeNameAnnotation] = envoyMeta.VirtualNodeName
 	return nil
+}
+
+func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVariables {
+	meshName := aws.StringValue(m.ms.Spec.AWSName)
+	virtualNodeName := aws.StringValue(m.vn.Spec.AWSName)
+	preview := m.getPreview(pod)
+
+	return EnvoyTemplateVariables{
+		AWSRegion:                    m.mutatorConfig.awsRegion,
+		MeshName:                     meshName,
+		VirtualNodeName:              virtualNodeName,
+		Preview:                      preview,
+		LogLevel:                     m.mutatorConfig.logLevel,
+		SidecarImage:                 m.mutatorConfig.sidecarImage,
+		SidecarCPURequests:           getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
+		SidecarMemoryRequests:        getSidecarMemoryRequest(m.mutatorConfig.sidecarMemoryRequests, pod),
+		EnvoyTracingConfigVolumeName: envoyTracingConfigVolumeName,
+		EnableXrayTracing:            m.mutatorConfig.enableXrayTracing,
+		EnableJaegerTracing:          m.mutatorConfig.enableJaegerTracing,
+		EnableDatadogTracing:         m.mutatorConfig.enableDatadogTracing,
+		EnableStatsTags:              m.mutatorConfig.enableStatsTags,
+		EnableStatsD:                 m.mutatorConfig.enableStatsD,
+	}
+}
+
+func (m *envoyMutator) getPreview(pod *corev1.Pod) string {
+	preview := m.mutatorConfig.preview
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshPreviewAnnotation]; ok {
+		preview = strings.ToLower(v) == "true"
+	}
+	if preview {
+		return "1"
+	}
+	return "0"
 }

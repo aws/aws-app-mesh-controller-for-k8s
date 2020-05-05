@@ -1,11 +1,12 @@
 package inject
 
 import (
+	"encoding/json"
 	corev1 "k8s.io/api/core/v1"
 )
 
 // Creating a template to avoid relying on an extra ConfigMap
-const datadogTemplate = `
+const datadogEnvoyConfigTemplate = `
 tracing:
   http:
     name: envoy.tracers.datadog
@@ -29,7 +30,7 @@ static_resources:
              port_value: {{ .DatadogPort }}
 `
 
-const injectDatadogTemplate = `
+const datadogInitContainerTemplate = `
 {
   "command": [
     "sh",
@@ -42,7 +43,7 @@ const injectDatadogTemplate = `
   "volumeMounts": [
     {
       "mountPath": "/tmp/envoy",
-      "name": "config"
+      "name": "{{ .EnvoyTracingConfigVolumeName }}"
     }
   ],
   "resources": {
@@ -58,36 +59,77 @@ const injectDatadogTemplate = `
 }
 `
 
-type DatadogMutator struct {
-	config *Config
-}
-
-type DatadogMeta struct {
+type DatadogEnvoyConfigTemplateVariables struct {
 	DatadogAddress string
 	DatadogPort    string
 }
 
-func NewDatadogMutator(Config *Config) *DatadogMutator {
-	return &DatadogMutator{config: Config}
+type DatadogInitContainerTemplateVariables struct {
+	EnvoyConfig                  string
+	EnvoyTracingConfigVolumeName string
 }
 
-func (d *DatadogMutator) Meta() *DatadogMeta {
-	return &DatadogMeta{
-		DatadogAddress: d.config.DatadogAddress,
-		DatadogPort:    d.config.DatadogPort,
+type datadogMutatorConfig struct {
+	datadogAddress string
+	datadogPort    string
+}
+
+func newDatadogMutator(mutatorConfig datadogMutatorConfig, enabled bool) *datadogMutator {
+	return &datadogMutator{
+		mutatorConfig: mutatorConfig,
+		enabled:       enabled,
 	}
 }
 
-func (d *DatadogMutator) mutate(pod *corev1.Pod) error {
-	if !d.config.EnableDatadogTracing {
+type datadogMutator struct {
+	mutatorConfig datadogMutatorConfig
+	enabled       bool
+}
+
+func (m *datadogMutator) mutate(pod *corev1.Pod) error {
+	if !m.enabled {
 		return nil
 	}
-	datadogMeta := d.Meta()
-	init, err := renderInitContainer("datadog", datadogTemplate, injectDatadogTemplate, datadogMeta)
+	variables, err := m.buildInitContainerTemplateVariables()
 	if err != nil {
 		return err
 	}
-	pod.Spec.InitContainers = append(pod.Spec.InitContainers, *init)
-	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{Name: tracingConfigVolumeName})
+	initContainer, err := renderTemplate("datadog-init-container", datadogInitContainerTemplate, variables)
+	if err != nil {
+		return err
+	}
+	container := corev1.Container{}
+	err = json.Unmarshal([]byte(initContainer), &container)
+	if err != nil {
+		return err
+	}
+	pod.Spec.InitContainers = append(pod.Spec.InitContainers, container)
+	volume := corev1.Volume{Name: envoyTracingConfigVolumeName, VolumeSource: corev1.VolumeSource{
+		EmptyDir: &corev1.EmptyDirVolumeSource{},
+	}}
+	pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
 	return nil
+}
+
+func (m *datadogMutator) buildEnvoyConfigTemplateVariables() DatadogEnvoyConfigTemplateVariables {
+	return DatadogEnvoyConfigTemplateVariables{
+		DatadogAddress: m.mutatorConfig.datadogAddress,
+		DatadogPort:    m.mutatorConfig.datadogPort,
+	}
+}
+
+func (m *datadogMutator) buildInitContainerTemplateVariables() (DatadogInitContainerTemplateVariables, error) {
+	envoyConfigVariables := m.buildEnvoyConfigTemplateVariables()
+	envoyConfig, err := renderTemplate("datadog-envoy-config", datadogEnvoyConfigTemplate, envoyConfigVariables)
+	if err != nil {
+		return DatadogInitContainerTemplateVariables{}, err
+	}
+	envoyConfig, err = escapeYaml(envoyConfig)
+	if err != nil {
+		return DatadogInitContainerTemplateVariables{}, err
+	}
+	return DatadogInitContainerTemplateVariables{
+		EnvoyConfig:                  envoyConfig,
+		EnvoyTracingConfigVolumeName: envoyTracingConfigVolumeName,
+	}, nil
 }

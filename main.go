@@ -66,6 +66,10 @@ func main() {
 	var injectConfig inject.Config
 	injectConfig.BindFlags()
 	flag.Parse()
+	if err := injectConfig.Validate(); err != nil {
+		setupLog.Error(err, "invalid flags")
+		os.Exit(1)
+	}
 
 	// TODO: make level configurable
 	lvl := zapraw.NewAtomicLevelAt(-2)
@@ -125,7 +129,7 @@ func main() {
 
 	meshMembershipDesignator := mesh.NewMembershipDesignator(mgr.GetClient())
 	vnMembershipDesignator := virtualnode.NewMembershipDesignator(mgr.GetClient())
-	sidecarInjector := inject.NewSidecarInjector(&injectConfig, cloud.Region())
+	sidecarInjector := inject.NewSidecarInjector(injectConfig, cloud.Region())
 	appmeshwebhook.NewMeshMutator().SetupWithManager(mgr)
 	appmeshwebhook.NewMeshValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualNodeMutator(meshMembershipDesignator).SetupWithManager(mgr)
