@@ -108,31 +108,6 @@ func ShouldInject(cfg *Config, pod *corev1.Pod) bool {
 	return cfg.InjectDefault
 }
 
-func IsAppMeshCNIEnabled(pod *corev1.Pod) bool {
-	annotations := pod.GetAnnotations()
-	if v, ok := annotations[AppMeshCNIAnnotation]; ok {
-		switch strings.ToLower(v) {
-		case "enabled":
-			return true
-		case "disabled":
-			return false
-		}
-	}
-	//Fargate platform has appmesh-cni enabled by default
-	if v, ok := pod.GetLabels()[FargateProfileLabel]; ok {
-		return len(v) > 0
-	}
-	return false
-}
-
-func GetEgressIgnoredPorts(pod *corev1.Pod) string {
-	egressIgnoredPorts := "22"
-	if v, ok := pod.ObjectMeta.Annotations[AppMeshEgressIgnoredPortsAnnotation]; ok {
-		egressIgnoredPorts = v
-	}
-	return egressIgnoredPorts
-}
-
 func GetSidecarCpu(config *Config, pod *corev1.Pod) string {
 	if v, ok := pod.ObjectMeta.Annotations[AppMeshCpuRequestAnnotation]; ok {
 		return v

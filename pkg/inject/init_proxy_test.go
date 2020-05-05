@@ -1,0 +1,209 @@
+package inject
+
+import (
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"testing"
+)
+
+func Test_initProxyMutator_mutate(t *testing.T) {
+	cpuRequests, _ := resource.ParseQuantity("32Mi")
+	memoryRequests, _ := resource.ParseQuantity("10m")
+	type fields struct {
+		mutatorConfig initProxyMutatorConfig
+		proxyConfig   proxyConfig
+	}
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantPod *corev1.Pod
+		wantErr error
+	}{
+		{
+			name: "normal case",
+			fields: fields{
+				mutatorConfig: initProxyMutatorConfig{
+					containerImage: "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
+					cpuRequests:    cpuRequests.String(),
+					memoryRequests: memoryRequests.String(),
+				},
+				proxyConfig: proxyConfig{
+					appPorts:           "80,443",
+					egressIgnoredIPs:   "192.168.0.1",
+					egressIgnoredPorts: "22",
+					proxyEgressPort:    15001,
+					proxyIngressPort:   15000,
+					proxyUID:           1337,
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						InitContainers: nil,
+					},
+				},
+			},
+			wantPod: &corev1.Pod{
+				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Name:  "proxyinit",
+							Image: "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
+							SecurityContext: &corev1.SecurityContext{
+								Capabilities: &corev1.Capabilities{
+									Add: []corev1.Capability{
+										"NET_ADMIN",
+									},
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_START_ENABLED",
+									Value: "1",
+								},
+								{
+									Name:  "APPMESH_IGNORE_UID",
+									Value: "1337",
+								},
+								{
+									Name:  "APPMESH_ENVOY_INGRESS_PORT",
+									Value: "15000",
+								},
+								{
+									Name:  "APPMESH_ENVOY_EGRESS_PORT",
+									Value: "15001",
+								},
+								{
+									Name:  "APPMESH_APP_PORTS",
+									Value: "80,443",
+								},
+								{
+									Name:  "APPMESH_EGRESS_IGNORED_IP",
+									Value: "192.168.0.1",
+								},
+								{
+									Name:  "APPMESH_EGRESS_IGNORED_PORTS",
+									Value: "22",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "normal case + exists other init container",
+			fields: fields{
+				mutatorConfig: initProxyMutatorConfig{
+					containerImage: "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
+					cpuRequests:    cpuRequests.String(),
+					memoryRequests: memoryRequests.String(),
+				},
+				proxyConfig: proxyConfig{
+					appPorts:           "80,443",
+					egressIgnoredIPs:   "192.168.0.1",
+					egressIgnoredPorts: "22",
+					proxyEgressPort:    15001,
+					proxyIngressPort:   15000,
+					proxyUID:           1337,
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						InitContainers: []corev1.Container{
+							{
+								Name:  "custominit",
+								Image: "custominit:v1",
+							},
+						},
+					},
+				},
+			},
+			wantPod: &corev1.Pod{
+				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Name:  "custominit",
+							Image: "custominit:v1",
+						},
+						{
+							Name:  "proxyinit",
+							Image: "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
+							SecurityContext: &corev1.SecurityContext{
+								Capabilities: &corev1.Capabilities{
+									Add: []corev1.Capability{
+										"NET_ADMIN",
+									},
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_START_ENABLED",
+									Value: "1",
+								},
+								{
+									Name:  "APPMESH_IGNORE_UID",
+									Value: "1337",
+								},
+								{
+									Name:  "APPMESH_ENVOY_INGRESS_PORT",
+									Value: "15000",
+								},
+								{
+									Name:  "APPMESH_ENVOY_EGRESS_PORT",
+									Value: "15001",
+								},
+								{
+									Name:  "APPMESH_APP_PORTS",
+									Value: "80,443",
+								},
+								{
+									Name:  "APPMESH_EGRESS_IGNORED_IP",
+									Value: "192.168.0.1",
+								},
+								{
+									Name:  "APPMESH_EGRESS_IGNORED_PORTS",
+									Value: "22",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &initProxyMutator{
+				mutatorConfig: tt.fields.mutatorConfig,
+				proxyConfig:   tt.fields.proxyConfig,
+			}
+			err := m.mutate(tt.args.pod)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.True(t, cmp.Equal(tt.wantPod, tt.args.pod), "diff", cmp.Diff(tt.wantPod, tt.args.pod))
+			}
+		})
+	}
+}
