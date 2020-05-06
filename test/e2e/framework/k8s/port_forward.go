@@ -22,7 +22,6 @@ func NewPortForwarder(ctx context.Context, restCfg *rest.Config, pod *corev1.Pod
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(url)
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, http.MethodPost, url)
 	return portforward.New(dialer, ports, ctx.Done(), readyChan, nil, ginkgo.GinkgoWriter)
 }
