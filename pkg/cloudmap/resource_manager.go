@@ -20,10 +20,10 @@ import (
 )
 
 type ResourceManager interface {
-	// Reconcile will create/update AppMesh VirtualNode to match vn.spec, and update vn.status
+	// Reconcile will create/update AppMesh CloudMap Resources
 	Reconcile(ctx context.Context, vn *appmesh.VirtualNode) error
 
-	// Cleanup will delete AppMesh VirtualNode created for vn.
+	// Cleanup will delete AppMesh CloudMap resources created for Virtualnode.
 	Cleanup(ctx context.Context, vn *appmesh.VirtualNode) error
 }
 
