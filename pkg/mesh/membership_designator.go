@@ -65,5 +65,8 @@ func (d *membershipDesignator) Designate(ctx context.Context, obj metav1.Object)
 		return nil, errors.Errorf("found multiple matching meshes for namespace: %s, expecting 1 but found %d: %s",
 			obj.GetNamespace(), len(meshCandidates), strings.Join(meshCandidatesNames, ","))
 	}
+	if !meshCandidates[0].DeletionTimestamp.IsZero() {
+		return nil, errors.Errorf("unable to create new content in mesh %s because it is being terminated", meshCandidates[0].Name)
+	}
 	return meshCandidates[0], nil
 }
