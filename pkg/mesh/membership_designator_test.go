@@ -56,6 +56,16 @@ func Test_meshSelectorDesignator_Designate(t *testing.T) {
 			},
 		},
 	}
+	now := metav1.Now()
+	meshBeenDeleting := &appmesh.Mesh{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "mesh-been-deleting",
+			DeletionTimestamp: &now,
+		},
+		Spec: appmesh.MeshSpec{
+			NamespaceSelector: &metav1.LabelSelector{},
+		},
+	}
 
 	type env struct {
 		meshes     []*appmesh.Mesh
@@ -468,6 +478,32 @@ func Test_meshSelectorDesignator_Designate(t *testing.T) {
 			},
 			want:    nil,
 			wantErr: errors.New("failed to find matching mesh for namespace: awesome-ns, expecting 1 but found 0"),
+		},
+		{
+			name: "[a single mesh been deleting] cannot be selected",
+			env: env{
+				meshes: []*appmesh.Mesh{
+					meshBeenDeleting,
+				},
+				namespaces: []*corev1.Namespace{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "awesome-ns",
+						},
+					},
+				},
+			},
+			args: args{
+				obj: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-node",
+					},
+					Spec: appmesh.VirtualNodeSpec{},
+				},
+			},
+			want:    nil,
+			wantErr: errors.New("unable to create new content in mesh mesh-been-deleting because it is being terminated"),
 		},
 	}
 	for _, tt := range tests {
