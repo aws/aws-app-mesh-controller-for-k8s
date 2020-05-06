@@ -246,7 +246,6 @@ func (r *cloudMapReconciler) getCloudMapNameSpace(ctx context.Context,
 		return namespaceSummary, nil
 	}
 
-	r.log.Info("Reach out to CloudMap for Namespace Summary")
 	//Namespace info missing in Cache. Reach out to AWS Cloudmap for relevant info.
 	namespaceSummary, err = r.getCloudMapNameSpaceFromAWS(ctx, key, cloudMapConfig)
 	if err != nil {
