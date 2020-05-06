@@ -1,7 +1,9 @@
 package cloudmap
 
 import (
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
 )
 
 func ArePodContainersReady(pod *corev1.Pod) bool {
@@ -31,4 +33,23 @@ func PodToInstanceID(pod *corev1.Pod) string {
 		return ""
 	}
 	return pod.Status.PodIP
+}
+
+func IsCloudMapEnabledForVirtualNode(vNode *appmesh.VirtualNode) bool {
+	if vNode.Spec.ServiceDiscovery == nil || vNode.Spec.ServiceDiscovery.AWSCloudMap == nil {
+		return false
+	}
+	if vNode.Spec.ServiceDiscovery.AWSCloudMap.NamespaceName == "" ||
+		vNode.Spec.ServiceDiscovery.AWSCloudMap.ServiceName == "" {
+		klog.Errorf("CloudMap NamespaceName or ServiceName is null")
+		return false
+	}
+	return true
+}
+
+func IsPodSelectorDefinedForVirtualNode(vNode *appmesh.VirtualNode) bool {
+	if vNode.Spec.PodSelector == nil {
+		return false
+	}
+	return true
 }
