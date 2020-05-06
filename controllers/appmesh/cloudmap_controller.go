@@ -222,10 +222,10 @@ func (r *cloudMapReconciler) getCloudMapNameSpaceFromAWS(ctx context.Context,
 
 					r.log.V(4).Info("NameSpace found ", "key: ", key, "namespaceID: ", namespaceSummary.NamespaceID)
 					r.nameSpaceIDCache.Add(key, namespaceSummary, cloudMapNamespaceCacheTTL)
-					return true
+					return false
 				}
 			}
-			return false
+			return true
 		},
 	)
 
