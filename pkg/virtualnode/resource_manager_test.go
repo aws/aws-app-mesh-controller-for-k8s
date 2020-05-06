@@ -9,7 +9,6 @@ import (
 	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -133,110 +132,6 @@ func Test_defaultResourceManager_updateCRDVirtualNode(t *testing.T) {
 					cmpopts.IgnoreTypes((*metav1.Time)(nil)),
 				}
 				assert.True(t, cmp.Equal(tt.wantVN, gotVN, opts), "diff", cmp.Diff(tt.wantVN, gotVN, opts))
-			}
-		})
-	}
-}
-
-func Test_defaultResourceManager_buildSDKVirtualServiceReferenceConvertFunc(t *testing.T) {
-	vsRefWithNamespace := appmesh.VirtualServiceReference{
-		Namespace: aws.String("my-ns"),
-		Name:      "vs-1",
-	}
-	vsRefWithoutNamespace := appmesh.VirtualServiceReference{
-		Namespace: nil,
-		Name:      "vs-2",
-	}
-
-	type args struct {
-		vsByRef map[appmesh.VirtualServiceReference]*appmesh.VirtualService
-	}
-	tests := []struct {
-		name                  string
-		args                  args
-		wantAWSNameOrErrByRef map[appmesh.VirtualServiceReference]struct {
-			awsName string
-			err     error
-		}
-	}{
-		{
-			name: "when all virtualServiceReference resolve correctly",
-			args: args{
-				vsByRef: map[appmesh.VirtualServiceReference]*appmesh.VirtualService{
-					vsRefWithNamespace: {
-						ObjectMeta: metav1.ObjectMeta{
-							Namespace: "my-ns",
-							Name:      "vs-1",
-						},
-						Spec: appmesh.VirtualServiceSpec{
-							AWSName: aws.String("vs-1.my-ns"),
-						},
-					},
-					vsRefWithoutNamespace: {
-						ObjectMeta: metav1.ObjectMeta{
-							Namespace: "my-ns",
-							Name:      "vs-2",
-						},
-						Spec: appmesh.VirtualServiceSpec{
-							AWSName: aws.String("vs-2.my-ns"),
-						},
-					},
-				},
-			},
-			wantAWSNameOrErrByRef: map[appmesh.VirtualServiceReference]struct {
-				awsName string
-				err     error
-			}{
-				vsRefWithNamespace: {
-					awsName: "vs-1.my-ns",
-				},
-				vsRefWithoutNamespace: {
-					awsName: "vs-2.my-ns",
-				},
-			},
-		},
-		{
-			name: "when some virtualServiceReference cannot resolve correctly",
-			args: args{
-				vsByRef: map[appmesh.VirtualServiceReference]*appmesh.VirtualService{
-					vsRefWithNamespace: {
-						ObjectMeta: metav1.ObjectMeta{
-							Namespace: "my-ns",
-							Name:      "vs-1",
-						},
-						Spec: appmesh.VirtualServiceSpec{
-							AWSName: aws.String("vs-1.my-ns"),
-						},
-					},
-				},
-			},
-			wantAWSNameOrErrByRef: map[appmesh.VirtualServiceReference]struct {
-				awsName string
-				err     error
-			}{
-				vsRefWithNamespace: {
-					awsName: "vs-1.my-ns",
-				},
-				vsRefWithoutNamespace: {
-					err: errors.Errorf("unexpected VirtualServiceReference: %v", vsRefWithoutNamespace),
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
-			m := &defaultResourceManager{}
-			convertFunc := m.buildSDKVirtualServiceReferenceConvertFunc(ctx, tt.args.vsByRef)
-			for vsRef, wantAWSNameOrErr := range tt.wantAWSNameOrErrByRef {
-				var gotAWSName = ""
-				gotErr := convertFunc(&vsRef, &gotAWSName, nil)
-				if wantAWSNameOrErr.err != nil {
-					assert.EqualError(t, gotErr, wantAWSNameOrErr.err.Error())
-				} else {
-					assert.NoError(t, gotErr)
-					assert.Equal(t, wantAWSNameOrErr.awsName, gotAWSName)
-				}
 			}
 		})
 	}

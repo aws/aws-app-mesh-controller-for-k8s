@@ -18,6 +18,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/conversion"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -63,11 +64,11 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 	if err := m.validateMeshDependencies(ctx, ms); err != nil {
 		return err
 	}
-	vsByRef, err := m.findVirtualServiceDependencies(ctx, vn)
+	vsByKey, err := m.findVirtualServiceDependencies(ctx, vn)
 	if err != nil {
 		return err
 	}
-	if err := m.validateVirtualServiceDependencies(ctx, ms, vsByRef); err != nil {
+	if err := m.validateVirtualServiceDependencies(ctx, ms, vsByKey); err != nil {
 		return err
 	}
 
@@ -76,12 +77,12 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 		return err
 	}
 	if sdkVN == nil {
-		sdkVN, err = m.createSDKVirtualNode(ctx, ms, vn, vsByRef)
+		sdkVN, err = m.createSDKVirtualNode(ctx, ms, vn, vsByKey)
 		if err != nil {
 			return err
 		}
 	} else {
-		sdkVN, err = m.updateSDKVirtualNode(ctx, sdkVN, ms, vn, vsByRef)
+		sdkVN, err = m.updateSDKVirtualNode(ctx, sdkVN, ms, vn, vsByKey)
 		if err != nil {
 			return err
 		}
@@ -124,24 +125,28 @@ func (m *defaultResourceManager) validateMeshDependencies(ctx context.Context, m
 }
 
 // findVirtualServiceDependencies find the VirtualService dependencies for this virtualNode.
-func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Context, vn *appmesh.VirtualNode) (map[appmesh.VirtualServiceReference]*appmesh.VirtualService, error) {
-	vsByRef := make(map[appmesh.VirtualServiceReference]*appmesh.VirtualService, len(vn.Spec.Backends))
+func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Context, vn *appmesh.VirtualNode) (map[types.NamespacedName]*appmesh.VirtualService, error) {
+	vsByKey := make(map[types.NamespacedName]*appmesh.VirtualService, len(vn.Spec.Backends))
 	for _, backend := range vn.Spec.Backends {
 		vsRef := backend.VirtualService.VirtualServiceRef
+		vsKey := references.ObjectKeyForVirtualServiceReference(vn, vsRef)
+		if _, ok := vsByKey[vsKey]; ok {
+			continue
+		}
 		vs, err := m.referencesResolver.ResolveVirtualServiceReference(ctx, vn, vsRef)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to resolve virtualServiceRef")
 		}
-		vsByRef[vsRef] = vs
+		vsByKey[vsKey] = vs
 	}
-	return vsByRef, nil
+	return vsByKey, nil
 }
 
 // validateVirtualServiceDependencies validates the VirtualService dependencies for this virtualNode.
 // AppMesh API allows to create a virtualNode with virtualService backend without the virtualService presents first.
 // we will not validate whether virtualService is active or not, to allows circular dependency between virtualNode and virtualService.
-func (m *defaultResourceManager) validateVirtualServiceDependencies(ctx context.Context, ms *appmesh.Mesh, vsByRef map[appmesh.VirtualServiceReference]*appmesh.VirtualService) error {
-	for _, vs := range vsByRef {
+func (m *defaultResourceManager) validateVirtualServiceDependencies(ctx context.Context, ms *appmesh.Mesh, vsByKey map[types.NamespacedName]*appmesh.VirtualService) error {
+	for _, vs := range vsByKey {
 		if vs.Spec.MeshRef == nil || !mesh.IsMeshReferenced(ms, *vs.Spec.MeshRef) {
 			return errors.Errorf("virtualService %v didn't belong to mesh %v", k8s.NamespacedName(vs), k8s.NamespacedName(ms))
 		}
@@ -165,8 +170,8 @@ func (m *defaultResourceManager) findSDKVirtualNode(ctx context.Context, ms *app
 	return resp.VirtualNode, nil
 }
 
-func (m *defaultResourceManager) createSDKVirtualNode(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, vsByRef map[appmesh.VirtualServiceReference]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeData, error) {
-	sdkVNSpec, err := m.buildSDKVirtualNodeSpec(ctx, vn, vsByRef)
+func (m *defaultResourceManager) createSDKVirtualNode(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeData, error) {
+	sdkVNSpec, err := m.buildSDKVirtualNodeSpec(ctx, vn, vsByKey)
 	if err != nil {
 		return nil, err
 	}
@@ -183,9 +188,9 @@ func (m *defaultResourceManager) createSDKVirtualNode(ctx context.Context, ms *a
 	return resp.VirtualNode, nil
 }
 
-func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN *appmeshsdk.VirtualNodeData, ms *appmesh.Mesh, vn *appmesh.VirtualNode, vsByRef map[appmesh.VirtualServiceReference]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeData, error) {
+func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN *appmeshsdk.VirtualNodeData, ms *appmesh.Mesh, vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeData, error) {
 	actualSDKVNSpec := sdkVN.Spec
-	desiredSDKVNSpec, err := m.buildSDKVirtualNodeSpec(ctx, vn, vsByRef)
+	desiredSDKVNSpec, err := m.buildSDKVirtualNodeSpec(ctx, vn, vsByKey)
 	if err != nil {
 		return nil, err
 	}
@@ -265,12 +270,12 @@ func (m *defaultResourceManager) updateCRDVirtualNode(ctx context.Context, vn *a
 	return m.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN))
 }
 
-func (m *defaultResourceManager) buildSDKVirtualNodeSpec(ctx context.Context, vn *appmesh.VirtualNode, vsByRef map[appmesh.VirtualServiceReference]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeSpec, error) {
+func (m *defaultResourceManager) buildSDKVirtualNodeSpec(ctx context.Context, vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeSpec, error) {
 	converter := conversion.NewConverter(conversion.DefaultNameFunc)
 	converter.RegisterUntypedConversionFunc((*appmesh.VirtualNodeSpec)(nil), (*appmeshsdk.VirtualNodeSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return conversions.Convert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(a.(*appmesh.VirtualNodeSpec), b.(*appmeshsdk.VirtualNodeSpec), scope)
 	})
-	sdkVSRefConvertFunc := m.buildSDKVirtualServiceReferenceConvertFunc(ctx, vsByRef)
+	sdkVSRefConvertFunc := references.BuildSDKVirtualServiceReferenceConvertFunc(vn, vsByKey)
 	converter.RegisterUntypedConversionFunc((*appmesh.VirtualServiceReference)(nil), (*string)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return sdkVSRefConvertFunc(a.(*appmesh.VirtualServiceReference), b.(*string), scope)
 	})
@@ -284,19 +289,6 @@ func (m *defaultResourceManager) buildSDKVirtualNodeSpec(ctx context.Context, vn
 func (m *defaultResourceManager) buildSDKVirtualNodeTags(ctx context.Context, vn *appmesh.VirtualNode) []*appmeshsdk.TagRef {
 	// TODO, support tags
 	return nil
-}
-
-type sdkVirtualServiceReferenceConvertFunc func(vsRef *appmesh.VirtualServiceReference, vsAWSName *string, scope conversion.Scope) error
-
-func (m *defaultResourceManager) buildSDKVirtualServiceReferenceConvertFunc(ctx context.Context, vsByRef map[appmesh.VirtualServiceReference]*appmesh.VirtualService) sdkVirtualServiceReferenceConvertFunc {
-	return func(vsRef *appmesh.VirtualServiceReference, vsAWSName *string, scope conversion.Scope) error {
-		vs, ok := vsByRef[*vsRef]
-		if !ok {
-			return errors.Errorf("unexpected VirtualServiceReference: %v", *vsRef)
-		}
-		*vsAWSName = aws.StringValue(vs.Spec.AWSName)
-		return nil
-	}
 }
 
 // isSDKVirtualNodeControlledByCRDVirtualNode checks whether an AppMesh virtualNode is controlled by CRD virtualNode

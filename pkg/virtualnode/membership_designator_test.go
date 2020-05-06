@@ -3,6 +3,8 @@ package virtualnode
 import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
+	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -359,11 +361,11 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 			designator := NewMembershipDesignator(k8sClient)
 
 			for _, ns := range tt.env.namespaces {
-				err := k8sClient.Create(ctx, ns)
+				err := k8sClient.Create(ctx, ns.DeepCopy())
 				assert.NoError(t, err)
 			}
 			for _, mesh := range tt.env.virtualNodes {
-				err := k8sClient.Create(ctx, mesh)
+				err := k8sClient.Create(ctx, mesh.DeepCopy())
 				assert.NoError(t, err)
 			}
 
@@ -372,8 +374,9 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				assert.NoError(t, err)
+				opts := equality.IgnoreFakeClientPopulatedFields()
+				assert.True(t, cmp.Equal(tt.want, got, opts), "diff", cmp.Diff(tt.want, got, opts))
 			}
-			assert.Equal(t, tt.want, got)
 		})
 	}
 }
