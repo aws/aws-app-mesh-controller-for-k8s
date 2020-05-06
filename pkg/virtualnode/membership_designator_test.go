@@ -36,7 +36,9 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 			Namespace: testNS.Name,
 			Name:      "vn-with-empty-pod-selector",
 		},
-		Spec:   appmesh.VirtualNodeSpec{},
+		Spec:   appmesh.VirtualNodeSpec{
+			PodSelector: &metav1.LabelSelector{},
+		},
 		Status: appmesh.VirtualNodeStatus{},
 	}
 	vnWithPodSelectorPodX := &appmesh.VirtualNode{
@@ -81,7 +83,7 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name: "[a single virtualNode with empty pod selector] pod without labels cannot be selected",
+			name: "[a single virtualNode with empty pod selector] pod without labels can be selected",
 			env: env{
 				namespaces: []*corev1.Namespace{testNS},
 				virtualNodes: []*appmesh.VirtualNode{
@@ -97,11 +99,11 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 					Spec: corev1.PodSpec{},
 				},
 			},
-			want:    nil,
+			want:    vnWithEmptyPodSelector,
 			wantErr: nil,
 		},
 		{
-			name: "[a single virtualNode with empty pod selector] pod with labels cannot be selected",
+			name: "[a single virtualNode with empty pod selector] pod with labels can be selected",
 			env: env{
 				namespaces: []*corev1.Namespace{testNS},
 				virtualNodes: []*appmesh.VirtualNode{
@@ -120,7 +122,7 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 					Spec: corev1.PodSpec{},
 				},
 			},
-			want:    nil,
+			want:    vnWithEmptyPodSelector,
 			wantErr: nil,
 		},
 		{

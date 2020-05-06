@@ -298,7 +298,9 @@ type VirtualNodeSpec struct {
 	// +optional
 	AWSName *string `json:"awsName,omitempty"`
 	// PodSelector selects Pods using labels to designate VirtualNode membership.
-	// if unspecified or empty, it selects no pods.
+	// This field follows standard label selector semantics:
+	//	if present but empty, it selects all pods within namespace.
+	// 	if absent, it selects no pod.
 	// +optional
 	PodSelector *metav1.LabelSelector `json:"podSelector,omitempty"`
 	// The listener that the virtual node is expected to receive inbound traffic from
