@@ -2,10 +2,12 @@ package shared
 
 import (
 	"fmt"
-	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	"github.com/aws/aws-sdk-go/aws"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -27,7 +29,6 @@ const (
 )
 
 type ManifestBuilder struct {
-	MeshName             string
 	Namespace            string
 	ServiceDiscoveryType ServiceDiscoveryType
 
@@ -37,7 +38,7 @@ type ManifestBuilder struct {
 
 func (b *ManifestBuilder) BuildNodeDeployment(instanceName string, replicas int32) *appsv1.Deployment {
 	labels := b.buildNodeSelectors(instanceName)
-	dpName := instanceName
+	dpName := b.buildNodeName(instanceName)
 	dp := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: b.Namespace,
@@ -49,10 +50,6 @@ func (b *ManifestBuilder) BuildNodeDeployment(instanceName string, replicas int3
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels,
-					Annotations: map[string]string{
-						"appmesh.k8s.aws/mesh":  b.MeshName,
-						"appmesh.k8s.aws/ports": fmt.Sprintf("%d", AppContainerPort),
-					},
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
@@ -98,7 +95,7 @@ func (b *ManifestBuilder) BuildNodeDeployment(instanceName string, replicas int3
 
 func (b *ManifestBuilder) BuildNodeService(instanceName string) *corev1.Service {
 	labels := b.buildNodeSelectors(instanceName)
-	svcName := b.buildNodeServiceName(instanceName)
+	svcName := b.buildNodeName(instanceName)
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: b.Namespace,
@@ -119,33 +116,37 @@ func (b *ManifestBuilder) BuildNodeService(instanceName string) *corev1.Service 
 	return svc
 }
 
-func (b *ManifestBuilder) BuildNodeVirtualNode(instanceName string, backendVirtualServices []string) *appmeshv1beta1.VirtualNode {
-	vnName := instanceName
-	var sd *appmeshv1beta1.ServiceDiscovery
+func (b *ManifestBuilder) BuildNodeVirtualNode(instanceName string, backendVirtualServices []types.NamespacedName) *appmesh.VirtualNode {
+	labels := b.buildNodeSelectors(instanceName)
+	vnName := b.buildNodeName(instanceName)
+	var sd *appmesh.ServiceDiscovery
 	switch b.ServiceDiscoveryType {
 	case DNSServiceDiscovery:
 		sd = b.buildNodeDNSServiceDiscovery(instanceName)
 	case CloudMapServiceDiscovery:
 		sd = b.buildNodeCloudMapServiceDiscovery(instanceName)
 	}
-	var backends []appmeshv1beta1.Backend
+	var backends []appmesh.Backend
 	for _, backendVS := range backendVirtualServices {
-		backends = append(backends, appmeshv1beta1.Backend{
-			VirtualService: appmeshv1beta1.VirtualServiceBackend{
-				VirtualServiceName: backendVS,
+		backends = append(backends, appmesh.Backend{
+			VirtualService: appmesh.VirtualServiceBackend{
+				VirtualServiceRef: appmesh.VirtualServiceReference{
+					Namespace: aws.String(backendVS.Namespace),
+					Name:      backendVS.Name,
+				},
 			},
 		})
 	}
-	vn := &appmeshv1beta1.VirtualNode{
+	vn := &appmesh.VirtualNode{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: b.Namespace,
 			Name:      vnName,
 		},
-		Spec: appmeshv1beta1.VirtualNodeSpec{
-			MeshName: b.MeshName,
-			Listeners: []appmeshv1beta1.Listener{
+		Spec: appmesh.VirtualNodeSpec{
+			PodSelector: &metav1.LabelSelector{MatchLabels: labels},
+			Listeners: []appmesh.Listener{
 				{
-					PortMapping: appmeshv1beta1.PortMapping{
+					PortMapping: appmesh.PortMapping{
 						Port:     AppContainerPort,
 						Protocol: "http",
 					},
@@ -165,12 +166,12 @@ type RouteToWeightedVirtualNodes struct {
 
 // WeightedVirtualNode is virtual node with weight
 type WeightedVirtualNode struct {
-	VirtualNodeName string
-	Weight          int64
+	VirtualNode types.NamespacedName
+	Weight      int64
 }
 
 func (b *ManifestBuilder) BuildServiceService(instanceName string) *corev1.Service {
-	svcName := instanceName
+	svcName := b.buildServiceName(instanceName)
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: b.Namespace,
@@ -190,67 +191,88 @@ func (b *ManifestBuilder) BuildServiceService(instanceName string) *corev1.Servi
 	return svc
 }
 
-func (b *ManifestBuilder) BuildServiceVirtualService(instanceName string, routeCfgs []RouteToWeightedVirtualNodes) *appmeshv1beta1.VirtualService {
-	svcName := b.buildServiceServiceName(instanceName)
-	svcDNS := fmt.Sprintf("%s.%s", svcName, b.Namespace)
-	var routes []appmeshv1beta1.Route
+func (b *ManifestBuilder) BuildServiceVirtualRouter(instanceName string, routeCfgs []RouteToWeightedVirtualNodes) *appmesh.VirtualRouter {
+	vrName := b.buildServiceName(instanceName)
+	var routes []appmesh.Route
 	for index, routeCfg := range routeCfgs {
-		var targets []appmeshv1beta1.WeightedTarget
+		var targets []appmesh.WeightedTarget
 		for _, weightedTarget := range routeCfg.WeightedTargets {
-			targets = append(targets, appmeshv1beta1.WeightedTarget{
-				VirtualNodeName: weightedTarget.VirtualNodeName,
-				Weight:          weightedTarget.Weight,
+			targets = append(targets, appmesh.WeightedTarget{
+				VirtualNodeRef: appmesh.VirtualNodeReference{
+					Namespace: aws.String(weightedTarget.VirtualNode.Namespace),
+					Name:      weightedTarget.VirtualNode.Name,
+				},
+				Weight: weightedTarget.Weight,
 			})
 		}
-		routes = append(routes, appmeshv1beta1.Route{
+		routes = append(routes, appmesh.Route{
 			Name: fmt.Sprintf("path-%d", index),
-			Http: &appmeshv1beta1.HttpRoute{
-				Match: appmeshv1beta1.HttpRouteMatch{
+			HTTPRoute: &appmesh.HTTPRoute{
+				Match: appmesh.HTTPRouteMatch{
 					Prefix: routeCfg.Path,
 				},
-				Action: appmeshv1beta1.HttpRouteAction{
+				Action: appmesh.HTTPRouteAction{
 					WeightedTargets: targets,
 				},
 			},
 		})
 	}
-	vs := &appmeshv1beta1.VirtualService{
+	vr := &appmesh.VirtualRouter{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: b.Namespace,
-			Name:      svcDNS,
+			Name:      vrName,
 		},
-		Spec: appmeshv1beta1.VirtualServiceSpec{
-			MeshName: b.MeshName,
-			VirtualRouter: &appmeshv1beta1.VirtualRouter{
-				Listeners: []appmeshv1beta1.VirtualRouterListener{
-					{
-						PortMapping: appmeshv1beta1.PortMapping{
-							Port:     AppContainerPort,
-							Protocol: "http",
-						},
+		Spec: appmesh.VirtualRouterSpec{
+			Listeners: []appmesh.VirtualRouterListener{
+				{
+					PortMapping: appmesh.PortMapping{
+						Port:     AppContainerPort,
+						Protocol: "http",
 					},
 				},
 			},
 			Routes: routes,
 		},
 	}
+	return vr
+}
+
+func (b *ManifestBuilder) BuildServiceVirtualService(instanceName string) *appmesh.VirtualService {
+	vsName := b.buildServiceName(instanceName)
+	vrName := b.buildServiceName(instanceName)
+	vs := &appmesh.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: b.Namespace,
+			Name:      vsName,
+		},
+		Spec: appmesh.VirtualServiceSpec{
+			Provider: &appmesh.VirtualServiceProvider{
+				VirtualRouter: &appmesh.VirtualRouterServiceProvider{
+					VirtualRouterRef: appmesh.VirtualRouterReference{
+						Namespace: aws.String(b.Namespace),
+						Name:      vrName,
+					},
+				},
+			},
+		},
+	}
 	return vs
 }
 
-func (b *ManifestBuilder) buildNodeDNSServiceDiscovery(instanceName string) *appmeshv1beta1.ServiceDiscovery {
-	nodeServiceName := b.buildNodeServiceName(instanceName)
+func (b *ManifestBuilder) buildNodeDNSServiceDiscovery(instanceName string) *appmesh.ServiceDiscovery {
+	nodeServiceName := b.buildNodeName(instanceName)
 	nodeServiceDNS := fmt.Sprintf("%s.%s", nodeServiceName, b.Namespace)
-	return &appmeshv1beta1.ServiceDiscovery{
-		Dns: &appmeshv1beta1.DnsServiceDiscovery{
-			HostName: nodeServiceDNS,
+	return &appmesh.ServiceDiscovery{
+		DNS: &appmesh.DNSServiceDiscovery{
+			Hostname: nodeServiceDNS,
 		},
 	}
 }
 
-func (b *ManifestBuilder) buildNodeCloudMapServiceDiscovery(instanceName string) *appmeshv1beta1.ServiceDiscovery {
-	nodeServiceName := b.buildNodeServiceName(instanceName)
-	return &appmeshv1beta1.ServiceDiscovery{
-		CloudMap: &appmeshv1beta1.CloudMapServiceDiscovery{
+func (b *ManifestBuilder) buildNodeCloudMapServiceDiscovery(instanceName string) *appmesh.ServiceDiscovery {
+	nodeServiceName := b.buildNodeName(instanceName)
+	return &appmesh.ServiceDiscovery{
+		AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
 			NamespaceName: b.CloudMapNamespace,
 			ServiceName:   nodeServiceName,
 		},
@@ -264,12 +286,12 @@ func (b *ManifestBuilder) buildNodeSelectors(instanceName string) map[string]str
 	}
 }
 
-func (b *ManifestBuilder) buildNodeServiceName(instanceName string) string {
+func (b *ManifestBuilder) buildNodeName(instanceName string) string {
 	// I like to be explicit about implicit connections between Objects
 	return instanceName
 }
 
-func (b *ManifestBuilder) buildServiceServiceName(instanceName string) string {
+func (b *ManifestBuilder) buildServiceName(instanceName string) string {
 	// I like to be explicit about implicit connections between Objects
 	return instanceName
 }

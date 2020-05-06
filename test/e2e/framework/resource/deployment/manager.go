@@ -2,12 +2,12 @@ package deployment
 
 import (
 	"context"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Manager interface {
@@ -15,27 +15,22 @@ type Manager interface {
 	WaitUntilDeploymentDeleted(ctx context.Context, dp *appsv1.Deployment) error
 }
 
-func NewManager(cs kubernetes.Interface) Manager {
+func NewManager(k8sClient client.Client) Manager {
 	return &defaultManager{
-		cs: cs,
+		k8sClient: k8sClient,
 	}
 }
 
 type defaultManager struct {
-	cs kubernetes.Interface
+	k8sClient client.Client
 }
 
 func (m *defaultManager) WaitUntilDeploymentReady(ctx context.Context, dp *appsv1.Deployment) (*appsv1.Deployment, error) {
-	var (
-		observedDP *appsv1.Deployment
-		err        error
-	)
+	observedDP := &appsv1.Deployment{}
 	return observedDP, wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-		observedDP, err = m.cs.AppsV1().Deployments(dp.Namespace).Get(dp.Name, metav1.GetOptions{})
-		if err != nil {
+		if err := m.k8sClient.Get(ctx, k8s.NamespacedName(dp), observedDP); err != nil {
 			return false, err
 		}
-
 		if observedDP.Status.UpdatedReplicas == (*dp.Spec.Replicas) &&
 			observedDP.Status.Replicas == (*dp.Spec.Replicas) &&
 			observedDP.Status.AvailableReplicas == (*dp.Spec.Replicas) &&
@@ -47,8 +42,9 @@ func (m *defaultManager) WaitUntilDeploymentReady(ctx context.Context, dp *appsv
 }
 
 func (m *defaultManager) WaitUntilDeploymentDeleted(ctx context.Context, dp *appsv1.Deployment) error {
+	observedDP := &appsv1.Deployment{}
 	return wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-		if _, err := m.cs.AppsV1().Deployments(dp.Namespace).Get(dp.Name, metav1.GetOptions{}); err != nil {
+		if err := m.k8sClient.Get(ctx, k8s.NamespacedName(dp), observedDP); err != nil {
 			if apierrs.IsNotFound(err) {
 				return true, nil
 			}

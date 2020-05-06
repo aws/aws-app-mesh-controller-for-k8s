@@ -2,41 +2,37 @@ package mesh
 
 import (
 	"context"
-	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
-	meshclientset "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned"
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/utils"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Manager interface {
-	WaitUntilMeshActive(ctx context.Context, mesh *appmeshv1beta1.Mesh) (*appmeshv1beta1.Mesh, error)
-	WaitUntilMeshDeleted(ctx context.Context, mesh *appmeshv1beta1.Mesh) error
+	WaitUntilMeshActive(ctx context.Context, mesh *appmesh.Mesh) (*appmesh.Mesh, error)
+	WaitUntilMeshDeleted(ctx context.Context, mesh *appmesh.Mesh) error
 }
 
-func NewManager(cs meshclientset.Interface) Manager {
-	return &defaultManager{cs: cs}
+func NewManager(k8sClient client.Client) Manager {
+	return &defaultManager{k8sClient: k8sClient}
 }
 
 type defaultManager struct {
-	cs meshclientset.Interface
+	k8sClient client.Client
 }
 
-func (m *defaultManager) WaitUntilMeshActive(ctx context.Context, mesh *appmeshv1beta1.Mesh) (*appmeshv1beta1.Mesh, error) {
-	var (
-		observedMesh *appmeshv1beta1.Mesh
-		err          error
-	)
+func (m *defaultManager) WaitUntilMeshActive(ctx context.Context, mesh *appmesh.Mesh) (*appmesh.Mesh, error) {
+	observedMesh := &appmesh.Mesh{}
 	return observedMesh, wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-		observedMesh, err = m.cs.AppmeshV1beta1().Meshes().Get(mesh.Name, metav1.GetOptions{})
-		if err != nil {
+		if err := m.k8sClient.Get(ctx, k8s.NamespacedName(mesh), observedMesh); err != nil {
 			return false, err
 		}
 
 		for _, condition := range observedMesh.Status.Conditions {
-			if condition.Type == appmeshv1beta1.MeshActive && condition.Status == corev1.ConditionTrue {
+			if condition.Type == appmesh.MeshActive && condition.Status == corev1.ConditionTrue {
 				return true, nil
 			}
 		}
@@ -45,9 +41,10 @@ func (m *defaultManager) WaitUntilMeshActive(ctx context.Context, mesh *appmeshv
 	}, ctx.Done())
 }
 
-func (m *defaultManager) WaitUntilMeshDeleted(ctx context.Context, mesh *appmeshv1beta1.Mesh) error {
+func (m *defaultManager) WaitUntilMeshDeleted(ctx context.Context, mesh *appmesh.Mesh) error {
+	observedMesh := &appmesh.Mesh{}
 	return wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-		if _, err := m.cs.AppmeshV1beta1().Meshes().Get(mesh.Name, metav1.GetOptions{}); err != nil {
+		if err := m.k8sClient.Get(ctx, k8s.NamespacedName(mesh), observedMesh); err != nil {
 			if apierrs.IsNotFound(err) {
 				return true, nil
 			}

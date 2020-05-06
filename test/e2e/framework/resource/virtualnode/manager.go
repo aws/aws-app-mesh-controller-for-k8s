@@ -2,41 +2,37 @@ package virtualnode
 
 import (
 	"context"
-	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
-	meshclientset "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/client/clientset/versioned"
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/utils"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Manager interface {
-	WaitUntilVirtualNodeActive(ctx context.Context, vn *appmeshv1beta1.VirtualNode) (*appmeshv1beta1.VirtualNode, error)
-	WaitUntilVirtualNodeDeleted(ctx context.Context, vn *appmeshv1beta1.VirtualNode) error
+	WaitUntilVirtualNodeActive(ctx context.Context, vn *appmesh.VirtualNode) (*appmesh.VirtualNode, error)
+	WaitUntilVirtualNodeDeleted(ctx context.Context, vn *appmesh.VirtualNode) error
 }
 
-func NewManager(cs meshclientset.Interface) Manager {
-	return &defaultManager{cs: cs}
+func NewManager(k8sClient client.Client) Manager {
+	return &defaultManager{k8sClient: k8sClient}
 }
 
 type defaultManager struct {
-	cs meshclientset.Interface
+	k8sClient client.Client
 }
 
-func (m *defaultManager) WaitUntilVirtualNodeActive(ctx context.Context, vn *appmeshv1beta1.VirtualNode) (*appmeshv1beta1.VirtualNode, error) {
-	var (
-		observedVN *appmeshv1beta1.VirtualNode
-		err        error
-	)
+func (m *defaultManager) WaitUntilVirtualNodeActive(ctx context.Context, vn *appmesh.VirtualNode) (*appmesh.VirtualNode, error) {
+	observedVN := &appmesh.VirtualNode{}
 	return observedVN, wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-		observedVN, err = m.cs.AppmeshV1beta1().VirtualNodes(vn.Namespace).Get(vn.Name, metav1.GetOptions{})
-		if err != nil {
+		if err := m.k8sClient.Get(ctx, k8s.NamespacedName(vn), observedVN); err != nil {
 			return false, err
 		}
 
 		for _, condition := range observedVN.Status.Conditions {
-			if condition.Type == appmeshv1beta1.VirtualNodeActive && condition.Status == corev1.ConditionTrue {
+			if condition.Type == appmesh.VirtualNodeActive && condition.Status == corev1.ConditionTrue {
 				return true, nil
 			}
 		}
@@ -45,9 +41,10 @@ func (m *defaultManager) WaitUntilVirtualNodeActive(ctx context.Context, vn *app
 	}, ctx.Done())
 }
 
-func (m *defaultManager) WaitUntilVirtualNodeDeleted(ctx context.Context, vn *appmeshv1beta1.VirtualNode) error {
+func (m *defaultManager) WaitUntilVirtualNodeDeleted(ctx context.Context, vn *appmesh.VirtualNode) error {
+	observedVN := &appmesh.VirtualNode{}
 	return wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-		if _, err := m.cs.AppmeshV1beta1().VirtualNodes(vn.Namespace).Get(vn.Name, metav1.GetOptions{}); err != nil {
+		if err := m.k8sClient.Get(ctx, k8s.NamespacedName(vn), observedVN); err != nil {
 			if apierrs.IsNotFound(err) {
 				return true, nil
 			}

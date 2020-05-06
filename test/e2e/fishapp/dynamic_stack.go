@@ -3,10 +3,18 @@ package fishapp
 import (
 	"context"
 	"fmt"
-	appmeshv1beta1 "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/apis/appmesh/v1beta1"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
+	"io/ioutil"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"net/http"
+	"net/url"
+	"sync"
+	"time"
+
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/fishapp/shared"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/collection"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/utils"
 	"github.com/aws/aws-sdk-go/aws"
@@ -17,23 +25,18 @@ import (
 	"go.uber.org/zap"
 	"gonum.org/v1/gonum/stat"
 	"gonum.org/v1/gonum/stat/distuv"
-	"io/ioutil"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
-	"net/http"
-	"net/url"
-	"sync"
-	"time"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	connectivityCheckRate                  = time.Second / 100
 	connectivityCheckProxyPort             = 8899
 	connectivityCheckUniformDistributionSL = 0.001 // Significance level that traffic to targets are uniform distributed.
-	appMeshOperationRate                   = time.Second * 2
 )
 
 // A dynamic generated stack designed to test app mesh integration :D
@@ -98,15 +101,16 @@ type DynamicStack struct {
 	ConnectivityCheckPerURL int
 
 	// ====== runtime variables ======
-	mesh              *appmeshv1beta1.Mesh
+	mesh              *appmesh.Mesh
 	namespace         *corev1.Namespace
 	cloudMapNamespace string
 
-	createdNodeVNs  []*appmeshv1beta1.VirtualNode
+	createdNodeVNs  []*appmesh.VirtualNode
 	createdNodeDPs  []*appsv1.Deployment
 	createdNodeSVCs []*corev1.Service
 
-	createdServiceVSs  []*appmeshv1beta1.VirtualService
+	createdServiceVSs  []*appmesh.VirtualService
+	createdServiceVRs  []*appmesh.VirtualRouter
 	createdServiceSVCs []*corev1.Service
 }
 
@@ -117,7 +121,6 @@ func (s *DynamicStack) Deploy(ctx context.Context, f *framework.Framework) {
 		s.createCloudMapNamespace(ctx, f)
 	}
 	mb := &shared.ManifestBuilder{
-		MeshName:             s.mesh.Name,
 		Namespace:            s.namespace.Name,
 		ServiceDiscoveryType: s.ServiceDiscoveryType,
 		CloudMapNamespace:    s.cloudMapNamespace,
@@ -155,21 +158,26 @@ func (s *DynamicStack) Cleanup(ctx context.Context, f *framework.Framework) {
 
 // Check connectivity and routing works correctly
 func (s *DynamicStack) Check(ctx context.Context, f *framework.Framework) {
-	vsByName := make(map[string]*appmeshv1beta1.VirtualService)
+	// TODO: we can just record the mapping when allocate vn->vs, instead of re-compute it here
+	vsIndexByKey := make(map[types.NamespacedName]int, len(s.createdServiceVSs))
 	for i := 0; i != s.VirtualServicesCount; i++ {
-		vs := s.createdServiceVSs[i]
-		vsByName[vs.Name] = vs
+		vsKey := k8s.NamespacedName(s.createdServiceVSs[i])
+		vsIndexByKey[vsKey] = i
 	}
 
 	var checkErrors []error
 	for i := 0; i != s.VirtualNodesCount; i++ {
 		dp := s.createdNodeDPs[i]
 		vn := s.createdNodeVNs[i]
-		var vsList []*appmeshv1beta1.VirtualService
+
+		vsIndexes := sets.NewInt()
 		for _, backend := range vn.Spec.Backends {
-			vsList = append(vsList, vsByName[backend.VirtualService.VirtualServiceName])
+			vsKey := references.ObjectKeyForVirtualServiceReference(vn, backend.VirtualService.VirtualServiceRef)
+			vsIndex := vsIndexByKey[vsKey]
+			vsIndexes.Insert(vsIndex)
 		}
-		if errs := s.checkDeploymentToVirtualServiceConnectivity(ctx, f, vn, dp, vsList); len(errs) != 0 {
+
+		if errs := s.checkDeploymentToVirtualServiceConnectivity(ctx, f, dp, vsIndexes); len(errs) != 0 {
 			checkErrors = append(checkErrors, errs...)
 		}
 	}
@@ -182,12 +190,19 @@ func (s *DynamicStack) Check(ctx context.Context, f *framework.Framework) {
 func (s *DynamicStack) createMeshAndNamespace(ctx context.Context, f *framework.Framework) {
 	By("create a mesh", func() {
 		meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
-		mesh, err := f.K8sMeshClient.AppmeshV1beta1().Meshes().Create(&appmeshv1beta1.Mesh{
+		mesh := &appmesh.Mesh{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: meshName,
 			},
-			Spec: appmeshv1beta1.MeshSpec{},
-		})
+			Spec: appmesh.MeshSpec{
+				NamespaceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"mesh": meshName,
+					},
+				},
+			},
+		}
+		err := f.K8sClient.Create(ctx, mesh)
 		Expect(err).NotTo(HaveOccurred())
 		s.mesh = mesh
 	})
@@ -205,15 +220,13 @@ func (s *DynamicStack) createMeshAndNamespace(ctx context.Context, f *framework.
 	})
 
 	By("label namespace with appMesh inject", func() {
-		namespace := s.namespace.DeepCopy()
-		namespace.Labels = collection.MergeStringMap(s.namespace.Labels, map[string]string{
+		oldNS := s.namespace.DeepCopy()
+		s.namespace.Labels = algorithm.MergeStringMap(map[string]string{
 			"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
-		})
-		patch, err := k8s.CreateStrategicTwoWayMergePatch(s.namespace, namespace, corev1.Namespace{})
+			"mesh":                                   s.mesh.Name,
+		}, s.namespace.Labels)
+		err := f.K8sClient.Patch(ctx, s.namespace, client.MergeFrom(oldNS))
 		Expect(err).NotTo(HaveOccurred())
-		namespace, err = f.K8sClient.CoreV1().Namespaces().Patch(namespace.Name, types.StrategicMergePatchType, patch)
-		Expect(err).NotTo(HaveOccurred())
-		s.namespace = namespace
 	})
 }
 
@@ -221,11 +234,8 @@ func (s *DynamicStack) deleteMeshAndNamespace(ctx context.Context, f *framework.
 	var deletionErrors []error
 	if s.namespace != nil {
 		By(fmt.Sprintf("delete namespace: %s", s.namespace.Name), func() {
-			foregroundDeletion := metav1.DeletePropagationForeground
-			if err := f.K8sClient.CoreV1().Namespaces().Delete(s.namespace.Name, &metav1.DeleteOptions{
-				GracePeriodSeconds: aws.Int64(0),
-				PropagationPolicy:  &foregroundDeletion,
-			}); err != nil {
+			if err := f.K8sClient.Delete(ctx, s.namespace,
+				client.PropagationPolicy(metav1.DeletePropagationForeground), client.GracePeriodSeconds(0)); err != nil {
 				f.Logger.Error("failed to delete namespace",
 					zap.String("namespace", s.namespace.Name),
 					zap.Error(err))
@@ -246,11 +256,8 @@ func (s *DynamicStack) deleteMeshAndNamespace(ctx context.Context, f *framework.
 
 	if s.mesh != nil {
 		By(fmt.Sprintf("delete mesh %s", s.mesh.Name), func() {
-			foregroundDeletion := metav1.DeletePropagationForeground
-			if err := f.K8sMeshClient.AppmeshV1beta1().Meshes().Delete(s.mesh.Name, &metav1.DeleteOptions{
-				GracePeriodSeconds: aws.Int64(0),
-				PropagationPolicy:  &foregroundDeletion,
-			}); err != nil {
+			if err := f.K8sClient.Delete(ctx, s.mesh,
+				client.PropagationPolicy(metav1.DeletePropagationForeground), client.GracePeriodSeconds(0)); err != nil {
 				f.Logger.Error("failed to delete mesh",
 					zap.String("mesh", s.mesh.Name),
 					zap.Error(err))
@@ -388,34 +395,30 @@ func (s *DynamicStack) deleteCloudMapNamespace(ctx context.Context, f *framework
 }
 
 func (s *DynamicStack) createResourcesForNodes(ctx context.Context, f *framework.Framework, mb *shared.ManifestBuilder) {
-	throttle := time.Tick(appMeshOperationRate)
 	By("create all resources for nodes", func() {
-		s.createdNodeVNs = make([]*appmeshv1beta1.VirtualNode, s.VirtualNodesCount)
+		s.createdNodeVNs = make([]*appmesh.VirtualNode, s.VirtualNodesCount)
 		s.createdNodeDPs = make([]*appsv1.Deployment, s.VirtualNodesCount)
 		s.createdNodeSVCs = make([]*corev1.Service, s.VirtualNodesCount)
 
-		var err error
 		for i := 0; i != s.VirtualNodesCount; i++ {
 			instanceName := fmt.Sprintf("node-%d", i)
 			By(fmt.Sprintf("create VirtualNode for node #%d", i), func() {
 				vn := mb.BuildNodeVirtualNode(instanceName, nil)
-
-				<-throttle
-				vn, err = f.K8sMeshClient.AppmeshV1beta1().VirtualNodes(s.namespace.Name).Create(vn)
+				err := f.K8sClient.Create(ctx, vn)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdNodeVNs[i] = vn
 			})
 
 			By(fmt.Sprintf("create Deployment for node #%d", i), func() {
 				dp := mb.BuildNodeDeployment(instanceName, s.ReplicasPerVirtualNode)
-				dp, err = f.K8sClient.AppsV1().Deployments(s.namespace.Name).Create(dp)
+				err := f.K8sClient.Create(ctx, dp)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdNodeDPs[i] = dp
 			})
 
 			By(fmt.Sprintf("create Service for node #%d", i), func() {
 				svc := mb.BuildNodeService(instanceName)
-				svc, err := f.K8sClient.CoreV1().Services(s.namespace.Name).Create(svc)
+				err := f.K8sClient.Create(ctx, svc)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdNodeSVCs[i] = svc
 			})
@@ -476,7 +479,6 @@ func (s *DynamicStack) createResourcesForNodes(ctx context.Context, f *framework
 }
 
 func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework.Framework) []error {
-	throttle := time.Tick(appMeshOperationRate)
 	var deletionErrors []error
 	By("delete all resources for nodes", func() {
 		for i, svc := range s.createdNodeSVCs {
@@ -484,7 +486,7 @@ func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework
 				continue
 			}
 			By(fmt.Sprintf("delete Service for node #%d", i), func() {
-				if err := f.K8sClient.CoreV1().Services(svc.Namespace).Delete(svc.Name, &metav1.DeleteOptions{}); err != nil {
+				if err := f.K8sClient.Delete(ctx, svc); err != nil {
 					f.Logger.Error("failed to delete Service",
 						zap.String("namespace", svc.Namespace),
 						zap.String("name", svc.Name),
@@ -499,11 +501,8 @@ func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework
 				continue
 			}
 			By(fmt.Sprintf("delete Deployment for node #%d", i), func() {
-				foregroundDeletion := metav1.DeletePropagationForeground
-				if err := f.K8sClient.AppsV1().Deployments(dp.Namespace).Delete(dp.Name, &metav1.DeleteOptions{
-					GracePeriodSeconds: aws.Int64(0),
-					PropagationPolicy:  &foregroundDeletion,
-				}); err != nil {
+				if err := f.K8sClient.Delete(ctx, dp,
+					client.PropagationPolicy(metav1.DeletePropagationForeground), client.GracePeriodSeconds(0)); err != nil {
 					f.Logger.Error("failed to delete Deployment",
 						zap.String("namespace", dp.Namespace),
 						zap.String("name", dp.Name),
@@ -518,8 +517,7 @@ func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework
 				continue
 			}
 			By(fmt.Sprintf("delete VirtualNode for node #%d", i), func() {
-				<-throttle
-				if err := f.K8sMeshClient.AppmeshV1beta1().VirtualNodes(vn.Namespace).Delete(vn.Name, &metav1.DeleteOptions{}); err != nil {
+				if err := f.K8sClient.Delete(ctx, vn); err != nil {
 					f.Logger.Error("failed to delete VirtualNode",
 						zap.String("namespace", vn.Namespace),
 						zap.String("name", vn.Name),
@@ -588,24 +586,22 @@ func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework
 }
 
 func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framework.Framework, mb *shared.ManifestBuilder) {
-	throttle := time.Tick(appMeshOperationRate)
-
 	By("create all resources for services", func() {
-		s.createdServiceVSs = make([]*appmeshv1beta1.VirtualService, s.VirtualServicesCount)
+		s.createdServiceVSs = make([]*appmesh.VirtualService, s.VirtualServicesCount)
+		s.createdServiceVRs = make([]*appmesh.VirtualRouter, s.VirtualServicesCount)
 		s.createdServiceSVCs = make([]*corev1.Service, s.VirtualServicesCount)
 
-		var err error
 		nextVirtualNodeIndex := 0
 		for i := 0; i != s.VirtualServicesCount; i++ {
 			instanceName := fmt.Sprintf("service-%d", i)
-			By(fmt.Sprintf("create VirtualService for service #%d", i), func() {
+			By(fmt.Sprintf("create VirtualRouter for service #%d", i), func() {
 				var routeCfgs []shared.RouteToWeightedVirtualNodes
 				for routeIndex := 0; routeIndex != s.RoutesCountPerVirtualRouter; routeIndex++ {
 					var weightedTargets []shared.WeightedVirtualNode
 					for targetIndex := 0; targetIndex != s.TargetsCountPerRoute; targetIndex++ {
 						weightedTargets = append(weightedTargets, shared.WeightedVirtualNode{
-							VirtualNodeName: s.createdNodeVNs[nextVirtualNodeIndex].Name,
-							Weight:          1,
+							VirtualNode: k8s.NamespacedName(s.createdNodeVNs[nextVirtualNodeIndex]),
+							Weight:      1,
 						})
 						nextVirtualNodeIndex = (nextVirtualNodeIndex + 1) % s.VirtualNodesCount
 					}
@@ -614,16 +610,22 @@ func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framew
 						WeightedTargets: weightedTargets,
 					})
 				}
-				vs := mb.BuildServiceVirtualService(instanceName, routeCfgs)
-				<-throttle
-				vs, err := f.K8sMeshClient.AppmeshV1beta1().VirtualServices(s.namespace.Name).Create(vs)
+				vr := mb.BuildServiceVirtualRouter(instanceName, routeCfgs)
+				err := f.K8sClient.Create(ctx, vr)
+				Expect(err).NotTo(HaveOccurred())
+				s.createdServiceVRs[i] = vr
+			})
+
+			By(fmt.Sprintf("create VirtualService for service #%d", i), func() {
+				vs := mb.BuildServiceVirtualService(instanceName)
+				err := f.K8sClient.Create(ctx, vs)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdServiceVSs[i] = vs
 			})
 
 			By(fmt.Sprintf("create Service for service #%d", i), func() {
 				svc := mb.BuildServiceService(instanceName)
-				svc, err = f.K8sClient.CoreV1().Services(s.namespace.Name).Create(svc)
+				err := f.K8sClient.Create(ctx, svc)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdServiceSVCs[i] = svc
 			})
@@ -657,8 +659,6 @@ func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framew
 }
 
 func (s *DynamicStack) deleteResourcesForServices(ctx context.Context, f *framework.Framework) []error {
-	throttle := time.Tick(appMeshOperationRate)
-
 	var deletionErrors []error
 	By("delete all resources for services", func() {
 		for i, svc := range s.createdServiceSVCs {
@@ -667,7 +667,7 @@ func (s *DynamicStack) deleteResourcesForServices(ctx context.Context, f *framew
 			}
 
 			By(fmt.Sprintf("delete Service for service #%d", i), func() {
-				if err := f.K8sClient.CoreV1().Services(svc.Namespace).Delete(svc.Name, &metav1.DeleteOptions{}); err != nil {
+				if err := f.K8sClient.Delete(ctx, svc); err != nil {
 					f.Logger.Error("failed to delete Service",
 						zap.String("namespace", svc.Namespace),
 						zap.String("name", svc.Name),
@@ -682,11 +682,25 @@ func (s *DynamicStack) deleteResourcesForServices(ctx context.Context, f *framew
 				continue
 			}
 			By(fmt.Sprintf("delete VirtualService for service #%d", i), func() {
-				<-throttle
-				if err := f.K8sMeshClient.AppmeshV1beta1().VirtualServices(vs.Namespace).Delete(vs.Name, &metav1.DeleteOptions{}); err != nil {
+				if err := f.K8sClient.Delete(ctx, vs); err != nil {
 					f.Logger.Error("failed to delete VirtualService",
 						zap.String("namespace", vs.Namespace),
 						zap.String("name", vs.Name),
+						zap.Error(err),
+					)
+					deletionErrors = append(deletionErrors, err)
+				}
+			})
+		}
+		for i, vr := range s.createdServiceVRs {
+			if vr == nil {
+				continue
+			}
+			By(fmt.Sprintf("delete VirtualRouter for service #%d", i), func() {
+				if err := f.K8sClient.Delete(ctx, vr); err != nil {
+					f.Logger.Error("failed to delete VirtualRouter",
+						zap.String("namespace", vr.Namespace),
+						zap.String("name", vr.Name),
 						zap.Error(err),
 					)
 					deletionErrors = append(deletionErrors, err)
@@ -720,13 +734,37 @@ func (s *DynamicStack) deleteResourcesForServices(ctx context.Context, f *framew
 			}
 			Expect(len(waitErrors)).To(BeZero())
 		})
+		By("wait all VirtualRouter become deleted", func() {
+			var waitErrors []error
+			waitErrorsMutex := &sync.Mutex{}
+			var wg sync.WaitGroup
+			for i, vr := range s.createdServiceVRs {
+				if vr == nil {
+					continue
+				}
+				wg.Add(1)
+				go func(serviceIndex int) {
+					defer wg.Done()
+					vr := s.createdServiceVRs[serviceIndex]
+					if err := f.VRManager.WaitUntilVirtualRouterDeleted(ctx, vr); err != nil {
+						waitErrorsMutex.Lock()
+						waitErrors = append(waitErrors, errors.Wrapf(err, "VirtualRouter: %v", k8s.NamespacedName(vr).String()))
+						waitErrorsMutex.Unlock()
+						return
+					}
+				}(i)
+			}
+			wg.Wait()
+			for _, waitErr := range waitErrors {
+				f.Logger.Error("failed to wait all VirtualRouter become deleted", zap.Error(waitErr))
+			}
+			Expect(len(waitErrors)).To(BeZero())
+		})
 	})
 	return deletionErrors
 }
 
 func (s *DynamicStack) grantVirtualNodesBackendAccess(ctx context.Context, f *framework.Framework) {
-	throttle := time.Tick(appMeshOperationRate)
-
 	By("granting VirtualNodes backend access", func() {
 		nextVirtualServiceIndex := 0
 		for i, vn := range s.createdNodeVNs {
@@ -734,11 +772,15 @@ func (s *DynamicStack) grantVirtualNodesBackendAccess(ctx context.Context, f *fr
 				continue
 			}
 			By(fmt.Sprintf("granting VirtualNode backend access for node #%d", i), func() {
-				var vnBackends []appmeshv1beta1.Backend
+				var vnBackends []appmesh.Backend
 				for backendIndex := 0; backendIndex != s.BackendsCountPerVirtualNode; backendIndex++ {
-					vnBackends = append(vnBackends, appmeshv1beta1.Backend{
-						VirtualService: appmeshv1beta1.VirtualServiceBackend{
-							VirtualServiceName: s.createdServiceVSs[nextVirtualServiceIndex].Name,
+					vs := s.createdServiceVSs[nextVirtualServiceIndex]
+					vnBackends = append(vnBackends, appmesh.Backend{
+						VirtualService: appmesh.VirtualServiceBackend{
+							VirtualServiceRef: appmesh.VirtualServiceReference{
+								Namespace: aws.String(vs.Namespace),
+								Name:      vs.Name,
+							},
 						},
 					})
 					nextVirtualServiceIndex = (nextVirtualServiceIndex + 1) % s.VirtualServicesCount
@@ -746,10 +788,7 @@ func (s *DynamicStack) grantVirtualNodesBackendAccess(ctx context.Context, f *fr
 
 				vnNew := vn.DeepCopy()
 				vnNew.Spec.Backends = vnBackends
-				patch, err := k8s.CreateJSONMergePatch(vn, vnNew, appmeshv1beta1.VirtualNode{})
-				Expect(err).NotTo(HaveOccurred())
-				<-throttle
-				vnNew, err = f.K8sMeshClient.AppmeshV1beta1().VirtualNodes(vnNew.Namespace).Patch(vnNew.Name, types.MergePatchType, patch)
+				err := f.K8sClient.Patch(ctx, vnNew, client.MergeFrom(vn))
 				Expect(err).NotTo(HaveOccurred())
 				s.createdNodeVNs[i] = vnNew
 			})
@@ -758,8 +797,6 @@ func (s *DynamicStack) grantVirtualNodesBackendAccess(ctx context.Context, f *fr
 }
 
 func (s *DynamicStack) revokeVirtualNodeBackendAccess(ctx context.Context, f *framework.Framework) []error {
-	throttle := time.Tick(appMeshOperationRate)
-
 	var deletionErrors []error
 	By("revoking VirtualNodes backend access", func() {
 		for i, vn := range s.createdNodeVNs {
@@ -769,18 +806,8 @@ func (s *DynamicStack) revokeVirtualNodeBackendAccess(ctx context.Context, f *fr
 			By(fmt.Sprintf("revoking VirtualNode backend access for node #%d", i), func() {
 				vnNew := vn.DeepCopy()
 				vnNew.Spec.Backends = nil
-				patch, err := k8s.CreateJSONMergePatch(vn, vnNew, appmeshv1beta1.VirtualNode{})
-				if err != nil {
-					f.Logger.Error("failed to generate merge patch",
-						zap.String("namespace", vn.Namespace),
-						zap.String("name", vn.Name),
-						zap.Error(err),
-					)
-					deletionErrors = append(deletionErrors, err)
-					return
-				}
-				<-throttle
-				vnNew, err = f.K8sMeshClient.AppmeshV1beta1().VirtualNodes(vnNew.Namespace).Patch(vnNew.Name, types.MergePatchType, patch)
+
+				err := f.K8sClient.Patch(ctx, vnNew, client.MergeFrom(vn))
 				if err != nil {
 					f.Logger.Error("failed to revoke VirtualNode backend access",
 						zap.String("namespace", vn.Namespace),
@@ -796,22 +823,22 @@ func (s *DynamicStack) revokeVirtualNodeBackendAccess(ctx context.Context, f *fr
 }
 
 func (s *DynamicStack) checkDeploymentToVirtualServiceConnectivity(ctx context.Context, f *framework.Framework,
-	vn *appmeshv1beta1.VirtualNode, dp *appsv1.Deployment, vsList []*appmeshv1beta1.VirtualService) []error {
+	dp *appsv1.Deployment, vsIndexes sets.Int) []error {
 	sel := labels.Set(dp.Spec.Selector.MatchLabels)
-	opts := metav1.ListOptions{LabelSelector: sel.AsSelector().String()}
-	pods, err := f.K8sClient.CoreV1().Pods(dp.Namespace).List(opts)
+	podList := &corev1.PodList{}
+	err := f.K8sClient.List(ctx, podList, client.InNamespace(dp.Namespace), client.MatchingLabelsSelector{Selector: sel.AsSelector()})
 	if err != nil {
 		return []error{errors.Wrapf(err, "failed to get pods for Deployment: %v", k8s.NamespacedName(dp).String())}
 	}
-	if len(pods.Items) == 0 {
+	if len(podList.Items) == 0 {
 		return []error{errors.Wrapf(err, "Deployment have zero pods: %v", k8s.NamespacedName(dp).String())}
 	}
 
 	var checkErrors []error
-	for i := range pods.Items {
-		pod := pods.Items[i].DeepCopy()
+	for i := range podList.Items {
+		pod := podList.Items[i].DeepCopy()
 		By(fmt.Sprintf("check pod %s/%s connectivity to services", pod.Namespace, pod.Name), func() {
-			if errs := s.checkPodToVirtualServiceConnectivity(ctx, f, vn, pod, vsList); len(errs) != 0 {
+			if errs := s.checkPodToVirtualServiceConnectivity(ctx, f, pod, vsIndexes); len(errs) != 0 {
 				checkErrors = append(checkErrors, errs...)
 			}
 		})
@@ -820,8 +847,8 @@ func (s *DynamicStack) checkDeploymentToVirtualServiceConnectivity(ctx context.C
 }
 
 func (s *DynamicStack) checkPodToVirtualServiceConnectivity(ctx context.Context, f *framework.Framework,
-	vn *appmeshv1beta1.VirtualNode, pod *corev1.Pod, vsList []*appmeshv1beta1.VirtualService) []error {
-	connectivityCheckEntries, err := s.obtainPodToVirtualServiceConnectivityEntries(ctx, f, vn, pod, vsList)
+	pod *corev1.Pod, vsIndexes sets.Int) []error {
+	connectivityCheckEntries, err := s.obtainPodToVirtualServiceConnectivityEntries(ctx, f, pod, vsIndexes)
 	if err != nil {
 		return []error{err}
 	}
@@ -927,17 +954,19 @@ type connectivityCheckEntry struct {
 }
 
 func (s *DynamicStack) obtainPodToVirtualServiceConnectivityEntries(ctx context.Context, f *framework.Framework,
-	vn *appmeshv1beta1.VirtualNode, pod *corev1.Pod, vsList []*appmeshv1beta1.VirtualService) ([]connectivityCheckEntry, error) {
+	pod *corev1.Pod, vsIndexes sets.Int) ([]connectivityCheckEntry, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	var checkEntries []connectivityCheckEntry
-	for _, vs := range vsList {
-		for _, route := range vs.Spec.Routes {
-			path := route.Http.Match.Prefix
+	for vsIndex := range vsIndexes {
+		vs := s.createdServiceVSs[vsIndex]
+		vr := s.createdServiceVRs[vsIndex]
+		for _, route := range vr.Spec.Routes {
+			path := route.HTTPRoute.Match.Prefix
 			checkEntries = append(checkEntries, connectivityCheckEntry{
 				dstVirtualService: k8s.NamespacedName(vs),
-				dstURL:            fmt.Sprintf("http://%s:%d%s", vs.Name, shared.AppContainerPort, path),
+				dstURL:            fmt.Sprintf("http://%s:%d%s", aws.StringValue(vs.Spec.AWSName), shared.AppContainerPort, path),
 			})
 		}
 	}
