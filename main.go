@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualrouter"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
@@ -105,6 +106,9 @@ func main() {
 	vrResManager := virtualrouter.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	msReconciler := appmeshcontroller.NewMeshReconciler(mgr.GetClient(), finalizerManager, meshMembersFinalizer, meshResManager, ctrl.Log.WithName("controllers").WithName("Mesh"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
+	cloudMapEndPointResolver := cloudmap.NewEndPointResolver(mgr.GetClient(), ctrl.Log)
+	cloudMapInstanceResolver := cloudmap.NewCloudMapInstanceResolver(cloud.CloudMap(), ctrl.Log)
+	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), finalizerManager, cloud.CloudMap(), cloudMapEndPointResolver, cloudMapInstanceResolver, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
 	vsReconciler := appmeshcontroller.NewVirtualServiceReconciler(mgr.GetClient(), finalizerManager, vsResManager, ctrl.Log.WithName("controllers").WithName("VirtualService"))
 	vrReconciler := appmeshcontroller.NewVirtualRouterReconciler(mgr.GetClient(), finalizerManager, vrResManager, ctrl.Log.WithName("controllers").WithName("VirtualRouter"))
 	if err = msReconciler.SetupWithManager(mgr); err != nil {
@@ -121,6 +125,10 @@ func main() {
 	}
 	if err = vrReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualRouter")
+		os.Exit(1)
+	}
+	if err = cloudMapReconciler.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "CloudMap")
 		os.Exit(1)
 	}
 

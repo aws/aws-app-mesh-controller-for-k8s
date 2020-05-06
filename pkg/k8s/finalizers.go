@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	FinalizerMeshMembers         = "finalizers.appmesh.k8s.aws/mesh-members"
-	FinalizerAWSAppMeshResources = "finalizers.appmesh.k8s.aws/aws-appmesh-resources"
+	FinalizerMeshMembers          = "finalizers.appmesh.k8s.aws/mesh-members"
+	FinalizerAWSAppMeshResources  = "finalizers.appmesh.k8s.aws/aws-appmesh-resources"
+	FinalizerAWSCloudMapResources = "finalizers.appmesh.k8s.aws/aws-cloudmap-resources"
 )
 
 type APIObject interface {
