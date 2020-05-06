@@ -202,7 +202,7 @@ func (r *cloudMapReconciler) getCloudMapNamespaceFromCache(ctx context.Context,
 }
 
 func (r *cloudMapReconciler) getCloudMapNameSpaceFromAWS(ctx context.Context,
-	key string, cloudMapConfig *appmesh.AWSCloudMapServiceDiscovery) (*cloudMapNamespaceSummary, error) {
+	key string, cloudMapConfig *appmesh.AWSCloudMapServiceDiscovery) (cloudMapNamespaceSummary, error) {
 	listNamespacesInput := &servicediscovery.ListNamespacesInput{}
 	var namespaceSummary cloudMapNamespaceSummary
 
@@ -222,42 +222,37 @@ func (r *cloudMapReconciler) getCloudMapNameSpaceFromAWS(ctx context.Context,
 
 					r.log.V(4).Info("NameSpace found ", "key: ", key, "namespaceID: ", namespaceSummary.NamespaceID)
 					r.nameSpaceIDCache.Add(key, namespaceSummary, cloudMapNamespaceCacheTTL)
-					return true
+					return false
 				}
 			}
-			return false
+			return true
 		},
 	)
 
-	if err != nil {
-		return nil, err
+	if err != nil || namespaceSummary.NamespaceID == "" {
+		return cloudMapNamespaceSummary{}, fmt.Errorf("Namespace not found: %s", cloudMapConfig.NamespaceName)
 	}
 
-	if namespaceSummary.NamespaceID == "" {
-		klog.Infof("No namespace found with name %s", awssdk.StringValue(&cloudMapConfig.NamespaceName))
-		return nil, nil
-	}
-	return &namespaceSummary, err
+	return namespaceSummary, nil
 }
 
 func (r *cloudMapReconciler) getCloudMapNameSpace(ctx context.Context,
 	cloudMapConfig *appmesh.AWSCloudMapServiceDiscovery) (cloudMapNamespaceSummary, error) {
 	key := r.namespaceCacheKey(cloudMapConfig)
+	var namespaceSummary cloudMapNamespaceSummary
+	var err error
 
-	if namespaceSummary, _ := r.getCloudMapNamespaceFromCache(ctx, key); namespaceSummary.NamespaceID != "" {
+	if namespaceSummary, _ = r.getCloudMapNamespaceFromCache(ctx, key); namespaceSummary.NamespaceID != "" {
 		return namespaceSummary, nil
 	}
 
 	//Namespace info missing in Cache. Reach out to AWS Cloudmap for relevant info.
-	namespaceItem, err := r.getCloudMapNameSpaceFromAWS(ctx, key, cloudMapConfig)
+	namespaceSummary, err = r.getCloudMapNameSpaceFromAWS(ctx, key, cloudMapConfig)
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == servicediscovery.ErrCodeNamespaceNotFound {
-			//Don't log an error if namespace is missing. We will retry forever.
-			return cloudMapNamespaceSummary{}, nil
-		}
 		return cloudMapNamespaceSummary{}, err
 	}
-	return *namespaceItem, err
+
+	return namespaceSummary, nil
 }
 
 func (r *cloudMapReconciler) getCloudMapServiceFromCache(ctx context.Context,
