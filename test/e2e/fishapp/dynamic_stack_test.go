@@ -55,7 +55,7 @@ var _ = Describe("test dynamically generated symmetrical mesh", func() {
 			}
 		})
 
-		for _, sdType := range []shared.ServiceDiscoveryType{shared.DNSServiceDiscovery} {
+		for _, sdType := range []shared.ServiceDiscoveryType{shared.DNSServiceDiscovery, shared.CloudMapServiceDiscovery} {
 			func(sdType shared.ServiceDiscoveryType) {
 				It(fmt.Sprintf("should behaves correctly with service discovery type %v", sdType), func() {
 					stackPrototype.ServiceDiscoveryType = sdType
