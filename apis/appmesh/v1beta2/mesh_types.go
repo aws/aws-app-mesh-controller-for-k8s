@@ -68,7 +68,9 @@ type MeshSpec struct {
 	// +optional
 	AWSName *string `json:"awsName,omitempty"`
 	// NamespaceSelector selects Namespaces using labels to designate mesh membership.
-	// This field follows standard label selector semantics; if present but empty, it selects all namespaces.
+	// This field follows standard label selector semantics:
+	//	if present but empty, it selects all namespaces.
+	// 	if absent, it selects no namespace.
 	// +optional
 	NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector,omitempty"`
 	// The egress filter rules for the service mesh.
