@@ -234,7 +234,7 @@ func (m *cloudMapResourceManager) getCloudMapServiceDetails(ctx context.Context,
 
 	serviceDetails, err := m.cloudMapSDK.GetServiceWithContext(ctx, getServiceInput)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	return serviceDetails, nil
 }
