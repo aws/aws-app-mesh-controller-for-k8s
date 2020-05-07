@@ -417,7 +417,7 @@ func (m *cloudMapResourceManager) deleteCloudMapService(ctx context.Context, vNo
 		return err
 	}
 
-	if *(serviceDetails.Service.CreatorRequestId) == string(vNode.UID) {
+	if serviceDetails.Service.CreatorRequestId != nil && *(serviceDetails.Service.CreatorRequestId) == string(vNode.UID) {
 		if err := m.deleteAWSCloudMapService(ctx, serviceSummary.ServiceID, serviceSummary.NamespaceID, cloudMapConfig); err != nil {
 			m.log.Error(err, "Delete from CloudMap failed for: ", "Service: ", cloudMapConfig.ServiceName)
 			return err
