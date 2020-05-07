@@ -228,6 +228,17 @@ func (m *cloudMapResourceManager) getCloudMapServiceFromAWS(ctx context.Context,
 	return svcSummary, err
 }
 
+func (m *cloudMapResourceManager) getCloudMapServiceDetails(ctx context.Context,
+	serviceID string) (*servicediscovery.GetServiceOutput, error) {
+	getServiceInput := &servicediscovery.GetServiceInput{Id: awssdk.String(serviceID)}
+
+	serviceDetails, err := m.cloudMapSDK.GetServiceWithContext(ctx, getServiceInput)
+	if err != nil {
+		return nil, nil
+	}
+	return serviceDetails, nil
+}
+
 func (m *cloudMapResourceManager) getCloudMapService(ctx context.Context,
 	cloudMapConfig *appmesh.AWSCloudMapServiceDiscovery) (*cloudMapServiceSummary, error) {
 	key := m.serviceCacheKey(cloudMapConfig)
@@ -400,9 +411,18 @@ func (m *cloudMapResourceManager) deleteCloudMapService(ctx context.Context, vNo
 		return nil
 	}
 
-	if err := m.deleteAWSCloudMapService(ctx, serviceSummary.ServiceID, serviceSummary.NamespaceID, cloudMapConfig); err != nil {
-		m.log.Error(err, "Delete from CloudMap failed for: ", "Service: ", cloudMapConfig.ServiceName)
+	//Get service details
+	serviceDetails, err := m.getCloudMapServiceDetails(ctx, serviceSummary.ServiceID)
+	if err != nil {
+		m.log.Error(err, "Coudln't get attributes for", "Service: ", serviceSummary.ServiceID)
 		return err
+	}
+
+	if *(serviceDetails.Service.CreatorRequestId) == string(vNode.UID) {
+		if err := m.deleteAWSCloudMapService(ctx, serviceSummary.ServiceID, serviceSummary.NamespaceID, cloudMapConfig); err != nil {
+			m.log.Error(err, "Delete from CloudMap failed for: ", "Service: ", cloudMapConfig.ServiceName)
+			return err
+		}
 	}
 
 	if err := m.deleteCloudMapServiceFromCache(ctx, cloudMapConfig); err != nil {
