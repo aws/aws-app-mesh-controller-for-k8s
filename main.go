@@ -62,7 +62,7 @@ func init() {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
-	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&metricsAddr, "metrics-addr", "0.0.0.0:8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -135,7 +135,7 @@ func main() {
 
 	meshMembershipDesignator := mesh.NewMembershipDesignator(mgr.GetClient())
 	vnMembershipDesignator := virtualnode.NewMembershipDesignator(mgr.GetClient())
-	sidecarInjector := inject.NewSidecarInjector(injectConfig, cloud.Region())
+	sidecarInjector := inject.NewSidecarInjector(injectConfig, cloud.Region(), mgr.GetClient(), referencesResolver, vnMembershipDesignator)
 	appmeshwebhook.NewMeshMutator().SetupWithManager(mgr)
 	appmeshwebhook.NewMeshValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualNodeMutator(meshMembershipDesignator).SetupWithManager(mgr)
@@ -144,7 +144,7 @@ func main() {
 	appmeshwebhook.NewVirtualServiceValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualRouterMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualRouterValidator().SetupWithManager(mgr)
-	corewebhook.NewPodMutator(referencesResolver, vnMembershipDesignator, sidecarInjector).SetupWithManager(mgr)
+	corewebhook.NewPodMutator(sidecarInjector).SetupWithManager(mgr)
 
 	if err = (&appmeshcontroller.VirtualGatewayReconciler{
 		Client: mgr.GetClient(),

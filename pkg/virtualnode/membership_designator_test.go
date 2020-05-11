@@ -36,7 +36,7 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 			Namespace: testNS.Name,
 			Name:      "vn-with-empty-pod-selector",
 		},
-		Spec:   appmesh.VirtualNodeSpec{
+		Spec: appmesh.VirtualNodeSpec{
 			PodSelector: &metav1.LabelSelector{},
 		},
 		Status: appmesh.VirtualNodeStatus{},

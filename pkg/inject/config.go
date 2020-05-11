@@ -6,9 +6,8 @@ import (
 )
 
 const (
-	flagEnableSidecarInjectorWebhook = "enable-sidecar-injector-webhook"
-	flagEnableIAMForServiceAccounts  = "enable-iam-for-service-accounts"
-	flagEnableECRSecret              = "enable-ecr-secret"
+	flagEnableIAMForServiceAccounts = "enable-iam-for-service-accounts"
+	flagEnableECRSecret             = "enable-ecr-secret"
 
 	flagSidecarImage          = "sidecar-image"
 	flagSidecarCpuRequests    = "sidecar-cpu-requests"
@@ -31,8 +30,6 @@ const (
 )
 
 type Config struct {
-	// whether enable pod injection webhook
-	EnableSidecarInjectorWebhook bool
 	// If enabled, an fsGroup: 1337 will be injected in the absence of it within pod securityContext
 	// see https://github.com/aws/amazon-eks-pod-identity-webhook/issues/8 for more details
 	EnableIAMForServiceAccounts bool
@@ -72,8 +69,6 @@ func multipleTracer(config *Config) bool {
 }
 
 func (cfg *Config) BindFlags() {
-	flag.BoolVar(&cfg.EnableSidecarInjectorWebhook, flagEnableSidecarInjectorWebhook, true,
-		`If enabled, sidecars will be injected in the absence of the corresponding pod annotation`)
 	flag.BoolVar(&cfg.EnableIAMForServiceAccounts, flagEnableIAMForServiceAccounts, true,
 		`If enabled, a fsGroup: 1337 will be injected in the absence of it within pod securityContext`)
 	flag.BoolVar(&cfg.EnableECRSecret, flagEnableECRSecret, false,
