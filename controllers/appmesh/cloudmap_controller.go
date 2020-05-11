@@ -51,6 +51,7 @@ func NewCloudMapReconciler(k8sClient client.Client, finalizerManager k8s.Finaliz
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes,verbs=get;list;watch
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes/status,verbs=get
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=pods/status,verbs=get;update;patch
 
 func (r *cloudMapReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return runtime.HandleReconcileError(r.reconcile(req), r.log)
@@ -58,6 +59,7 @@ func (r *cloudMapReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 func (r *cloudMapReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		Named("cloudMap").
 		For(&appmesh.VirtualNode{}).
 		Watches(&source.Kind{Type: &corev1.Pod{}}, r.enqueueRequestsForPodEvents).
 		Complete(r)
@@ -78,18 +80,10 @@ func (r *cloudMapReconciler) reconcile(req ctrl.Request) error {
 }
 
 func (r *cloudMapReconciler) reconcileVirtualNodeWithCloudMap(ctx context.Context, vNode *appmesh.VirtualNode) error {
-
-	if !cloudmap.IsCloudMapEnabledForVirtualNode(vNode) {
-		r.log.V(1).Info("CloudMap not enabled for", " virtualNode: %s", vNode.Name)
+	if vNode.Spec.ServiceDiscovery == nil || vNode.Spec.ServiceDiscovery.AWSCloudMap == nil {
 		return nil
 	}
-	if !cloudmap.IsPodSelectorDefinedForVirtualNode(vNode) {
-		r.log.V(1).Info("PodSelector not defined for", "virtualNode: %s", vNode.Name)
-		return nil
-	}
-
 	if err := r.finalizerManager.AddFinalizers(ctx, vNode, k8s.FinalizerAWSCloudMapResources); err != nil {
-		r.log.Error(err, "..while adding cloudmap resource finalizer")
 		return err
 	}
 	if err := r.cloudMapResourceManager.Reconcile(ctx, vNode); err != nil {
