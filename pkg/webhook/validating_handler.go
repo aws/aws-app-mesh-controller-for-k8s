@@ -51,7 +51,7 @@ func (h *validatingHandler) handleCreate(ctx context.Context, req admission.Requ
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	if err := h.validator.ValidateCreate(ctx, obj); err != nil {
+	if err := h.validator.ValidateCreate(ContextWithAdmissionRequest(ctx, req), obj); err != nil {
 		return admission.Denied(err.Error())
 	}
 	return admission.Allowed("")
@@ -71,7 +71,7 @@ func (h *validatingHandler) handleUpdate(ctx context.Context, req admission.Requ
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	if err := h.validator.ValidateUpdate(ctx, obj, oldObj); err != nil {
+	if err := h.validator.ValidateUpdate(ContextWithAdmissionRequest(ctx, req), obj, oldObj); err != nil {
 		return admission.Denied(err.Error())
 	}
 	return admission.Allowed("")
@@ -87,7 +87,7 @@ func (h *validatingHandler) handleDelete(ctx context.Context, req admission.Requ
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	if err := h.validator.ValidateDelete(ctx, obj); err != nil {
+	if err := h.validator.ValidateDelete(ContextWithAdmissionRequest(ctx, req), obj); err != nil {
 		return admission.Denied(err.Error())
 	}
 	return admission.Allowed("")

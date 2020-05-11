@@ -1,25 +1,31 @@
 package inject
 
 import (
+	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
+	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	testclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 	"testing"
 )
 
 func getConfig(fp func(Config) Config) Config {
 	conf := Config{
-		IgnoredIPs:                   "169.254.169.254",
-		LogLevel:                     "debug",
-		Preview:                      false,
-		SidecarImage:                 "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:latest",
-		InitImage:                    "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
-		EnableSidecarInjectorWebhook: true,
-		SidecarMemory:                "32Mi",
-		SidecarCpu:                   "10m",
-		EnableIAMForServiceAccounts:  true,
+		IgnoredIPs:                  "169.254.169.254",
+		LogLevel:                    "debug",
+		Preview:                     false,
+		SidecarImage:                "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:latest",
+		InitImage:                   "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
+		SidecarMemory:               "32Mi",
+		SidecarCpu:                  "10m",
+		EnableIAMForServiceAccounts: true,
 	}
 	if fp != nil {
 		conf = fp(conf)
@@ -143,23 +149,6 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 			},
 		},
 		{
-			name: "Disable sidecar inject",
-			conf: getConfig(nil),
-			args: args{
-				ms: getMesh(),
-				vn: getVn(nil),
-				pod: getPod(map[string]string{
-					AppMeshSidecarInjectAnnotation: "disabled",
-				}),
-			},
-			want: expected{
-				init:       0,
-				containers: 1,
-				xray:       false,
-				proxyinit:  false,
-			},
-		},
-		{
 			name: "AppMesh CNI Enabled",
 			conf: getConfig(nil),
 			args: args{
@@ -239,9 +228,9 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			inj := NewSidecarInjector(tt.conf, "us-west-2")
+			inj := NewSidecarInjector(tt.conf, "us-west-2", nil, nil, nil)
 			pod := tt.args.pod
-			inj.InjectAppMeshPatches(tt.args.ms, tt.args.vn, pod)
+			inj.injectAppMeshPatches(tt.args.ms, tt.args.vn, pod)
 			assert.Equal(t, tt.want.init, len(pod.Spec.InitContainers), "Numbers of init containers mismatch")
 			assert.Equal(t, tt.want.containers, len(pod.Spec.Containers), "Numbers of containers mismatch")
 			if tt.want.xray {
@@ -261,6 +250,174 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 					}
 				}
 				assert.True(t, found, "Proxyinit container not found")
+			}
+		})
+	}
+}
+
+func TestSidecarInjector_determineSidecarInjectMode(t *testing.T) {
+	nsEnabledSidecarInject := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "awesome-ns",
+			Annotations: map[string]string{
+				"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
+			},
+		},
+	}
+	nsDisabledSidecarInject := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "awesome-ns",
+			Annotations: map[string]string{
+				"appmesh.k8s.aws/sidecarInjectorWebhook": "disabled",
+			},
+		},
+	}
+	nsUnspecifiedSidecarInject := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "awesome-ns",
+			Annotations: map[string]string{},
+		},
+	}
+	podEnabledSidecarInject := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "awesome-ns",
+			Name:      "my-pod",
+			Annotations: map[string]string{
+				"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
+			},
+		},
+	}
+	podDisabledSidecarInject := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "awesome-ns",
+			Name:      "my-pod",
+			Annotations: map[string]string{
+				"appmesh.k8s.aws/sidecarInjectorWebhook": "disabled",
+			},
+		},
+	}
+	podUnspecifiedSidecarInject := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:   "awesome-ns",
+			Name:        "my-pod",
+			Annotations: map[string]string{},
+		},
+	}
+	// see https://github.com/kubernetes/kubernetes/issues/76680
+	podWithUnspecifiedNameAndNamespace := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{},
+		},
+	}
+
+	type env struct {
+		namespaces []*corev1.Namespace
+	}
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name    string
+		env     env
+		args    args
+		want    sidecarInjectMode
+		wantErr error
+	}{
+		{
+			name: "when pod enable sidecar inject",
+			env: env{
+				namespaces: []*corev1.Namespace{nsUnspecifiedSidecarInject},
+			},
+			args: args{
+				pod: podEnabledSidecarInject,
+			},
+			want: sidecarInjectModeEnabled,
+		},
+		{
+			name: "when pod disable sidecar inject",
+			env: env{
+				namespaces: []*corev1.Namespace{nsUnspecifiedSidecarInject},
+			},
+			args: args{
+				pod: podDisabledSidecarInject,
+			},
+			want: sidecarInjectModeDisabled,
+		},
+		{
+			name: "when pod unspecified sidecar inject",
+			env: env{
+				namespaces: []*corev1.Namespace{nsUnspecifiedSidecarInject},
+			},
+			args: args{
+				pod: podUnspecifiedSidecarInject,
+			},
+			want: sidecarInjectModeUnspecified,
+		},
+		{
+			name: "when pod namespace enabled sidecar inject - case 1",
+			env: env{
+				namespaces: []*corev1.Namespace{nsEnabledSidecarInject},
+			},
+			args: args{
+				pod: podUnspecifiedSidecarInject,
+			},
+			want: sidecarInjectModeEnabled,
+		},
+		{
+			name: "when pod namespace enabled sidecar inject - case 2",
+			env: env{
+				namespaces: []*corev1.Namespace{nsEnabledSidecarInject},
+			},
+			args: args{
+				pod: podWithUnspecifiedNameAndNamespace,
+			},
+			want: sidecarInjectModeEnabled,
+		},
+		{
+			name: "when pod namespace disabled sidecar inject",
+			env: env{
+				namespaces: []*corev1.Namespace{nsDisabledSidecarInject},
+			},
+			args: args{
+				pod: podUnspecifiedSidecarInject,
+			},
+			want: sidecarInjectModeDisabled,
+		},
+		{
+			name: "when pod namespace unspecified sidecar inject",
+			env: env{
+				namespaces: []*corev1.Namespace{nsUnspecifiedSidecarInject},
+			},
+			args: args{
+				pod: podUnspecifiedSidecarInject,
+			},
+			want: sidecarInjectModeUnspecified,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			k8sSchema := runtime.NewScheme()
+			clientgoscheme.AddToScheme(k8sSchema)
+			appmesh.AddToScheme(k8sSchema)
+			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			m := &SidecarInjector{
+				k8sClient: k8sClient,
+			}
+
+			for _, ns := range tt.env.namespaces {
+				err := k8sClient.Create(ctx, ns.DeepCopy())
+				assert.NoError(t, err)
+			}
+			ctx = webhook.ContextWithAdmissionRequest(ctx, admission.Request{
+				AdmissionRequest: admissionv1beta1.AdmissionRequest{Namespace: "awesome-ns"},
+			})
+			got, err := m.determineSidecarInjectMode(ctx, tt.args.pod)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
 			}
 		})
 	}

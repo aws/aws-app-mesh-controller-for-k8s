@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	corev1 "k8s.io/api/core/v1"
-	"strings"
 	"text/template"
 )
 
@@ -42,13 +41,6 @@ func escapeYaml(yaml string) (string, error) {
 		s = s[:len(s)-1]
 	}
 	return s, nil
-}
-
-func shouldInject(defaultShouldInject bool, pod *corev1.Pod) bool {
-	if v, ok := pod.ObjectMeta.Annotations[AppMeshSidecarInjectAnnotation]; ok {
-		return strings.ToLower(v) == "enabled"
-	}
-	return defaultShouldInject
 }
 
 func getSidecarCPURequest(defaultCPURequest string, pod *corev1.Pod) string {

@@ -50,7 +50,7 @@ func (h *mutatingHandler) handleCreate(ctx context.Context, req admission.Reques
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	mutatedObj, err := h.mutator.MutateCreate(ctx, obj)
+	mutatedObj, err := h.mutator.MutateCreate(ContextWithAdmissionRequest(ctx, req), obj)
 	if err != nil {
 		return admission.Denied(err.Error())
 	}
@@ -75,7 +75,7 @@ func (h *mutatingHandler) handleUpdate(ctx context.Context, req admission.Reques
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	mutatedObj, err := h.mutator.MutateUpdate(ctx, obj, oldObj)
+	mutatedObj, err := h.mutator.MutateUpdate(ContextWithAdmissionRequest(ctx, req), obj, oldObj)
 	if err != nil {
 		return admission.Denied(err.Error())
 	}
