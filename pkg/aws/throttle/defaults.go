@@ -35,7 +35,17 @@ func NewDefaultServiceOperationsThrottleConfig() *ServiceOperationsThrottleConfi
 					burst:        8,
 				},
 				{
+					operationPtn: regexp.MustCompile("^GetService"),
+					r:            rate.Limit(4),
+					burst:        40,
+				},
+				{
 					operationPtn: regexp.MustCompile("^CreateService"),
+					r:            rate.Limit(8),
+					burst:        80,
+				},
+				{
+					operationPtn: regexp.MustCompile("^DeleteService"),
 					r:            rate.Limit(8),
 					burst:        80,
 				},
@@ -45,8 +55,28 @@ func NewDefaultServiceOperationsThrottleConfig() *ServiceOperationsThrottleConfi
 					burst:        400,
 				},
 				{
-					operationPtn: regexp.MustCompile("^RegisterInstance|DeregisterInstance"),
+					operationPtn: regexp.MustCompile("^RegisterInstance"),
 					r:            rate.Limit(4),
+					burst:        80,
+				},
+				{
+					operationPtn: regexp.MustCompile("^DeregisterInstance"),
+					r:            rate.Limit(4),
+					burst:        80,
+				},
+				{
+					operationPtn: regexp.MustCompile("^GetOperation"),
+					r:            rate.Limit(4),
+					burst:        40,
+				},
+				{
+					operationPtn: regexp.MustCompile("^UpdateInstanceCustomHealthStatus"),
+					r:            rate.Limit(240),
+					burst:        240,
+				},
+				{
+					operationPtn: regexp.MustCompile("^DiscoverInstances"),
+					r:            rate.Limit(400),
 					burst:        80,
 				},
 			},
