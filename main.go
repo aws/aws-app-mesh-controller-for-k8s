@@ -99,6 +99,7 @@ func main() {
 	}
 
 	stopChan := ctrl.SetupSignalHandler()
+	referencesIndexer := references.NewDefaultObjectReferenceIndexer(mgr.GetCache(), mgr.GetFieldIndexer())
 	finalizerManager := k8s.NewDefaultFinalizerManager(mgr.GetClient(), ctrl.Log)
 	meshMembersFinalizer := mesh.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("mesh-members"), ctrl.Log)
 	referencesResolver := references.NewDefaultResolver(mgr.GetClient(), ctrl.Log)
@@ -114,8 +115,8 @@ func main() {
 	msReconciler := appmeshcontroller.NewMeshReconciler(mgr.GetClient(), finalizerManager, meshMembersFinalizer, meshResManager, ctrl.Log.WithName("controllers").WithName("Mesh"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
 	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), finalizerManager, cloudMapResManager, ctrl.Log.WithName("controllers").WithName("CloudMap"))
-	vsReconciler := appmeshcontroller.NewVirtualServiceReconciler(mgr.GetClient(), finalizerManager, vsResManager, ctrl.Log.WithName("controllers").WithName("VirtualService"))
-	vrReconciler := appmeshcontroller.NewVirtualRouterReconciler(mgr.GetClient(), finalizerManager, vrResManager, ctrl.Log.WithName("controllers").WithName("VirtualRouter"))
+	vsReconciler := appmeshcontroller.NewVirtualServiceReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vsResManager, ctrl.Log.WithName("controllers").WithName("VirtualService"))
+	vrReconciler := appmeshcontroller.NewVirtualRouterReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vrResManager, ctrl.Log.WithName("controllers").WithName("VirtualRouter"))
 	if err = msReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Mesh")
 		os.Exit(1)

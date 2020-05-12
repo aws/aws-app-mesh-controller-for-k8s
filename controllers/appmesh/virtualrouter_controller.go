@@ -19,9 +19,11 @@ package controllers
 import (
 	"context"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualrouter"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -31,24 +33,28 @@ import (
 )
 
 // NewVirtualRouterReconciler constructs new virtualRouterReconciler
-func NewVirtualRouterReconciler(k8sClient client.Client, finalizerManager k8s.FinalizerManager, vrResManager virtualrouter.ResourceManager, log logr.Logger) *virtualRouterReconciler {
+func NewVirtualRouterReconciler(k8sClient client.Client, finalizerManager k8s.FinalizerManager, referencesIndexer references.ObjectReferenceIndexer, vrResManager virtualrouter.ResourceManager, log logr.Logger) *virtualRouterReconciler {
 	return &virtualRouterReconciler{
-		k8sClient:                    k8sClient,
-		finalizerManager:             finalizerManager,
-		vrResManager:                 vrResManager,
-		enqueueRequestsForMeshEvents: virtualrouter.NewEnqueueRequestsForMeshEvents(k8sClient, log),
-		log:                          log,
+		k8sClient:                           k8sClient,
+		finalizerManager:                    finalizerManager,
+		referencesIndexer:                   referencesIndexer,
+		vrResManager:                        vrResManager,
+		enqueueRequestsForMeshEvents:        virtualrouter.NewEnqueueRequestsForMeshEvents(k8sClient, log),
+		enqueueRequestsForVirtualNodeEvents: virtualrouter.NewEnqueueRequestsForVirtualNodeEvents(referencesIndexer, log),
+		log:                                 log,
 	}
 }
 
 // virtualRouterReconciler reconciles a VirtualRouter object
 type virtualRouterReconciler struct {
-	k8sClient        client.Client
-	finalizerManager k8s.FinalizerManager
-	vrResManager     virtualrouter.ResourceManager
+	k8sClient         client.Client
+	finalizerManager  k8s.FinalizerManager
+	referencesIndexer references.ObjectReferenceIndexer
+	vrResManager      virtualrouter.ResourceManager
 
-	enqueueRequestsForMeshEvents handler.EventHandler
-	log                          logr.Logger
+	enqueueRequestsForMeshEvents        handler.EventHandler
+	enqueueRequestsForVirtualNodeEvents handler.EventHandler
+	log                                 logr.Logger
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualrouters,verbs=get;list;watch;create;update;patch;delete
@@ -59,8 +65,15 @@ func (r *virtualRouterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 }
 
 func (r *virtualRouterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if err := r.referencesIndexer.Setup(&appmesh.VirtualRouter{}, map[string]references.ObjectReferenceIndexFunc{
+		virtualrouter.ReferenceKindVirtualNode: virtualrouter.VirtualNodeReferenceIndexFunc,
+	}); err != nil {
+		return err
+	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appmesh.VirtualRouter{}).
+		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
+		Watches(&source.Kind{Type: &appmesh.VirtualNode{}}, r.enqueueRequestsForVirtualNodeEvents).
 		Complete(r)
 }
 
