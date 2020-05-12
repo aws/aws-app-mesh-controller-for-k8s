@@ -79,7 +79,7 @@ type instanceProbeEntry struct {
 }
 
 func (p *defaultInstancesHealthProber) SubmitProbe(ctx context.Context, serviceID string, instances []InstanceProbe) error {
-	instancesToProbe := p.filterUnhealthyInstances(instances)
+	instancesToProbe := filterInstancesBlockedByCMHealthyReadinessGate(instances)
 	config := probeConfig{
 		serviceID: serviceID,
 		instances: instancesToProbe,
@@ -196,8 +196,8 @@ func (p *defaultInstancesHealthProber) updateInstanceProbeEntry(ctx context.Cont
 	return podHealthyConditionStatus != corev1.ConditionTrue, nil
 }
 
-// filterUnhealthyInstances returns unhealthy ones that needs to be probed
-func (p *defaultInstancesHealthProber) filterUnhealthyInstances(instances []InstanceProbe) []InstanceProbe {
+// filterInstancesBlockedByCMHealthyReadinessGate returns unhealthy ones that needs are blocked by ConditionAWSCloudMapHealthy readinessGate.
+func filterInstancesBlockedByCMHealthyReadinessGate(instances []InstanceProbe) []InstanceProbe {
 	var unhealthyInstances []InstanceProbe
 	for _, instance := range instances {
 		podHealthyCondition := k8s.GetPodCondition(instance.pod, k8s.ConditionAWSCloudMapHealthy)
