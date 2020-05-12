@@ -5,6 +5,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+const xrayDaemonContainerName = "xray-daemon"
 const xrayDaemonContainerTemplate = `
 {
   "name": "xray-daemon",
@@ -62,6 +63,9 @@ func (m *xrayMutator) mutate(pod *corev1.Pod) error {
 	if !m.enabled {
 		return nil
 	}
+	if containsXRAYDaemonContainer(pod) {
+		return nil
+	}
 	variables := m.buildTemplateVariables(pod)
 	xrayDaemonSidecar, err := renderTemplate("xray-daemon", xrayDaemonContainerTemplate, variables)
 	if err != nil {
@@ -82,4 +86,13 @@ func (m *xrayMutator) buildTemplateVariables(pod *corev1.Pod) XrayTemplateVariab
 		SidecarCPURequests:    getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
 		SidecarMemoryRequests: getSidecarMemoryRequest(m.mutatorConfig.sidecarMemoryRequests, pod),
 	}
+}
+
+func containsXRAYDaemonContainer(pod *corev1.Pod) bool {
+	for _, container := range pod.Spec.Containers {
+		if container.Name == xrayDaemonContainerName {
+			return true
+		}
+	}
+	return false
 }

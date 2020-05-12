@@ -9,6 +9,7 @@ import (
 )
 
 const envoyTracingConfigVolumeName = "envoy-tracing-config"
+const envoyContainerName = "envoy"
 
 const envoyContainerTemplate = `
 {
@@ -119,6 +120,9 @@ type envoyMutator struct {
 }
 
 func (m *envoyMutator) mutate(pod *corev1.Pod) error {
+	if containsEnvoyContainer(pod) {
+		return nil
+	}
 	variables := m.buildTemplateVariables(pod)
 	envoySidecar, err := renderTemplate("envoy", envoyContainerTemplate, variables)
 	if err != nil {
@@ -165,4 +169,24 @@ func (m *envoyMutator) getPreview(pod *corev1.Pod) string {
 		return "1"
 	}
 	return "0"
+}
+
+// containsEnvoyContainer checks whether pod already contains "envoy" container
+func containsEnvoyContainer(pod *corev1.Pod) bool {
+	for _, container := range pod.Spec.Containers {
+		if container.Name == envoyContainerName {
+			return true
+		}
+	}
+	return false
+}
+
+// containsEnvoyTracingConfigVolume checks whether pod already contains "envoy-tracing-config" volume
+func containsEnvoyTracingConfigVolume(pod *corev1.Pod) bool {
+	for _, volume := range pod.Spec.Volumes {
+		if volume.Name == envoyTracingConfigVolumeName {
+			return true
+		}
+	}
+	return false
 }

@@ -190,6 +190,44 @@ func Test_initProxyMutator_mutate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "no-op when already contains proxyInit container",
+			fields: fields{
+				mutatorConfig: initProxyMutatorConfig{
+					containerImage: "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
+					cpuRequests:    cpuRequests.String(),
+					memoryRequests: memoryRequests.String(),
+				},
+				proxyConfig: proxyConfig{
+					appPorts:           "80,443",
+					egressIgnoredIPs:   "192.168.0.1",
+					egressIgnoredPorts: "22",
+					proxyEgressPort:    15001,
+					proxyIngressPort:   15000,
+					proxyUID:           1337,
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						InitContainers: []corev1.Container{
+							{
+								Name: "proxyinit",
+							},
+						},
+					},
+				},
+			},
+			wantPod: &corev1.Pod{
+				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Name: "proxyinit",
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -204,6 +242,54 @@ func Test_initProxyMutator_mutate(t *testing.T) {
 				assert.NoError(t, err)
 				assert.True(t, cmp.Equal(tt.wantPod, tt.args.pod), "diff", cmp.Diff(tt.wantPod, tt.args.pod))
 			}
+		})
+	}
+}
+
+func Test_containsProxyInitContainer(t *testing.T) {
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "contains proxy init container",
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						InitContainers: []corev1.Container{
+							{
+								Name: "proxyinit",
+							},
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "doesn't contains proxy init container",
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						InitContainers: []corev1.Container{
+							{
+								Name: "other",
+							},
+						},
+					},
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := containsProxyInitContainer(tt.args.pod)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
