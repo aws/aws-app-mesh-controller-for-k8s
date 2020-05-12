@@ -857,6 +857,9 @@ func (s *DynamicStack) checkPodToVirtualServiceConnectivity(ctx context.Context,
 	retStatusNotOKCounterByURL := make(map[string]map[int]int)
 	retBodyCounterByURL := make(map[string]map[string]int)
 	for _, checkEntry := range connectivityCheckEntries {
+		if _, ok := retBodyCounterByURL[checkEntry.dstURL]; !ok {
+			retBodyCounterByURL[checkEntry.dstURL] = make(map[string]int)
+		}
 		if checkEntry.retErr != nil {
 			if _, ok := retErrCounterByRUL[checkEntry.dstURL]; !ok {
 				retErrCounterByRUL[checkEntry.dstURL] = make(map[string]int)
@@ -871,24 +874,19 @@ func (s *DynamicStack) checkPodToVirtualServiceConnectivity(ctx context.Context,
 			retStatusNotOKCounterByURL[checkEntry.dstURL][checkEntry.retHTTPStatusCode] += 1
 			continue
 		}
-		if _, ok := retBodyCounterByURL[checkEntry.dstURL]; !ok {
-			retBodyCounterByURL[checkEntry.dstURL] = make(map[string]int)
-		}
+
 		retBodyCounterByURL[checkEntry.dstURL][checkEntry.retHTTPBody] += 1
 	}
 
 	var checkErrors []error
 	for url, retErrCounter := range retErrCounterByRUL {
 		for retErr, count := range retErrCounter {
-			if s.ServiceDiscoveryType == shared.CloudMapServiceDiscovery {
-				f.Logger.Warn("expect traffic from pod to URL succeed",
-					zap.String("pod", k8s.NamespacedName(pod).String()),
-					zap.String("url", url),
-					zap.String("error", retErr),
-					zap.Int("count", count),
-				)
-				continue
-			}
+			f.Logger.Warn("expect traffic from pod to URL succeed",
+				zap.String("pod", k8s.NamespacedName(pod).String()),
+				zap.String("url", url),
+				zap.String("error", retErr),
+				zap.Int("count", count),
+			)
 			checkErrors = append(checkErrors, errors.Errorf("expect traffic from pod %v to URL %v succeed, got err: %v, count: %v",
 				k8s.NamespacedName(pod).String(), url, retErr, count,
 			))
@@ -896,15 +894,12 @@ func (s *DynamicStack) checkPodToVirtualServiceConnectivity(ctx context.Context,
 	}
 	for url, retStatusNotOKCounter := range retStatusNotOKCounterByURL {
 		for retStatusNotOK, count := range retStatusNotOKCounter {
-			if s.ServiceDiscoveryType == shared.CloudMapServiceDiscovery {
-				f.Logger.Warn("expect traffic from pod to URL succeed",
-					zap.String("pod", k8s.NamespacedName(pod).String()),
-					zap.String("url", url),
-					zap.Int("status_code", retStatusNotOK),
-					zap.Int("count", count),
-				)
-				continue
-			}
+			f.Logger.Warn("expect traffic from pod to URL succeed",
+				zap.String("pod", k8s.NamespacedName(pod).String()),
+				zap.String("url", url),
+				zap.Int("status_code", retStatusNotOK),
+				zap.Int("count", count),
+			)
 			checkErrors = append(checkErrors, errors.Errorf("expect traffic from pod %v to URL %v succeed, got status_code: %v, count: %v",
 				k8s.NamespacedName(pod).String(), url, retStatusNotOK, count,
 			))
@@ -927,6 +922,10 @@ func (s *DynamicStack) checkPodToVirtualServiceConnectivity(ctx context.Context,
 			zap.String("pod", k8s.NamespacedName(pod).String()),
 			zap.String("url", url),
 		)
+		httpRetCountsDiff := len(expectedHTTPRetCounts) - len(actualHTTPRetCounts)
+		for i := 0; i < httpRetCountsDiff; i++ {
+			actualHTTPRetCounts = append(actualHTTPRetCounts, 0)
+		}
 
 		chiSqStatics := stat.ChiSquare(actualHTTPRetCounts, expectedHTTPRetCounts)
 		pv := 1 - uniformDist.CDF(chiSqStatics)
