@@ -116,13 +116,13 @@ func Convert_CRD_BackendDefaults_To_SDK_BackendDefaults(crdObj *appmesh.BackendD
 }
 
 func Convert_CRD_HealthCheckPolicy_To_SDK_HealthCheckPolicy(crdObj *appmesh.HealthCheckPolicy, sdkObj *appmeshsdk.HealthCheckPolicy, scope conversion.Scope) error {
-	sdkObj.HealthyThreshold = crdObj.HealthyThreshold
-	sdkObj.IntervalMillis = crdObj.IntervalMillis
+	sdkObj.HealthyThreshold = aws.Int64(crdObj.HealthyThreshold)
+	sdkObj.IntervalMillis = aws.Int64(crdObj.IntervalMillis)
 	sdkObj.Path = crdObj.Path
 	sdkObj.Port = (*int64)(crdObj.Port)
-	sdkObj.Protocol = (*string)(crdObj.Protocol)
-	sdkObj.TimeoutMillis = crdObj.TimeoutMillis
-	sdkObj.UnhealthyThreshold = crdObj.UnhealthyThreshold
+	sdkObj.Protocol = aws.String((string)(crdObj.Protocol))
+	sdkObj.TimeoutMillis = aws.Int64(crdObj.TimeoutMillis)
+	sdkObj.UnhealthyThreshold = aws.Int64(crdObj.UnhealthyThreshold)
 	return nil
 }
 

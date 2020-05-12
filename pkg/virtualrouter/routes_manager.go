@@ -5,7 +5,6 @@ import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-sdk-go/aws"
@@ -13,6 +12,7 @@ import (
 	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/types"
@@ -168,9 +168,7 @@ func (m *defaultRoutesManager) updateSDKRoute(ctx context.Context, sdkRoute *app
 		return nil, err
 	}
 
-	// If an optional field is not set, AWS will provide default settings that will be in actualSDKRouteSpec.
-	// We use IgnoreLeftHandUnset when doing the equality check here to allow AWS sever-side to provide default settings.
-	opts := equality.IgnoreLeftHandUnset()
+	opts := cmpopts.EquateEmpty()
 	if cmp.Equal(desiredSDKRouteSpec, actualSDKRouteSpec, opts) {
 		return sdkRoute, nil
 	}

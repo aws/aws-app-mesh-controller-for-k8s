@@ -23,6 +23,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 		name       string
 		argLeft    TestStruct
 		argRight   TestStruct
+		fields     []string
 		wantEquals bool
 	}{
 		{
@@ -33,6 +34,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 			argRight: TestStruct{
 				StrField: "a",
 			},
+			fields:     []string{"StrField"},
 			wantEquals: true,
 		},
 		{
@@ -43,6 +45,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 			argRight: TestStruct{
 				StrField: "b",
 			},
+			fields:     []string{"StrField"},
 			wantEquals: false,
 		},
 		{
@@ -53,6 +56,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 			argRight: TestStruct{
 				SliceField: []string{"a", "b"},
 			},
+			fields:     []string{"SliceField"},
 			wantEquals: true,
 		},
 		{
@@ -63,6 +67,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 			argRight: TestStruct{
 				SliceField: []string{"b", "a"},
 			},
+			fields:     []string{"SliceField"},
 			wantEquals: false,
 		},
 		{
@@ -73,6 +78,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 			argRight: TestStruct{
 				SliceField: []string{"b", "a"},
 			},
+			fields:     []string{"SliceField"},
 			wantEquals: true,
 		},
 		{
@@ -83,6 +89,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 			argRight: TestStruct{
 				SliceField: []string{"b", "a"},
 			},
+			fields:     []string{"SliceField"},
 			wantEquals: false,
 		},
 		{
@@ -93,6 +100,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 			argRight: TestStruct{
 				MapField: map[string]string{"k": "v"},
 			},
+			fields:     []string{"MapField"},
 			wantEquals: true,
 		},
 		{
@@ -103,6 +111,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 			argRight: TestStruct{
 				MapField: map[string]string{"k": "v2"},
 			},
+			fields:     []string{"MapField"},
 			wantEquals: false,
 		},
 		{
@@ -113,6 +122,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 			argRight: TestStruct{
 				MapField: map[string]string{"k2": "v"},
 			},
+			fields:     []string{"MapField"},
 			wantEquals: false,
 		},
 		{
@@ -123,6 +133,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 			argRight: TestStruct{
 				MapField: map[string]string{"k": "v"},
 			},
+			fields:     []string{"MapField"},
 			wantEquals: true,
 		},
 		{
@@ -133,6 +144,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 			argRight: TestStruct{
 				MapField: map[string]string{"k": "v"},
 			},
+			fields:     []string{"MapField"},
 			wantEquals: false,
 		},
 		{
@@ -147,6 +159,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 					StrField: "a",
 				},
 			},
+			fields:     []string{"StructField"},
 			wantEquals: true,
 		},
 		{
@@ -161,6 +174,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 					StrField: "b",
 				},
 			},
+			fields:     []string{"StructField"},
 			wantEquals: false,
 		},
 		{
@@ -175,6 +189,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 					StrField: "a",
 				},
 			},
+			fields:     []string{"StructPtrField"},
 			wantEquals: true,
 		},
 		{
@@ -189,6 +204,7 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 					StrField: "b",
 				},
 			},
+			fields:     []string{"StructPtrField"},
 			wantEquals: false,
 		},
 		{
@@ -201,12 +217,13 @@ func TestIgnoreLeftHandUnset(t *testing.T) {
 					StrField: "b",
 				},
 			},
+			fields:     []string{"StructPtrField"},
 			wantEquals: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			opts := IgnoreLeftHandUnset()
+			opts := IgnoreLeftHandUnset(TestStruct{}, tt.fields...)
 			gotEquals := cmp.Equal(tt.argLeft, tt.argRight, opts)
 			assert.Equal(t, tt.wantEquals, gotEquals)
 		})
