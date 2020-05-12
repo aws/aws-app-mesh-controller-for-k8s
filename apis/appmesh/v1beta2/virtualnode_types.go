@@ -98,41 +98,30 @@ type BackendDefaults struct {
 // HealthCheckPolicy refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HealthCheckPolicy.html
 type HealthCheckPolicy struct {
 	// The number of consecutive successful health checks that must occur before declaring listener healthy.
-	// If unspecified, defaults to be 10
 	// +kubebuilder:validation:Minimum=2
 	// +kubebuilder:validation:Maximum=10
-	// +optional
-	HealthyThreshold *int64 `json:"healthyThreshold,omitempty"`
+	HealthyThreshold int64 `json:"healthyThreshold"`
 	// The time period in milliseconds between each health check execution.
-	// If unspecified, defaults to be 30000
 	// +kubebuilder:validation:Minimum=5000
 	// +kubebuilder:validation:Maximum=300000
-	// +optional
-	IntervalMillis *int64 `json:"intervalMillis,omitempty"`
+	IntervalMillis int64 `json:"intervalMillis"`
 	// The destination path for the health check request.
 	// This value is only used if the specified protocol is http or http2. For any other protocol, this value is ignored.
 	// +optional
 	Path *string `json:"path,omitempty"`
 	// The destination port for the health check request.
-	// If unspecified, defaults to be same as port defined in the PortMapping for the listener.
 	// +optional
 	Port *PortNumber `json:"port,omitempty"`
 	// The protocol for the health check request
-	// If unspecified, defaults to be same as protocol defined in the PortMapping for the listener.
-	// +optional
-	Protocol *PortProtocol `json:"protocol,omitempty"`
+	Protocol PortProtocol `json:"protocol"`
 	// The amount of time to wait when receiving a response from the health check, in milliseconds.
-	// If unspecified, defaults to be 5000
 	// +kubebuilder:validation:Minimum=2000
 	// +kubebuilder:validation:Maximum=60000
-	// +optional
-	TimeoutMillis *int64 `json:"timeoutMillis,omitempty"`
+	TimeoutMillis int64 `json:"timeoutMillis"`
 	// The number of consecutive failed health checks that must occur before declaring a virtual node unhealthy.
-	// If unspecified, defaults to be 2
 	// +kubebuilder:validation:Minimum=2
 	// +kubebuilder:validation:Maximum=10
-	// +optional
-	UnhealthyThreshold *int64 `json:"unhealthyThreshold,omitempty"`
+	UnhealthyThreshold int64 `json:"unhealthyThreshold"`
 }
 
 // ListenerTLSACMCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsAcmCertificate.html

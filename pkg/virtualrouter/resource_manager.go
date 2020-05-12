@@ -5,7 +5,6 @@ import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
@@ -16,6 +15,7 @@ import (
 	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/conversion"
@@ -203,9 +203,7 @@ func (m *defaultResourceManager) updateSDKVirtualRouter(ctx context.Context, sdk
 		return nil, err
 	}
 
-	// If an optional field is not set, AWS will provide default settings that will be in actualSDKVRSpec.
-	// We use IgnoreLeftHandUnset when doing the equality check here to allow AWS sever-side to provide default settings.
-	opts := equality.IgnoreLeftHandUnset()
+	opts := cmpopts.EquateEmpty()
 	if cmp.Equal(desiredSDKVRSpec, actualSDKVRSpec, opts) {
 		return sdkVR, nil
 	}

@@ -5,13 +5,13 @@ import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -117,10 +117,7 @@ func (m *defaultResourceManager) updateSDKMesh(ctx context.Context, sdkMS *appme
 	if err != nil {
 		return nil, err
 	}
-
-	// If an optional field is not set, AWS will provide default settings that will be in actualSDKMSSpec.
-	// We use IgnoreLeftHandUnset when doing the equality check here to allow AWS sever-side to provide default settings.
-	opts := equality.IgnoreLeftHandUnset()
+	opts := cmpopts.EquateEmpty()
 	if cmp.Equal(desiredSDKMSSpec, actualSDKMSSpec, opts) {
 		return sdkMS, nil
 	}
