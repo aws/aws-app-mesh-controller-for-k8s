@@ -47,20 +47,6 @@ func (mr *MockScopeMockRecorder) Convert(arg0, arg1, arg2 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Convert", reflect.TypeOf((*MockScope)(nil).Convert), arg0, arg1, arg2)
 }
 
-// DefaultConvert mocks base method
-func (m *MockScope) DefaultConvert(arg0, arg1 interface{}, arg2 conversion.FieldMatchingFlags) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DefaultConvert", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DefaultConvert indicates an expected call of DefaultConvert
-func (mr *MockScopeMockRecorder) DefaultConvert(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DefaultConvert", reflect.TypeOf((*MockScope)(nil).DefaultConvert), arg0, arg1, arg2)
-}
-
 // DestTag mocks base method
 func (m *MockScope) DestTag() reflect.StructTag {
 	m.ctrl.T.Helper()
