@@ -15,7 +15,7 @@ all: manager
 
 # Run tests
 test: generate fmt vet manifests
-	go test ./pkg/... ./controllers/... ./webhooks/... -coverprofile cover.out
+	go test ./pkg/... ./controllers/... ./webhooks/... -covermode=atomic -coverprofile=cover.out
 
 # Build manager binary
 manager: generate fmt vet

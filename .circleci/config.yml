@@ -29,6 +29,20 @@ jobs:
           name: Build
           command: make manager
       - run:
+          name: Test
+          command: make test
+      - run:
+          name: Upload Coverage Results
+          command: |
+            curl -s https://codecov.io/bash | bash -s -- \
+              -f "cover.out" \
+              -t "${CODECOV_TOKEN}" \
+              -n "${CIRCLE_BUILD_NUM}" \
+              -y ".codecov.yml" \
+              -F "" \
+              -Z || echo 'Codecov upload failed'
+          when: always
+      - run:
           name: Run
           command: ./bin/manager -h || true
 workflows:
