@@ -187,8 +187,7 @@ func Test_defaultInstancesHealthProber_filterUnhealthyInstances(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &defaultInstancesHealthProber{}
-			got := p.filterUnhealthyInstances(tt.args.instances)
+			got := filterInstancesBlockedByCMHealthyReadinessGate(tt.args.instances)
 			assert.Equal(t, tt.want, got)
 		})
 	}

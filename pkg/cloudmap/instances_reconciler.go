@@ -4,13 +4,17 @@ import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -30,8 +34,9 @@ type InstancesReconciler interface {
 		readyPods []*corev1.Pod, notReadyPods []*corev1.Pod) error
 }
 
-func NewDefaultInstancesReconciler(cloudMapSDK services.CloudMap, instancesCache InstancesCache, instancesHealthProber InstancesHealthProber, log logr.Logger) *defaultInstancesReconciler {
+func NewDefaultInstancesReconciler(k8sClient client.Client, cloudMapSDK services.CloudMap, instancesCache InstancesCache, instancesHealthProber InstancesHealthProber, log logr.Logger) *defaultInstancesReconciler {
 	return &defaultInstancesReconciler{
+		k8sClient:             k8sClient,
 		cloudMapSDK:           cloudMapSDK,
 		instancesCache:        instancesCache,
 		instancesHealthProber: instancesHealthProber,
@@ -43,6 +48,7 @@ var _ InstancesReconciler = &defaultInstancesReconciler{}
 
 type defaultInstancesReconciler struct {
 	cloudMapSDK           services.CloudMap
+	k8sClient             client.Client
 	instancesCache        InstancesCache
 	instancesHealthProber InstancesHealthProber
 	log                   logr.Logger
@@ -51,15 +57,21 @@ type defaultInstancesReconciler struct {
 func (r *defaultInstancesReconciler) Reconcile(ctx context.Context, vn *appmesh.VirtualNode, serviceID string, customHealthCheckEnabled bool,
 	readyPods []*corev1.Pod, notReadyPods []*corev1.Pod) error {
 	instanceProbes := r.buildInstanceProbes(readyPods)
-	if err := r.instancesHealthProber.SubmitProbe(ctx, serviceID, instanceProbes); err != nil {
-		return err
+	if customHealthCheckEnabled {
+		if err := r.instancesHealthProber.SubmitProbe(ctx, serviceID, instanceProbes); err != nil {
+			return err
+		}
+	} else {
+		if err := r.unblockCMHealthyReadinessGateImmediately(ctx, instanceProbes); err != nil {
+			return err
+		}
 	}
 
 	existingInstancesAttrsByID, err := r.instancesCache.ListInstances(ctx, serviceID)
 	if err != nil {
 		return err
 	}
-
+	existingInstancesAttrsByIDForVN := r.filterExistingInstancesAttrsIDForVirtualNode(vn, existingInstancesAttrsByID)
 	desiredReadyInstancesAttrsByID := r.buildInstanceAttributesByID(vn, readyPods)
 	var desiredNotReadyInstancesAttrsByID map[string]InstanceAttributes
 	if customHealthCheckEnabled {
@@ -68,7 +80,7 @@ func (r *defaultInstancesReconciler) Reconcile(ctx context.Context, vn *appmesh.
 		desiredNotReadyInstancesAttrsByID = nil
 	}
 
-	instancesToCreateOrUpdate, instancesToDelete, instancesToUpdateHealthy, instancesToUpdateUnhealthy := r.matchDesiredInstancesAgainstExistingInstances(desiredReadyInstancesAttrsByID, desiredNotReadyInstancesAttrsByID, existingInstancesAttrsByID)
+	instancesToCreateOrUpdate, instancesToDelete, instancesToUpdateHealthy, instancesToUpdateUnhealthy := r.matchDesiredInstancesAgainstExistingInstances(desiredReadyInstancesAttrsByID, desiredNotReadyInstancesAttrsByID, existingInstancesAttrsByIDForVN)
 	r.log.V(1).Info("instances reconcile",
 		"instancesToCreateOrUpdate", instancesToCreateOrUpdate,
 		"instancesToDelete", instancesToDelete,
@@ -152,6 +164,32 @@ func (r *defaultInstancesReconciler) matchDesiredInstancesAgainstExistingInstanc
 	existingInstanceIDs := sets.StringKeySet(existingInstancesAttrsByID)
 	instancesToDelete := existingInstanceIDs.Difference(desiredInstanceIDs).List()
 	return instancesToCreateOrUpdate, instancesToDelete, instancesToUpdateHealthy, instancesToUpdateUnhealthy
+}
+
+func (r *defaultInstancesReconciler) filterExistingInstancesAttrsIDForVirtualNode(vn *appmesh.VirtualNode, existingInstancesAttrsByID map[string]InstanceAttributes) map[string]InstanceAttributes {
+	labelSelector, _ := metav1.LabelSelectorAsSelector(vn.Spec.PodSelector)
+	existingInstancesAttrsIDForVirtualNode := make(map[string]InstanceAttributes, len(existingInstancesAttrsByID))
+	for instanceID, attrs := range existingInstancesAttrsByID {
+		if attrs[attrK8sNamespace] == vn.Namespace && labelSelector.Matches(labels.Set(attrs)) {
+			existingInstancesAttrsIDForVirtualNode[instanceID] = attrs
+		}
+	}
+	return existingInstancesAttrsIDForVirtualNode
+}
+
+// unblockCMHealthyReadinessGateImmediately will unblock readinessGate immediately.
+// this is for **backwards-compatibility** for old cloudMapService we created, which don't have custom healthCheck(when using controller < v1.0.0).
+func (r *defaultInstancesReconciler) unblockCMHealthyReadinessGateImmediately(ctx context.Context, instances []InstanceProbe) error {
+	instancesToUnblock := filterInstancesBlockedByCMHealthyReadinessGate(instances)
+	for _, instance := range instancesToUnblock {
+		oldPod := instance.pod.DeepCopy()
+		if updated := k8s.UpdatePodCondition(instance.pod, k8s.ConditionAWSCloudMapHealthy, corev1.ConditionTrue, nil, nil); updated {
+			if err := r.k8sClient.Status().Patch(ctx, instance.pod, client.MergeFrom(oldPod)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // buildInstanceAttributesByID build instances attributes indexed by instanceID

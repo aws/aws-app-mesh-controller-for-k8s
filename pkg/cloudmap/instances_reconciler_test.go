@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"reflect"
 	"testing"
 )
 
@@ -880,6 +881,139 @@ func Test_ignoreAttrAwsInitHealthStatus(t *testing.T) {
 			opts := ignoreAttrAwsInitHealthStatus()
 			gotEquals := cmp.Equal(tt.desiredAttrs, tt.existingAttrs, opts)
 			assert.Equal(t, tt.wantEquals, gotEquals)
+		})
+	}
+}
+
+func Test_defaultInstancesReconciler_filterExistingInstancesAttrsIDForVirtualNode(t *testing.T) {
+	type args struct {
+		vn                         *appmesh.VirtualNode
+		existingInstancesAttrsByID map[string]InstanceAttributes
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string]InstanceAttributes
+	}{
+		{
+			name: "when contains instances from another namespace",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-ns",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						PodSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{
+								"app": "my-app",
+							},
+						},
+					},
+				},
+				existingInstancesAttrsByID: map[string]InstanceAttributes{
+					"192.168.1.1": {
+						"app":                    "my-app",
+						"AWS_INSTANCE_IPV4":      "192.168.1.1",
+						"AWS_INIT_HEALTH_STATUS": "HEALTHY",
+						"k8s.io/pod":             "pod1",
+						"k8s.io/namespace":       "my-ns",
+					},
+					"192.168.1.2": {
+						"app":                    "my-app",
+						"AWS_INSTANCE_IPV4":      "192.168.1.2",
+						"AWS_INIT_HEALTH_STATUS": "HEALTHY",
+						"k8s.io/pod":             "pod2",
+						"k8s.io/namespace":       "another-ns",
+					},
+					"192.168.1.3": {
+						"app":                    "my-app",
+						"AWS_INSTANCE_IPV4":      "192.168.1.3",
+						"AWS_INIT_HEALTH_STATUS": "HEALTHY",
+						"k8s.io/pod":             "pod3",
+						"k8s.io/namespace":       "my-ns",
+					},
+				},
+			},
+			want: map[string]InstanceAttributes{
+				"192.168.1.1": {
+					"app":                    "my-app",
+					"AWS_INSTANCE_IPV4":      "192.168.1.1",
+					"AWS_INIT_HEALTH_STATUS": "HEALTHY",
+					"k8s.io/pod":             "pod1",
+					"k8s.io/namespace":       "my-ns",
+				},
+				"192.168.1.3": {
+					"app":                    "my-app",
+					"AWS_INSTANCE_IPV4":      "192.168.1.3",
+					"AWS_INIT_HEALTH_STATUS": "HEALTHY",
+					"k8s.io/pod":             "pod3",
+					"k8s.io/namespace":       "my-ns",
+				},
+			},
+		},
+		{
+			name: "when contains instances from another virtualnode",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-ns",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						PodSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{
+								"app": "my-app",
+							},
+						},
+					},
+				},
+				existingInstancesAttrsByID: map[string]InstanceAttributes{
+					"192.168.1.1": {
+						"app":                    "my-app",
+						"AWS_INSTANCE_IPV4":      "192.168.1.1",
+						"AWS_INIT_HEALTH_STATUS": "HEALTHY",
+						"k8s.io/pod":             "pod1",
+						"k8s.io/namespace":       "my-ns",
+					},
+					"192.168.1.2": {
+						"app":                    "another-app",
+						"AWS_INSTANCE_IPV4":      "192.168.1.2",
+						"AWS_INIT_HEALTH_STATUS": "HEALTHY",
+						"k8s.io/pod":             "pod2",
+						"k8s.io/namespace":       "my-ns",
+					},
+					"192.168.1.3": {
+						"app":                    "my-app",
+						"AWS_INSTANCE_IPV4":      "192.168.1.3",
+						"AWS_INIT_HEALTH_STATUS": "HEALTHY",
+						"k8s.io/pod":             "pod3",
+						"k8s.io/namespace":       "my-ns",
+					},
+				},
+			},
+			want: map[string]InstanceAttributes{
+				"192.168.1.1": {
+					"app":                    "my-app",
+					"AWS_INSTANCE_IPV4":      "192.168.1.1",
+					"AWS_INIT_HEALTH_STATUS": "HEALTHY",
+					"k8s.io/pod":             "pod1",
+					"k8s.io/namespace":       "my-ns",
+				},
+				"192.168.1.3": {
+					"app":                    "my-app",
+					"AWS_INSTANCE_IPV4":      "192.168.1.3",
+					"AWS_INIT_HEALTH_STATUS": "HEALTHY",
+					"k8s.io/pod":             "pod3",
+					"k8s.io/namespace":       "my-ns",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &defaultInstancesReconciler{}
+			if got := r.filterExistingInstancesAttrsIDForVirtualNode(tt.args.vn, tt.args.existingInstancesAttrsByID); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("filterExistingInstancesAttrsIDForVirtualNode() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

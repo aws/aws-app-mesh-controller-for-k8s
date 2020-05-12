@@ -106,7 +106,7 @@ func main() {
 	virtualNodeEndpointResolver := cloudmap.NewDefaultVirtualNodeEndpointResolver(mgr.GetClient(), ctrl.Log)
 	cloudMapInstancesCache := cloudmap.NewDefaultInstancesCache(cloud.CloudMap(), ctrl.Log, stopChan)
 	cloudMapInstancesHealthProber := cloudmap.NewDefaultInstancesHealthProber(mgr.GetClient(), cloud.CloudMap(), ctrl.Log, stopChan)
-	cloudMapInstancesReconciler := cloudmap.NewDefaultInstancesReconciler(cloud.CloudMap(), cloudMapInstancesCache, cloudMapInstancesHealthProber, ctrl.Log)
+	cloudMapInstancesReconciler := cloudmap.NewDefaultInstancesReconciler(mgr.GetClient(), cloud.CloudMap(), cloudMapInstancesCache, cloudMapInstancesHealthProber, ctrl.Log)
 	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
 	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	vsResManager := virtualservice.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
