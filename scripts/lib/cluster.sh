@@ -83,7 +83,7 @@ cluster::create() {
     cat ${cluster_config}
 
     echo "Creating cluster for ${cluster_config}"
-    if ! ${K8S_TESTER_BINARY} eks create cluster \
+    if ! ${K8S_TESTER_BINARY} eks create cluster --enable-prompt=false \
             --path ${cluster_config}; then
       echo "Unable to create cluster for ${cluster_config}"
       return 1
@@ -106,7 +106,7 @@ cluster::delete() {
     declare -r cluster_config="$1"
 
     echo "Deleting cluster for ${cluster_config}"
-    if ! ${K8S_TESTER_BINARY} eks delete cluster \
+    if ! ${K8S_TESTER_BINARY} eks delete cluster --enable-prompt=false \
            --path ${cluster_config}; then
         echo "Unable to delete cluster for ${cluster_config}"
     fi

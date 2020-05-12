@@ -30,6 +30,7 @@ commands:
       - run:
           name: Run e2e tests
           command: CLUSTER_VERSION=<< parameters.k8s_version >> ./scripts/ci_e2e_test.sh
+          no_output_timeout: 25m
       - store_artifacts:
           path: /tmp/appmesh-e2e/clusters/
 
@@ -68,6 +69,17 @@ jobs:
           name: Unit test
           command: make test
       - run:
+          name: Upload Coverage Results
+          command: |
+            curl -s https://codecov.io/bash | bash -s -- \
+              -f "coverage-all.out" \
+              -t "${CODECOV_TOKEN}" \
+              -n "${CIRCLE_BUILD_NUM}" \
+              -y ".codecov.yml" \
+              -F "" \
+              -Z || echo 'Codecov upload failed'
+          when: always
+      - run:
           name: Verify code gen
           command: make verify-codegen
       - run:
@@ -80,20 +92,20 @@ jobs:
     steps:
       - run_e2e_test:
           k8s_version: "1.14"
-  e2e_test_113:
+  e2e_test_115:
     docker:
       - image: circleci/golang:1.13
     working_directory: ~/build
     steps:
       - run_e2e_test:
-          k8s_version: "1.13"
-  e2e_test_112:
+          k8s_version: "1.15"
+  e2e_test_116:
     docker:
       - image: circleci/golang:1.13
     working_directory: ~/build
     steps:
       - run_e2e_test:
-          k8s_version: "1.12"
+          k8s_version: "1.16"
 
 workflows:
   version: 2
@@ -119,4 +131,4 @@ workflows:
                 - master
     jobs:
       - e2e_test_114
-      - e2e_test_113
+      - e2e_test_115
