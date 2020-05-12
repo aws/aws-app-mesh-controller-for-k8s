@@ -110,6 +110,150 @@ func Test_defaultResolver_ResolveMeshReference(t *testing.T) {
 	}
 }
 
+func Test_defaultResolver_ResolveVirtualGatewayReference(t *testing.T) {
+	vgInNS1 := &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-1",
+			Name:      "my-vg",
+			UID:       "a385048d-aba8-4235-9a11-4173764c8ab7",
+		},
+	}
+	vgInNS2 := &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-2",
+			Name:      "my-vg",
+			UID:       "a385048d-aba8-4235-9a11-4173764c8ab7",
+		},
+	}
+	vgUIDMismatches := &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-1",
+			Name:      "my-vg",
+			UID:       "f7d10a22-e8d5-4626-b780-261374fc68d4",
+		},
+	}
+
+	type env struct {
+		virtualGateways []*appmesh.VirtualGateway
+	}
+	type args struct {
+		obj   metav1.Object
+		vgRef appmesh.VirtualGatewayReference
+	}
+	tests := []struct {
+		name    string
+		env     env
+		args    args
+		want    *appmesh.VirtualGateway
+		wantErr error
+	}{
+		{
+			name: "when VirtualGatewayReference contains namespace, UID and name",
+			env: env{
+				virtualGateways: []*appmesh.VirtualGateway{vgInNS1, vgInNS2},
+			},
+			args: args{
+				obj: &appmesh.GatewayRoute{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "ns-1",
+						Name:      "gr",
+					},
+				},
+				vgRef: appmesh.VirtualGatewayReference{
+					Namespace: aws.String("ns-2"),
+					Name:      "my-vg",
+					UID:       "a385048d-aba8-4235-9a11-4173764c8ab7",
+				},
+			},
+			want: vgInNS2,
+		},
+		{
+			name: "when VirtualGatewayReference contains name and UID only",
+			env: env{
+				virtualGateways: []*appmesh.VirtualGateway{vgInNS1, vgInNS2},
+			},
+			args: args{
+				obj: &appmesh.GatewayRoute{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "ns-1",
+						Name:      "gr",
+					},
+				},
+				vgRef: appmesh.VirtualGatewayReference{
+					Name: "my-vg",
+					UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+				},
+			},
+			want: vgInNS1,
+		},
+		{
+			name: "virtual gateway cannot be resolved when UID mismatches",
+			env: env{
+				virtualGateways: []*appmesh.VirtualGateway{vgUIDMismatches},
+			},
+			args: args{
+				obj: &appmesh.GatewayRoute{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "ns-1",
+						Name:      "gr",
+					},
+				},
+				vgRef: appmesh.VirtualGatewayReference{
+					Namespace: aws.String("ns-1"),
+					Name:      "my-vg",
+					UID:       "a385048d-aba8-4235-9a11-4173764c8ab7",
+				},
+			},
+			wantErr: errors.New("virtualGateway UID mismatch: my-vg"),
+		},
+		{
+			name: "virtual gateway cannot be resolved if not found",
+			env: env{
+				virtualGateways: []*appmesh.VirtualGateway{vgInNS1},
+			},
+			args: args{
+				obj: &appmesh.GatewayRoute{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "ns-1",
+						Name:      "gr",
+					},
+				},
+				vgRef: appmesh.VirtualGatewayReference{
+					Namespace: aws.String("ns-1"),
+					Name:      "another-vg",
+					UID:       "a385048d-aba8-4235-9a11-4173764c8ab7",
+				},
+			},
+			wantErr: errors.New("unable to fetch virtualGateway: ns-1/another-vg: virtualgatewaies.appmesh.k8s.aws \"another-vg\" not found"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			k8sSchema := runtime.NewScheme()
+			clientgoscheme.AddToScheme(k8sSchema)
+			appmesh.AddToScheme(k8sSchema)
+			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			r := NewDefaultResolver(k8sClient, &log.NullLogger{})
+
+			for _, ms := range tt.env.virtualGateways {
+				err := k8sClient.Create(ctx, ms.DeepCopy())
+				assert.NoError(t, err)
+			}
+
+			got, err := r.ResolveVirtualGatewayReference(ctx, tt.args.obj, tt.args.vgRef)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				opt := equality.IgnoreFakeClientPopulatedFields()
+				assert.True(t, cmp.Equal(tt.want, got, opt),
+					"diff: %v", cmp.Diff(tt.want, got, opt))
+			}
+		})
+	}
+}
+
 func Test_defaultResolver_ResolveVirtualNodeReference(t *testing.T) {
 	vnInNS1 := &appmesh.VirtualNode{
 		ObjectMeta: metav1.ObjectMeta{

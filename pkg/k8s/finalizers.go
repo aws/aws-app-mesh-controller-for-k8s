@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	FinalizerMeshMembers          	= "finalizers.appmesh.k8s.aws/mesh-members"
-	FinalizerVirtualGatewayMembers	= "finalizers.appmesh.k8s.aws/virtualgateway-members"
-	FinalizerAWSAppMeshResources  	= "finalizers.appmesh.k8s.aws/aws-appmesh-resources"
-	FinalizerAWSCloudMapResources 	= "finalizers.appmesh.k8s.aws/aws-cloudmap-resources"
+	FinalizerMeshMembers           = "finalizers.appmesh.k8s.aws/mesh-members"
+	FinalizerVirtualGatewayMembers = "finalizers.appmesh.k8s.aws/virtualgateway-members"
+	FinalizerAWSAppMeshResources   = "finalizers.appmesh.k8s.aws/aws-appmesh-resources"
+	FinalizerAWSCloudMapResources  = "finalizers.appmesh.k8s.aws/aws-cloudmap-resources"
 )
 
 type APIObject interface {
