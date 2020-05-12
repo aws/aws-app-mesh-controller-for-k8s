@@ -104,6 +104,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 			jaegerAddress: m.config.JaegerAddress,
 			jaegerPort:    m.config.JaegerPort,
 		}, m.config.EnableJaegerTracing),
+		newCloudMapHealthyReadinessGate(vn),
 		newIAMForServiceAccountsMutator(m.config.EnableIAMForServiceAccounts),
 		newECRSecretMutator(m.config.EnableECRSecret),
 	}
