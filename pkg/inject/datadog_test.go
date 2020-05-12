@@ -46,6 +46,42 @@ func Test_datadogMutator_mutate(t *testing.T) {
 			},
 		},
 		{
+			name: "no-op when already contain envoy tracing config volume",
+			fields: fields{
+				mutatorConfig: datadogMutatorConfig{
+					datadogAddress: "127.0.0.1",
+					datadogPort:    "8080",
+				},
+				enabled: true,
+			},
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						Volumes: []corev1.Volume{
+							{
+								Name: envoyTracingConfigVolumeName,
+								VolumeSource: corev1.VolumeSource{
+									EmptyDir: &corev1.EmptyDirVolumeSource{},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantPod: &corev1.Pod{
+				Spec: corev1.PodSpec{
+					Volumes: []corev1.Volume{
+						{
+							Name: envoyTracingConfigVolumeName,
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "inject sidecar and volume",
 			fields: fields{
 				mutatorConfig: datadogMutatorConfig{

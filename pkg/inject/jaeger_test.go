@@ -46,6 +46,42 @@ func Test_jaegerMutator_mutate(t *testing.T) {
 			},
 		},
 		{
+			name: "no-op when already contains envoy tracing config volume",
+			fields: fields{
+				mutatorConfig: jaegerMutatorConfig{
+					jaegerAddress: "127.0.0.1",
+					jaegerPort:    "8080",
+				},
+				enabled: false,
+			},
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						Volumes: []corev1.Volume{
+							{
+								Name: envoyTracingConfigVolumeName,
+								VolumeSource: corev1.VolumeSource{
+									EmptyDir: &corev1.EmptyDirVolumeSource{},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantPod: &corev1.Pod{
+				Spec: corev1.PodSpec{
+					Volumes: []corev1.Volume{
+						{
+							Name: envoyTracingConfigVolumeName,
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "inject sidecar and volume",
 			fields: fields{
 				mutatorConfig: jaegerMutatorConfig{

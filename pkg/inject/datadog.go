@@ -90,6 +90,9 @@ func (m *datadogMutator) mutate(pod *corev1.Pod) error {
 	if !m.enabled {
 		return nil
 	}
+	if containsEnvoyTracingConfigVolume(pod) {
+		return nil
+	}
 	variables, err := m.buildInitContainerTemplateVariables()
 	if err != nil {
 		return err

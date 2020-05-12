@@ -587,6 +587,57 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "no-op when already injected",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:             "us-west-2",
+					preview:               false,
+					logLevel:              "debug",
+					sidecarImage:          "envoy:v2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-ns",
+						Name:      "my-pod",
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "app",
+								Image: "app/v1",
+							},
+							{
+								Name: "envoy",
+							},
+						},
+					},
+				},
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name: "envoy",
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -691,6 +742,102 @@ func Test_envoyMutator_getPreview(t *testing.T) {
 				mutatorConfig: tt.fields.mutatorConfig,
 			}
 			got := m.getPreview(tt.args.pod)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_containsEnvoyContainer(t *testing.T) {
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "contains envoy container",
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name: "envoy",
+							},
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "doesn't contains envoy container",
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name: "other",
+							},
+						},
+					},
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := containsEnvoyContainer(tt.args.pod)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_containsEnvoyTracingConfigVolume(t *testing.T) {
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "contains envoy tracing config volume",
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						Volumes: []corev1.Volume{
+							{
+								Name: "envoy-tracing-config",
+							},
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "doesn't contains envoy tracing config volume",
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						Volumes: []corev1.Volume{
+							{
+								Name: "other",
+							},
+						},
+					},
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := containsEnvoyTracingConfigVolume(tt.args.pod)
 			assert.Equal(t, tt.want, got)
 		})
 	}

@@ -5,7 +5,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-const initContainerTemplate = `
+const proxyInitContainerName = "proxyinit"
+const proxyInitContainerTemplate = `
 {
   "name": "proxyinit",
   "image": "{{ .ContainerImage }}",
@@ -88,8 +89,11 @@ type initProxyMutator struct {
 }
 
 func (m *initProxyMutator) mutate(pod *corev1.Pod) error {
+	if containsProxyInitContainer(pod) {
+		return nil
+	}
 	variables := m.buildTemplateVariables()
-	containerJSON, err := renderTemplate("init", initContainerTemplate, variables)
+	containerJSON, err := renderTemplate("init", proxyInitContainerTemplate, variables)
 	if err != nil {
 		return err
 	}
@@ -114,4 +118,13 @@ func (m *initProxyMutator) buildTemplateVariables() InitContainerTemplateVariabl
 		CPURequests:        m.mutatorConfig.cpuRequests,
 		MemoryRequests:     m.mutatorConfig.memoryRequests,
 	}
+}
+
+func containsProxyInitContainer(pod *corev1.Pod) bool {
+	for _, container := range pod.Spec.InitContainers {
+		if container.Name == proxyInitContainerName {
+			return true
+		}
+	}
+	return false
 }

@@ -71,6 +71,49 @@ func Test_xrayMutator_mutate(t *testing.T) {
 			},
 		},
 		{
+			name: "no-op when already contains xray daemon container",
+			fields: fields{
+				enabled:       true,
+				mutatorConfig: mutatorConfig,
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-ns",
+						Name:      "my-pod",
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "app",
+								Image: "app/v1",
+							},
+							{
+								Name: "xray-daemon",
+							},
+						},
+					},
+				},
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name: "xray-daemon",
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "inject sidecar when enabled",
 			fields: fields{
 				enabled:       true,
@@ -135,6 +178,54 @@ func Test_xrayMutator_mutate(t *testing.T) {
 				assert.NoError(t, err)
 				assert.True(t, cmp.Equal(tt.wantPod, pod), "diff", cmp.Diff(tt.wantPod, pod))
 			}
+		})
+	}
+}
+
+func Test_containsXRAYDaemonContainer(t *testing.T) {
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "contains xray daemon container",
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name: "xray-daemon",
+							},
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "doesn't contains xray daemon container",
+			args: args{
+				pod: &corev1.Pod{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name: "other",
+							},
+						},
+					},
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := containsXRAYDaemonContainer(tt.args.pod)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
