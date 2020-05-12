@@ -48,6 +48,7 @@ func Test_buildIndexValue(t *testing.T) {
 					Name:      "my-obj",
 				},
 			},
+			want: "my-ns/my-obj",
 		},
 	}
 	for _, tt := range tests {
