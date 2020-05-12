@@ -135,15 +135,14 @@ spec:
                     properties:
                       healthyThreshold:
                         description: The number of consecutive successful health checks
-                          that must occur before declaring listener healthy. If unspecified,
-                          defaults to be 10
+                          that must occur before declaring listener healthy.
                         format: int64
                         maximum: 10
                         minimum: 2
                         type: integer
                       intervalMillis:
                         description: The time period in milliseconds between each
-                          health check execution. If unspecified, defaults to be 30000
+                          health check execution.
                         format: int64
                         maximum: 300000
                         minimum: 5000
@@ -155,16 +154,12 @@ spec:
                         type: string
                       port:
                         description: The destination port for the health check request.
-                          If unspecified, defaults to be same as port defined in the
-                          PortMapping for the listener.
                         format: int64
                         maximum: 65535
                         minimum: 1
                         type: integer
                       protocol:
-                        description: The protocol for the health check request If
-                          unspecified, defaults to be same as protocol defined in
-                          the PortMapping for the listener.
+                        description: The protocol for the health check request
                         enum:
                         - grpc
                         - http
@@ -172,8 +167,7 @@ spec:
                         type: string
                       timeoutMillis:
                         description: The amount of time to wait when receiving a response
-                          from the health check, in milliseconds. If unspecified,
-                          defaults to be 5000
+                          from the health check, in milliseconds.
                         format: int64
                         maximum: 60000
                         minimum: 2000
@@ -181,11 +175,15 @@ spec:
                       unhealthyThreshold:
                         description: The number of consecutive failed health checks
                           that must occur before declaring a virtual Gateway unhealthy.
-                          If unspecified, defaults to be 2
                         format: int64
                         maximum: 10
                         minimum: 2
                         type: integer
+                    required:
+                    - intervalMillis
+                    - protocol
+                    - timeoutMillis
+                    - unhealthyThreshold
                     type: object
                   logging:
                     description: The inbound and outbound access logging information
