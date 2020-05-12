@@ -383,8 +383,7 @@ func Test_defaultInstancesReconciler_matchDesiredInstancesAgainstExistingInstanc
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &defaultInstancesReconciler{
-			}
+			r := &defaultInstancesReconciler{}
 			gotInstancesToCreateOrUpdate, gotInstancesToDelete, gotInstancesToUpdateHealthy, gotInstancesToUpdateUnhealthy := r.matchDesiredInstancesAgainstExistingInstances(tt.args.desiredReadyInstancesAttrsByID, tt.args.desiredNotReadyInstancesAttrsByID, tt.args.existingInstancesAttrsByID)
 			assert.Equal(t, tt.wantInstancesToCreateOrUpdate, gotInstancesToCreateOrUpdate)
 			assert.Equal(t, tt.wantInstancesToDelete, gotInstancesToDelete)
@@ -396,12 +395,10 @@ func Test_defaultInstancesReconciler_matchDesiredInstancesAgainstExistingInstanc
 
 func Test_defaultInstancesReconciler_buildInstanceAttributesByID(t *testing.T) {
 	vn := &appmesh.VirtualNode{
-		ObjectMeta: metav1.ObjectMeta{
-		},
+		ObjectMeta: metav1.ObjectMeta{},
 		Spec: appmesh.VirtualNodeSpec{
 			ServiceDiscovery: &appmesh.ServiceDiscovery{
-				AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
-				},
+				AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{},
 			},
 		},
 	}
@@ -471,8 +468,7 @@ func Test_defaultInstancesReconciler_buildInstanceAttributesByID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &defaultInstancesReconciler{
-			}
+			r := &defaultInstancesReconciler{}
 			got := r.buildInstanceAttributesByID(tt.args.vn, tt.args.pods)
 			assert.Equal(t, tt.want, got)
 		})
@@ -566,12 +562,10 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 			name: "attributes should have pod labels",
 			args: args{
 				vn: &appmesh.VirtualNode{
-					ObjectMeta: metav1.ObjectMeta{
-					},
+					ObjectMeta: metav1.ObjectMeta{},
 					Spec: appmesh.VirtualNodeSpec{
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
-							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
-							},
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{},
 						},
 					},
 				},
@@ -602,8 +596,7 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 			name: "attributes should have VirtualNode attributes",
 			args: args{
 				vn: &appmesh.VirtualNode{
-					ObjectMeta: metav1.ObjectMeta{
-					},
+					ObjectMeta: metav1.ObjectMeta{},
 					Spec: appmesh.VirtualNodeSpec{
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
 							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
@@ -645,8 +638,7 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 			name: "attributes should have both pod labels and VirtualNode attributes",
 			args: args{
 				vn: &appmesh.VirtualNode{
-					ObjectMeta: metav1.ObjectMeta{
-					},
+					ObjectMeta: metav1.ObjectMeta{},
 					Spec: appmesh.VirtualNodeSpec{
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
 							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
@@ -693,8 +685,7 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 			name: "when pod labels or virtualNode attributes contains core attributes, it should be overwritten",
 			args: args{
 				vn: &appmesh.VirtualNode{
-					ObjectMeta: metav1.ObjectMeta{
-					},
+					ObjectMeta: metav1.ObjectMeta{},
 					Spec: appmesh.VirtualNodeSpec{
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
 							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
