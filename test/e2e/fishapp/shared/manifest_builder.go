@@ -261,7 +261,7 @@ func (b *ManifestBuilder) BuildServiceVirtualService(instanceName string) *appme
 
 func (b *ManifestBuilder) buildNodeDNSServiceDiscovery(instanceName string) *appmesh.ServiceDiscovery {
 	nodeServiceName := b.buildNodeName(instanceName)
-	nodeServiceDNS := fmt.Sprintf("%s.%s", nodeServiceName, b.Namespace)
+	nodeServiceDNS := fmt.Sprintf("%s.%s.svc.cluster.local.", nodeServiceName, b.Namespace)
 	return &appmesh.ServiceDiscovery{
 		DNS: &appmesh.DNSServiceDiscovery{
 			Hostname: nodeServiceDNS,
