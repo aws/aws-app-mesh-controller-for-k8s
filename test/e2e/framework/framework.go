@@ -2,6 +2,9 @@ package framework
 
 import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/helm"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/resource/deployment"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/resource/mesh"
@@ -10,16 +13,14 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/resource/virtualrouter"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/resource/virtualservice"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/utils"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/servicediscovery"
-	"github.com/aws/aws-sdk-go/service/servicediscovery/servicediscoveryiface"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -36,8 +37,9 @@ type Framework struct {
 	VRManager   virtualrouter.Manager
 	HelmManager helm.Manager
 
-	SDClient servicediscoveryiface.ServiceDiscoveryAPI
-	Logger   *zap.Logger
+	CloudMapClient services.CloudMap
+	Logger         *zap.Logger
+	StopChan       <-chan struct{}
 }
 
 func New(options Options) *Framework {
@@ -50,25 +52,46 @@ func New(options Options) *Framework {
 	k8sSchema := runtime.NewScheme()
 	clientgoscheme.AddToScheme(k8sSchema)
 	appmesh.AddToScheme(k8sSchema)
-	k8sClient, err := client.New(restCfg, client.Options{Scheme: k8sSchema})
+
+	stopChan := ctrl.SetupSignalHandler()
+	cache, err := cache.New(restCfg, cache.Options{Scheme: k8sSchema})
+	Expect(err).NotTo(HaveOccurred())
+	go func() {
+		cache.Start(stopChan)
+	}()
+	cache.WaitForCacheSync(stopChan)
+	realClient, err := client.New(restCfg, client.Options{Scheme: k8sSchema})
+	Expect(err).NotTo(HaveOccurred())
+	k8sClient := client.DelegatingClient{
+		Reader: &client.DelegatingReader{
+			CacheReader:  cache,
+			ClientReader: realClient,
+		},
+		Writer:       realClient,
+		StatusClient: realClient,
+	}
+
+	cloud, err := aws.NewCloud(aws.CloudConfig{
+		Region:         options.AWSRegion,
+		ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig(),
+	}, nil)
 	Expect(err).NotTo(HaveOccurred())
 
-	sess := session.Must(session.NewSession(aws.NewConfig().WithRegion(options.AWSRegion)))
-	sdClient := servicediscovery.New(sess)
 	f := &Framework{
 		Options:   options,
 		RestCfg:   restCfg,
 		K8sClient: k8sClient,
 
-		HelmManager: helm.NewManager(options.KubeConfig),
-		NSManager:   namespace.NewManager(k8sClient),
-		DPManager:   deployment.NewManager(k8sClient),
-		MeshManager: mesh.NewManager(k8sClient),
-		VNManager:   virtualnode.NewManager(k8sClient),
-		VSManager:   virtualservice.NewManager(k8sClient),
-		VRManager:   virtualrouter.NewManager(k8sClient),
-		SDClient:    sdClient,
-		Logger:      utils.NewGinkgoLogger(),
+		HelmManager:    helm.NewManager(options.KubeConfig),
+		NSManager:      namespace.NewManager(k8sClient),
+		DPManager:      deployment.NewManager(k8sClient),
+		MeshManager:    mesh.NewManager(k8sClient),
+		VNManager:      virtualnode.NewManager(k8sClient, cloud.AppMesh()),
+		VSManager:      virtualservice.NewManager(k8sClient, cloud.AppMesh()),
+		VRManager:      virtualrouter.NewManager(k8sClient, cloud.AppMesh()),
+		CloudMapClient: cloud.CloudMap(),
+		Logger:         utils.NewGinkgoLogger(),
+		StopChan:       stopChan,
 	}
 	return f
 }

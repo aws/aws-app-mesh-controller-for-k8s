@@ -142,7 +142,7 @@ func (m *defaultRoutesManager) findSDKRoute(ctx context.Context, sdkRouteRef *ap
 }
 
 func (m *defaultRoutesManager) createSDKRoute(ctx context.Context, ms *appmesh.Mesh, vr *appmesh.VirtualRouter, route appmesh.Route, vnByKey map[types.NamespacedName]*appmesh.VirtualNode) (*appmeshsdk.RouteData, error) {
-	sdkRouteSpec, err := buildSDKRouteSpec(vr, route, vnByKey)
+	sdkRouteSpec, err := BuildSDKRouteSpec(vr, route, vnByKey)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (m *defaultRoutesManager) createSDKRoute(ctx context.Context, ms *appmesh.M
 
 func (m *defaultRoutesManager) updateSDKRoute(ctx context.Context, sdkRoute *appmeshsdk.RouteData, vr *appmesh.VirtualRouter, route appmesh.Route, vnByKey map[types.NamespacedName]*appmesh.VirtualNode) (*appmeshsdk.RouteData, error) {
 	actualSDKRouteSpec := sdkRoute.Spec
-	desiredSDKRouteSpec, err := buildSDKRouteSpec(vr, route, vnByKey)
+	desiredSDKRouteSpec, err := BuildSDKRouteSpec(vr, route, vnByKey)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func matchRoutesAgainstSDKRouteRefs(routes []appmesh.Route, sdkRouteRefs []*appm
 	return matchedRouteAndSDKRouteRef, unmatchedRoutes, unmatchedSDKRouteRefs
 }
 
-func buildSDKRouteSpec(vr *appmesh.VirtualRouter, route appmesh.Route, vnByKey map[types.NamespacedName]*appmesh.VirtualNode) (*appmeshsdk.RouteSpec, error) {
+func BuildSDKRouteSpec(vr *appmesh.VirtualRouter, route appmesh.Route, vnByKey map[types.NamespacedName]*appmesh.VirtualNode) (*appmeshsdk.RouteSpec, error) {
 	sdkVNRefConvertFunc := references.BuildSDKVirtualNodeReferenceConvertFunc(vr, vnByKey)
 	converter := conversion.NewConverter(conversion.DefaultNameFunc)
 	converter.RegisterUntypedConversionFunc((*appmesh.Route)(nil), (*appmeshsdk.RouteSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {

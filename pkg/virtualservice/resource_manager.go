@@ -204,7 +204,7 @@ func (m *defaultResourceManager) findSDKVirtualService(ctx context.Context, ms *
 func (m *defaultResourceManager) createSDKVirtualService(ctx context.Context, ms *appmesh.Mesh, vs *appmesh.VirtualService,
 	vnByKey map[types.NamespacedName]*appmesh.VirtualNode, vrByKey map[types.NamespacedName]*appmesh.VirtualRouter) (*appmeshsdk.VirtualServiceData, error) {
 
-	sdkVSSpec, err := buildSDKVirtualServiceSpec(vs, vnByKey, vrByKey)
+	sdkVSSpec, err := BuildSDKVirtualServiceSpec(vs, vnByKey, vrByKey)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func (m *defaultResourceManager) createSDKVirtualService(ctx context.Context, ms
 func (m *defaultResourceManager) updateSDKVirtualService(ctx context.Context, sdkVS *appmeshsdk.VirtualServiceData, vs *appmesh.VirtualService,
 	vnByKey map[types.NamespacedName]*appmesh.VirtualNode, vrByKey map[types.NamespacedName]*appmesh.VirtualRouter) (*appmeshsdk.VirtualServiceData, error) {
 	actualSDKVSSpec := sdkVS.Spec
-	desiredSDKVSSpec, err := buildSDKVirtualServiceSpec(vs, vnByKey, vrByKey)
+	desiredSDKVSSpec, err := BuildSDKVirtualServiceSpec(vs, vnByKey, vrByKey)
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +318,7 @@ func (m *defaultResourceManager) isSDKVirtualServiceOwnedByCRDVirtualService(ctx
 	return true
 }
 
-func buildSDKVirtualServiceSpec(vs *appmesh.VirtualService, vnByKey map[types.NamespacedName]*appmesh.VirtualNode, vrByKey map[types.NamespacedName]*appmesh.VirtualRouter) (*appmeshsdk.VirtualServiceSpec, error) {
+func BuildSDKVirtualServiceSpec(vs *appmesh.VirtualService, vnByKey map[types.NamespacedName]*appmesh.VirtualNode, vrByKey map[types.NamespacedName]*appmesh.VirtualRouter) (*appmeshsdk.VirtualServiceSpec, error) {
 	converter := conversion.NewConverter(conversion.DefaultNameFunc)
 	converter.RegisterUntypedConversionFunc((*appmesh.VirtualServiceSpec)(nil), (*appmeshsdk.VirtualServiceSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return conversions.Convert_CRD_VirtualServiceSpec_To_SDK_VirtualServiceSpec(a.(*appmesh.VirtualServiceSpec), b.(*appmeshsdk.VirtualServiceSpec), scope)

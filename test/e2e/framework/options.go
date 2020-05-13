@@ -26,7 +26,7 @@ type Options struct {
 }
 
 func (options *Options) BindFlags() {
-	flag.StringVar(&options.KubeConfig, clientcmd.RecommendedConfigPathFlag, "", "Path to kubeconfig containing embedded authinfo (required)")
+	flag.StringVar(&options.KubeConfig, "cluster-kubeconfig", "", "Path to kubeconfig containing embedded authinfo (required)")
 	flag.StringVar(&options.ClusterName, "cluster-name", "", `Kubernetes cluster name (required)`)
 	flag.StringVar(&options.AWSRegion, "aws-region", "", `AWS Region for the kubernetes cluster`)
 	flag.StringVar(&options.AWSVPCID, "aws-vpc-id", "", `AWS VPC ID for the kubernetes cluster`)

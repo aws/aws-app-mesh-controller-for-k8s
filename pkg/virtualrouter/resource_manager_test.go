@@ -329,7 +329,7 @@ func Test_defaultResourceManager_isSDKVirtualRouterOwnedByCRDVirtualRouter(t *te
 	}
 }
 
-func Test_buildSDKVirtualRouterSpec(t *testing.T) {
+func Test_BuildSDKVirtualRouterSpec(t *testing.T) {
 	type args struct {
 		vr *appmesh.VirtualRouter
 	}
@@ -381,7 +381,7 @@ func Test_buildSDKVirtualRouterSpec(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildSDKVirtualRouterSpec(tt.args.vr)
+			got, err := BuildSDKVirtualRouterSpec(tt.args.vr)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
