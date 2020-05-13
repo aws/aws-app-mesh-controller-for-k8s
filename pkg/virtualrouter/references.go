@@ -11,8 +11,8 @@ const (
 	ReferenceKindVirtualNode = "VirtualNode"
 )
 
-// extractVirtualNodeReferences extracts all virtualNodeReferences for this virtualRouter
-func extractVirtualNodeReferences(vr *appmesh.VirtualRouter) []appmesh.VirtualNodeReference {
+// ExtractVirtualNodeReferences extracts all virtualNodeReferences for this virtualRouter
+func ExtractVirtualNodeReferences(vr *appmesh.VirtualRouter) []appmesh.VirtualNodeReference {
 	var vnRefs []appmesh.VirtualNodeReference
 	for _, route := range vr.Spec.Routes {
 		if route.GRPCRoute != nil {
@@ -41,7 +41,7 @@ func extractVirtualNodeReferences(vr *appmesh.VirtualRouter) []appmesh.VirtualNo
 
 func VirtualNodeReferenceIndexFunc(obj runtime.Object) []types.NamespacedName {
 	vr := obj.(*appmesh.VirtualRouter)
-	vnRefs := extractVirtualNodeReferences(vr)
+	vnRefs := ExtractVirtualNodeReferences(vr)
 	var vnKeys []types.NamespacedName
 	for _, vnRef := range vnRefs {
 		vnKeys = append(vnKeys, references.ObjectKeyForVirtualNodeReference(vr, vnRef))
