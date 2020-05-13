@@ -173,7 +173,7 @@ func (m *defaultRoutesManager) updateSDKRoute(ctx context.Context, sdkRoute *app
 		return sdkRoute, nil
 	}
 	diff := cmp.Diff(desiredSDKRouteSpec, actualSDKRouteSpec, opts)
-	m.log.V(2).Info("routeSpec changed",
+	m.log.V(1).Info("routeSpec changed",
 		"virtualRouter", k8s.NamespacedName(vr),
 		"route", route.Name,
 		"actualSDKRouteSpec", actualSDKRouteSpec,

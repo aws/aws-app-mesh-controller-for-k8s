@@ -13,7 +13,7 @@ const (
 	flagSidecarCpuRequests    = "sidecar-cpu-requests"
 	flagSidecarMemoryRequests = "sidecar-memory-requests"
 	flagPreview               = "preview"
-	flagLogLevel              = "log-level"
+	flagLogLevel              = "sidecar-log-level"
 
 	flagInitImage  = "init-image"
 	flagIgnoredIPs = "ignored-ips"

@@ -203,7 +203,7 @@ func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN
 		return sdkVN, nil
 	}
 	if !m.isSDKVirtualNodeControlledByCRDVirtualNode(ctx, sdkVN, vn) {
-		m.log.V(2).Info("skip virtualNode update since it's not controlled",
+		m.log.V(1).Info("skip virtualNode update since it's not controlled",
 			"virtualNode", k8s.NamespacedName(vn),
 			"virtualNodeARN", aws.StringValue(sdkVN.Metadata.Arn),
 		)
@@ -211,7 +211,7 @@ func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN
 	}
 
 	diff := cmp.Diff(desiredSDKVNSpec, actualSDKVNSpec, opts)
-	m.log.V(2).Info("virtualNodeSpec changed",
+	m.log.V(1).Info("virtualNodeSpec changed",
 		"virtualNode", k8s.NamespacedName(vn),
 		"actualSDKVNSpec", actualSDKVNSpec,
 		"desiredSDKVNSpec", desiredSDKVNSpec,
@@ -231,7 +231,7 @@ func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN
 
 func (m *defaultResourceManager) deleteSDKVirtualNode(ctx context.Context, sdkVN *appmeshsdk.VirtualNodeData, ms *appmesh.Mesh, vn *appmesh.VirtualNode) error {
 	if !m.isSDKVirtualNodeOwnedByCRDVirtualNode(ctx, sdkVN, vn) {
-		m.log.V(2).Info("skip mesh virtualNode since its not owned",
+		m.log.V(1).Info("skip mesh virtualNode since its not owned",
 			"virtualNode", k8s.NamespacedName(vn),
 			"virtualNodeARN", aws.StringValue(sdkVN.Metadata.Arn),
 		)

@@ -122,7 +122,7 @@ func (m *defaultResourceManager) updateSDKMesh(ctx context.Context, sdkMS *appme
 		return sdkMS, nil
 	}
 	if !m.isSDKMeshControlledByCRDMesh(ctx, sdkMS, ms) {
-		m.log.V(2).Info("skip mesh update since it's not controlled",
+		m.log.V(1).Info("skip mesh update since it's not controlled",
 			"mesh", k8s.NamespacedName(ms),
 			"meshARN", aws.StringValue(sdkMS.Metadata.Arn),
 		)
@@ -130,7 +130,7 @@ func (m *defaultResourceManager) updateSDKMesh(ctx context.Context, sdkMS *appme
 	}
 
 	diff := cmp.Diff(desiredSDKMSSpec, actualSDKMSSpec, opts)
-	m.log.V(2).Info("meshSpec changed",
+	m.log.V(1).Info("meshSpec changed",
 		"mesh", k8s.NamespacedName(ms),
 		"actualSDKMSSpec", actualSDKMSSpec,
 		"desiredSDKMSSpec", desiredSDKMSSpec,
@@ -148,7 +148,7 @@ func (m *defaultResourceManager) updateSDKMesh(ctx context.Context, sdkMS *appme
 
 func (m *defaultResourceManager) deleteSDKMesh(ctx context.Context, sdkMS *appmeshsdk.MeshData, ms *appmesh.Mesh) error {
 	if !m.isSDKMeshOwnedByCRDMesh(ctx, sdkMS, ms) {
-		m.log.V(2).Info("skip mesh deletion since its not owned",
+		m.log.V(1).Info("skip mesh deletion since its not owned",
 			"mesh", k8s.NamespacedName(ms),
 			"meshARN", aws.StringValue(sdkMS.Metadata.Arn),
 		)

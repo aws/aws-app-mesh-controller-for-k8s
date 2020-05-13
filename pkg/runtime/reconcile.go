@@ -14,13 +14,13 @@ func HandleReconcileError(err error, log logr.Logger) (ctrl.Result, error) {
 
 	var requeueAfterErr *RequeueAfterError
 	if errors.As(err, &requeueAfterErr) {
-		log.V(2).Info("requeue after due to error", "duration", requeueAfterErr.Duration(), "error", requeueAfterErr.Unwrap())
+		log.V(1).Info("requeue after due to error", "duration", requeueAfterErr.Duration(), "error", requeueAfterErr.Unwrap())
 		return ctrl.Result{RequeueAfter: requeueAfterErr.Duration()}, nil
 	}
 
 	var requeueError *RequeueError
 	if errors.As(err, &requeueError) {
-		log.V(2).Info("requeue due to error", "error", requeueError.Unwrap())
+		log.V(1).Info("requeue due to error", "error", requeueError.Unwrap())
 		return ctrl.Result{Requeue: true}, nil
 	}
 
