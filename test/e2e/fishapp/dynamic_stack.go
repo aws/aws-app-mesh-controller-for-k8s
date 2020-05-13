@@ -282,7 +282,7 @@ func (s *DynamicStack) deleteMeshAndNamespace(ctx context.Context, f *framework.
 func (s *DynamicStack) createCloudMapNamespace(ctx context.Context, f *framework.Framework) {
 	cmNamespace := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
 	By(fmt.Sprintf("create cloudMap namespace %s", cmNamespace), func() {
-		resp, err := f.SDClient.CreatePrivateDnsNamespaceWithContext(ctx, &servicediscovery.CreatePrivateDnsNamespaceInput{
+		resp, err := f.CloudMapClient.CreatePrivateDnsNamespaceWithContext(ctx, &servicediscovery.CreatePrivateDnsNamespaceInput{
 			Name: aws.String(cmNamespace),
 			Vpc:  aws.String(f.Options.AWSVPCID),
 		})
@@ -300,7 +300,7 @@ func (s *DynamicStack) deleteCloudMapNamespace(ctx context.Context, f *framework
 	if s.cloudMapNamespace != "" {
 		By(fmt.Sprintf("delete cloudMap namespace %s", s.cloudMapNamespace), func() {
 			var cmNamespaceID string
-			f.SDClient.ListNamespacesPagesWithContext(ctx, &servicediscovery.ListNamespacesInput{}, func(output *servicediscovery.ListNamespacesOutput, b bool) bool {
+			f.CloudMapClient.ListNamespacesPagesWithContext(ctx, &servicediscovery.ListNamespacesInput{}, func(output *servicediscovery.ListNamespacesOutput, b bool) bool {
 				for _, ns := range output.Namespaces {
 					if aws.StringValue(ns.Name) == s.cloudMapNamespace {
 						cmNamespaceID = aws.StringValue(ns.Id)
@@ -325,7 +325,7 @@ func (s *DynamicStack) deleteCloudMapNamespace(ctx context.Context, f *framework
 				// give controller a break to deregister instance xD
 				time.Sleep(1 * time.Minute)
 				var cmServiceIDs []string
-				f.SDClient.ListServicesPagesWithContext(ctx, &servicediscovery.ListServicesInput{
+				f.CloudMapClient.ListServicesPagesWithContext(ctx, &servicediscovery.ListServicesInput{
 					Filters: []*servicediscovery.ServiceFilter{
 						{
 							Condition: aws.String(servicediscovery.FilterConditionEq),
@@ -341,7 +341,7 @@ func (s *DynamicStack) deleteCloudMapNamespace(ctx context.Context, f *framework
 				})
 				for _, cmServiceID := range cmServiceIDs {
 					var cmInstanceIDs []string
-					f.SDClient.ListInstancesPagesWithContext(ctx, &servicediscovery.ListInstancesInput{
+					f.CloudMapClient.ListInstancesPagesWithContext(ctx, &servicediscovery.ListInstancesInput{
 						ServiceId: aws.String(cmServiceID),
 					}, func(output *servicediscovery.ListInstancesOutput, b bool) bool {
 						for _, ins := range output.Instances {
@@ -351,7 +351,7 @@ func (s *DynamicStack) deleteCloudMapNamespace(ctx context.Context, f *framework
 					})
 
 					for _, cmInstanceID := range cmInstanceIDs {
-						if _, err := f.SDClient.DeregisterInstanceWithContext(ctx, &servicediscovery.DeregisterInstanceInput{
+						if _, err := f.CloudMapClient.DeregisterInstanceWithContext(ctx, &servicediscovery.DeregisterInstanceInput{
 							ServiceId:  aws.String(cmServiceID),
 							InstanceId: aws.String(cmInstanceID),
 						}); err != nil {
@@ -366,7 +366,7 @@ func (s *DynamicStack) deleteCloudMapNamespace(ctx context.Context, f *framework
 					}
 					time.Sleep(30 * time.Second)
 
-					if _, err := f.SDClient.DeleteServiceWithContext(ctx, &servicediscovery.DeleteServiceInput{
+					if _, err := f.CloudMapClient.DeleteServiceWithContext(ctx, &servicediscovery.DeleteServiceInput{
 						Id: aws.String(cmServiceID),
 					}); err != nil {
 						f.Logger.Error("failed to delete cloudMap service",
@@ -380,7 +380,7 @@ func (s *DynamicStack) deleteCloudMapNamespace(ctx context.Context, f *framework
 			})
 
 			time.Sleep(30 * time.Second)
-			if _, err := f.SDClient.DeleteNamespaceWithContext(ctx, &servicediscovery.DeleteNamespaceInput{
+			if _, err := f.CloudMapClient.DeleteNamespaceWithContext(ctx, &servicediscovery.DeleteNamespaceInput{
 				Id: aws.String(cmNamespaceID),
 			}); err != nil {
 				f.Logger.Error("failed to delete cloudMap namespace",
@@ -474,6 +474,31 @@ func (s *DynamicStack) createResourcesForNodes(ctx context.Context, f *framework
 				f.Logger.Error("failed to wait all Deployments become active", zap.Error(waitErr))
 			}
 			Expect(len(waitErrors)).To(BeZero())
+		})
+
+		By("check all VirtualNode in aws", func() {
+			var checkErrors []error
+			checkErrorsMutex := &sync.Mutex{}
+			var wg sync.WaitGroup
+			for i := 0; i != s.VirtualNodesCount; i++ {
+				wg.Add(1)
+				go func(nodeIndex int) {
+					defer wg.Done()
+					vn := s.createdNodeVNs[nodeIndex]
+					err := f.VNManager.CheckVirtualNodeInAWS(ctx, s.mesh, vn)
+					if err != nil {
+						checkErrorsMutex.Lock()
+						checkErrors = append(checkErrors, errors.Wrapf(err, "VirtualNode: %v", k8s.NamespacedName(vn).String()))
+						checkErrorsMutex.Unlock()
+						return
+					}
+				}(i)
+			}
+			wg.Wait()
+			for _, checkErr := range checkErrors {
+				f.Logger.Error("failed to check all VirtualNodes in aws", zap.Error(checkErr))
+			}
+			Expect(len(checkErrors)).To(BeZero())
 		})
 	})
 }
@@ -654,6 +679,56 @@ func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framew
 				f.Logger.Error("failed to wait all VirtualService become active", zap.Error(waitErr))
 			}
 			Expect(len(waitErrors)).To(BeZero())
+		})
+
+		By("check all VirtualRouters in AWS", func() {
+			var checkErrors []error
+			checkErrorsMutex := &sync.Mutex{}
+			var wg sync.WaitGroup
+			for i := 0; i != s.VirtualServicesCount; i++ {
+				wg.Add(1)
+				go func(serviceIndex int) {
+					defer wg.Done()
+					vr := s.createdServiceVRs[serviceIndex]
+					err := f.VRManager.CheckVirtualRouterInAWS(ctx, s.mesh, vr)
+					if err != nil {
+						checkErrorsMutex.Lock()
+						checkErrors = append(checkErrors, errors.Wrapf(err, "VirtualRouter: %v", k8s.NamespacedName(vr).String()))
+						checkErrorsMutex.Unlock()
+						return
+					}
+				}(i)
+			}
+			wg.Wait()
+			for _, checkErr := range checkErrors {
+				f.Logger.Error("failed to check all VirtualRouters in AWS", zap.Error(checkErr))
+			}
+			Expect(len(checkErrors)).To(BeZero())
+		})
+
+		By("check all VirtualService in AWS", func() {
+			var checkErrors []error
+			checkErrorsMutex := &sync.Mutex{}
+			var wg sync.WaitGroup
+			for i := 0; i != s.VirtualServicesCount; i++ {
+				wg.Add(1)
+				go func(serviceIndex int) {
+					defer wg.Done()
+					vs := s.createdServiceVSs[serviceIndex]
+					err := f.VSManager.CheckVirtualServiceInAWS(ctx, s.mesh, vs)
+					if err != nil {
+						checkErrorsMutex.Lock()
+						checkErrors = append(checkErrors, errors.Wrapf(err, "VirtualService: %v", k8s.NamespacedName(vs).String()))
+						checkErrorsMutex.Unlock()
+						return
+					}
+				}(i)
+			}
+			wg.Wait()
+			for _, checkErr := range checkErrors {
+				f.Logger.Error("failed to check all VirtualService in AWS", zap.Error(checkErr))
+			}
+			Expect(len(checkErrors)).To(BeZero())
 		})
 	})
 }

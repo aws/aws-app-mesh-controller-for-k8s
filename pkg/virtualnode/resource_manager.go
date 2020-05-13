@@ -174,7 +174,7 @@ func (m *defaultResourceManager) findSDKVirtualNode(ctx context.Context, ms *app
 }
 
 func (m *defaultResourceManager) createSDKVirtualNode(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeData, error) {
-	sdkVNSpec, err := m.buildSDKVirtualNodeSpec(ctx, vn, vsByKey)
+	sdkVNSpec, err := BuildSDKVirtualNodeSpec(vn, vsByKey)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (m *defaultResourceManager) createSDKVirtualNode(ctx context.Context, ms *a
 
 func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN *appmeshsdk.VirtualNodeData, ms *appmesh.Mesh, vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeData, error) {
 	actualSDKVNSpec := sdkVN.Spec
-	desiredSDKVNSpec, err := m.buildSDKVirtualNodeSpec(ctx, vn, vsByKey)
+	desiredSDKVNSpec, err := BuildSDKVirtualNodeSpec(vn, vsByKey)
 	if err != nil {
 		return nil, err
 	}
@@ -271,22 +271,6 @@ func (m *defaultResourceManager) updateCRDVirtualNode(ctx context.Context, vn *a
 	return m.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN))
 }
 
-func (m *defaultResourceManager) buildSDKVirtualNodeSpec(ctx context.Context, vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeSpec, error) {
-	converter := conversion.NewConverter(conversion.DefaultNameFunc)
-	converter.RegisterUntypedConversionFunc((*appmesh.VirtualNodeSpec)(nil), (*appmeshsdk.VirtualNodeSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return conversions.Convert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(a.(*appmesh.VirtualNodeSpec), b.(*appmeshsdk.VirtualNodeSpec), scope)
-	})
-	sdkVSRefConvertFunc := references.BuildSDKVirtualServiceReferenceConvertFunc(vn, vsByKey)
-	converter.RegisterUntypedConversionFunc((*appmesh.VirtualServiceReference)(nil), (*string)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return sdkVSRefConvertFunc(a.(*appmesh.VirtualServiceReference), b.(*string), scope)
-	})
-	sdkVNSpec := &appmeshsdk.VirtualNodeSpec{}
-	if err := converter.Convert(&vn.Spec, sdkVNSpec, conversion.DestFromSource, nil); err != nil {
-		return nil, err
-	}
-	return sdkVNSpec, nil
-}
-
 func (m *defaultResourceManager) buildSDKVirtualNodeTags(ctx context.Context, vn *appmesh.VirtualNode) []*appmeshsdk.TagRef {
 	// TODO, support tags
 	return nil
@@ -308,4 +292,20 @@ func (m *defaultResourceManager) isSDKVirtualNodeOwnedByCRDVirtualNode(ctx conte
 	// TODO: Adding tagging support, so a existing virtualNode in owner account but not ownership can be support.
 	// currently, virtualNode controllership == ownership, but it don't have to be so once we add tagging support.
 	return true
+}
+
+func BuildSDKVirtualNodeSpec(vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeSpec, error) {
+	converter := conversion.NewConverter(conversion.DefaultNameFunc)
+	converter.RegisterUntypedConversionFunc((*appmesh.VirtualNodeSpec)(nil), (*appmeshsdk.VirtualNodeSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return conversions.Convert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(a.(*appmesh.VirtualNodeSpec), b.(*appmeshsdk.VirtualNodeSpec), scope)
+	})
+	sdkVSRefConvertFunc := references.BuildSDKVirtualServiceReferenceConvertFunc(vn, vsByKey)
+	converter.RegisterUntypedConversionFunc((*appmesh.VirtualServiceReference)(nil), (*string)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return sdkVSRefConvertFunc(a.(*appmesh.VirtualServiceReference), b.(*string), scope)
+	})
+	sdkVNSpec := &appmeshsdk.VirtualNodeSpec{}
+	if err := converter.Convert(&vn.Spec, sdkVNSpec, conversion.DestFromSource, nil); err != nil {
+		return nil, err
+	}
+	return sdkVNSpec, nil
 }

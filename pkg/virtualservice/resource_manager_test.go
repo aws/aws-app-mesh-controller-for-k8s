@@ -246,7 +246,7 @@ func Test_defaultResourceManager_isSDKVirtualServiceOwnedByCRDVirtualService(t *
 	}
 }
 
-func Test_buildSDKVirtualServiceSpec(t *testing.T) {
+func Test_BuildSDKVirtualServiceSpec(t *testing.T) {
 	type args struct {
 		vs      *appmesh.VirtualService
 		vnByKey map[types.NamespacedName]*appmesh.VirtualNode
@@ -399,7 +399,7 @@ func Test_buildSDKVirtualServiceSpec(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildSDKVirtualServiceSpec(tt.args.vs, tt.args.vnByKey, tt.args.vrByKey)
+			got, err := BuildSDKVirtualServiceSpec(tt.args.vs, tt.args.vnByKey, tt.args.vrByKey)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {

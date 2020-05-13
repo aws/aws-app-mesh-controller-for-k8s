@@ -182,7 +182,7 @@ func (m *defaultResourceManager) findSDKVirtualRouter(ctx context.Context, ms *a
 }
 
 func (m *defaultResourceManager) createSDKVirtualRouter(ctx context.Context, ms *appmesh.Mesh, vr *appmesh.VirtualRouter) (*appmeshsdk.VirtualRouterData, error) {
-	sdkVRSpec, err := buildSDKVirtualRouterSpec(vr)
+	sdkVRSpec, err := BuildSDKVirtualRouterSpec(vr)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +201,7 @@ func (m *defaultResourceManager) createSDKVirtualRouter(ctx context.Context, ms 
 
 func (m *defaultResourceManager) updateSDKVirtualRouter(ctx context.Context, sdkVR *appmeshsdk.VirtualRouterData, vr *appmesh.VirtualRouter) (*appmeshsdk.VirtualRouterData, error) {
 	actualSDKVRSpec := sdkVR.Spec
-	desiredSDKVRSpec, err := buildSDKVirtualRouterSpec(vr)
+	desiredSDKVRSpec, err := BuildSDKVirtualRouterSpec(vr)
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +306,7 @@ func (m *defaultResourceManager) isSDKVirtualRouterOwnedByCRDVirtualRouter(ctx c
 	return true
 }
 
-func buildSDKVirtualRouterSpec(vr *appmesh.VirtualRouter) (*appmeshsdk.VirtualRouterSpec, error) {
+func BuildSDKVirtualRouterSpec(vr *appmesh.VirtualRouter) (*appmeshsdk.VirtualRouterSpec, error) {
 	converter := conversion.NewConverter(conversion.DefaultNameFunc)
 	converter.RegisterUntypedConversionFunc((*appmesh.VirtualRouterSpec)(nil), (*appmeshsdk.VirtualRouterSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return conversions.Convert_CRD_VirtualRouterSpec_To_SDK_VirtualRouterSpec(a.(*appmesh.VirtualRouterSpec), b.(*appmeshsdk.VirtualRouterSpec), scope)

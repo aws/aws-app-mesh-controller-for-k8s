@@ -177,7 +177,7 @@ func Test_matchRoutesAgainstSDKRouteRefs(t *testing.T) {
 	}
 }
 
-func Test_buildSDKRouteSpec(t *testing.T) {
+func Test_BuildSDKRouteSpec(t *testing.T) {
 	type args struct {
 		vr      *appmesh.VirtualRouter
 		route   appmesh.Route
@@ -696,7 +696,7 @@ func Test_buildSDKRouteSpec(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := buildSDKRouteSpec(tt.args.vr, tt.args.route, tt.args.vnByKey)
+			got, err := BuildSDKRouteSpec(tt.args.vr, tt.args.route, tt.args.vnByKey)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
