@@ -32,6 +32,10 @@ spec:
         - --enable-leader-election
         image: controller:latest
         name: manager
+        ports:
+        - containerPort: 8080
+          name: metrics-server
+          protocol: TCP
         resources:
           limits:
             cpu: 100m

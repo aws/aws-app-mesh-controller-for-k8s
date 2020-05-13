@@ -234,7 +234,7 @@ func (m *defaultResourceManager) updateSDKVirtualService(ctx context.Context, sd
 		return sdkVS, nil
 	}
 	if !m.isSDKVirtualServiceControlledByCRDVirtualService(ctx, sdkVS, vs) {
-		m.log.V(2).Info("skip virtualService update since it's not controlled",
+		m.log.V(1).Info("skip virtualService update since it's not controlled",
 			"virtualService", k8s.NamespacedName(vs),
 			"virtualServiceARN", aws.StringValue(sdkVS.Metadata.Arn),
 		)
@@ -242,7 +242,7 @@ func (m *defaultResourceManager) updateSDKVirtualService(ctx context.Context, sd
 	}
 
 	diff := cmp.Diff(desiredSDKVSSpec, actualSDKVSSpec, opts)
-	m.log.V(2).Info("virtualServiceSpec changed",
+	m.log.V(1).Info("virtualServiceSpec changed",
 		"virtualService", k8s.NamespacedName(vs),
 		"actualSDKVRSpec", actualSDKVSSpec,
 		"desiredSDKVRSpec", desiredSDKVSSpec,
@@ -262,7 +262,7 @@ func (m *defaultResourceManager) updateSDKVirtualService(ctx context.Context, sd
 
 func (m *defaultResourceManager) deleteSDKVirtualService(ctx context.Context, sdkVS *appmeshsdk.VirtualServiceData, vs *appmesh.VirtualService) error {
 	if !m.isSDKVirtualServiceOwnedByCRDVirtualService(ctx, sdkVS, vs) {
-		m.log.V(2).Info("skip virtualService deletion since its not owned",
+		m.log.V(1).Info("skip virtualService deletion since its not owned",
 			"virtualService", k8s.NamespacedName(vs),
 			"virtualServiceARN", aws.StringValue(sdkVS.Metadata.Arn),
 		)

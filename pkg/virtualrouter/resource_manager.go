@@ -211,7 +211,7 @@ func (m *defaultResourceManager) updateSDKVirtualRouter(ctx context.Context, sdk
 		return sdkVR, nil
 	}
 	if !m.isSDKVirtualRouterControlledByCRDVirtualRouter(ctx, sdkVR, vr) {
-		m.log.V(2).Info("skip virtualRouter update since it's not controlled",
+		m.log.V(1).Info("skip virtualRouter update since it's not controlled",
 			"virtualRouter", k8s.NamespacedName(vr),
 			"virtualRouterARN", aws.StringValue(sdkVR.Metadata.Arn),
 		)
@@ -219,7 +219,7 @@ func (m *defaultResourceManager) updateSDKVirtualRouter(ctx context.Context, sdk
 	}
 
 	diff := cmp.Diff(desiredSDKVRSpec, actualSDKVRSpec, opts)
-	m.log.V(2).Info("virtualRouterSpec changed",
+	m.log.V(1).Info("virtualRouterSpec changed",
 		"virtualRouter", k8s.NamespacedName(vr),
 		"actualSDKVRSpec", actualSDKVRSpec,
 		"desiredSDKVRSpec", desiredSDKVRSpec,
@@ -239,7 +239,7 @@ func (m *defaultResourceManager) updateSDKVirtualRouter(ctx context.Context, sdk
 
 func (m *defaultResourceManager) deleteSDKVirtualRouter(ctx context.Context, sdkVR *appmeshsdk.VirtualRouterData, vr *appmesh.VirtualRouter) error {
 	if !m.isSDKVirtualRouterOwnedByCRDVirtualRouter(ctx, sdkVR, vr) {
-		m.log.V(2).Info("skip virtualRouter deletion since its not owned",
+		m.log.V(1).Info("skip virtualRouter deletion since its not owned",
 			"virtualRouter", k8s.NamespacedName(vr),
 			"virtualRouterARN", aws.StringValue(sdkVR.Metadata.Arn),
 		)

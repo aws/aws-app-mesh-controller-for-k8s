@@ -63,10 +63,12 @@ func init() {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
+	var logLevel string
 	flag.StringVar(&metricsAddr, "metrics-addr", "0.0.0.0:8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&logLevel, "log-level", "info", "Set the controller manager log level - info(default), debug")
 	var injectConfig inject.Config
 	injectConfig.BindFlags()
 	flag.Parse()
@@ -75,8 +77,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: make level configurable
-	lvl := zapraw.NewAtomicLevelAt(-2)
+	lvl := zapraw.NewAtomicLevelAt(0)
+	if logLevel == "debug" {
+		lvl = zapraw.NewAtomicLevelAt(-1)
+	}
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.Level(&lvl)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
