@@ -15,6 +15,8 @@ spec:
     plural: meshes
     singular: mesh
   scope: Cluster
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: Mesh is the Schema for the meshes API
@@ -136,6 +138,10 @@ spec:
             meshARN:
               description: MeshARN is the AppMesh Mesh object's Amazon Resource Name
               type: string
+            observedGeneration:
+              description: The generation observed by the Mesh controller.
+              format: int64
+              type: integer
           type: object
       type: object
   version: v1beta2

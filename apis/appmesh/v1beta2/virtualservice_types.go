@@ -94,10 +94,14 @@ type VirtualServiceStatus struct {
 	// The current VirtualService status.
 	// +optional
 	Conditions []VirtualServiceCondition `json:"conditions,omitempty"`
+
+	// The generation observed by the VirtualService controller.
+	// +optional
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 }
 
 // +kubebuilder:object:root=true
-
+// +kubebuilder:subresource:status
 // VirtualService is the Schema for the virtualservices API
 type VirtualService struct {
 	metav1.TypeMeta   `json:",inline"`

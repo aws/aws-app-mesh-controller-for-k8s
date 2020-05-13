@@ -264,6 +264,10 @@ func (m *defaultResourceManager) updateCRDVirtualRouter(ctx context.Context, vr 
 		vr.Status.VirtualRouterARN = sdkVR.Metadata.Arn
 		needsUpdate = true
 	}
+	if aws.Int64Value(vr.Status.ObservedGeneration) != vr.Generation {
+		vr.Status.ObservedGeneration = aws.Int64(vr.Generation)
+		needsUpdate = true
+	}
 
 	routeARNByName := make(map[string]string)
 	for name, sdkRoute := range sdkRouteByName {
@@ -285,7 +289,7 @@ func (m *defaultResourceManager) updateCRDVirtualRouter(ctx context.Context, vr 
 	if !needsUpdate {
 		return nil
 	}
-	return m.k8sClient.Patch(ctx, vr, client.MergeFrom(oldVR))
+	return m.k8sClient.Status().Patch(ctx, vr, client.MergeFrom(oldVR))
 }
 
 // isSDKVirtualRouterControlledByCRDVirtualRouter checks whether an AppMesh virtualRouter is controlled by CRD VirtualRouter.

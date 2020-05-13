@@ -15,6 +15,8 @@ spec:
     plural: virtualservices
     singular: virtualservice
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: VirtualService is the Schema for the virtualservices API
@@ -131,6 +133,10 @@ spec:
                 - type
                 type: object
               type: array
+            observedGeneration:
+              description: The generation observed by the VirtualService controller.
+              format: int64
+              type: integer
             virtualServiceARN:
               description: VirtualServiceARN is the AppMesh VirtualService object's
                 Amazon Resource Name.

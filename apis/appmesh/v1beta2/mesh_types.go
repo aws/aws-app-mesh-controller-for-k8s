@@ -91,11 +91,15 @@ type MeshStatus struct {
 	// The current Mesh status.
 	// +optional
 	Conditions []MeshCondition `json:"conditions,omitempty"`
+
+	// The generation observed by the Mesh controller.
+	// +optional
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
-
+// +kubebuilder:subresource:status
 // Mesh is the Schema for the meshes API
 type Mesh struct {
 	metav1.TypeMeta   `json:",inline"`

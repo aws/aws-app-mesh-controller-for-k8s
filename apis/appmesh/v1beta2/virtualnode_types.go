@@ -330,10 +330,14 @@ type VirtualNodeStatus struct {
 	// AWSCloudMapServiceStatus is AWS CloudMap Service object's info
 	// +optional
 	AWSCloudMapServiceStatus *AWSCloudMapServiceStatus `json:"awsCloudMapServiceStatus,omitempty"`
+
+	// The generation observed by the VirtualNode controller.
+	// +optional
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 }
 
 // +kubebuilder:object:root=true
-
+// +kubebuilder:subresource:status
 // VirtualNode is the Schema for the virtualnodes API
 type VirtualNode struct {
 	metav1.TypeMeta   `json:",inline"`
