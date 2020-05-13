@@ -57,9 +57,10 @@ spec:
                 if the account ID is not your own.
               type: string
             namespaceSelector:
-              description: NamespaceSelector selects Namespaces using labels to designate
-                mesh membership. This field follows standard label selector semantics;
-                if present but empty, it selects all namespaces.
+              description: "NamespaceSelector selects Namespaces using labels to designate
+                mesh membership. This field follows standard label selector semantics:
+                \tif present but empty, it selects all namespaces. \tif absent, it
+                selects no namespace."
               properties:
                 matchExpressions:
                   description: matchExpressions is a list of label selector requirements.

@@ -35,6 +35,14 @@ rules:
   - list
   - watch
 - apiGroups:
+  - ""
+  resources:
+  - pods/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - appmesh.k8s.aws
   resources:
   - gatewayroutes
