@@ -240,12 +240,14 @@ func (b *ManifestBuilder) BuildServiceVirtualRouter(instanceName string, routeCf
 func (b *ManifestBuilder) BuildServiceVirtualService(instanceName string) *appmesh.VirtualService {
 	vsName := b.buildServiceName(instanceName)
 	vrName := b.buildServiceName(instanceName)
+	vsDNS := fmt.Sprintf("%s.%s.svc.cluster.local", vsName, b.Namespace)
 	vs := &appmesh.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: b.Namespace,
 			Name:      vsName,
 		},
 		Spec: appmesh.VirtualServiceSpec{
+			AWSName: aws.String(vsDNS),
 			Provider: &appmesh.VirtualServiceProvider{
 				VirtualRouter: &appmesh.VirtualRouterServiceProvider{
 					VirtualRouterRef: appmesh.VirtualRouterReference{
