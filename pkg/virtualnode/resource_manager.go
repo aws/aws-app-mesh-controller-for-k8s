@@ -130,8 +130,8 @@ func (m *defaultResourceManager) validateMeshDependencies(ctx context.Context, m
 // findVirtualServiceDependencies find the VirtualService dependencies for this virtualNode.
 func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Context, vn *appmesh.VirtualNode) (map[types.NamespacedName]*appmesh.VirtualService, error) {
 	vsByKey := make(map[types.NamespacedName]*appmesh.VirtualService, len(vn.Spec.Backends))
-	for _, backend := range vn.Spec.Backends {
-		vsRef := backend.VirtualService.VirtualServiceRef
+	vsRefs := ExtractVirtualServiceReferences(vn)
+	for _, vsRef := range vsRefs {
 		vsKey := references.ObjectKeyForVirtualServiceReference(vn, vsRef)
 		if _, ok := vsByKey[vsKey]; ok {
 			continue

@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func Test_extractVirtualNodeReferences(t *testing.T) {
+func Test_ExtractVirtualNodeReferences(t *testing.T) {
 	type args struct {
 		vr *appmesh.VirtualRouter
 	}
@@ -265,7 +265,7 @@ func Test_extractVirtualNodeReferences(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := extractVirtualNodeReferences(tt.args.vr)
+			got := ExtractVirtualNodeReferences(tt.args.vr)
 			assert.Equal(t, tt.want, got)
 		})
 	}

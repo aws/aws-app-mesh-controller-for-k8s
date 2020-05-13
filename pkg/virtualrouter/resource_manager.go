@@ -137,7 +137,7 @@ func (m *defaultResourceManager) validateMeshDependencies(ctx context.Context, m
 }
 
 func (m *defaultResourceManager) findVirtualNodeDependencies(ctx context.Context, vr *appmesh.VirtualRouter) (map[types.NamespacedName]*appmesh.VirtualNode, error) {
-	vnRefs := extractVirtualNodeReferences(vr)
+	vnRefs := ExtractVirtualNodeReferences(vr)
 	vnByKey := make(map[types.NamespacedName]*appmesh.VirtualNode)
 	for _, vnRef := range vnRefs {
 		vnKey := references.ObjectKeyForVirtualNodeReference(vr, vnRef)

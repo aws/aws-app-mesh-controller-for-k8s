@@ -12,22 +12,42 @@ const (
 	ReferenceKindVirtualRouter = "VirtualRouter"
 )
 
-func VirtualNodeReferenceIndexFunc(obj runtime.Object) []types.NamespacedName {
-	vs := obj.(*appmesh.VirtualService)
+func ExtractVirtualNodeReferences(vs *appmesh.VirtualService) []appmesh.VirtualNodeReference {
 	if vs.Spec.Provider == nil || vs.Spec.Provider.VirtualNode == nil {
 		return nil
 	}
 	vnRef := vs.Spec.Provider.VirtualNode.VirtualNodeRef
-	vnKey := references.ObjectKeyForVirtualNodeReference(vs, vnRef)
-	return []types.NamespacedName{vnKey}
+	return []appmesh.VirtualNodeReference{vnRef}
 }
 
-func VirtualRouterReferenceIndexFunc(obj runtime.Object) []types.NamespacedName {
-	vs := obj.(*appmesh.VirtualService)
+func ExtractVirtualRouterReferences(vs *appmesh.VirtualService) []appmesh.VirtualRouterReference {
 	if vs.Spec.Provider == nil || vs.Spec.Provider.VirtualRouter == nil {
 		return nil
 	}
 	vrRef := vs.Spec.Provider.VirtualRouter.VirtualRouterRef
-	vrKey := references.ObjectKeyForVirtualRouterReference(vs, vrRef)
-	return []types.NamespacedName{vrKey}
+	return []appmesh.VirtualRouterReference{vrRef}
+}
+
+func VirtualNodeReferenceIndexFunc(obj runtime.Object) []types.NamespacedName {
+	vs := obj.(*appmesh.VirtualService)
+	vnRefs := ExtractVirtualNodeReferences(vs)
+
+	var vnKeys []types.NamespacedName
+	for _, vnRef := range vnRefs {
+		vnKey := references.ObjectKeyForVirtualNodeReference(vs, vnRef)
+		vnKeys = append(vnKeys, vnKey)
+	}
+	return vnKeys
+}
+
+func VirtualRouterReferenceIndexFunc(obj runtime.Object) []types.NamespacedName {
+	vs := obj.(*appmesh.VirtualService)
+	vrRefs := ExtractVirtualRouterReferences(vs)
+
+	var vrKeys []types.NamespacedName
+	for _, vrRef := range vrRefs {
+		vrKey := references.ObjectKeyForVirtualRouterReference(vs, vrRef)
+		vrKeys = append(vrKeys, vrKey)
+	}
+	return vrKeys
 }
