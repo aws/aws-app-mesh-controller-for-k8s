@@ -167,6 +167,100 @@ func Convert_CRD_ListenerTLS_To_SDK_ListenerTLS(crdObj *appmesh.ListenerTLS, sdk
 	return nil
 }
 
+func Convert_CRD_ListenerTimeoutTcp_To_SDK_ListenerTimeoutTcp(crdObj *appmesh.TCPTimeout, sdkObj *appmeshsdk.TcpTimeout, scope conversion.Scope) error {
+	if crdObj.Idle != nil {
+		sdkObj.Idle = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.Idle, sdkObj.Idle, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Idle = nil
+	}
+	return nil
+}
+
+func Convert_CRD_ListenerTimeoutHttp_To_SDK_ListenerTimeoutHttp(crdObj *appmesh.HTTPTimeout, sdkObj *appmeshsdk.HttpTimeout, scope conversion.Scope) error {
+	if crdObj.PerRequest != nil {
+		sdkObj.PerRequest = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.PerRequest, sdkObj.PerRequest, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.PerRequest = nil
+	}
+
+	if crdObj.Idle != nil {
+		sdkObj.Idle = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.Idle, sdkObj.Idle, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Idle = nil
+	}
+	return nil
+}
+
+func Convert_CRD_ListenerTimeoutGrpc_To_SDK_ListenerTimeoutGrpc(crdObj *appmesh.GRPCTimeout, sdkObj *appmeshsdk.GrpcTimeout, scope conversion.Scope) error {
+	if crdObj.PerRequest != nil {
+		sdkObj.PerRequest = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.PerRequest, sdkObj.PerRequest, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.PerRequest = nil
+	}
+
+	if crdObj.Idle != nil {
+		sdkObj.Idle = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.Idle, sdkObj.Idle, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Idle = nil
+	}
+	return nil
+}
+
+func Convert_CRD_ListenerTimeout_To_SDK_ListenerTimeout(crdObj *appmesh.ListenerTimeout, sdkObj *appmeshsdk.ListenerTimeout, scope conversion.Scope) error {
+	if crdObj.TCP != nil {
+		sdkObj.Tcp = &appmeshsdk.TcpTimeout{}
+		if err := Convert_CRD_ListenerTimeoutTcp_To_SDK_ListenerTimeoutTcp(crdObj.TCP, sdkObj.Tcp, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Tcp = nil
+	}
+
+	if crdObj.HTTP != nil {
+		sdkObj.Http = &appmeshsdk.HttpTimeout{}
+		if err := Convert_CRD_ListenerTimeoutHttp_To_SDK_ListenerTimeoutHttp(crdObj.HTTP, sdkObj.Http, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Http = nil
+	}
+
+	if crdObj.HTTP2 != nil {
+		sdkObj.Http2 = &appmeshsdk.HttpTimeout{}
+		if err := Convert_CRD_ListenerTimeoutHttp_To_SDK_ListenerTimeoutHttp(crdObj.HTTP2, sdkObj.Http2, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Http2 = nil
+	}
+
+	if crdObj.GRPC != nil {
+		sdkObj.Grpc = &appmeshsdk.GrpcTimeout{}
+		if err := Convert_CRD_ListenerTimeoutGrpc_To_SDK_ListenerTimeoutGrpc(crdObj.GRPC, sdkObj.Grpc, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Grpc = nil
+	}
+
+	return nil
+}
+
 func Convert_CRD_Listener_To_SDK_Listener(crdObj *appmesh.Listener, sdkObj *appmeshsdk.Listener, scope conversion.Scope) error {
 	sdkObj.PortMapping = &appmeshsdk.PortMapping{}
 	if err := Convert_CRD_PortMapping_To_SDK_PortMapping(&crdObj.PortMapping, sdkObj.PortMapping, scope); err != nil {

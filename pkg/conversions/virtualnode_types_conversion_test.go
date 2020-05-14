@@ -978,6 +978,299 @@ func TestConvert_CRD_ListenerTLS_To_SDK_ListenerTLS(t *testing.T) {
 	}
 }
 
+func TestConvert_CRD_ListenerTimeoutTcp_To_SDK_ListenerTimeoutTcp(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.TCPTimeout
+		sdkObj *appmeshsdk.TcpTimeout
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.TcpTimeout
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.TCPTimeout{
+					Idle: &appmesh.Duration{
+						Unit:  "ms",
+						Value: int64(200),
+					},
+				},
+				sdkObj: &appmeshsdk.TcpTimeout{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.TcpTimeout{
+				Idle: &appmeshsdk.Duration{
+					Unit:  aws.String("ms"),
+					Value: aws.Int64(200),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_ListenerTimeoutTcp_To_SDK_ListenerTimeoutTcp(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
+func TestConvert_CRD_ListenerTimeoutHttp_To_SDK_ListenerTimeoutHttp(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.HTTPTimeout
+		sdkObj *appmeshsdk.HttpTimeout
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.HttpTimeout
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.HTTPTimeout{
+					PerRequest: &appmesh.Duration{
+						Unit:  "ms",
+						Value: int64(100),
+					},
+					Idle: &appmesh.Duration{
+						Unit:  "ms",
+						Value: int64(200),
+					},
+				},
+				sdkObj: &appmeshsdk.HttpTimeout{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.HttpTimeout{
+				PerRequest: &appmeshsdk.Duration{
+					Unit:  aws.String("ms"),
+					Value: aws.Int64(100),
+				},
+				Idle: &appmeshsdk.Duration{
+					Unit:  aws.String("ms"),
+					Value: aws.Int64(200),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_ListenerTimeoutHttp_To_SDK_ListenerTimeoutHttp(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
+func TestConvert_CRD_ListenerTimeoutGrpc_To_SDK_ListenerTimeoutGrpc(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.GRPCTimeout
+		sdkObj *appmeshsdk.GrpcTimeout
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.GrpcTimeout
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.GRPCTimeout{
+					PerRequest: &appmesh.Duration{
+						Unit:  "ms",
+						Value: int64(100),
+					},
+					Idle: &appmesh.Duration{
+						Unit:  "ms",
+						Value: int64(200),
+					},
+				},
+				sdkObj: &appmeshsdk.GrpcTimeout{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.GrpcTimeout{
+				PerRequest: &appmeshsdk.Duration{
+					Unit:  aws.String("ms"),
+					Value: aws.Int64(100),
+				},
+				Idle: &appmeshsdk.Duration{
+					Unit:  aws.String("ms"),
+					Value: aws.Int64(200),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_ListenerTimeoutGrpc_To_SDK_ListenerTimeoutGrpc(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
+func TestConvert_CRD_ListenerTimeout_To_SDK_ListenerTimeout(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.ListenerTimeout
+		sdkObj *appmeshsdk.ListenerTimeout
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.ListenerTimeout
+		wantErr    error
+	}{
+		{
+			name: "tcp timeout case",
+			args: args{
+				crdObj: &appmesh.ListenerTimeout{
+					TCP: &appmesh.TCPTimeout{
+						Idle: &appmesh.Duration{
+							Unit:  "ms",
+							Value: int64(200),
+						},
+					},
+				},
+				sdkObj: &appmeshsdk.ListenerTimeout{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.ListenerTimeout{
+				Tcp: &appmeshsdk.TcpTimeout{
+					Idle: &appmeshsdk.Duration{
+						Unit:  aws.String("ms"),
+						Value: aws.Int64(200),
+					},
+				},
+			},
+		},
+		{
+			name: "http timeout case",
+			args: args{
+				crdObj: &appmesh.ListenerTimeout{
+					HTTP: &appmesh.HTTPTimeout{
+						PerRequest: &appmesh.Duration{
+							Unit:  "ms",
+							Value: int64(100),
+						},
+						Idle: &appmesh.Duration{
+							Unit:  "ms",
+							Value: int64(200),
+						},
+					},
+				},
+				sdkObj: &appmeshsdk.ListenerTimeout{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.ListenerTimeout{
+				Http: &appmeshsdk.HttpTimeout{
+					PerRequest: &appmeshsdk.Duration{
+						Unit:  aws.String("ms"),
+						Value: aws.Int64(100),
+					},
+					Idle: &appmeshsdk.Duration{
+						Unit:  aws.String("ms"),
+						Value: aws.Int64(200),
+					},
+				},
+			},
+		},
+		{
+			name: "http2 timeout case",
+			args: args{
+				crdObj: &appmesh.ListenerTimeout{
+					HTTP2: &appmesh.HTTPTimeout{
+						PerRequest: &appmesh.Duration{
+							Unit:  "ms",
+							Value: int64(100),
+						},
+						Idle: &appmesh.Duration{
+							Unit:  "ms",
+							Value: int64(200),
+						},
+					},
+				},
+				sdkObj: &appmeshsdk.ListenerTimeout{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.ListenerTimeout{
+				Http2: &appmeshsdk.HttpTimeout{
+					PerRequest: &appmeshsdk.Duration{
+						Unit:  aws.String("ms"),
+						Value: aws.Int64(100),
+					},
+					Idle: &appmeshsdk.Duration{
+						Unit:  aws.String("ms"),
+						Value: aws.Int64(200),
+					},
+				},
+			},
+		},
+		{
+			name: "grpc timeout case",
+			args: args{
+				crdObj: &appmesh.ListenerTimeout{
+					GRPC: &appmesh.GRPCTimeout{
+						PerRequest: &appmesh.Duration{
+							Unit:  "ms",
+							Value: int64(100),
+						},
+						Idle: &appmesh.Duration{
+							Unit:  "ms",
+							Value: int64(200),
+						},
+					},
+				},
+				sdkObj: &appmeshsdk.ListenerTimeout{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.ListenerTimeout{
+				Grpc: &appmeshsdk.GrpcTimeout{
+					PerRequest: &appmeshsdk.Duration{
+						Unit:  aws.String("ms"),
+						Value: aws.Int64(100),
+					},
+					Idle: &appmeshsdk.Duration{
+						Unit:  aws.String("ms"),
+						Value: aws.Int64(200),
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_ListenerTimeout_To_SDK_ListenerTimeout(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
 func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 	port80 := appmesh.PortNumber(80)
 	protocolHTTP := appmesh.PortProtocolHTTP

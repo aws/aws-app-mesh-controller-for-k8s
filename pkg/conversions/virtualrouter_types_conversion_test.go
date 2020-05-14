@@ -770,6 +770,51 @@ func TestConvert_CRD_HTTPRetryPolicy_To_SDK_HttpRetryPolicy(t *testing.T) {
 	}
 }
 
+func TestConvert_CRD_HTTPTimeout_To_SDK_HttpTimeout(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.HTTPTimeout
+		sdkObj *appmeshsdk.HttpTimeout
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.HttpTimeout
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.HTTPTimeout{
+					PerRequest: &appmesh.Duration{
+						Unit:  "ms",
+						Value: int64(200),
+					},
+				},
+				sdkObj: &appmeshsdk.HttpTimeout{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.HttpTimeout{
+				PerRequest: &appmeshsdk.Duration{
+					Unit:  aws.String("ms"),
+					Value: aws.Int64(200),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_HTTPTimeout_To_SDK_HttpTimeout(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
 func TestConvert_CRD_HTTPRoute_To_SDK_HttpRoute(t *testing.T) {
 	type args struct {
 		crdObj           *appmesh.HTTPRoute
@@ -1158,6 +1203,51 @@ func TestConvert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(t *testing.T) {
 			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(tt.args.crdObj, tt.args.sdkObj, scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
+func TestConvert_CRD_TCPTimeout_To_SDK_TcpTimeout(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.TCPTimeout
+		sdkObj *appmeshsdk.TcpTimeout
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.TcpTimeout
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.TCPTimeout{
+					Idle: &appmesh.Duration{
+						Unit:  "ms",
+						Value: int64(200),
+					},
+				},
+				sdkObj: &appmeshsdk.TcpTimeout{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.TcpTimeout{
+				Idle: &appmeshsdk.Duration{
+					Unit:  aws.String("ms"),
+					Value: aws.Int64(200),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_TCPTimeout_To_SDK_TcpTimeout(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
@@ -1941,6 +2031,51 @@ func TestConvert_CRD_GRPCRetryPolicy_To_SDK_GrpcRetryPolicy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := Convert_CRD_GRPCRetryPolicy_To_SDK_GrpcRetryPolicy(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
+func TestConvert_CRD_GRPCTimeout_To_SDK_GrpcTimeout(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.GRPCTimeout
+		sdkObj *appmeshsdk.GrpcTimeout
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.GrpcTimeout
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.GRPCTimeout{
+					PerRequest: &appmesh.Duration{
+						Unit:  "ms",
+						Value: int64(200),
+					},
+				},
+				sdkObj: &appmeshsdk.GrpcTimeout{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.GrpcTimeout{
+				PerRequest: &appmeshsdk.Duration{
+					Unit:  aws.String("ms"),
+					Value: aws.Int64(200),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_GRPCTimeout_To_SDK_GrpcTimeout(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {

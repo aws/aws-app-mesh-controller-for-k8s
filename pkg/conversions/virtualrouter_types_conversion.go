@@ -142,6 +142,30 @@ func Convert_CRD_HTTPRetryPolicy_To_SDK_HttpRetryPolicy(crdObj *appmesh.HTTPRetr
 	return nil
 }
 
+func Convert_CRD_HTTPTimeout_To_SDK_HttpTimeout(crdObj *appmesh.HTTPTimeout,
+	sdkObj *appmeshsdk.HttpTimeout, scope conversion.Scope) error {
+
+	if crdObj.PerRequest != nil {
+		sdkObj.PerRequest = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.PerRequest, sdkObj.PerRequest, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.PerRequest = nil
+	}
+
+	if crdObj.Idle != nil {
+		sdkObj.Idle = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.Idle, sdkObj.Idle, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Idle = nil
+	}
+
+	return nil
+}
+
 func Convert_CRD_HTTPRoute_To_SDK_HttpRoute(crdObj *appmesh.HTTPRoute,
 	sdkObj *appmeshsdk.HttpRoute, scope conversion.Scope) error {
 
@@ -182,6 +206,21 @@ func Convert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(crdObj *appmesh.TCPRouteAc
 		}
 	}
 	sdkObj.WeightedTargets = sdkWeightedTargets
+	return nil
+}
+
+func Convert_CRD_TCPTimeout_To_SDK_TcpTimeout(crdObj *appmesh.TCPTimeout,
+	sdkObj *appmeshsdk.TcpTimeout, scope conversion.Scope) error {
+
+	if crdObj.Idle != nil {
+		sdkObj.Idle = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.Idle, sdkObj.Idle, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Idle = nil
+	}
+
 	return nil
 }
 
@@ -306,6 +345,30 @@ func Convert_CRD_GRPCRetryPolicy_To_SDK_GrpcRetryPolicy(crdObj *appmesh.GRPCRetr
 	}
 
 	sdkObj.MaxRetries = aws.Int64((int64)(crdObj.MaxRetries))
+	return nil
+}
+
+func Convert_CRD_GRPCTimeout_To_SDK_GrpcTimeout(crdObj *appmesh.GRPCTimeout,
+	sdkObj *appmeshsdk.GrpcTimeout, scope conversion.Scope) error {
+
+	if crdObj.PerRequest != nil {
+		sdkObj.PerRequest = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.PerRequest, sdkObj.PerRequest, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.PerRequest = nil
+	}
+
+	if crdObj.Idle != nil {
+		sdkObj.Idle = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.Idle, sdkObj.Idle, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Idle = nil
+	}
+
 	return nil
 }
 
