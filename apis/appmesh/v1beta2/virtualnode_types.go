@@ -195,7 +195,7 @@ type Listener struct {
 	// A reference to an object that represents the Transport Layer Security (TLS) properties for a listener.
 	// +optional
 	TLS *ListenerTLS `json:"tls,omitempty"`
-	// A reference to an object that represents 
+	// A reference to an object that represents
 	// +optional
 	Timeout *ListenerTimeout `json:"timeout,omitempty"`
 }
