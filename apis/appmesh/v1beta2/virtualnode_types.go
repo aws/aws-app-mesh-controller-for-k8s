@@ -169,6 +169,22 @@ type ListenerTLS struct {
 	Mode ListenerTLSMode `json:"mode"`
 }
 
+// ListenerTimeout refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTimeout.html
+type ListenerTimeout struct {
+	// Specifies tcp timeout information for the virtual node.
+	// +optional
+	TCP *TCPTimeout `json:"tcp,omitempty"`
+	// Specifies http timeout information for the virtual node.
+	// +optional
+	HTTP *HTTPTimeout `json:"http,omitempty"`
+	// Specifies http2 information for the virtual node.
+	// +optional
+	HTTP2 *HTTPTimeout `json:"http2,omitempty"`
+	// Specifies grpc timeout information for the virtual node.
+	// +optional
+	GRPC *GRPCTimeout `json:"grpc,omitempty"`
+}
+
 // Listener refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Listener.html
 type Listener struct {
 	// The port mapping information for the listener.
@@ -179,6 +195,9 @@ type Listener struct {
 	// A reference to an object that represents the Transport Layer Security (TLS) properties for a listener.
 	// +optional
 	TLS *ListenerTLS `json:"tls,omitempty"`
+	// A reference to an object that represents 
+	// +optional
+	Timeout *ListenerTimeout `json:"timeout,omitempty"`
 }
 
 // AWSCloudMapInstanceAttribute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapInstanceAttribute.html
