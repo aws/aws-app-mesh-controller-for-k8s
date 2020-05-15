@@ -276,10 +276,14 @@ type VirtualGatewayStatus struct {
 	// The current VirtualGateway status.
 	// +optional
 	Conditions []VirtualGatewayCondition `json:"conditions,omitempty"`
+
+	// The generation observed by the VirtualGateway controller.
+	// +optional
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 }
 
 // +kubebuilder:object:root=true
-
+// +kubebuilder:subresource:status
 // VirtualGateway is the Schema for the virtualgateways API
 type VirtualGateway struct {
 	metav1.TypeMeta   `json:",inline"`

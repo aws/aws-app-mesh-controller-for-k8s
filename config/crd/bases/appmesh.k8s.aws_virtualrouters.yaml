@@ -15,6 +15,8 @@ spec:
     plural: virtualrouters
     singular: virtualrouter
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: VirtualRouter is the Schema for the virtualrouters API
@@ -761,6 +763,10 @@ spec:
                 - type
                 type: object
               type: array
+            observedGeneration:
+              description: The generation observed by the VirtualRouter controller.
+              format: int64
+              type: integer
             routeARNs:
               additionalProperties:
                 type: string

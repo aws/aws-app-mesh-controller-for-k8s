@@ -286,6 +286,11 @@ func (m *defaultResourceManager) updateCRDVirtualService(ctx context.Context, vs
 		vs.Status.VirtualServiceARN = sdkVS.Metadata.Arn
 		needsUpdate = true
 	}
+	if aws.Int64Value(vs.Status.ObservedGeneration) != vs.Generation {
+		vs.Status.ObservedGeneration = aws.Int64(vs.Generation)
+		needsUpdate = true
+	}
+
 	vsActiveConditionStatus := corev1.ConditionFalse
 	if sdkVS.Status != nil && aws.StringValue(sdkVS.Status.Status) == appmeshsdk.VirtualServiceStatusCodeActive {
 		vsActiveConditionStatus = corev1.ConditionTrue
@@ -297,7 +302,7 @@ func (m *defaultResourceManager) updateCRDVirtualService(ctx context.Context, vs
 	if !needsUpdate {
 		return nil
 	}
-	return m.k8sClient.Patch(ctx, vs, client.MergeFrom(oldVS))
+	return m.k8sClient.Status().Patch(ctx, vs, client.MergeFrom(oldVS))
 }
 
 // isSDKVirtualServiceControlledByCRDVirtualService checks whether an AppMesh VirtualService is controlled by CRD VirtualService.

@@ -15,6 +15,8 @@ spec:
     plural: virtualgateways
     singular: virtualgateway
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       description: VirtualGateway is the Schema for the virtualgateways API
@@ -408,6 +410,10 @@ spec:
                 - type
                 type: object
               type: array
+            observedGeneration:
+              description: The generation observed by the VirtualGateway controller.
+              format: int64
+              type: integer
             virtualGatewayARN:
               description: VirtualGatewayARN is the AppMesh VirtualGateway object's
                 Amazon Resource Name

@@ -256,6 +256,10 @@ func (m *defaultResourceManager) updateCRDVirtualNode(ctx context.Context, vn *a
 		vn.Status.VirtualNodeARN = sdkVN.Metadata.Arn
 		needsUpdate = true
 	}
+	if aws.Int64Value(vn.Status.ObservedGeneration) != vn.Generation {
+		vn.Status.ObservedGeneration = aws.Int64(vn.Generation)
+		needsUpdate = true
+	}
 
 	vnActiveConditionStatus := corev1.ConditionFalse
 	if sdkVN.Status != nil && aws.StringValue(sdkVN.Status.Status) == appmeshsdk.VirtualNodeStatusCodeActive {
@@ -268,7 +272,7 @@ func (m *defaultResourceManager) updateCRDVirtualNode(ctx context.Context, vn *a
 	if !needsUpdate {
 		return nil
 	}
-	return m.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN))
+	return m.k8sClient.Status().Patch(ctx, vn, client.MergeFrom(oldVN))
 }
 
 func (m *defaultResourceManager) buildSDKVirtualNodeTags(ctx context.Context, vn *appmesh.VirtualNode) []*appmeshsdk.TagRef {

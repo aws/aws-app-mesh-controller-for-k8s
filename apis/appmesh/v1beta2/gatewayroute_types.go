@@ -137,10 +137,14 @@ type GatewayRouteStatus struct {
 	// The current GatewayRoute status.
 	// +optional
 	Conditions []GatewayRouteCondition `json:"conditions,omitempty"`
+
+	// The generation observed by the GatewayRoute controller.
+	// +optional
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 }
 
 // +kubebuilder:object:root=true
-
+// +kubebuilder:subresource:status
 // GatewayRoute is the Schema for the gatewayroutes API
 type GatewayRoute struct {
 	metav1.TypeMeta   `json:",inline"`

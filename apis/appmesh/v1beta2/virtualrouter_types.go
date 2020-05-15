@@ -345,10 +345,14 @@ type VirtualRouterStatus struct {
 	// The current VirtualRouter status.
 	// +optional
 	Conditions []VirtualRouterCondition `json:"conditions,omitempty"`
+
+	// The generation observed by the VirtualRouter controller.
+	// +optional
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
 }
 
 // +kubebuilder:object:root=true
-
+// +kubebuilder:subresource:status
 // VirtualRouter is the Schema for the virtualrouters API
 type VirtualRouter struct {
 	metav1.TypeMeta   `json:",inline"`

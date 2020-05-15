@@ -184,6 +184,10 @@ func (m *defaultResourceManager) updateCRDMesh(ctx context.Context, ms *appmesh.
 		ms.Status.MeshARN = sdkMS.Metadata.Arn
 		needsUpdate = true
 	}
+	if aws.Int64Value(ms.Status.ObservedGeneration) != ms.Generation {
+		ms.Status.ObservedGeneration = aws.Int64(ms.Generation)
+		needsUpdate = true
+	}
 
 	msActiveConditionStatus := corev1.ConditionFalse
 	if sdkMS.Status != nil && aws.StringValue(sdkMS.Status.Status) == appmeshsdk.MeshStatusCodeActive {
@@ -196,7 +200,7 @@ func (m *defaultResourceManager) updateCRDMesh(ctx context.Context, ms *appmesh.
 	if !needsUpdate {
 		return nil
 	}
-	return m.k8sClient.Patch(ctx, ms, client.MergeFrom(oldMS))
+	return m.k8sClient.Status().Patch(ctx, ms, client.MergeFrom(oldMS))
 }
 
 // isSDKMeshControlledByCRDMesh checks whether an AppMesh mesh is controlled by CRDMesh
