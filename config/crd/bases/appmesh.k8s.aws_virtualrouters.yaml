@@ -8,8 +8,18 @@ metadata:
   creationTimestamp: null
   name: virtualrouters.appmesh.k8s.aws
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.virtualRouterARN
+    description: The AppMesh VirtualRouter object's Amazon Resource Name
+    name: ARN
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: AGE
+    type: date
   group: appmesh.k8s.aws
   names:
+    categories:
+    - all
     kind: VirtualRouter
     listKind: VirtualRouterList
     plural: virtualrouters

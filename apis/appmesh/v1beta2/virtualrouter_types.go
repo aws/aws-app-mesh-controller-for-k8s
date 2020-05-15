@@ -352,7 +352,10 @@ type VirtualRouterStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories=all
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="ARN",type="string",JSONPath=".status.virtualRouterARN",description="The AppMesh VirtualRouter object's Amazon Resource Name"
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // VirtualRouter is the Schema for the virtualrouters API
 type VirtualRouter struct {
 	metav1.TypeMeta   `json:",inline"`
