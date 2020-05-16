@@ -140,7 +140,7 @@ func (m *SidecarInjector) determineSidecarInjectMode(ctx context.Context, pod *c
 		if err := m.k8sClient.Get(ctx, types.NamespacedName{Name: req.Namespace}, objectNS); err != nil {
 			return sidecarInjectModeUnspecified, err
 		}
-		if v, ok := objectNS.ObjectMeta.Annotations[AppMeshSidecarInjectAnnotation]; ok {
+		if v, ok := objectNS.Labels[AppMeshSidecarInjectAnnotation]; ok {
 			sidecarInjectAnnotation = v
 		}
 	}

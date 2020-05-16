@@ -259,7 +259,7 @@ func TestSidecarInjector_determineSidecarInjectMode(t *testing.T) {
 	nsEnabledSidecarInject := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "awesome-ns",
-			Annotations: map[string]string{
+			Labels: map[string]string{
 				"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
 			},
 		},
@@ -267,15 +267,15 @@ func TestSidecarInjector_determineSidecarInjectMode(t *testing.T) {
 	nsDisabledSidecarInject := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "awesome-ns",
-			Annotations: map[string]string{
+			Labels: map[string]string{
 				"appmesh.k8s.aws/sidecarInjectorWebhook": "disabled",
 			},
 		},
 	}
 	nsUnspecifiedSidecarInject := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        "awesome-ns",
-			Annotations: map[string]string{},
+			Name:   "awesome-ns",
+			Labels: map[string]string{},
 		},
 	}
 	podEnabledSidecarInject := &corev1.Pod{
