@@ -131,7 +131,7 @@ type GatewayRouteCondition struct {
 
 // GatewayRouteStatus defines the observed state of GatewayRoute
 type GatewayRouteStatus struct {
-	// GatewayRouteARNs is a map of AppMesh GatewayRoute objects' Amazon Resource Names, indexed by gatewayRoute name.
+	// GatewayRouteARN is the AppMesh GatewayRoute object's Amazon Resource Name
 	// +optional
 	GatewayRouteARN *string `json:"gatewayRouteARN,omitempty"`
 	// The current GatewayRoute status.
@@ -144,7 +144,10 @@ type GatewayRouteStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:categories=all
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="ARN",type="string",JSONPath=".status.gatewayRouteARN",description="The AppMesh GatewayRoute object's Amazon Resource Name"
+// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // GatewayRoute is the Schema for the gatewayroutes API
 type GatewayRoute struct {
 	metav1.TypeMeta   `json:",inline"`

@@ -8,6 +8,14 @@ metadata:
   creationTimestamp: null
   name: meshes.appmesh.k8s.aws
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.meshARN
+    description: The AppMesh Mesh object's Amazon Resource Name
+    name: ARN
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: AGE
+    type: date
   group: appmesh.k8s.aws
   names:
     kind: Mesh

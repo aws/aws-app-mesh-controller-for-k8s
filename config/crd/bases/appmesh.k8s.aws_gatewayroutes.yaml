@@ -8,8 +8,18 @@ metadata:
   creationTimestamp: null
   name: gatewayroutes.appmesh.k8s.aws
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.gatewayRouteARN
+    description: The AppMesh GatewayRoute object's Amazon Resource Name
+    name: ARN
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: AGE
+    type: date
   group: appmesh.k8s.aws
   names:
+    categories:
+    - all
     kind: GatewayRoute
     listKind: GatewayRouteList
     plural: gatewayroutes
@@ -272,8 +282,8 @@ spec:
                 type: object
               type: array
             gatewayRouteARN:
-              description: GatewayRouteARNs is a map of AppMesh GatewayRoute objects'
-                Amazon Resource Names, indexed by gatewayRoute name.
+              description: GatewayRouteARN is the AppMesh GatewayRoute object's Amazon
+                Resource Name
               type: string
             observedGeneration:
               description: The generation observed by the GatewayRoute controller.
