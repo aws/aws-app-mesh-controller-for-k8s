@@ -3,6 +3,7 @@ package cloudmap
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
@@ -38,19 +39,22 @@ type ResourceManager interface {
 func NewDefaultResourceManager(
 	k8sClient client.Client,
 	cloudMapSDK services.CloudMap,
+	referencesResolver references.Resolver,
 	virtualNodeEndpointResolver VirtualNodeEndpointResolver,
 	instancesReconciler InstancesReconciler,
+	enableCustomHealthCheck bool,
 	log logr.Logger) ResourceManager {
 
 	return &defaultResourceManager{
 		k8sClient:                   k8sClient,
 		cloudMapSDK:                 cloudMapSDK,
+		referencesResolver:          referencesResolver,
 		virtualNodeEndpointResolver: virtualNodeEndpointResolver,
 		instancesReconciler:         instancesReconciler,
-
-		namespaceSummaryCache: cache.NewLRUExpireCache(defaultNamespaceCacheMaxSize),
-		serviceSummaryCache:   cache.NewLRUExpireCache(defaultServiceCacheMaxSize),
-		log:                   log,
+		enableCustomHealthCheck:     enableCustomHealthCheck,
+		namespaceSummaryCache:       cache.NewLRUExpireCache(defaultNamespaceCacheMaxSize),
+		serviceSummaryCache:         cache.NewLRUExpireCache(defaultServiceCacheMaxSize),
+		log:                         log,
 	}
 }
 
@@ -58,21 +62,21 @@ func NewDefaultResourceManager(
 type defaultResourceManager struct {
 	k8sClient                   client.Client
 	cloudMapSDK                 services.CloudMap
+	referencesResolver          references.Resolver
 	virtualNodeEndpointResolver VirtualNodeEndpointResolver
 	instancesReconciler         InstancesReconciler
-	accountID                   string
+	enableCustomHealthCheck     bool
 
 	namespaceSummaryCache *cache.LRUExpireCache
 	serviceSummaryCache   *cache.LRUExpireCache
 	log                   logr.Logger
 }
 
-type serviceSummary struct {
-	serviceID               string
-	healthCheckCustomConfig *servicediscovery.HealthCheckCustomConfig
-}
-
 func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.VirtualNode) error {
+	ms, err := m.findMeshDependency(ctx, vn)
+	if err != nil {
+		return err
+	}
 	cloudMapConfig := vn.Spec.ServiceDiscovery.AWSCloudMap
 	nsSummary, err := m.findCloudMapNamespace(ctx, cloudMapConfig.NamespaceName)
 	if err != nil {
@@ -101,7 +105,7 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 			"readyPods", len(readyPods),
 			"notReadyPods", len(notReadyPods),
 		)
-		if err := m.instancesReconciler.Reconcile(ctx, vn, svcSummary.serviceID, svcSummary.healthCheckCustomConfig != nil, readyPods, notReadyPods); err != nil {
+		if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, readyPods, notReadyPods); err != nil {
 			return err
 		}
 	}
@@ -110,6 +114,10 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 }
 
 func (m *defaultResourceManager) Cleanup(ctx context.Context, vn *appmesh.VirtualNode) error {
+	ms, err := m.findMeshDependency(ctx, vn)
+	if err != nil {
+		return err
+	}
 	cloudMapConfig := vn.Spec.ServiceDiscovery.AWSCloudMap
 	nsSummary, err := m.findCloudMapNamespace(ctx, cloudMapConfig.NamespaceName)
 	if err != nil {
@@ -127,7 +135,7 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vn *appmesh.Virtua
 	}
 
 	if vn.Spec.PodSelector != nil {
-		if err := m.instancesReconciler.Reconcile(ctx, vn, svcSummary.serviceID, svcSummary.healthCheckCustomConfig != nil, nil, nil); err != nil {
+		if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, nil, nil); err != nil {
 			return err
 		}
 	}
@@ -135,6 +143,18 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vn *appmesh.Virtua
 		return err
 	}
 	return nil
+}
+
+// findMeshDependency find the Mesh dependency for this virtualNode.
+func (m *defaultResourceManager) findMeshDependency(ctx context.Context, vn *appmesh.VirtualNode) (*appmesh.Mesh, error) {
+	if vn.Spec.MeshRef == nil {
+		return nil, errors.Errorf("meshRef shouldn't be nil, please check webhook setup")
+	}
+	ms, err := m.referencesResolver.ResolveMeshReference(ctx, *vn.Spec.MeshRef)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to resolve meshRef")
+	}
+	return ms, nil
 }
 
 // findCloudMapNamespaceFromAWS will try to find CloudMapNamespace from cache and AWS(if cache miss). returns nil if not found
@@ -307,10 +327,13 @@ func (m *defaultResourceManager) createCloudMapServiceUnderPrivateDNSNamespace(c
 				},
 			},
 		},
-		HealthCheckCustomConfig: &servicediscovery.HealthCheckCustomConfig{
-			FailureThreshold: awssdk.Int64(defaultServiceCustomHCFailureThreshold),
-		},
 	}
+	if m.enableCustomHealthCheck {
+		createServiceInput.HealthCheckCustomConfig = &servicediscovery.HealthCheckCustomConfig{
+			FailureThreshold: awssdk.Int64(defaultServiceCustomHCFailureThreshold),
+		}
+	}
+
 	resp, err := m.cloudMapSDK.CreateServiceWithContext(ctx, createServiceInput)
 	if err != nil {
 		return nil, err
@@ -325,9 +348,11 @@ func (m *defaultResourceManager) createCloudMapServiceUnderHTTPNamespace(ctx con
 		CreatorRequestId: awssdk.String(creatorRequestID),
 		NamespaceId:      nsSummary.Id,
 		Name:             awssdk.String(serviceName),
-		HealthCheckCustomConfig: &servicediscovery.HealthCheckCustomConfig{
+	}
+	if m.enableCustomHealthCheck {
+		createServiceInput.HealthCheckCustomConfig = &servicediscovery.HealthCheckCustomConfig{
 			FailureThreshold: awssdk.Int64(defaultServiceCustomHCFailureThreshold),
-		},
+		}
 	}
 	resp, err := m.cloudMapSDK.CreateServiceWithContext(ctx, createServiceInput)
 	if err != nil {

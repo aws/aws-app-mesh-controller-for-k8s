@@ -2,339 +2,208 @@ package cloudmap
 
 import (
 	"context"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/retry"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
-	awssdk "github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
-	"github.com/go-logr/logr"
-	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/cache"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sync"
 	"time"
 )
 
 const (
-	defaultInstanceAttrsCacheTTL        = 5 * time.Minute
-	defaultInstanceAttrsCacheSize       = 1024
-	defaultOperationPollPeriod          = 3 * time.Second
-	defaultOperationPollTimeout         = 15 * time.Minute
-	defaultOperationPollEntryChanBuffer = 10
+	defaultInstanceAttrsCacheTTL  = 5 * time.Minute
+	defaultInstanceAttrsCacheSize = 1024
+
+	defaultOperationPollInterval = 3 * time.Second
+	// we want to retry higher times for getOperation than other normal AWS API :D
+	defaultOperationPollMaxRetries = 10
 )
 
-type InstanceAttributes map[string]string
-
-// InstancesCache provides interface to asynchronous register/deregister instances call while maintains cache for ListInstances.
-type InstancesCache interface {
-	// ListInstances list all instances registered for serviceID.
-	ListInstances(ctx context.Context, serviceID string) (map[string]InstanceAttributes, error)
-	// RegisterInstance register a instance to serviceID.
-	RegisterInstance(ctx context.Context, serviceID string, instanceID string, attrs InstanceAttributes) error
-	// DeregisterInstance a instance to serviceID.
+// instancesCache is an abstraction around cloudMap's asynchronous instances API.
+// It is able to take the result of register/deregister operations to provide a more current view.
+type instancesCache interface {
+	// ListInstances returns all instances associated with cloudMap service.
+	ListInstances(ctx context.Context, serviceID string) (map[string]instanceAttributes, error)
+	// RegisterInstance register an instance into cloudMap service
+	// it blocks until registerInstance operation succeeds or fails.
+	RegisterInstance(ctx context.Context, serviceID string, instanceID string, attrs instanceAttributes) error
+	// DeregisterInstance deregister an instance from cloudMap service.
+	// it blocks until deregisterInstance operation succeeds or fails.
 	DeregisterInstance(ctx context.Context, serviceID string, instanceID string) error
 }
 
-func NewDefaultInstancesCache(cloudMapSDK services.CloudMap, log logr.Logger, stopChan <-chan struct{}) *defaultInstancesCache {
-	cache := &defaultInstancesCache{
-		cloudMapSDK:            cloudMapSDK,
-		instancesAttrsCacheTTL: defaultInstanceAttrsCacheTTL,
-		instancesAttrsCache:    cache.NewLRUExpireCache(defaultInstanceAttrsCacheSize),
-
-		operationsInProgress:      make(map[instanceWithinServiceID][]operationInfo),
-		operationsInProgressMutex: sync.RWMutex{},
-		operationPollEntryChan:    make(chan operationPollEntry, defaultOperationPollEntryChanBuffer),
-		operationPollPeriod:       defaultOperationPollPeriod,
-		operationPollTimeout:      defaultOperationPollTimeout,
-		log:                       log,
+// newDefaultInstancesCache constructs defaultInstancesCache
+func newDefaultInstancesCache(cloudMapSDK services.CloudMap) *defaultInstancesCache {
+	return &defaultInstancesCache{
+		cloudMapSDK:              cloudMapSDK,
+		instancesAttrsCache:      cache.NewLRUExpireCache(defaultInstanceAttrsCacheSize),
+		instancesAttrsCacheMutex: sync.Mutex{},
+		instancesAttrsCacheTTL:   defaultInstanceAttrsCacheTTL,
+		operationPollInterval:    defaultOperationPollInterval,
+		operationPollMaxRetries:  defaultOperationPollMaxRetries,
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		select {
-		case <-stopChan:
-			cancel()
-		}
-	}()
-	go cache.pollOperationsLoop(ctx)
-	return cache
 }
 
-var _ InstancesCache = &defaultInstancesCache{}
+var _ instancesCache = &defaultInstancesCache{}
 
+// defaultInstancesCache implements instancesCache
 type defaultInstancesCache struct {
-	cloudMapSDK services.CloudMap
+	cloudMapSDK              services.CloudMap
+	instancesAttrsCache      *cache.LRUExpireCache
+	instancesAttrsCacheMutex sync.Mutex
+	instancesAttrsCacheTTL   time.Duration
 
-	instancesAttrsCacheTTL time.Duration
-	instancesAttrsCache    *cache.LRUExpireCache
-
-	// operations in progress indexed by serviceID/instanceID
-	operationsInProgress      map[instanceWithinServiceID][]operationInfo
-	operationsInProgressMutex sync.RWMutex
-	operationPollEntryChan    chan operationPollEntry
-	operationPollPeriod       time.Duration
-	operationPollTimeout      time.Duration
-
-	log logr.Logger
+	// interval between each getOperation call
+	operationPollInterval time.Duration
+	// maximum retries per getOperation call
+	operationPollMaxRetries int
 }
 
 type instancesAttrsCacheItem struct {
-	instancesAttrsByID map[string]InstanceAttributes
-	mutex              sync.RWMutex
+	// the attributes of instances indexed by instance ID.
+	instanceAttrsByID map[string]instanceAttributes
+	// the last time we modified a instance's attributes
+	lastUpdatedTimeByID map[string]time.Time
+
+	mutex sync.RWMutex
 }
 
-// identity for a instance within service.
-type instanceWithinServiceID struct {
-	serviceID  string
-	instanceID string
-}
+func (c *defaultInstancesCache) ListInstances(ctx context.Context, serviceID string) (map[string]instanceAttributes, error) {
+	c.instancesAttrsCacheMutex.Lock()
+	defer c.instancesAttrsCacheMutex.Unlock()
 
-// information about a ongoing operation.
-type operationInfo struct {
-	operationID   string
-	operationType string
-
-	// for OperationTypeRegisterInstance, the attributes will be registered instance attributes.
-	instanceAttrs InstanceAttributes
-	// first time when this operation is been polled.
-	firstPollTime time.Time
-}
-
-type operationPollEntry struct {
-	instanceWithinServiceID instanceWithinServiceID
-	operation               operationInfo
-}
-
-func (c *defaultInstancesCache) ListInstances(ctx context.Context, serviceID string) (map[string]InstanceAttributes, error) {
 	if cachedValue, exists := c.instancesAttrsCache.Get(serviceID); exists {
 		cacheItem := cachedValue.(*instancesAttrsCacheItem)
 		cacheItem.mutex.RLock()
 		defer cacheItem.mutex.RUnlock()
-		return c.cloneInstanceAttributesByID(cacheItem.instancesAttrsByID), nil
+		return c.cloneInstanceAttributesByID(cacheItem.instanceAttrsByID), nil
 	}
 
-	instancesAttrsByID, err := c.listInstancesFromAWS(ctx, serviceID)
+	instanceAttrsByID, err := c.listInstancesFromAWS(ctx, serviceID)
 	if err != nil {
 		return nil, err
 	}
 	cacheItem := &instancesAttrsCacheItem{
-		instancesAttrsByID: instancesAttrsByID,
-		mutex:              sync.RWMutex{},
+		instanceAttrsByID:   instanceAttrsByID,
+		lastUpdatedTimeByID: make(map[string]time.Time),
+		mutex:               sync.RWMutex{},
 	}
-	instanceAttrsByIDClone := c.cloneInstanceAttributesByID(instancesAttrsByID)
+	instanceAttrsByIDClone := c.cloneInstanceAttributesByID(instanceAttrsByID)
 	c.instancesAttrsCache.Add(serviceID, cacheItem, c.instancesAttrsCacheTTL)
 	return instanceAttrsByIDClone, nil
 }
 
-func (c *defaultInstancesCache) RegisterInstance(ctx context.Context, serviceID string, instanceID string, attrs InstanceAttributes) error {
-	instanceWithinServiceID := instanceWithinServiceID{
-		serviceID:  serviceID,
-		instanceID: instanceID,
-	}
-	if c.hasInprogressRegisterInstanceOperation(instanceWithinServiceID, attrs) {
-		return nil
-	}
-	resp, err := c.cloudMapSDK.RegisterInstanceWithContext(ctx, &servicediscovery.RegisterInstanceInput{
-		ServiceId:  awssdk.String(serviceID),
-		InstanceId: awssdk.String(instanceID),
-		Attributes: awssdk.StringMap(attrs),
+func (c *defaultInstancesCache) RegisterInstance(ctx context.Context, serviceID string, instanceID string, attrs instanceAttributes) error {
+	optResp, err := c.cloudMapSDK.RegisterInstanceWithContext(ctx, &servicediscovery.RegisterInstanceInput{
+		ServiceId:  aws.String(serviceID),
+		InstanceId: aws.String(instanceID),
+		Attributes: aws.StringMap(attrs),
 	})
 	if err != nil {
 		return err
 	}
-	c.operationPollEntryChan <- operationPollEntry{
-		instanceWithinServiceID: instanceWithinServiceID,
-		operation: operationInfo{
-			operationID:   awssdk.StringValue(resp.OperationId),
-			operationType: servicediscovery.OperationTypeRegisterInstance,
-			instanceAttrs: attrs,
-			firstPollTime: time.Time{},
-		},
-	}
-	return nil
+	return wait.PollUntil(c.operationPollInterval, func() (done bool, err error) {
+		getOptResp, err := c.cloudMapSDK.GetOperationWithContext(ctx, &servicediscovery.GetOperationInput{
+			OperationId: optResp.OperationId,
+		}, retry.WithMaxRetries(c.operationPollMaxRetries))
+		if err != nil {
+			return false, err
+		}
+		switch aws.StringValue(getOptResp.Operation.Status) {
+		case servicediscovery.OperationStatusSuccess:
+			c.recordSuccessfulRegisterInstanceOperation(serviceID, instanceID, attrs, getOptResp.Operation)
+			return true, nil
+		case servicediscovery.OperationStatusFail:
+			return true, errors.New(aws.StringValue(getOptResp.Operation.ErrorMessage))
+		default:
+			return false, nil
+		}
+	}, ctx.Done())
 }
 
 func (c *defaultInstancesCache) DeregisterInstance(ctx context.Context, serviceID string, instanceID string) error {
-	instanceWithinServiceID := instanceWithinServiceID{
-		serviceID:  serviceID,
-		instanceID: instanceID,
-	}
-	if c.hasInprogressDeregisterInstanceOperation(instanceWithinServiceID) {
-		return nil
-	}
-	resp, err := c.cloudMapSDK.DeregisterInstanceWithContext(ctx, &servicediscovery.DeregisterInstanceInput{
-		ServiceId:  awssdk.String(serviceID),
-		InstanceId: awssdk.String(instanceID),
+	optResp, err := c.cloudMapSDK.DeregisterInstanceWithContext(ctx, &servicediscovery.DeregisterInstanceInput{
+		ServiceId:  aws.String(serviceID),
+		InstanceId: aws.String(instanceID),
 	})
 	if err != nil {
 		return err
 	}
-	c.operationPollEntryChan <- operationPollEntry{
-		instanceWithinServiceID: instanceWithinServiceID,
-		operation: operationInfo{
-			operationID:   awssdk.StringValue(resp.OperationId),
-			operationType: servicediscovery.OperationTypeDeregisterInstance,
-			instanceAttrs: nil,
-			firstPollTime: time.Time{},
-		},
-	}
-	return nil
-}
 
-func (c *defaultInstancesCache) pollOperationsLoop(ctx context.Context) {
-	for {
-		var timer <-chan time.Time
-		if len(c.operationsInProgress) > 0 {
-			timer = time.After(c.operationPollPeriod)
+	return wait.PollUntil(c.operationPollInterval, func() (done bool, err error) {
+		getOptResp, err := c.cloudMapSDK.GetOperationWithContext(ctx, &servicediscovery.GetOperationInput{
+			OperationId: optResp.OperationId,
+		}, retry.WithMaxRetries(c.operationPollMaxRetries))
+		if err != nil {
+			return false, err
 		}
-		select {
-		case <-ctx.Done():
-			return
-		case operationPollEntry := <-c.operationPollEntryChan:
-			c.addOperationToPoll(operationPollEntry)
-		case <-timer:
-			c.pollOperations(ctx)
+		switch aws.StringValue(getOptResp.Operation.Status) {
+		case servicediscovery.OperationStatusSuccess:
+			c.recordSuccessfulDeregisterInstanceOperation(serviceID, instanceID, getOptResp.Operation)
+			return true, nil
+		case servicediscovery.OperationStatusFail:
+			return true, errors.New(aws.StringValue(getOptResp.Operation.ErrorMessage))
+		default:
+			return false, nil
 		}
-	}
+	}, ctx.Done())
 }
 
-func (c *defaultInstancesCache) addOperationToPoll(entry operationPollEntry) {
-	c.operationsInProgressMutex.Lock()
-	defer c.operationsInProgressMutex.Unlock()
-
-	for _, existingOperation := range c.operationsInProgress[entry.instanceWithinServiceID] {
-		if existingOperation.operationID == entry.operation.operationID {
-			c.log.Info("skipping existing operation",
-				"serviceID", entry.instanceWithinServiceID.serviceID,
-				"instanceID", entry.instanceWithinServiceID.instanceID,
-				"operationID", entry.operation.operationID)
-			return
-		}
-	}
-	c.operationsInProgress[entry.instanceWithinServiceID] = append(c.operationsInProgress[entry.instanceWithinServiceID], entry.operation)
-}
-
-func (c *defaultInstancesCache) hasInprogressRegisterInstanceOperation(instanceWithinServiceID instanceWithinServiceID, attrs InstanceAttributes) bool {
-	c.operationsInProgressMutex.RLock()
-	defer c.operationsInProgressMutex.RUnlock()
-	for _, existingOperation := range c.operationsInProgress[instanceWithinServiceID] {
-		if existingOperation.operationType == servicediscovery.OperationTypeRegisterInstance && cmp.Equal(existingOperation.instanceAttrs, attrs) {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *defaultInstancesCache) hasInprogressDeregisterInstanceOperation(instanceWithinServiceID instanceWithinServiceID) bool {
-	c.operationsInProgressMutex.RLock()
-	defer c.operationsInProgressMutex.RUnlock()
-	for _, existingOperation := range c.operationsInProgress[instanceWithinServiceID] {
-		if existingOperation.operationType == servicediscovery.OperationTypeDeregisterInstance {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *defaultInstancesCache) pollOperations(ctx context.Context) {
-	operationsContinuePoll := make(map[instanceWithinServiceID][]operationInfo)
-	var operationsContinuePollMutex sync.Mutex
-	var wg sync.WaitGroup
-	c.operationsInProgressMutex.RLock()
-	for id, operations := range c.operationsInProgress {
-		for _, operation := range operations {
-			wg.Add(1)
-			go func(instanceWithinServiceID instanceWithinServiceID, operation operationInfo) {
-				defer wg.Done()
-				continuePoll, err := c.pollOperation(ctx, instanceWithinServiceID, &operation)
-				if err != nil {
-					c.log.Error(err, "failed to poll operation",
-						"serviceID", instanceWithinServiceID.serviceID,
-						"instanceID", instanceWithinServiceID.instanceID,
-						"operationID", operation.operationID)
-					operationsContinuePollMutex.Lock()
-					operationsContinuePoll[instanceWithinServiceID] = append(operationsContinuePoll[instanceWithinServiceID], operation)
-					operationsContinuePollMutex.Unlock()
-				} else if continuePoll {
-					operationsContinuePollMutex.Lock()
-					operationsContinuePoll[instanceWithinServiceID] = append(operationsContinuePoll[instanceWithinServiceID], operation)
-					operationsContinuePollMutex.Unlock()
-				}
-			}(id, operation)
-		}
-	}
-	c.operationsInProgressMutex.RUnlock()
-	wg.Wait()
-	c.operationsInProgressMutex.Lock()
-	c.operationsInProgress = operationsContinuePoll
-	c.operationsInProgressMutex.Unlock()
-}
-
-func (c *defaultInstancesCache) pollOperation(ctx context.Context, instanceWithinServiceID instanceWithinServiceID, operation *operationInfo) (bool, error) {
-	if operation.firstPollTime.IsZero() {
-		operation.firstPollTime = time.Now()
-	}
-
-	if time.Since(operation.firstPollTime) > c.operationPollTimeout {
-		c.log.Error(nil, "timeout poll operation",
-			"serviceID", instanceWithinServiceID.serviceID,
-			"instanceID", instanceWithinServiceID.instanceID,
-			"operationID", operation.operationID)
-		return false, nil
-	}
-
-	resp, err := c.cloudMapSDK.GetOperationWithContext(ctx, &servicediscovery.GetOperationInput{
-		OperationId: awssdk.String(operation.operationID),
-	})
-	if err != nil {
-		return false, err
-	}
-	switch awssdk.StringValue(resp.Operation.Status) {
-	case servicediscovery.OperationStatusSuccess:
-		c.recordSuccessOperation(ctx, instanceWithinServiceID, *operation, resp.Operation)
-		return false, nil
-	case servicediscovery.OperationStatusFail:
-		return false, nil
-	default:
-		return true, nil
-	}
-}
-
-func (c *defaultInstancesCache) recordSuccessOperation(ctx context.Context, instanceWithinServiceID instanceWithinServiceID, operation operationInfo, sdkOperation *servicediscovery.Operation) {
-	cachedValue, exists := c.instancesAttrsCache.Get(instanceWithinServiceID.serviceID)
-	if !exists {
-		return
-	}
-
-	cacheItem := cachedValue.(*instancesAttrsCacheItem)
-	cacheItem.mutex.RLock()
-	defer cacheItem.mutex.RUnlock()
-	switch operation.operationType {
-	case servicediscovery.OperationTypeRegisterInstance:
-		cacheItem.instancesAttrsByID[instanceWithinServiceID.instanceID] = operation.instanceAttrs
-	case servicediscovery.OperationTypeDeregisterInstance:
-		delete(cacheItem.instancesAttrsByID, instanceWithinServiceID.instanceID)
-	}
-}
-
-func (c *defaultInstancesCache) listInstancesFromAWS(ctx context.Context, serviceID string) (map[string]InstanceAttributes, error) {
+func (c *defaultInstancesCache) listInstancesFromAWS(ctx context.Context, serviceID string) (map[string]instanceAttributes, error) {
 	input := &servicediscovery.ListInstancesInput{
-		ServiceId: awssdk.String(serviceID),
+		ServiceId: aws.String(serviceID),
 	}
-	instancesAttrsByID := make(map[string]InstanceAttributes)
+	instanceAttrsByID := make(map[string]instanceAttributes)
 	if err := c.cloudMapSDK.ListInstancesPagesWithContext(ctx, input, func(output *servicediscovery.ListInstancesOutput, b bool) bool {
 		for _, instance := range output.Instances {
-			instancesAttrsByID[awssdk.StringValue(instance.Id)] = awssdk.StringValueMap(instance.Attributes)
+			instanceAttrsByID[aws.StringValue(instance.Id)] = aws.StringValueMap(instance.Attributes)
 		}
 		return true
 	}); err != nil {
 		return nil, err
 	}
-	return instancesAttrsByID, nil
+	return instanceAttrsByID, nil
 }
 
-// cloneInstanceAttributesByID make a copy of instancesAttrsByID.
-// we return a copy in ListInstances to avoid race if the map is read concurrently with writes from registerInstance/deregisterInstance.
-func (c *defaultInstancesCache) cloneInstanceAttributesByID(instancesAttrsByID map[string]InstanceAttributes) map[string]InstanceAttributes {
-	instancesAttrsByIDClone := make(map[string]InstanceAttributes, len(instancesAttrsByID))
-	for id, attrs := range instancesAttrsByID {
-		instancesAttrsByIDClone[id] = attrs
+func (c *defaultInstancesCache) recordSuccessfulRegisterInstanceOperation(serviceID string, instanceID string, attrs instanceAttributes, operation *servicediscovery.Operation) {
+	cachedValue, exists := c.instancesAttrsCache.Get(serviceID)
+	if !exists {
+		return
 	}
-	return instancesAttrsByIDClone
+	cacheItem := cachedValue.(*instancesAttrsCacheItem)
+	cacheItem.mutex.Lock()
+	defer cacheItem.mutex.Unlock()
+	if operation.UpdateDate.Before(cacheItem.lastUpdatedTimeByID[instanceID]) {
+		return
+	}
+	cacheItem.lastUpdatedTimeByID[instanceID] = *operation.UpdateDate
+	cacheItem.instanceAttrsByID[instanceID] = attrs
+}
+
+func (c *defaultInstancesCache) recordSuccessfulDeregisterInstanceOperation(serviceID string, instanceID string, operation *servicediscovery.Operation) {
+	cachedValue, exists := c.instancesAttrsCache.Get(serviceID)
+	if !exists {
+		return
+	}
+	cacheItem := cachedValue.(*instancesAttrsCacheItem)
+	cacheItem.mutex.Lock()
+	defer cacheItem.mutex.Unlock()
+	if operation.UpdateDate.Before(cacheItem.lastUpdatedTimeByID[instanceID]) {
+		return
+	}
+	cacheItem.lastUpdatedTimeByID[instanceID] = *operation.UpdateDate
+	delete(cacheItem.instanceAttrsByID, instanceID)
+}
+
+// cloneInstanceAttributesByID make a copy of instanceAttrsByID.
+// we return a copy in ListInstances to avoid race if the map is read concurrently with writes from registerInstance/deregisterInstance.
+func (c *defaultInstancesCache) cloneInstanceAttributesByID(instanceAttrsByID map[string]instanceAttributes) map[string]instanceAttributes {
+	instanceAttrsByIDClone := make(map[string]instanceAttributes, len(instanceAttrsByID))
+	for instanceID, attrs := range instanceAttrsByID {
+		instanceAttrsByIDClone[instanceID] = attrs
+	}
+	return instanceAttrsByIDClone
 }

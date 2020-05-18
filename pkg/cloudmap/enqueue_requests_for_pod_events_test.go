@@ -31,6 +31,12 @@ func Test_enqueueRequestsForPodEvents_Create(t *testing.T) {
 					"app": "testapp",
 				},
 			},
+			ServiceDiscovery: &appmesh.ServiceDiscovery{
+				AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+					NamespaceName: "my-ns",
+					ServiceName:   "my-svc",
+				},
+			},
 		},
 	}
 
@@ -124,6 +130,12 @@ func Test_enqueueRequestsForPodEvents_Update(t *testing.T) {
 			PodSelector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": "testapp",
+				},
+			},
+			ServiceDiscovery: &appmesh.ServiceDiscovery{
+				AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+					NamespaceName: "my-ns",
+					ServiceName:   "my-svc",
 				},
 			},
 		},
@@ -266,6 +278,12 @@ func Test_enqueueRequestsForPodEvents_Delete(t *testing.T) {
 			PodSelector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": "testapp",
+				},
+			},
+			ServiceDiscovery: &appmesh.ServiceDiscovery{
+				AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+					NamespaceName: "my-ns",
+					ServiceName:   "my-svc",
 				},
 			},
 		},

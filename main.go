@@ -63,12 +63,16 @@ func init() {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
+	var enableCustomHealthCheck bool
 	var logLevel string
 	flag.StringVar(&metricsAddr, "metrics-addr", "0.0.0.0:8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&enableCustomHealthCheck, "enable-custom-health-check", false,
+		"Enable custom healthCheck when using cloudMap serviceDiscovery")
 	flag.StringVar(&logLevel, "log-level", "info", "Set the controller manager log level - info(default), debug")
+
 	var injectConfig inject.Config
 	injectConfig.BindFlags()
 	flag.Parse()
@@ -108,14 +112,12 @@ func main() {
 	meshMembersFinalizer := mesh.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("mesh-members"), ctrl.Log)
 	referencesResolver := references.NewDefaultResolver(mgr.GetClient(), ctrl.Log)
 	virtualNodeEndpointResolver := cloudmap.NewDefaultVirtualNodeEndpointResolver(mgr.GetClient(), ctrl.Log)
-	cloudMapInstancesCache := cloudmap.NewDefaultInstancesCache(cloud.CloudMap(), ctrl.Log, stopChan)
-	cloudMapInstancesHealthProber := cloudmap.NewDefaultInstancesHealthProber(mgr.GetClient(), cloud.CloudMap(), ctrl.Log, stopChan)
-	cloudMapInstancesReconciler := cloudmap.NewDefaultInstancesReconciler(mgr.GetClient(), cloud.CloudMap(), cloudMapInstancesCache, cloudMapInstancesHealthProber, ctrl.Log)
+	cloudMapInstancesReconciler := cloudmap.NewDefaultInstancesReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log, stopChan)
 	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
 	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	vsResManager := virtualservice.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	vrResManager := virtualrouter.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
-	cloudMapResManager := cloudmap.NewDefaultResourceManager(mgr.GetClient(), cloud.CloudMap(), virtualNodeEndpointResolver, cloudMapInstancesReconciler, ctrl.Log)
+	cloudMapResManager := cloudmap.NewDefaultResourceManager(mgr.GetClient(), cloud.CloudMap(), referencesResolver, virtualNodeEndpointResolver, cloudMapInstancesReconciler, enableCustomHealthCheck, ctrl.Log)
 	msReconciler := appmeshcontroller.NewMeshReconciler(mgr.GetClient(), finalizerManager, meshMembersFinalizer, meshResManager, ctrl.Log.WithName("controllers").WithName("Mesh"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
 	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), finalizerManager, cloudMapResManager, ctrl.Log.WithName("controllers").WithName("CloudMap"))
