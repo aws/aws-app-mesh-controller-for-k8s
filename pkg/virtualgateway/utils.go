@@ -18,5 +18,5 @@ func IsVirtualGatewayActive(vg *appmesh.VirtualGateway) bool {
 
 // IsVirtualGatewayReferenced tests whether given virtualGateway is referenced by virtualGatewayReference
 func IsVirtualGatewayReferenced(vg *appmesh.VirtualGateway, reference appmesh.VirtualGatewayReference) bool {
-	return vg.Name == reference.Name && vg.UID == reference.UID
+	return vg.Name == reference.Name && vg.Namespace == *reference.Namespace && vg.UID == reference.UID
 }
