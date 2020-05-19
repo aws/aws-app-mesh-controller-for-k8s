@@ -22,6 +22,12 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 		},
 		Spec: corev1.NamespaceSpec{},
 	}
+	secondTestNS := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "awesome-ns2",
+		},
+		Spec: corev1.NamespaceSpec{},
+	}
 	vnWithNilPodSelector := &appmesh.VirtualNode{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: testNS.Name,
@@ -63,6 +69,20 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 			PodSelector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"pod-y": "true",
+				},
+			},
+		},
+	}
+
+	vnWithPodSelectorPodXSecondNs := &appmesh.VirtualNode{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: secondTestNS.Name,
+			Name:      "vn-with-pod-selector-pod-x",
+		},
+		Spec: appmesh.VirtualNodeSpec{
+			PodSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"pod-x": "true",
 				},
 			},
 		},
@@ -306,6 +326,30 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 			},
 			want:    nil,
 			wantErr: errors.New("found multiple matching VirtualNodes for pod awesome-ns/my-pod: awesome-ns/vn-with-pod-selector-pod-x,awesome-ns/vn-with-pod-selector-pod-y"),
+		},
+		{
+			name: "[multiple virtualNode different namespaces with same name ] only the virtualNode for pod namespaces will be listed and used",
+			env: env{
+				namespaces: []*corev1.Namespace{testNS, secondTestNS},
+				virtualNodes: []*appmesh.VirtualNode{
+					vnWithPodSelectorPodX,
+					vnWithPodSelectorPodXSecondNs,
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: testNS.Name,
+						Name:      "my-pod",
+						Labels: map[string]string{
+							"pod-x": "true",
+						},
+					},
+					Spec: corev1.PodSpec{},
+				},
+			},
+			want:    nil,
+			wantErr: nil,
 		},
 		{
 			name: "[multiple virtualNode - both selects namespace with different labels] pod without labels cannot be selected",

@@ -34,7 +34,7 @@ type membershipDesignator struct {
 
 func (d *membershipDesignator) Designate(ctx context.Context, pod *corev1.Pod) (*appmesh.VirtualNode, error) {
 	vnList := appmesh.VirtualNodeList{}
-	if err := d.k8sClient.List(ctx, &vnList); err != nil {
+	if err := d.k8sClient.List(ctx, &vnList, client.InNamespace(pod.Namespace)); err != nil {
 		return nil, errors.Wrap(err, "failed to list VirtualNodes in cluster")
 	}
 
