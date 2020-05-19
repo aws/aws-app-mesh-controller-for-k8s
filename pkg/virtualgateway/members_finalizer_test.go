@@ -217,8 +217,9 @@ func Test_pendingMembersFinalizer_findGatewayRouteMembers(t *testing.T) {
 func Test_pendingMembersFinalizer_Finalize(t *testing.T) {
 	vg := &appmesh.VirtualGateway{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "my-vg",
-			UID:  "uid-1",
+			Name:      "my-vg",
+			UID:       "uid-1",
+			Namespace: "vg-ns",
 		},
 	}
 	gr := &appmesh.GatewayRoute{
@@ -228,8 +229,9 @@ func Test_pendingMembersFinalizer_Finalize(t *testing.T) {
 		},
 		Spec: appmesh.GatewayRouteSpec{
 			VirtualGatewayRef: &appmesh.VirtualGatewayReference{
-				Name: "my-vg",
-				UID:  "uid-1",
+				Name:      "my-vg",
+				UID:       "uid-1",
+				Namespace: aws.String("vg-ns"),
 			},
 		},
 	}
