@@ -71,6 +71,9 @@ func (h *enqueueRequestsForPodEvents) enqueueVirtualNodesForPods(ctx context.Con
 	}
 
 	for _, vn := range vnList.Items {
+		if vn.Spec.ServiceDiscovery == nil || vn.Spec.ServiceDiscovery.AWSCloudMap == nil {
+			continue
+		}
 		selector, err := metav1.LabelSelectorAsSelector(vn.Spec.PodSelector)
 		if err != nil {
 			continue
