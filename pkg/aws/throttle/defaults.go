@@ -65,19 +65,24 @@ func NewDefaultServiceOperationsThrottleConfig() *ServiceOperationsThrottleConfi
 					burst:        80,
 				},
 				{
+					operationPtn: regexp.MustCompile("^GetInstance"),
+					r:            rate.Limit(16),
+					burst:        80,
+				},
+				{
 					operationPtn: regexp.MustCompile("^GetOperation"),
 					r:            rate.Limit(4),
 					burst:        40,
 				},
 				{
+					operationPtn: regexp.MustCompile("^GetInstancesHealthStatus"),
+					r:            rate.Limit(80),
+					burst:        80,
+				},
+				{
 					operationPtn: regexp.MustCompile("^UpdateInstanceCustomHealthStatus"),
 					r:            rate.Limit(240),
 					burst:        240,
-				},
-				{
-					operationPtn: regexp.MustCompile("^DiscoverInstances"),
-					r:            rate.Limit(400),
-					burst:        80,
 				},
 			},
 		},
