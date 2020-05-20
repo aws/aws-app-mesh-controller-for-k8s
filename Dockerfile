@@ -2,28 +2,28 @@
 FROM golang:1.14 as builder
 
 WORKDIR /workspace
-# Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
+
+COPY . ./
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download
 
-# Copy the go source
-COPY main.go main.go
-COPY apis/ apis/
-COPY pkg/ pkg/
-COPY controllers/ controllers/
-COPY webhooks/ webhooks/
-
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
+ENV VERSION_PKG=github.com/aws/aws-app-mesh-controller-for-k8s/pkg/version
+RUN GIT_VERSION=$(git describe --tags --dirty) && \
+    GIT_COMMIT=$(git rev-parse HEAD) && \
+    BUILD_DATE=$(date +%Y-%m-%dT%H:%M:%S%z) && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build \
+    -ldflags="-X ${VERSION_PKG}.GitVersion=${GIT_VERSION} -X ${VERSION_PKG}.GitCommit=${GIT_COMMIT} -X ${VERSION_PKG}.BuildDate=${BUILD_DATE}" -a -o manager main.go
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+# Build the container image
+FROM amazonlinux:2
+RUN yum update -y && \
+    yum install -y ca-certificates && \
+    yum clean all && \
+    rm -rf /var/cache/yum
+
 WORKDIR /
 COPY --from=builder /workspace/manager .
-USER nonroot:nonroot
 
 ENTRYPOINT ["/manager"]
