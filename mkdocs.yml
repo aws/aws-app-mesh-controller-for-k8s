@@ -1,0 +1,35 @@
+site_name: AWS App Mesh Controller
+repo_name: aws/aws-app-mesh-controller-for-k8s
+repo_url: https://github.com/aws/aws-app-mesh-controller-for-k8s
+strict: true
+
+nav:
+  - Home: index.md
+  - API:
+      - Design: api_design.md
+  - Guide:
+      - Troubleshooting: troubleshooting.md
+plugins:
+  - search
+theme:
+  name: material
+  language: en
+  favicon: assets/images/aws_appmesh_icon.svg
+  palette:
+    primary: indigo
+    accent: indigo
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - tabs
+# Extensions
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.inlinehilite
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.superfences
+  - toc:
+      permalink: true
