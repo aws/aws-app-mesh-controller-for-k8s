@@ -348,7 +348,7 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 					Spec: corev1.PodSpec{},
 				},
 			},
-			want:    nil,
+			want:    vnWithPodSelectorPodX,
 			wantErr: nil,
 		},
 		{
