@@ -1040,7 +1040,7 @@ func (s *DynamicStack) obtainPodToVirtualServiceConnectivityEntries(ctx context.
 			path := route.HTTPRoute.Match.Prefix
 			checkEntries = append(checkEntries, connectivityCheckEntry{
 				dstVirtualService: k8s.NamespacedName(vs),
-				dstURL:            fmt.Sprintf("http://%s.:%d%s", aws.StringValue(vs.Spec.AWSName), shared.AppContainerPort, path),
+				dstURL:            fmt.Sprintf("http://%s:%d%s", aws.StringValue(vs.Spec.AWSName), shared.AppContainerPort, path),
 			})
 		}
 	}
