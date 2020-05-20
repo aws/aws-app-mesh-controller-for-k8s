@@ -627,7 +627,6 @@ func (c *Controller) handleVServiceDelete(ctx context.Context, vservice *appmesh
 		if err := c.deleteVServiceResources(ctx, vservice); err != nil {
 			return err
 		}
-
 		if err := removeFinalizer(copy, virtualServiceDeletionFinalizerName); err != nil {
 			return fmt.Errorf("error removing finalizer %s to virtual service %s during deletion: %s", virtualServiceDeletionFinalizerName, vservice.Name, err)
 		}
@@ -653,13 +652,13 @@ func (c *Controller) handleVServiceMeshDeleting(ctx context.Context, vservice *a
 
 	// if mesh DeletionTimestamp is set, clean up virtual service via App Mesh API
 	if !mesh.DeletionTimestamp.IsZero() {
-		if err := c.deleteVServiceResources(ctx, vservice); err != nil {
-			klog.Error(err)
-		} else {
-			klog.Infof("Deleted resources for virtual service %s because mesh %s is being deleted", vservice.Name, vservice.Spec.MeshName)
+		if err := c.meshclientset.AppmeshV1beta1().VirtualServices(vservice.Namespace).Delete(vservice.Name, &metav1.DeleteOptions{}); err != nil {
+			klog.Errorf("Deletion failed for virtual service: %s - %s", vservice.Name, err)
+			return false
 		}
-		return false
+		klog.Infof("Deleted virtual service %s because mesh %s is being deleted", vservice.Name, vservice.Spec.MeshName)
 	}
+
 	return true
 }
 
