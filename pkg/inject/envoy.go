@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"strings"
 )
@@ -123,6 +124,10 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 	if containsEnvoyContainer(pod) {
 		return nil
 	}
+	secretMounts, err := m.getSecretMounts(pod)
+	if err != nil {
+		return err
+	}
 	variables := m.buildTemplateVariables(pod)
 	envoySidecar, err := renderTemplate("envoy", envoyContainerTemplate, variables)
 	if err != nil {
@@ -133,6 +138,7 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 	if err != nil {
 		return err
 	}
+	m.mutateSecretMounts(pod, &container, secretMounts)
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
 	return nil
 }
@@ -169,6 +175,42 @@ func (m *envoyMutator) getPreview(pod *corev1.Pod) string {
 		return "1"
 	}
 	return "0"
+}
+
+func (m *envoyMutator) mutateSecretMounts(pod *corev1.Pod, envoyContainer *corev1.Container, secretMounts map[string]string) {
+	for secretName, mountPath := range secretMounts {
+		volume := corev1.Volume{
+			Name: secretName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: secretName,
+				},
+			},
+		}
+		volumeMount := corev1.VolumeMount{
+			Name:      secretName,
+			MountPath: mountPath,
+			ReadOnly:  true,
+		}
+		envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
+		pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
+	}
+}
+
+func (m *envoyMutator) getSecretMounts(pod *corev1.Pod) (map[string]string, error) {
+	secretMounts := make(map[string]string)
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshSecretMountsAnnotation]; ok {
+		for _, segment := range strings.Split(v, ",") {
+			pair := strings.Split(segment, ":")
+			if len(pair) != 2 { // secretName:mountPath
+				return nil, errors.Errorf("malformed annotation %s, expected format: %s", AppMeshSecretMountsAnnotation, "secretName:mountPath")
+			}
+			secretName := strings.TrimSpace(pair[0])
+			mountPath := strings.TrimSpace(pair[1])
+			secretMounts[secretName] = mountPath
+		}
+	}
+	return secretMounts, nil
 }
 
 // containsEnvoyContainer checks whether pod already contains "envoy" container

@@ -29,6 +29,8 @@ const (
 	AppMeshPreviewAnnotation = "appmesh.k8s.aws/preview"
 	//AppMeshSidecarInjectAnnotation specifies proxy should be injected for pod. Other systems can use this annotation on pod to determine if proxy is injected or not
 	AppMeshSidecarInjectAnnotation = "appmesh.k8s.aws/sidecarInjectorWebhook"
+	//AppMeshSecretMountsAnnotation specifies the list of Secret that need to be mounted to the proxy as a volume
+	AppMeshSecretMountsAnnotation = "appmesh.k8s.aws/secretMounts"
 
 	//Pod Labels
 

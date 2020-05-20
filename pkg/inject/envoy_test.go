@@ -1,6 +1,7 @@
 package inject
 
 import (
+	"errors"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/google/go-cmp/cmp"
@@ -588,6 +589,125 @@ func Test_envoyMutator_mutate(t *testing.T) {
 			},
 		},
 		{
+			name: "no tracing + secretMounts",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:             "us-west-2",
+					preview:               false,
+					logLevel:              "debug",
+					sidecarImage:          "envoy:v2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-ns",
+						Name:      "my-pod",
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/secretMounts": "svc1-cert-chain-key:/certs/svc1, svc1-svc2-ca-bundle:/certs",
+						},
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "app",
+								Image: "app/v1",
+							},
+						},
+					},
+				},
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+					Annotations: map[string]string{
+						"appmesh.k8s.aws/secretMounts": "svc1-cert-chain-key:/certs/svc1, svc1-svc2-ca-bundle:/certs",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "svc1-cert-chain-key",
+									MountPath: "/certs/svc1",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "svc1-svc2-ca-bundle",
+									MountPath: "/certs",
+									ReadOnly:  true,
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "svc1-cert-chain-key",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "svc1-cert-chain-key",
+								},
+							},
+						},
+						{
+							Name: "svc1-svc2-ca-bundle",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "svc1-svc2-ca-bundle",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "no-op when already injected",
 			fields: fields{
 				vn: vn,
@@ -839,6 +959,73 @@ func Test_containsEnvoyTracingConfigVolume(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := containsEnvoyTracingConfigVolume(tt.args.pod)
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_envoyMutator_getSecretMounts(t *testing.T) {
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string]string
+		wantErr error
+	}{
+		{
+			name: "pods with valid appmesh.k8s.aws/secretMounts annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/secretMounts": "svc1-cert-chain-key:/certs/svc1, svc1-svc2-ca-bundle:/certs",
+						},
+					},
+				},
+			},
+			want: map[string]string{
+				"svc1-cert-chain-key": "/certs/svc1",
+				"svc1-svc2-ca-bundle": "/certs",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "pods with no appmesh.k8s.aws/secretMounts annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{},
+					},
+				},
+			},
+			want:    map[string]string{},
+			wantErr: nil,
+		},
+		{
+			name: "pods with invalid appmesh.k8s.aws/secretMounts annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/secretMounts": "svc1-cert-chain-ke",
+						},
+					},
+				},
+			},
+			wantErr: errors.New("malformed annotation appmesh.k8s.aws/secretMounts, expected format: secretName:mountPath"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &envoyMutator{}
+			got, err := m.getSecretMounts(tt.args.pod)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, got, tt.want)
+			}
 		})
 	}
 }
