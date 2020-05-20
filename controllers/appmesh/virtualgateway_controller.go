@@ -34,8 +34,8 @@ type VirtualGatewayReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualgateways,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualgateways/status,verbs=get;update;patch
+//// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualgateways,verbs=get;list;watch;create;update;patch;delete
+//// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualgateways/status,verbs=get;update;patch
 
 func (r *VirtualGatewayReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()

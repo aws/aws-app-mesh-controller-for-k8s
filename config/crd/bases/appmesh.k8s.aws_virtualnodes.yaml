@@ -509,18 +509,6 @@ spec:
         status:
           description: VirtualNodeStatus defines the observed state of VirtualNode
           properties:
-            awsCloudMapServiceStatus:
-              description: AWSCloudMapServiceStatus is AWS CloudMap Service object's
-                info
-              properties:
-                namespaceID:
-                  description: NamespaceID is AWS CloudMap Service object's namespace
-                    Id
-                  type: string
-                serviceID:
-                  description: ServiceID is AWS CloudMap Service object's Id
-                  type: string
-              type: object
             conditions:
               description: The current VirtualNode status.
               items:

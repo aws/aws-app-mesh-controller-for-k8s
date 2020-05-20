@@ -269,16 +269,6 @@ type VirtualNodeCondition struct {
 	Message *string `json:"message,omitempty"`
 }
 
-// AWSCloudMapServiceStatus is AWS CloudMap Service object's info
-type AWSCloudMapServiceStatus struct {
-	// NamespaceID is AWS CloudMap Service object's namespace Id
-	// +optional
-	NamespaceID *string `json:"namespaceID,omitempty"`
-	// ServiceID is AWS CloudMap Service object's Id
-	// +optional
-	ServiceID *string `json:"serviceID,omitempty"`
-}
-
 // VirtualNodeSpec defines the desired state of VirtualNode
 // refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html
 type VirtualNodeSpec struct {
@@ -327,9 +317,6 @@ type VirtualNodeStatus struct {
 	// The current VirtualNode status.
 	// +optional
 	Conditions []VirtualNodeCondition `json:"conditions,omitempty"`
-	// AWSCloudMapServiceStatus is AWS CloudMap Service object's info
-	// +optional
-	AWSCloudMapServiceStatus *AWSCloudMapServiceStatus `json:"awsCloudMapServiceStatus,omitempty"`
 
 	// The generation observed by the VirtualNode controller.
 	// +optional

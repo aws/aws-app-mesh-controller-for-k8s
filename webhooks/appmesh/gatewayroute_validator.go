@@ -63,7 +63,7 @@ func (v *gatewayRouteValidator) enforceFieldsImmutability(newGR *appmesh.Gateway
 	return nil
 }
 
-// +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-gatewayroute,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=gatewayroutes,verbs=create;update,versions=v1beta2,name=vgatewayroute.appmesh.k8s.aws
+//// +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-gatewayroute,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=gatewayroutes,verbs=create;update,versions=v1beta2,name=vgatewayroute.appmesh.k8s.aws
 
 func (v *gatewayRouteValidator) SetupWithManager(mgr ctrl.Manager) {
 	mgr.GetWebhookServer().Register(apiPathValidateAppMeshGatewayRoute, webhook.ValidatingWebhookForValidator(v))
