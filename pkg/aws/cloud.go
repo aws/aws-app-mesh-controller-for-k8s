@@ -28,6 +28,7 @@ type Cloud interface {
 // NewCloud constructs new Cloud implementation.
 func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, error) {
 	sess := session.Must(session.NewSession(aws.NewConfig()))
+	injectUserAgent(&sess.Handlers)
 	if cfg.ThrottleConfig != nil {
 		throttler := throttle.NewThrottler(cfg.ThrottleConfig)
 		throttler.InjectHandlers(&sess.Handlers)

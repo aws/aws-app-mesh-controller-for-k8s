@@ -17,11 +17,13 @@ limitations under the License.
 package main
 
 import (
-	"flag"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/version"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualrouter"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
+	"github.com/spf13/pflag"
 	"os"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
@@ -65,17 +67,22 @@ func main() {
 	var enableLeaderElection bool
 	var enableCustomHealthCheck bool
 	var logLevel string
-	flag.StringVar(&metricsAddr, "metrics-addr", "0.0.0.0:8080", "The address the metric endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
+	awsCloudConfig := aws.CloudConfig{ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig()}
+	injectConfig := inject.Config{}
+	fs := pflag.NewFlagSet("", pflag.ExitOnError)
+	fs.StringVar(&metricsAddr, "metrics-addr", "0.0.0.0:8080", "The address the metric endpoint binds to.")
+	fs.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.BoolVar(&enableCustomHealthCheck, "enable-custom-health-check", false,
+	fs.BoolVar(&enableCustomHealthCheck, "enable-custom-health-check", false,
 		"Enable custom healthCheck when using cloudMap serviceDiscovery")
-	flag.StringVar(&logLevel, "log-level", "info", "Set the controller manager log level - info(default), debug")
-
-	var injectConfig inject.Config
-	injectConfig.BindFlags()
-	flag.Parse()
+	fs.StringVar(&logLevel, "log-level", "info", "Set the controller manager log level - info(default), debug")
+	awsCloudConfig.BindFlags(fs)
+	injectConfig.BindFlags(fs)
+	if err := fs.Parse(os.Args); err != nil {
+		setupLog.Error(err, "invalid flags")
+		os.Exit(1)
+	}
 	if err := injectConfig.Validate(); err != nil {
 		setupLog.Error(err, "invalid flags")
 		os.Exit(1)
@@ -85,7 +92,12 @@ func main() {
 	if logLevel == "debug" {
 		lvl = zapraw.NewAtomicLevelAt(-1)
 	}
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.Level(&lvl)))
+	ctrl.SetLogger(zap.New(zap.UseDevMode(false), zap.Level(&lvl)))
+	setupLog.Info("version",
+		"GitVersion", version.GitVersion,
+		"GitCommit", version.GitCommit,
+		"BuildDate", version.BuildDate,
+	)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -99,8 +111,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: organize component initialization below
-	cloud, err := aws.NewCloud(aws.CloudConfig{}, metrics.Registry)
+	cloud, err := aws.NewCloud(awsCloudConfig, metrics.Registry)
 	if err != nil {
 		setupLog.Error(err, "unable to initialize AWS cloud")
 		os.Exit(1)

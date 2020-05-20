@@ -2,7 +2,7 @@ package inject
 
 import (
 	"errors"
-	"flag"
+	"github.com/spf13/pflag"
 )
 
 const (
@@ -68,42 +68,42 @@ func multipleTracer(config *Config) bool {
 	return (j && d) || (d && x) || (j && x)
 }
 
-func (cfg *Config) BindFlags() {
-	flag.BoolVar(&cfg.EnableIAMForServiceAccounts, flagEnableIAMForServiceAccounts, true,
+func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
+	fs.BoolVar(&cfg.EnableIAMForServiceAccounts, flagEnableIAMForServiceAccounts, true,
 		`If enabled, a fsGroup: 1337 will be injected in the absence of it within pod securityContext`)
-	flag.BoolVar(&cfg.EnableECRSecret, flagEnableECRSecret, false,
+	fs.BoolVar(&cfg.EnableECRSecret, flagEnableECRSecret, false,
 		"If enabled, 'appmesh-ecr-secret' secret will be injected in the absence of it within pod imagePullSecrets")
-	flag.StringVar(&cfg.SidecarImage, flagSidecarImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.12.3.0-prod",
+	fs.StringVar(&cfg.SidecarImage, flagSidecarImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.12.3.0-prod",
 		"Envoy sidecar container image.")
-	flag.StringVar(&cfg.SidecarCpu, flagSidecarCpuRequests, "10m",
+	fs.StringVar(&cfg.SidecarCpu, flagSidecarCpuRequests, "10m",
 		"Envoy sidecar CPU resources requests.")
-	flag.StringVar(&cfg.SidecarMemory, flagSidecarMemoryRequests, "32Mi",
+	fs.StringVar(&cfg.SidecarMemory, flagSidecarMemoryRequests, "32Mi",
 		"Envoy sidecar memory resources requests.")
-	flag.BoolVar(&cfg.Preview, flagPreview, false,
+	fs.BoolVar(&cfg.Preview, flagPreview, false,
 		"Enable preview channel")
-	flag.StringVar(&cfg.LogLevel, flagLogLevel, "info",
+	fs.StringVar(&cfg.LogLevel, flagLogLevel, "info",
 		"AWS App Mesh envoy log level")
-	flag.StringVar(&cfg.InitImage, flagInitImage, "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
+	fs.StringVar(&cfg.InitImage, flagInitImage, "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
 		"Init container image.")
-	flag.StringVar(&cfg.IgnoredIPs, flagIgnoredIPs, "169.254.169.254",
+	fs.StringVar(&cfg.IgnoredIPs, flagIgnoredIPs, "169.254.169.254",
 		"Init container ignored IPs.")
-	flag.BoolVar(&cfg.EnableJaegerTracing, flagEnableJaegerTracing, false,
+	fs.BoolVar(&cfg.EnableJaegerTracing, flagEnableJaegerTracing, false,
 		"Enable Envoy Jaeger tracing")
-	flag.StringVar(&cfg.JaegerAddress, flagJaegerAddress, "appmesh-jaeger.appmesh-system",
+	fs.StringVar(&cfg.JaegerAddress, flagJaegerAddress, "appmesh-jaeger.appmesh-system",
 		"Jaeger address")
-	flag.StringVar(&cfg.JaegerPort, flagJaegerPort, "9411",
+	fs.StringVar(&cfg.JaegerPort, flagJaegerPort, "9411",
 		"Jaeger port")
-	flag.BoolVar(&cfg.EnableDatadogTracing, flagEnableDatadogTracing, false,
+	fs.BoolVar(&cfg.EnableDatadogTracing, flagEnableDatadogTracing, false,
 		"Enable Envoy Datadog tracing")
-	flag.StringVar(&cfg.DatadogAddress, flagDatadogAddress, "datadog.appmesh-system",
+	fs.StringVar(&cfg.DatadogAddress, flagDatadogAddress, "datadog.appmesh-system",
 		"Datadog Agent address")
-	flag.StringVar(&cfg.DatadogPort, flagDatadogPort, "8126",
+	fs.StringVar(&cfg.DatadogPort, flagDatadogPort, "8126",
 		"Datadog Agent tracing port")
-	flag.BoolVar(&cfg.EnableXrayTracing, flagEnableXrayTracing, false,
+	fs.BoolVar(&cfg.EnableXrayTracing, flagEnableXrayTracing, false,
 		"Enable Envoy X-Ray tracing integration and injects xray-daemon as sidecar")
-	flag.BoolVar(&cfg.EnableStatsTags, flagEnableStatsTags, false,
+	fs.BoolVar(&cfg.EnableStatsTags, flagEnableStatsTags, false,
 		"Enable Envoy to tag stats")
-	flag.BoolVar(&cfg.EnableStatsD, flagEnableStatsD, false,
+	fs.BoolVar(&cfg.EnableStatsD, flagEnableStatsD, false,
 		"If enabled, Envoy will send DogStatsD metrics to 127.0.0.1:8125")
 }
 
