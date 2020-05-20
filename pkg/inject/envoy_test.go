@@ -5,6 +5,7 @@ import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -772,7 +773,15 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				assert.NoError(t, err)
-				assert.True(t, cmp.Equal(tt.wantPod, pod), "diff", cmp.Diff(tt.wantPod, pod))
+				opts := cmp.Options{
+					cmpopts.SortSlices(func(lhs corev1.Volume, rhs corev1.Volume) bool {
+						return lhs.Name < rhs.Name
+					}),
+					cmpopts.SortSlices(func(lhs corev1.VolumeMount, rhs corev1.VolumeMount) bool {
+						return lhs.Name < rhs.Name
+					}),
+				}
+				assert.True(t, cmp.Equal(tt.wantPod, pod, opts), "diff", cmp.Diff(tt.wantPod, pod, opts))
 			}
 		})
 	}
