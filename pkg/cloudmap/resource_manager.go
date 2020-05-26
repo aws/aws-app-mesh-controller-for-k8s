@@ -398,7 +398,7 @@ func (m *defaultResourceManager) getClusterNodeInfo(ctx context.Context) map[str
 		return nodeInfoByName
 	}
 
-	m.log.V(1).Info("Total no. of ", "nodes: ", len(nodeList.Items))
+	m.log.V(1).Info("Nodes ", "count: ", len(nodeList.Items))
 	nodeInfoByName = make(map[string]nodeAttributes, len(nodeList.Items))
 	for i := range nodeList.Items {
 		var nodeRegion string
