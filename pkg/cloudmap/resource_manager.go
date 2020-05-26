@@ -28,8 +28,10 @@ const (
 	defaultServiceCacheMaxSize             = 1024
 	defaultServiceCacheTTL                 = 2 * time.Minute
 
-	nodeRegionLabel           = "failure-domain.beta.kubernetes.io/region"
-	nodeAvailabilityZoneLabel = "failure-domain.beta.kubernetes.io/zone"
+	nodeRegionLabelKey1           = "failure-domain.beta.kubernetes.io/region"
+	nodeRegionLabelKey2           = "topology.kubernetes.io/region"
+	nodeAvailabilityZoneLabelKey1 = "failure-domain.beta.kubernetes.io/zone"
+	nodeAvailabilityZoneLabelKey2 = "topology.kubernetes.io/zone"
 )
 
 type ResourceManager interface {
@@ -392,22 +394,21 @@ func (m *defaultResourceManager) buildCloudMapServiceSummaryCacheKey(nsSummary *
 }
 
 func (m *defaultResourceManager) getClusterNodeInfo(ctx context.Context) map[string]nodeAttributes {
-	var nodeInfoByName map[string]nodeAttributes
 	nodeList := &corev1.NodeList{}
 	if err := m.k8sClient.List(ctx, nodeList); err != nil {
-		return nodeInfoByName
+		return nil
 	}
 
-	m.log.V(1).Info("Nodes ", "count: ", len(nodeList.Items))
-	nodeInfoByName = make(map[string]nodeAttributes, len(nodeList.Items))
+	m.log.V(1).Info("Listed Nodes", "count", len(nodeList.Items))
+	nodeInfoByName := make(map[string]nodeAttributes, len(nodeList.Items))
 	for i := range nodeList.Items {
 		var nodeRegion string
 		var nodeAvailabilityZone string
 		node := nodeList.Items[i]
 		for label, value := range node.Labels {
-			if label == nodeRegionLabel {
+			if label == nodeRegionLabelKey1 || label == nodeRegionLabelKey2 {
 				nodeRegion = value
-			} else if label == nodeAvailabilityZoneLabel {
+			} else if label == nodeAvailabilityZoneLabelKey1 || label == nodeAvailabilityZoneLabelKey2 {
 				nodeAvailabilityZone = value
 			}
 		}

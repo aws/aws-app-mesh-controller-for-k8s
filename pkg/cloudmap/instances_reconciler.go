@@ -155,14 +155,12 @@ func (r *defaultInstancesReconciler) buildInstanceAttributes(ms *appmesh.Mesh, v
 	attr[attrK8sNamespace] = pod.Namespace
 	attr[attrAppMeshMesh] = aws.StringValue(ms.Spec.AWSName)
 	attr[attrAppMeshVirtualNode] = aws.StringValue(vn.Spec.AWSName)
-	if nodeInfoByName != nil {
-		if nodeInfo, ok := nodeInfoByName[podsNodeName]; ok {
-			if nodeInfo.region != "" {
-				attr[attrK8sPodRegion] = nodeInfo.region
-			}
-			if nodeInfo.availabilityZone != "" {
-				attr[attrK8sPodAZ] = nodeInfo.availabilityZone
-			}
+	if nodeInfo, ok := nodeInfoByName[podsNodeName]; ok {
+		if nodeInfo.region != "" {
+			attr[attrK8sPodRegion] = nodeInfo.region
+		}
+		if nodeInfo.availabilityZone != "" {
+			attr[attrK8sPodAZ] = nodeInfo.availabilityZone
 		}
 	}
 	return attr
