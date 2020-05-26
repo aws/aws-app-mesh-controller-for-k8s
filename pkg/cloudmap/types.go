@@ -40,6 +40,11 @@ type instanceInfo struct {
 	pod *corev1.Pod
 }
 
+type nodeAttributes struct {
+	region           string
+	availabilityZone string
+}
+
 var _ serviceSubset = &virtualNodeServiceSubset{}
 
 // virtualNodeServiceSubset presents a subset of cloudMap service that should be managed by specific virtualNode.

@@ -22,6 +22,10 @@ const (
 	attrK8sPod = "k8s.io/pod"
 	// AttrK8sNamespace is a custom attribute injected by app-mesh controller
 	attrK8sNamespace = "k8s.io/namespace"
+	// AttrK8sPodRegion is a custom attribute injected by app-mesh controller
+	attrK8sPodRegion = "REGION"
+	// AttrK8sPodAZ is a custom attribute injected by app-mesh controller
+	attrK8sPodAZ = "AVAILABILITY_ZONE"
 
 	attrAppMeshMesh        = "appmesh.k8s.aws/mesh"
 	attrAppMeshVirtualNode = "appmesh.k8s.aws/virtualNode"
@@ -35,7 +39,7 @@ const (
 
 type InstancesReconciler interface {
 	Reconcile(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, service serviceSummary,
-		readyPods []*corev1.Pod, notReadyPods []*corev1.Pod) error
+		readyPods []*corev1.Pod, notReadyPods []*corev1.Pod, nodeInfoByName map[string]nodeAttributes) error
 }
 
 func NewDefaultInstancesReconciler(k8sClient client.Client, cloudMapSDK services.CloudMap, log logr.Logger, stopChan <-chan struct{}) *defaultInstancesReconciler {
@@ -67,17 +71,17 @@ type defaultInstancesReconciler struct {
 }
 
 func (r *defaultInstancesReconciler) Reconcile(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, service serviceSummary,
-	readyPods []*corev1.Pod, notReadyPods []*corev1.Pod) error {
+	readyPods []*corev1.Pod, notReadyPods []*corev1.Pod, nodeInfoByName map[string]nodeAttributes) error {
 
 	customHealthCheckEnabled := service.healthCheckCustomConfig != nil
 	subset := &virtualNodeServiceSubset{
 		ms: ms,
 		vn: vn,
 	}
-	readyInstanceInfoByID := r.buildInstanceInfoByID(ms, vn, readyPods)
+	readyInstanceInfoByID := r.buildInstanceInfoByID(ms, vn, readyPods, nodeInfoByName)
 	var notReadyInstanceInfoByID map[string]instanceInfo
 	if customHealthCheckEnabled {
-		notReadyInstanceInfoByID = r.buildInstanceInfoByID(ms, vn, notReadyPods)
+		notReadyInstanceInfoByID = r.buildInstanceInfoByID(ms, vn, notReadyPods, nodeInfoByName)
 	}
 	resultChan := r.instancesReconcileReactor.Submit(ctx, service, subset, readyInstanceInfoByID, notReadyInstanceInfoByID)
 	select {
@@ -122,11 +126,12 @@ func (r *defaultInstancesReconciler) reconcileCustomHealthCheck(ctx context.Cont
 }
 
 // buildInstanceInfoByID build instances info indexed by instanceID
-func (r *defaultInstancesReconciler) buildInstanceInfoByID(ms *appmesh.Mesh, vn *appmesh.VirtualNode, pods []*corev1.Pod) map[string]instanceInfo {
+func (r *defaultInstancesReconciler) buildInstanceInfoByID(ms *appmesh.Mesh, vn *appmesh.VirtualNode,
+	pods []*corev1.Pod, nodeInfoByName map[string]nodeAttributes) map[string]instanceInfo {
 	instanceInfoByID := make(map[string]instanceInfo, len(pods))
 	for _, pod := range pods {
 		instanceID := r.buildInstanceID(pod)
-		instanceAttrs := r.buildInstanceAttributes(ms, vn, pod)
+		instanceAttrs := r.buildInstanceAttributes(ms, vn, pod, nodeInfoByName)
 		instanceInfoByID[instanceID] = instanceInfo{
 			attrs: instanceAttrs,
 			pod:   pod,
@@ -135,7 +140,8 @@ func (r *defaultInstancesReconciler) buildInstanceInfoByID(ms *appmesh.Mesh, vn 
 	return instanceInfoByID
 }
 
-func (r *defaultInstancesReconciler) buildInstanceAttributes(ms *appmesh.Mesh, vn *appmesh.VirtualNode, pod *corev1.Pod) instanceAttributes {
+func (r *defaultInstancesReconciler) buildInstanceAttributes(ms *appmesh.Mesh, vn *appmesh.VirtualNode,
+	pod *corev1.Pod, nodeInfoByName map[string]nodeAttributes) instanceAttributes {
 	attr := make(map[string]string)
 	for label, v := range pod.Labels {
 		attr[label] = v
@@ -143,11 +149,22 @@ func (r *defaultInstancesReconciler) buildInstanceAttributes(ms *appmesh.Mesh, v
 	for _, cmAttr := range vn.Spec.ServiceDiscovery.AWSCloudMap.Attributes {
 		attr[cmAttr.Key] = cmAttr.Value
 	}
+	podsNodeName := pod.Spec.NodeName
 	attr[attrAWSInstanceIPV4] = pod.Status.PodIP
 	attr[attrK8sPod] = pod.Name
 	attr[attrK8sNamespace] = pod.Namespace
 	attr[attrAppMeshMesh] = aws.StringValue(ms.Spec.AWSName)
 	attr[attrAppMeshVirtualNode] = aws.StringValue(vn.Spec.AWSName)
+	if nodeInfoByName != nil {
+		if nodeInfo, ok := nodeInfoByName[podsNodeName]; ok {
+			if nodeInfo.region != "" {
+				attr[attrK8sPodRegion] = nodeInfo.region
+			}
+			if nodeInfo.availabilityZone != "" {
+				attr[attrK8sPodAZ] = nodeInfo.availabilityZone
+			}
+		}
+	}
 	return attr
 }
 

@@ -223,7 +223,7 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &defaultInstancesReconciler{}
-			got := r.buildInstanceAttributes(tt.args.ms, tt.args.vn, tt.args.pod)
+			got := r.buildInstanceAttributes(tt.args.ms, tt.args.vn, tt.args.pod, nil)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -416,7 +416,7 @@ func Test_defaultInstancesReconciler_buildInstanceInfoByID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &defaultInstancesReconciler{}
-			got := r.buildInstanceInfoByID(tt.args.ms, tt.args.vn, tt.args.pods)
+			got := r.buildInstanceInfoByID(tt.args.ms, tt.args.vn, tt.args.pods, nil)
 			assert.Equal(t, tt.want, got)
 		})
 	}
