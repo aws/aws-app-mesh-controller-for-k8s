@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/cache"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
@@ -26,6 +27,11 @@ const (
 	defaultNamespaceCacheTTL               = 2 * time.Minute
 	defaultServiceCacheMaxSize             = 1024
 	defaultServiceCacheTTL                 = 2 * time.Minute
+
+	nodeRegionLabelKey1           = "failure-domain.beta.kubernetes.io/region"
+	nodeRegionLabelKey2           = "topology.kubernetes.io/region"
+	nodeAvailabilityZoneLabelKey1 = "failure-domain.beta.kubernetes.io/zone"
+	nodeAvailabilityZoneLabelKey2 = "topology.kubernetes.io/zone"
 )
 
 type ResourceManager interface {
@@ -105,7 +111,8 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 			"readyPods", len(readyPods),
 			"notReadyPods", len(notReadyPods),
 		)
-		if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, readyPods, notReadyPods); err != nil {
+		nodeInfoByName := m.getClusterNodeInfo(ctx)
+		if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, readyPods, notReadyPods, nodeInfoByName); err != nil {
 			return err
 		}
 	}
@@ -135,7 +142,7 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vn *appmesh.Virtua
 	}
 
 	if vn.Spec.PodSelector != nil {
-		if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, nil, nil); err != nil {
+		if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, nil, nil, nil); err != nil {
 			return err
 		}
 	}
@@ -384,4 +391,32 @@ func (m *defaultResourceManager) isCloudMapServiceOwnedByVirtualNode(ctx context
 
 func (m *defaultResourceManager) buildCloudMapServiceSummaryCacheKey(nsSummary *servicediscovery.NamespaceSummary, serviceName string) string {
 	return fmt.Sprintf("%s/%s", awssdk.StringValue(nsSummary.Id), serviceName)
+}
+
+func (m *defaultResourceManager) getClusterNodeInfo(ctx context.Context) map[string]nodeAttributes {
+	nodeList := &corev1.NodeList{}
+	if err := m.k8sClient.List(ctx, nodeList); err != nil {
+		return nil
+	}
+
+	m.log.V(1).Info("Listed Nodes", "count", len(nodeList.Items))
+	nodeInfoByName := make(map[string]nodeAttributes, len(nodeList.Items))
+	for i := range nodeList.Items {
+		var nodeRegion string
+		var nodeAvailabilityZone string
+		node := nodeList.Items[i]
+		for label, value := range node.Labels {
+			if label == nodeRegionLabelKey1 || label == nodeRegionLabelKey2 {
+				nodeRegion = value
+			} else if label == nodeAvailabilityZoneLabelKey1 || label == nodeAvailabilityZoneLabelKey2 {
+				nodeAvailabilityZone = value
+			}
+		}
+		nodeAttrs := nodeAttributes{
+			region:           nodeRegion,
+			availabilityZone: nodeAvailabilityZone,
+		}
+		nodeInfoByName[node.Name] = nodeAttrs
+	}
+	return nodeInfoByName
 }
