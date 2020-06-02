@@ -4,6 +4,15 @@ IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
+
+# By default app mesh aws-sdk-go override is disabled for master
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+ifeq ($(GIT_BRANCH), master)
+APPMESH_SDK_OVERRIDE := "n"
+else
+APPMESH_SDK_OVERRIDE := "y"
+endif
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -47,7 +56,7 @@ fmt:
 	go fmt ./...
 
 # Run go vet against code
-vet:
+vet: setup-appmesh-sdk-override
 	go vet ./...
 
 # Generate code
@@ -61,6 +70,16 @@ docker-build: test
 # Push the docker image
 docker-push:
 	docker push ${IMG}
+
+setup-appmesh-sdk-override:
+	@if [ "$(APPMESH_SDK_OVERRIDE)" = "y" ] ; then \
+	    ./appmesh_models_override/setup.sh ; \
+	fi
+
+cleanup-appmesh-sdk-override:
+	@if [ "$(APPMESH_SDK_OVERRIDE)" = "y" ] ; then \
+	    ./appmesh_models_override/cleanup.sh ; \
+	fi
 
 # find or download controller-gen
 # download controller-gen if necessary
