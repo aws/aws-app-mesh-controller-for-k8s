@@ -6,6 +6,15 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+// ObjectKeyForVirtualGatewayReference returns the key of referenced VirtualGateway CR.
+func ObjectKeyForVirtualGatewayReference(obj metav1.Object, vgRef appmesh.VirtualGatewayReference) types.NamespacedName {
+	namespace := obj.GetNamespace()
+	if vgRef.Namespace != nil && len(*vgRef.Namespace) != 0 {
+		namespace = *vgRef.Namespace
+	}
+	return types.NamespacedName{Namespace: namespace, Name: vgRef.Name}
+}
+
 // ObjectKeyForVirtualNodeReference returns the key of referenced VirtualNode CR.
 func ObjectKeyForVirtualNodeReference(obj metav1.Object, vnRef appmesh.VirtualNodeReference) types.NamespacedName {
 	namespace := obj.GetNamespace()
