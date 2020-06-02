@@ -9,6 +9,56 @@ import (
 	"testing"
 )
 
+func TestObjectKeyForVirtualGatewayReference(t *testing.T) {
+	type args struct {
+		obj   metav1.Object
+		vgRef appmesh.VirtualGatewayReference
+	}
+	tests := []struct {
+		name string
+		args args
+		want types.NamespacedName
+	}{
+		{
+			name: "namespace un-specified",
+			args: args{
+				obj: &appmesh.GatewayRoute{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "gr-ns",
+						Name:      "gr",
+					},
+				},
+				vgRef: appmesh.VirtualGatewayReference{
+					Name: "vg",
+				},
+			},
+			want: types.NamespacedName{Namespace: "gr-ns", Name: "vg"},
+		},
+		{
+			name: "namespace specified",
+			args: args{
+				obj: &appmesh.GatewayRoute{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "gr-ns",
+						Name:      "gr",
+					},
+				},
+				vgRef: appmesh.VirtualGatewayReference{
+					Namespace: aws.String("vg-ns"),
+					Name:      "vg",
+				},
+			},
+			want: types.NamespacedName{Namespace: "vg-ns", Name: "vg"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ObjectKeyForVirtualGatewayReference(tt.args.obj, tt.args.vgRef)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestObjectKeyForVirtualNodeReference(t *testing.T) {
 	type args struct {
 		obj   metav1.Object

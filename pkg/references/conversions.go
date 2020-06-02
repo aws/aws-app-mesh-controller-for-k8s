@@ -9,6 +9,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+// SDKVirtualGatewayReferenceConvertFunc is func that can convert VirtualGatewayReference to its AppMesh VirtualGateway name.
+type SDKVirtualGatewayReferenceConvertFunc func(vgRef *appmesh.VirtualGatewayReference, vgAWSName *string, scope conversion.Scope) error
+
 // SDKVirtualNodeReferenceConvertFunc is func that can convert VirtualNodeReference to its AppMesh VirtualNode name.
 type SDKVirtualNodeReferenceConvertFunc func(vnRef *appmesh.VirtualNodeReference, vnAWSName *string, scope conversion.Scope) error
 
@@ -17,6 +20,19 @@ type SDKVirtualServiceReferenceConvertFunc func(vsRef *appmesh.VirtualServiceRef
 
 // SDKVirtualRouterReferenceConvertFunc is func that can convert VirtualRouterReference to its AppMesh VirtualRouter name.
 type SDKVirtualRouterReferenceConvertFunc func(vrRef *appmesh.VirtualRouterReference, vrAWSName *string, scope conversion.Scope) error
+
+// BuildSDKVirtualGatewayReferenceConvertFunc constructs new SDKVirtualGatewayReferenceConvertFunc by given referencing object and VirtualGateway mapping.
+func BuildSDKVirtualGatewayReferenceConvertFunc(obj metav1.Object, vgByKey map[types.NamespacedName]*appmesh.VirtualGateway) SDKVirtualGatewayReferenceConvertFunc {
+	return func(vgRef *appmesh.VirtualGatewayReference, vgAWSName *string, scope conversion.Scope) error {
+		vgKey := ObjectKeyForVirtualGatewayReference(obj, *vgRef)
+		vg, ok := vgByKey[vgKey]
+		if !ok {
+			return errors.Errorf("unexpected VirtualGatewayReference: %v", vgKey)
+		}
+		*vgAWSName = aws.StringValue(vg.Spec.AWSName)
+		return nil
+	}
+}
 
 // BuildSDKVirtualNodeReferenceConvertFunc constructs new SDKVirtualNodeReferenceConvertFunc by given referencing object and VirtualNode mapping.
 func BuildSDKVirtualNodeReferenceConvertFunc(obj metav1.Object, vnByKey map[types.NamespacedName]*appmesh.VirtualNode) SDKVirtualNodeReferenceConvertFunc {

@@ -10,6 +10,136 @@ import (
 	"testing"
 )
 
+func TestBuildSDKVirtualGatewayReferenceConvertFunc(t *testing.T) {
+	gr := &appmesh.GatewayRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "gr",
+		},
+	}
+	vgRefWithNamespace := appmesh.VirtualGatewayReference{
+		Namespace: aws.String("my-ns"),
+		Name:      "vg-1",
+	}
+	vgRefWithoutNamespace := appmesh.VirtualGatewayReference{
+		Namespace: nil,
+		Name:      "vg-2",
+	}
+	vgRefInAnotherNamespace := appmesh.VirtualGatewayReference{
+		Namespace: aws.String("my-other-ns"),
+		Name:      "vg-3",
+	}
+
+	type args struct {
+		obj     metav1.Object
+		vgByKey map[types.NamespacedName]*appmesh.VirtualGateway
+	}
+	tests := []struct {
+		name                  string
+		args                  args
+		wantAWSNameOrErrByRef map[appmesh.VirtualGatewayReference]struct {
+			awsName string
+			err     error
+		}
+	}{
+		{
+			name: "when all VirtualGatewayReference resolve correctly",
+			args: args{
+				obj: gr,
+				vgByKey: map[types.NamespacedName]*appmesh.VirtualGateway{
+					types.NamespacedName{Namespace: "my-ns", Name: "vg-1"}: {
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "my-ns",
+							Name:      "vg-1",
+						},
+						Spec: appmesh.VirtualGatewaySpec{
+							AWSName: aws.String("vg-1_my-ns"),
+						},
+					},
+					types.NamespacedName{Namespace: "my-ns", Name: "vg-2"}: {
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "my-ns",
+							Name:      "vg-2",
+						},
+						Spec: appmesh.VirtualGatewaySpec{
+							AWSName: aws.String("vg-2_my-ns"),
+						},
+					},
+					types.NamespacedName{Namespace: "my-other-ns", Name: "vg-3"}: {
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "my-other-ns",
+							Name:      "vg-3",
+						},
+						Spec: appmesh.VirtualGatewaySpec{
+							AWSName: aws.String("vg-3_my-other-ns"),
+						},
+					},
+				},
+			},
+			wantAWSNameOrErrByRef: map[appmesh.VirtualGatewayReference]struct {
+				awsName string
+				err     error
+			}{
+				vgRefWithNamespace: {
+					awsName: "vg-1_my-ns",
+				},
+				vgRefWithoutNamespace: {
+					awsName: "vg-2_my-ns",
+				},
+				vgRefInAnotherNamespace: {
+					awsName: "vg-3_my-other-ns",
+				},
+			},
+		},
+		{
+			name: "when some VirtualGatewayReference cannot resolve correctly",
+			args: args{
+				obj: gr,
+				vgByKey: map[types.NamespacedName]*appmesh.VirtualGateway{
+					types.NamespacedName{Namespace: "my-ns", Name: "vg-1"}: {
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "my-ns",
+							Name:      "vg-1",
+						},
+						Spec: appmesh.VirtualGatewaySpec{
+							AWSName: aws.String("vg-1_my-ns"),
+						},
+					},
+				},
+			},
+			wantAWSNameOrErrByRef: map[appmesh.VirtualGatewayReference]struct {
+				awsName string
+				err     error
+			}{
+				vgRefWithNamespace: {
+					awsName: "vg-1_my-ns",
+				},
+				vgRefWithoutNamespace: {
+					err: errors.New("unexpected VirtualGatewayReference: my-ns/vg-2"),
+				},
+				vgRefInAnotherNamespace: {
+					err: errors.New("unexpected VirtualGatewayReference: my-other-ns/vg-3"),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			convertFunc := BuildSDKVirtualGatewayReferenceConvertFunc(tt.args.obj, tt.args.vgByKey)
+			for vgRef, wantAWSNameOrErr := range tt.wantAWSNameOrErrByRef {
+				var gotAWSName = ""
+				gotErr := convertFunc(&vgRef, &gotAWSName, nil)
+				if wantAWSNameOrErr.err != nil {
+					assert.EqualError(t, gotErr, wantAWSNameOrErr.err.Error())
+				} else {
+					assert.NoError(t, gotErr)
+					assert.Equal(t, wantAWSNameOrErr.awsName, gotAWSName)
+				}
+			}
+		})
+	}
+}
+
 func TestBuildSDKVirtualNodeReferenceConvertFunc(t *testing.T) {
 	vs := &appmesh.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
