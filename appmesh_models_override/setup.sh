@@ -2,7 +2,7 @@
 
 mkdir -p ./vendor/github.com/aws
 
-git clone --depth 1 git@github.com:aws/aws-sdk-go.git ./vendor/github.com/aws/aws-sdk-go/
+git clone --depth 1 https://github.com/aws/aws-sdk-go.git ./vendor/github.com/aws/aws-sdk-go/
 API_PATH=./vendor/github.com/aws/aws-sdk-go/models/apis/appmesh/2019-01-25
 cp appmesh_models_override/api-2.json $API_PATH/api-2.json
 cp appmesh_models_override/docs-2.json $API_PATH/docs-2.json

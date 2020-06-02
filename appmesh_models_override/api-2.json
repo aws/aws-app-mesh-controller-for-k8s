@@ -2,13 +2,13 @@
   "version": "2.0",
   "metadata": {
     "apiVersion": "2019-01-25",
-    "endpointPrefix": "appmesh",
+    "endpointPrefix": "appmesh-preview",
     "jsonVersion": "1.1",
     "protocol": "rest-json",
     "serviceFullName": "AWS App Mesh",
     "serviceId": "App Mesh",
     "signatureVersion": "v4",
-    "signingName": "appmesh",
+    "signingName": "appmesh-preview",
     "uid": "appmesh-2019-01-25"
   },
   "documentation": null,
