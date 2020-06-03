@@ -142,6 +142,30 @@ func Convert_CRD_HTTPRetryPolicy_To_SDK_HttpRetryPolicy(crdObj *appmesh.HTTPRetr
 	return nil
 }
 
+func Convert_CRD_HTTPTimeout_To_SDK_HttpTimeout(crdObj *appmesh.HTTPTimeout,
+	sdkObj *appmeshsdk.HttpTimeout, scope conversion.Scope) error {
+
+	if crdObj.PerRequest != nil {
+		sdkObj.PerRequest = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.PerRequest, sdkObj.PerRequest, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.PerRequest = nil
+	}
+
+	if crdObj.Idle != nil {
+		sdkObj.Idle = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.Idle, sdkObj.Idle, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Idle = nil
+	}
+
+	return nil
+}
+
 func Convert_CRD_HTTPRoute_To_SDK_HttpRoute(crdObj *appmesh.HTTPRoute,
 	sdkObj *appmeshsdk.HttpRoute, scope conversion.Scope) error {
 
@@ -162,7 +186,15 @@ func Convert_CRD_HTTPRoute_To_SDK_HttpRoute(crdObj *appmesh.HTTPRoute,
 		}
 	} else {
 		sdkObj.RetryPolicy = nil
+	}
 
+	if crdObj.Timeout != nil {
+		sdkObj.Timeout = &appmeshsdk.HttpTimeout{}
+		if err := Convert_CRD_HTTPTimeout_To_SDK_HttpTimeout(crdObj.Timeout, sdkObj.Timeout, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Timeout = nil
 	}
 	return nil
 }
@@ -185,11 +217,39 @@ func Convert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(crdObj *appmesh.TCPRouteAc
 	return nil
 }
 
+func Convert_CRD_TCPTimeout_To_SDK_TcpTimeout(crdObj *appmesh.TCPTimeout,
+	sdkObj *appmeshsdk.TcpTimeout, scope conversion.Scope) error {
+
+	if crdObj.Idle != nil {
+		sdkObj.Idle = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.Idle, sdkObj.Idle, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Idle = nil
+	}
+
+	return nil
+}
+
 func Convert_CRD_TCPRoute_To_SDK_TcpRoute(crdObj *appmesh.TCPRoute,
 	sdkObj *appmeshsdk.TcpRoute, scope conversion.Scope) error {
 
 	sdkObj.Action = &appmeshsdk.TcpRouteAction{}
-	return Convert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(&crdObj.Action, sdkObj.Action, scope)
+	if err := Convert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(&crdObj.Action, sdkObj.Action, scope); err != nil {
+		return err
+	}
+
+	if crdObj.Timeout != nil {
+		sdkObj.Timeout = &appmeshsdk.TcpTimeout{}
+		if err := Convert_CRD_TCPTimeout_To_SDK_TcpTimeout(crdObj.Timeout, sdkObj.Timeout, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Timeout = nil
+	}
+
+	return nil
 }
 
 func Convert_CRD_GRPCRouteMetadataMatchMethod_To_SDK_GrpcRouteMetadataMatchMethod(crdObj *appmesh.GRPCRouteMetadataMatchMethod,
@@ -309,6 +369,30 @@ func Convert_CRD_GRPCRetryPolicy_To_SDK_GrpcRetryPolicy(crdObj *appmesh.GRPCRetr
 	return nil
 }
 
+func Convert_CRD_GRPCTimeout_To_SDK_GrpcTimeout(crdObj *appmesh.GRPCTimeout,
+	sdkObj *appmeshsdk.GrpcTimeout, scope conversion.Scope) error {
+
+	if crdObj.PerRequest != nil {
+		sdkObj.PerRequest = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.PerRequest, sdkObj.PerRequest, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.PerRequest = nil
+	}
+
+	if crdObj.Idle != nil {
+		sdkObj.Idle = &appmeshsdk.Duration{}
+		if err := Convert_CRD_Duration_To_SDK_Duration(crdObj.Idle, sdkObj.Idle, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Idle = nil
+	}
+
+	return nil
+}
+
 func Convert_CRD_GRPCRoute_To_SDK_GrpcRoute(crdObj *appmesh.GRPCRoute,
 	sdkObj *appmeshsdk.GrpcRoute, scope conversion.Scope) error {
 
@@ -330,6 +414,16 @@ func Convert_CRD_GRPCRoute_To_SDK_GrpcRoute(crdObj *appmesh.GRPCRoute,
 	} else {
 		sdkObj.RetryPolicy = nil
 	}
+
+	if crdObj.Timeout != nil {
+		sdkObj.Timeout = &appmeshsdk.GrpcTimeout{}
+		if err := Convert_CRD_GRPCTimeout_To_SDK_GrpcTimeout(crdObj.Timeout, sdkObj.Timeout, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Timeout = nil
+	}
+
 	return nil
 }
 

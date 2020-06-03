@@ -309,6 +309,158 @@ spec:
                     - port
                     - protocol
                     type: object
+                  timeout:
+                    description: A reference to an object that represents
+                    properties:
+                      grpc:
+                        description: Specifies grpc timeout information for the virtual
+                          node.
+                        properties:
+                          idle:
+                            description: An object that represents idle timeout duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                          perRequest:
+                            description: An object that represents per request timeout
+                              duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                        type: object
+                      http:
+                        description: Specifies http timeout information for the virtual
+                          node.
+                        properties:
+                          idle:
+                            description: An object that represents idle timeout duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                          perRequest:
+                            description: An object that represents per request timeout
+                              duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                        type: object
+                      http2:
+                        description: Specifies http2 information for the virtual node.
+                        properties:
+                          idle:
+                            description: An object that represents idle timeout duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                          perRequest:
+                            description: An object that represents per request timeout
+                              duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                        type: object
+                      tcp:
+                        description: Specifies tcp timeout information for the virtual
+                          node.
+                        properties:
+                          idle:
+                            description: An object that represents idle timeout duration.
+                            properties:
+                              unit:
+                                description: A unit of time.
+                                enum:
+                                - s
+                                - ms
+                                type: string
+                              value:
+                                description: A number of time units.
+                                format: int64
+                                minimum: 0
+                                type: integer
+                            required:
+                            - unit
+                            - value
+                            type: object
+                        type: object
+                    type: object
                   tls:
                     description: A reference to an object that represents the Transport
                       Layer Security (TLS) properties for a listener.
