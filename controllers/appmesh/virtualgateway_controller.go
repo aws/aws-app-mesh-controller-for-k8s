@@ -18,36 +18,101 @@ package controllers
 
 import (
 	"context"
-
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualgateway"
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 )
 
-// VirtualGatewayReconciler reconciles a VirtualGateway object
-type VirtualGatewayReconciler struct {
-	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+// NewVirtualGatewayReconciler constructs new virtualGatewayReconciler
+func NewVirtualGatewayReconciler(
+	k8sClient client.Client,
+	finalizerManager k8s.FinalizerManager,
+	vgMembersFinalizer virtualgateway.MembersFinalizer,
+	vgResManager virtualgateway.ResourceManager,
+	log logr.Logger) *virtualGatewayReconciler {
+	return &virtualGatewayReconciler{
+		k8sClient:                    k8sClient,
+		finalizerManager:             finalizerManager,
+		vgMembersFinalizer:           vgMembersFinalizer,
+		vgResManager:                 vgResManager,
+		enqueueRequestsForMeshEvents: virtualgateway.NewEnqueueRequestsForMeshEvents(k8sClient, log),
+		log:                          log,
+	}
 }
 
-//// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualgateways,verbs=get;list;watch;create;update;patch;delete
-//// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualgateways/status,verbs=get;update;patch
+// virtualGatewayReconciler reconciles a VirtualGateway object
+type virtualGatewayReconciler struct {
+	k8sClient          client.Client
+	finalizerManager   k8s.FinalizerManager
+	vgMembersFinalizer virtualgateway.MembersFinalizer
+	vgResManager       virtualgateway.ResourceManager
 
-func (r *VirtualGatewayReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
-	_ = r.Log.WithValues("virtualgateway", req.NamespacedName)
-
-	// your logic here
-
-	return ctrl.Result{}, nil
+	enqueueRequestsForMeshEvents handler.EventHandler
+	log                          logr.Logger
 }
 
-func (r *VirtualGatewayReconciler) SetupWithManager(mgr ctrl.Manager) error {
+// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualgateways,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualgateways/status,verbs=get;update;patch
+
+func (r *virtualGatewayReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+	return runtime.HandleReconcileError(r.reconcile(req), r.log)
+}
+
+func (r *virtualGatewayReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&appmeshv1beta2.VirtualGateway{}).
+		For(&appmesh.VirtualGateway{}).
+		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
+		WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
 		Complete(r)
+}
+
+func (r *virtualGatewayReconciler) reconcile(req ctrl.Request) error {
+	ctx := context.Background()
+	vg := &appmesh.VirtualGateway{}
+	if err := r.k8sClient.Get(ctx, req.NamespacedName, vg); err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	if !vg.DeletionTimestamp.IsZero() {
+		return r.cleanupVirtualGateway(ctx, vg)
+	}
+	return r.reconcileVirtualGateway(ctx, vg)
+}
+
+func (r *virtualGatewayReconciler) reconcileVirtualGateway(ctx context.Context, vg *appmesh.VirtualGateway) error {
+	if err := r.finalizerManager.AddFinalizers(ctx, vg, k8s.FinalizerVirtualGatewayMembers, k8s.FinalizerAWSAppMeshResources); err != nil {
+		return err
+	}
+	if err := r.vgResManager.Reconcile(ctx, vg); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *virtualGatewayReconciler) cleanupVirtualGateway(ctx context.Context, vg *appmesh.VirtualGateway) error {
+	if k8s.HasFinalizer(vg, k8s.FinalizerVirtualGatewayMembers) {
+		if err := r.vgMembersFinalizer.Finalize(ctx, vg); err != nil {
+			return err
+		}
+		if err := r.finalizerManager.RemoveFinalizers(ctx, vg, k8s.FinalizerVirtualGatewayMembers); err != nil {
+			return err
+		}
+	}
+
+	if k8s.HasFinalizer(vg, k8s.FinalizerAWSAppMeshResources) {
+		if err := r.vgResManager.Cleanup(ctx, vg); err != nil {
+			return err
+		}
+		if err := r.finalizerManager.RemoveFinalizers(ctx, vg, k8s.FinalizerAWSAppMeshResources); err != nil {
+			return err
+		}
+	}
+	return nil
 }
