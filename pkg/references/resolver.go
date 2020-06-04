@@ -13,6 +13,8 @@ import (
 type Resolver interface {
 	// ResolveMeshReference returns a mesh CR based on ref
 	ResolveMeshReference(ctx context.Context, ref appmesh.MeshReference) (*appmesh.Mesh, error)
+	// ResolveVirtualGatewayReference returns a virtualGateway CR based on obj and ref
+	ResolveVirtualGatewayReference(ctx context.Context, obj metav1.Object, ref appmesh.VirtualGatewayReference) (*appmesh.VirtualGateway, error)
 	// ResolveVirtualNodeReference returns a virtualNode CR based on obj and ref
 	ResolveVirtualNodeReference(ctx context.Context, obj metav1.Object, ref appmesh.VirtualNodeReference) (*appmesh.VirtualNode, error)
 	// ResolveVirtualServiceReference returns a virtualService CR based obj and ref
@@ -50,6 +52,24 @@ func (r *defaultResolver) ResolveMeshReference(ctx context.Context, ref appmesh.
 		return nil, errors.Errorf("mesh UID mismatch: %s", ref.Name)
 	}
 	return mesh, nil
+}
+
+func (r *defaultResolver) ResolveVirtualGatewayReference(ctx context.Context, obj metav1.Object, ref appmesh.VirtualGatewayReference) (*appmesh.VirtualGateway, error) {
+	vgKey := ObjectKeyForVirtualGatewayReference(obj, ref)
+	vg := &appmesh.VirtualGateway{}
+	if err := r.k8sClient.Get(ctx, vgKey, vg); err != nil {
+		return nil, errors.Wrapf(err, "unable to fetch virtualGateway: %v", vgKey)
+	}
+
+	if vg.UID != ref.UID {
+		r.log.Error(nil, "virtualGateway UID mismatch",
+			"virtualGateway", ref.Name,
+			"expected UID", ref.UID,
+			"actual UID", vg.UID,
+		)
+		return nil, errors.Errorf("virtualGateway UID mismatch: %s", ref.Name)
+	}
+	return vg, nil
 }
 
 func (r *defaultResolver) ResolveVirtualNodeReference(ctx context.Context, obj metav1.Object, ref appmesh.VirtualNodeReference) (*appmesh.VirtualNode, error) {

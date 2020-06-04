@@ -29,6 +29,24 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-appmesh-k8s-aws-v1beta2-virtualgateway
+  failurePolicy: Fail
+  name: mvirtualgateway.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualgateways
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-appmesh-k8s-aws-v1beta2-virtualnode
   failurePolicy: Fail
   name: mvirtualnode.appmesh.k8s.aws
@@ -121,6 +139,24 @@ webhooks:
     - UPDATE
     resources:
     - meshes
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-appmesh-k8s-aws-v1beta2-virtualgateway
+  failurePolicy: Fail
+  name: vvirtualgateway.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - virtualgateways
 - clientConfig:
     caBundle: Cg==
     service:

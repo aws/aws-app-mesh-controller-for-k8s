@@ -40,6 +40,7 @@ import (
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualgateway"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 
 	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
@@ -120,15 +121,18 @@ func main() {
 	referencesIndexer := references.NewDefaultObjectReferenceIndexer(mgr.GetCache(), mgr.GetFieldIndexer())
 	finalizerManager := k8s.NewDefaultFinalizerManager(mgr.GetClient(), ctrl.Log)
 	meshMembersFinalizer := mesh.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("mesh-members"), ctrl.Log)
+	vgMembersFinalizer := virtualgateway.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("virtualgateway-members"), ctrl.Log)
 	referencesResolver := references.NewDefaultResolver(mgr.GetClient(), ctrl.Log)
 	virtualNodeEndpointResolver := cloudmap.NewDefaultVirtualNodeEndpointResolver(mgr.GetClient(), ctrl.Log)
 	cloudMapInstancesReconciler := cloudmap.NewDefaultInstancesReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log, stopChan)
 	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
+	vgResManager := virtualgateway.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	vsResManager := virtualservice.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	vrResManager := virtualrouter.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	cloudMapResManager := cloudmap.NewDefaultResourceManager(mgr.GetClient(), cloud.CloudMap(), referencesResolver, virtualNodeEndpointResolver, cloudMapInstancesReconciler, enableCustomHealthCheck, ctrl.Log)
 	msReconciler := appmeshcontroller.NewMeshReconciler(mgr.GetClient(), finalizerManager, meshMembersFinalizer, meshResManager, ctrl.Log.WithName("controllers").WithName("Mesh"))
+	vgReconciler := appmeshcontroller.NewVirtualGatewayReconciler(mgr.GetClient(), finalizerManager, vgMembersFinalizer, vgResManager, ctrl.Log.WithName("controllers").WithName("VirtualGateway"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
 	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), finalizerManager, cloudMapResManager, ctrl.Log.WithName("controllers").WithName("CloudMap"))
 	vsReconciler := appmeshcontroller.NewVirtualServiceReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vsResManager, ctrl.Log.WithName("controllers").WithName("VirtualService"))
@@ -141,6 +145,12 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualService")
 		os.Exit(1)
 	}
+
+	if err = vgReconciler.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "VirtualGateway")
+		os.Exit(1)
+	}
+
 	if err = vnReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualNode")
 		os.Exit(1)
@@ -160,8 +170,8 @@ func main() {
 	sidecarInjector := inject.NewSidecarInjector(injectConfig, cloud.Region(), mgr.GetClient(), referencesResolver, vnMembershipDesignator)
 	appmeshwebhook.NewMeshMutator().SetupWithManager(mgr)
 	appmeshwebhook.NewMeshValidator().SetupWithManager(mgr)
-	//appmeshwebhook.NewVirtualGatewayMutator(meshMembershipDesignator).SetupWithManager(mgr)
-	//appmeshwebhook.NewVirtualGatewayValidator().SetupWithManager(mgr)
+	appmeshwebhook.NewVirtualGatewayMutator(meshMembershipDesignator).SetupWithManager(mgr)
+	appmeshwebhook.NewVirtualGatewayValidator().SetupWithManager(mgr)
 	//appmeshwebhook.NewGatewayRouteMutator(meshMembershipDesignator, vgMembershipDesignator).SetupWithManager(mgr)
 	//appmeshwebhook.NewGatewayRouteValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualNodeMutator(meshMembershipDesignator).SetupWithManager(mgr)
@@ -172,22 +182,6 @@ func main() {
 	appmeshwebhook.NewVirtualRouterValidator().SetupWithManager(mgr)
 	corewebhook.NewPodMutator(sidecarInjector).SetupWithManager(mgr)
 
-	//if err = (&appmeshcontroller.VirtualGatewayReconciler{
-	//	Client: mgr.GetClient(),
-	//	Log:    ctrl.Log.WithName("controllers").WithName("VirtualGateway"),
-	//	Scheme: mgr.GetScheme(),
-	//}).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "VirtualGateway")
-	//	os.Exit(1)
-	//}
-	//if err = (&appmeshcontroller.GatewayRouteReconciler{
-	//	Client: mgr.GetClient(),
-	//	Log:    ctrl.Log.WithName("controllers").WithName("GatewayRoute"),
-	//	Scheme: mgr.GetScheme(),
-	//}).SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "GatewayRoute")
-	//	os.Exit(1)
-	//}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
