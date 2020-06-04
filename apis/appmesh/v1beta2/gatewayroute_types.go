@@ -57,7 +57,7 @@ type GRPCGatewayRoute struct {
 // HTTPGatewayRouteMatch refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
 type HTTPGatewayRouteMatch struct {
 	// Specifies the path to match requests with
-	Prefix string `json:"prefix"`
+	Prefix *string `json:"prefix"`
 }
 
 // HTTPGatewayRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
