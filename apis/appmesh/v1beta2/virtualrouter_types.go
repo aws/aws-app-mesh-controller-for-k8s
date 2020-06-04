@@ -149,6 +149,9 @@ type HTTPRoute struct {
 	// An object that represents a retry policy.
 	// +optional
 	RetryPolicy *HTTPRetryPolicy `json:"retryPolicy,omitempty"`
+	// An object that represents a http timeout.
+	// +optional
+	Timeout *HTTPTimeout `json:"timeout,omitempty"`
 }
 
 // TCPRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRouteAction.html
@@ -163,6 +166,9 @@ type TCPRouteAction struct {
 type TCPRoute struct {
 	// The action to take if a match is determined.
 	Action TCPRouteAction `json:"action"`
+	// An object that represents a tcp timeout.
+	// +optional
+	Timeout *TCPTimeout `json:"timeout,omitempty"`
 }
 
 // GRPCRouteMetadataMatchMethod refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadataMatchMethod.html
@@ -261,6 +267,9 @@ type GRPCRoute struct {
 	// An object that represents a retry policy.
 	// +optional
 	RetryPolicy *GRPCRetryPolicy `json:"retryPolicy,omitempty"`
+	// An object that represents a grpc timeout.
+	// +optional
+	Timeout *GRPCTimeout `json:"timeout,omitempty"`
 }
 
 // Route refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_RouteSpec.html
