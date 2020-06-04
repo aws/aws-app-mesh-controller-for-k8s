@@ -23,6 +23,7 @@ func Test_pendingMembersFinalizer_buildPendingMembersEventMessage(t *testing.T) 
 		vsMembers []*appmesh.VirtualService
 		vrMembers []*appmesh.VirtualRouter
 		vnMembers []*appmesh.VirtualNode
+		vgMembers []*appmesh.VirtualGateway
 	}
 	tests := []struct {
 		name string
@@ -111,6 +112,26 @@ func Test_pendingMembersFinalizer_buildPendingMembersEventMessage(t *testing.T) 
 			},
 			want: "objects belong to this mesh exists, please delete them to proceed. virtualService: 1, virtualNode: 1",
 		},
+		{
+			name: "two virtualGateway pending",
+			args: args{
+				vgMembers: []*appmesh.VirtualGateway{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "vg-1",
+						},
+					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "ns-2",
+							Name:      "vg-2",
+						},
+					},
+				},
+			},
+			want: "objects belong to this mesh exists, please delete them to proceed. virtualGateway: 2",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -125,7 +146,7 @@ func Test_pendingMembersFinalizer_buildPendingMembersEventMessage(t *testing.T) 
 				eventRecorder: eventRecorder,
 				log:           &log.NullLogger{},
 			}
-			got := m.buildPendingMembersEventMessage(ctx, tt.args.vsMembers, tt.args.vrMembers, tt.args.vnMembers)
+			got := m.buildPendingMembersEventMessage(ctx, tt.args.vsMembers, tt.args.vrMembers, tt.args.vnMembers, tt.args.vgMembers)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -385,6 +406,133 @@ func Test_pendingMembersFinalizer_findVirtualNodeMembers(t *testing.T) {
 	}
 }
 
+func Test_pendingMembersFinalizer_findVirtualGatewayMembers(t *testing.T) {
+	ms := &appmesh.Mesh{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "mesh-1",
+			UID:  "uid-1",
+		},
+	}
+	vgInMesh_1 := &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-1",
+			Name:      "vg-1",
+		},
+		Spec: appmesh.VirtualGatewaySpec{
+			MeshRef: &appmesh.MeshReference{
+				Name: "mesh-1",
+				UID:  "uid-1",
+			},
+		},
+	}
+	vgInMesh_2 := &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-2",
+			Name:      "vg-2",
+		},
+		Spec: appmesh.VirtualGatewaySpec{
+			MeshRef: &appmesh.MeshReference{
+				Name: "mesh-1",
+				UID:  "uid-1",
+			},
+		},
+	}
+	vgNotInMesh_1 := &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-3",
+			Name:      "vg-3",
+		},
+		Spec: appmesh.VirtualGatewaySpec{
+			MeshRef: &appmesh.MeshReference{
+				Name: "mesh-2",
+				UID:  "uid-2",
+			},
+		},
+	}
+	vgNotInMesh_2 := &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-4",
+			Name:      "vg-4",
+		},
+		Spec: appmesh.VirtualGatewaySpec{
+			MeshRef: &appmesh.MeshReference{
+				Name: "mesh-1",
+				UID:  "uid-2",
+			},
+		},
+	}
+
+	type env struct {
+		virtualGateways []*appmesh.VirtualGateway
+	}
+	type args struct {
+		ms *appmesh.Mesh
+	}
+	tests := []struct {
+		name    string
+		env     env
+		args    args
+		want    []*appmesh.VirtualGateway
+		wantErr error
+	}{
+		{
+			name: "found no virtualGateway",
+			env: env{
+				virtualGateways: []*appmesh.VirtualGateway{},
+			},
+			args: args{
+				ms: ms,
+			},
+			want: []*appmesh.VirtualGateway{},
+		},
+		{
+			name: "found virtualGateways that matches",
+			env: env{
+				virtualGateways: []*appmesh.VirtualGateway{
+					vgInMesh_1, vgInMesh_2, vgNotInMesh_1, vgNotInMesh_2,
+				},
+			},
+			args: args{
+				ms: ms,
+			},
+			want: []*appmesh.VirtualGateway{vgInMesh_1, vgInMesh_2},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			k8sSchema := runtime.NewScheme()
+			clientgoscheme.AddToScheme(k8sSchema)
+			appmesh.AddToScheme(k8sSchema)
+			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			eventRecorder := record.NewFakeRecorder(1)
+			m := &pendingMembersFinalizer{
+				k8sClient:        k8sClient,
+				eventRecorder:    eventRecorder,
+				log:              &log.NullLogger{},
+				evaluateInterval: pendingMembersFinalizerEvaluateInterval,
+			}
+
+			for _, vg := range tt.env.virtualGateways {
+				err := k8sClient.Create(ctx, vg.DeepCopy())
+				assert.NoError(t, err)
+			}
+
+			got, err := m.findVirtualGatewayMembers(ctx, tt.args.ms)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				opts := cmp.Options{
+					equality.IgnoreFakeClientPopulatedFields(),
+					cmpopts.SortSlices(compareVirtualGateway),
+				}
+				assert.True(t, cmp.Equal(tt.want, got, opts), "diff", cmp.Diff(tt.want, got, opts))
+			}
+		})
+	}
+}
+
 func Test_pendingMembersFinalizer_findVirtualRouterMembers(t *testing.T) {
 	ms := &appmesh.Mesh{
 		ObjectMeta: metav1.ObjectMeta{
@@ -543,6 +691,18 @@ func Test_pendingMembersFinalizer_Finalize(t *testing.T) {
 			},
 		},
 	}
+	vg := &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "vg-1",
+		},
+		Spec: appmesh.VirtualGatewaySpec{
+			MeshRef: &appmesh.MeshReference{
+				Name: "my-mesh",
+				UID:  "uid-1",
+			},
+		},
+	}
 	vr := &appmesh.VirtualRouter{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "my-ns",
@@ -562,6 +722,7 @@ func Test_pendingMembersFinalizer_Finalize(t *testing.T) {
 		virtualServices []*appmesh.VirtualService
 		virtualNodes    []*appmesh.VirtualNode
 		virtualRouters  []*appmesh.VirtualRouter
+		virtualGateways []*appmesh.VirtualGateway
 	}
 	type args struct {
 		ms *appmesh.Mesh
@@ -592,6 +753,14 @@ func Test_pendingMembersFinalizer_Finalize(t *testing.T) {
 			name: "when pending virtualService deletion",
 			env: env{
 				virtualNodes: []*appmesh.VirtualNode{vn},
+			},
+			args:    args{ms: ms},
+			wantErr: errors.New("pending members deletion"),
+		},
+		{
+			name: "when pending virtualGateway deletion",
+			env: env{
+				virtualGateways: []*appmesh.VirtualGateway{vg},
 			},
 			args:    args{ms: ms},
 			wantErr: errors.New("pending members deletion"),
@@ -629,6 +798,10 @@ func Test_pendingMembersFinalizer_Finalize(t *testing.T) {
 				err := k8sClient.Create(ctx, vn)
 				assert.NoError(t, err)
 			}
+			for _, vg := range tt.env.virtualGateways {
+				err := k8sClient.Create(ctx, vg)
+				assert.NoError(t, err)
+			}
 
 			err := m.Finalize(ctx, tt.args.ms)
 			if tt.wantErr != nil {
@@ -649,5 +822,9 @@ func compareVirtualNode(a *appmesh.VirtualNode, b *appmesh.VirtualNode) bool {
 }
 
 func compareVirtualRouter(a *appmesh.VirtualRouter, b *appmesh.VirtualRouter) bool {
+	return k8s.NamespacedName(a).String() < k8s.NamespacedName(b).String()
+}
+
+func compareVirtualGateway(a *appmesh.VirtualGateway, b *appmesh.VirtualGateway) bool {
 	return k8s.NamespacedName(a).String() < k8s.NamespacedName(b).String()
 }

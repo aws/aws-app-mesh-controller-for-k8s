@@ -55,11 +55,15 @@ func (m *pendingMembersFinalizer) Finalize(ctx context.Context, ms *appmesh.Mesh
 	if err != nil {
 		return err
 	}
-	if len(vsMembers) == 0 && len(vrMembers) == 0 && len(vnMembers) == 0 {
+	vgMembers, err := m.findVirtualGatewayMembers(ctx, ms)
+	if err != nil {
+		return err
+	}
+	if len(vsMembers) == 0 && len(vrMembers) == 0 && len(vnMembers) == 0 && len(vgMembers) == 0 {
 		return nil
 	}
 
-	message := m.buildPendingMembersEventMessage(ctx, vsMembers, vrMembers, vnMembers)
+	message := m.buildPendingMembersEventMessage(ctx, vsMembers, vrMembers, vnMembers, vgMembers)
 	m.eventRecorder.Eventf(ms, corev1.EventTypeWarning, "PendingMembersDeletion", message)
 	return runtime.NewRequeueAfterError(errors.New("pending members deletion"), m.evaluateInterval)
 }
@@ -115,8 +119,26 @@ func (m *pendingMembersFinalizer) findVirtualNodeMembers(ctx context.Context, ms
 	return members, nil
 }
 
+// findVirtualGatewayMembers find the VirtualGateway members for this mesh.
+func (m *pendingMembersFinalizer) findVirtualGatewayMembers(ctx context.Context, ms *appmesh.Mesh) ([]*appmesh.VirtualGateway, error) {
+	vgList := &appmesh.VirtualGatewayList{}
+	if err := m.k8sClient.List(ctx, vgList); err != nil {
+		return nil, err
+	}
+	members := make([]*appmesh.VirtualGateway, 0, len(vgList.Items))
+	for i := range vgList.Items {
+		vg := &vgList.Items[i]
+		if vg.Spec.MeshRef == nil || !IsMeshReferenced(ms, *vg.Spec.MeshRef) {
+			continue
+		}
+		members = append(members, vg)
+	}
+	return members, nil
+}
+
 func (m *pendingMembersFinalizer) buildPendingMembersEventMessage(ctx context.Context,
-	vsMembers []*appmesh.VirtualService, vrMembers []*appmesh.VirtualRouter, vnMembers []*appmesh.VirtualNode) string {
+	vsMembers []*appmesh.VirtualService, vrMembers []*appmesh.VirtualRouter,
+	vnMembers []*appmesh.VirtualNode, vgMembers []*appmesh.VirtualGateway) string {
 	var messagePerObjectTypes []string
 	if len(vsMembers) != 0 {
 		message := fmt.Sprintf("virtualService: %v", len(vsMembers))
@@ -128,6 +150,10 @@ func (m *pendingMembersFinalizer) buildPendingMembersEventMessage(ctx context.Co
 	}
 	if len(vnMembers) != 0 {
 		message := fmt.Sprintf("virtualNode: %v", len(vnMembers))
+		messagePerObjectTypes = append(messagePerObjectTypes, message)
+	}
+	if len(vgMembers) != 0 {
+		message := fmt.Sprintf("virtualGateway: %v", len(vgMembers))
 		messagePerObjectTypes = append(messagePerObjectTypes, message)
 	}
 
