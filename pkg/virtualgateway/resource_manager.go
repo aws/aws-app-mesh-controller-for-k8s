@@ -227,7 +227,7 @@ func (m *defaultResourceManager) updateCRDVirtualGateway(ctx context.Context, vg
 	if !needsUpdate {
 		return nil
 	}
-	return m.k8sClient.Patch(ctx, vg, client.MergeFrom(oldVG))
+	return m.k8sClient.Status().Patch(ctx, vg, client.MergeFrom(oldVG))
 }
 
 func (m *defaultResourceManager) buildSDKVirtualGatewaySpec(ctx context.Context, vg *appmesh.VirtualGateway) (*appmeshsdk.VirtualGatewaySpec, error) {

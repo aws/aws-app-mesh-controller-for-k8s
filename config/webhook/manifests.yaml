@@ -11,6 +11,24 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-appmesh-k8s-aws-v1beta2-gatewayroute
+  failurePolicy: Fail
+  name: mgatewayroute.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - gatewayroutes
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-appmesh-k8s-aws-v1beta2-mesh
   failurePolicy: Fail
   name: mmesh.appmesh.k8s.aws
@@ -121,6 +139,24 @@ metadata:
   creationTimestamp: null
   name: validating-webhook-configuration
 webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-appmesh-k8s-aws-v1beta2-gatewayroute
+  failurePolicy: Fail
+  name: vgatewayroute.appmesh.k8s.aws
+  rules:
+  - apiGroups:
+    - appmesh.k8s.aws
+    apiVersions:
+    - v1beta2
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - gatewayroutes
 - clientConfig:
     caBundle: Cg==
     service:
