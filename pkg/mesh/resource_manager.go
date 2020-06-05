@@ -103,7 +103,6 @@ func (m *defaultResourceManager) createSDKMesh(ctx context.Context, ms *appmesh.
 	resp, err := m.appMeshSDK.CreateMeshWithContext(ctx, &appmeshsdk.CreateMeshInput{
 		MeshName: ms.Spec.AWSName,
 		Spec:     sdkMSSpec,
-		Tags:     nil,
 	})
 	if err != nil {
 		return nil, err

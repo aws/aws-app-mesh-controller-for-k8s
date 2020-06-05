@@ -217,7 +217,6 @@ func (m *defaultResourceManager) createSDKGatewayRoute(ctx context.Context, ms *
 		MeshName:           ms.Spec.AWSName,
 		MeshOwner:          ms.Spec.MeshOwner,
 		Spec:               sdkGRSpec,
-		Tags:               nil,
 		VirtualGatewayName: vg.Spec.AWSName,
 		GatewayRouteName:   gr.Spec.AWSName,
 	})

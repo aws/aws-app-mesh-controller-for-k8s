@@ -141,7 +141,6 @@ func (m *defaultResourceManager) createSDKVirtualGateway(ctx context.Context, ms
 		MeshName:           ms.Spec.AWSName,
 		MeshOwner:          ms.Spec.MeshOwner,
 		Spec:               sdkVGSpec,
-		Tags:               nil,
 		VirtualGatewayName: vg.Spec.AWSName,
 	})
 	if err != nil {
