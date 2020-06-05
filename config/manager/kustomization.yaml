@@ -4,5 +4,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: 669977933099.dkr.ecr.us-west-2.amazonaws.com/controller/controller
-  newTag: fk22
+  newName: controller
+  newTag: latest
