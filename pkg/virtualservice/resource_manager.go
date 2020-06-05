@@ -213,7 +213,6 @@ func (m *defaultResourceManager) createSDKVirtualService(ctx context.Context, ms
 		MeshOwner:          ms.Spec.MeshOwner,
 		VirtualServiceName: vs.Spec.AWSName,
 		Spec:               sdkVSSpec,
-		Tags:               nil,
 	})
 	if err != nil {
 		return nil, err

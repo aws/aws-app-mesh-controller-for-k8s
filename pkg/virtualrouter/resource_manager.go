@@ -191,7 +191,6 @@ func (m *defaultResourceManager) createSDKVirtualRouter(ctx context.Context, ms 
 		MeshOwner:         ms.Spec.MeshOwner,
 		VirtualRouterName: vr.Spec.AWSName,
 		Spec:              sdkVRSpec,
-		Tags:              nil,
 	})
 	if err != nil {
 		return nil, err

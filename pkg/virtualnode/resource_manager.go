@@ -182,7 +182,6 @@ func (m *defaultResourceManager) createSDKVirtualNode(ctx context.Context, ms *a
 		MeshName:        ms.Spec.AWSName,
 		MeshOwner:       ms.Spec.MeshOwner,
 		Spec:            sdkVNSpec,
-		Tags:            nil,
 		VirtualNodeName: vn.Spec.AWSName,
 	})
 	if err != nil {

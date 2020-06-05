@@ -153,7 +153,6 @@ func (m *defaultRoutesManager) createSDKRoute(ctx context.Context, ms *appmesh.M
 		VirtualRouterName: vr.Spec.AWSName,
 		RouteName:         aws.String(route.Name),
 		Spec:              sdkRouteSpec,
-		Tags:              nil,
 	})
 	if err != nil {
 		return nil, err
