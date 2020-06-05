@@ -59,11 +59,15 @@ func (m *pendingMembersFinalizer) Finalize(ctx context.Context, ms *appmesh.Mesh
 	if err != nil {
 		return err
 	}
-	if len(vsMembers) == 0 && len(vrMembers) == 0 && len(vnMembers) == 0 && len(vgMembers) == 0 {
+	grMembers, err := m.findGatewayRouteMembers(ctx, ms)
+	if err != nil {
+		return err
+	}
+	if len(vsMembers) == 0 && len(vrMembers) == 0 && len(vnMembers) == 0 && len(vgMembers) == 0 && len(grMembers) == 0 {
 		return nil
 	}
 
-	message := m.buildPendingMembersEventMessage(ctx, vsMembers, vrMembers, vnMembers, vgMembers)
+	message := m.buildPendingMembersEventMessage(ctx, vsMembers, vrMembers, vnMembers, vgMembers, grMembers)
 	m.eventRecorder.Eventf(ms, corev1.EventTypeWarning, "PendingMembersDeletion", message)
 	return runtime.NewRequeueAfterError(errors.New("pending members deletion"), m.evaluateInterval)
 }
@@ -136,9 +140,27 @@ func (m *pendingMembersFinalizer) findVirtualGatewayMembers(ctx context.Context,
 	return members, nil
 }
 
+// findGatewayRouteMembers find the GatewayRoute members for this mesh.
+func (m *pendingMembersFinalizer) findGatewayRouteMembers(ctx context.Context, ms *appmesh.Mesh) ([]*appmesh.GatewayRoute, error) {
+	grList := &appmesh.GatewayRouteList{}
+	if err := m.k8sClient.List(ctx, grList); err != nil {
+		return nil, err
+	}
+	members := make([]*appmesh.GatewayRoute, 0, len(grList.Items))
+	for i := range grList.Items {
+		gr := &grList.Items[i]
+		if gr.Spec.MeshRef == nil || !IsMeshReferenced(ms, *gr.Spec.MeshRef) {
+			continue
+		}
+		members = append(members, gr)
+	}
+	return members, nil
+}
+
 func (m *pendingMembersFinalizer) buildPendingMembersEventMessage(ctx context.Context,
 	vsMembers []*appmesh.VirtualService, vrMembers []*appmesh.VirtualRouter,
-	vnMembers []*appmesh.VirtualNode, vgMembers []*appmesh.VirtualGateway) string {
+	vnMembers []*appmesh.VirtualNode, vgMembers []*appmesh.VirtualGateway,
+	grMembers []*appmesh.GatewayRoute) string {
 	var messagePerObjectTypes []string
 	if len(vsMembers) != 0 {
 		message := fmt.Sprintf("virtualService: %v", len(vsMembers))
@@ -154,6 +176,10 @@ func (m *pendingMembersFinalizer) buildPendingMembersEventMessage(ctx context.Co
 	}
 	if len(vgMembers) != 0 {
 		message := fmt.Sprintf("virtualGateway: %v", len(vgMembers))
+		messagePerObjectTypes = append(messagePerObjectTypes, message)
+	}
+	if len(grMembers) != 0 {
+		message := fmt.Sprintf("gatewayRoute: %v", len(grMembers))
 		messagePerObjectTypes = append(messagePerObjectTypes, message)
 	}
 

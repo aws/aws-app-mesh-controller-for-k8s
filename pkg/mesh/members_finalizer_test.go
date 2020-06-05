@@ -24,6 +24,7 @@ func Test_pendingMembersFinalizer_buildPendingMembersEventMessage(t *testing.T) 
 		vrMembers []*appmesh.VirtualRouter
 		vnMembers []*appmesh.VirtualNode
 		vgMembers []*appmesh.VirtualGateway
+		grMembers []*appmesh.GatewayRoute
 	}
 	tests := []struct {
 		name string
@@ -132,6 +133,34 @@ func Test_pendingMembersFinalizer_buildPendingMembersEventMessage(t *testing.T) 
 			},
 			want: "objects belong to this mesh exists, please delete them to proceed. virtualGateway: 2",
 		},
+		{
+			name: "2 gatewayRoutes and 1 virtualnode pending",
+			args: args{
+				grMembers: []*appmesh.GatewayRoute{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "gr-1",
+						},
+					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "ns-2",
+							Name:      "gr-2",
+						},
+					},
+				},
+				vnMembers: []*appmesh.VirtualNode{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "ns-1",
+							Name:      "vn-1",
+						},
+					},
+				},
+			},
+			want: "objects belong to this mesh exists, please delete them to proceed. virtualNode: 1, gatewayRoute: 2",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -146,8 +175,136 @@ func Test_pendingMembersFinalizer_buildPendingMembersEventMessage(t *testing.T) 
 				eventRecorder: eventRecorder,
 				log:           &log.NullLogger{},
 			}
-			got := m.buildPendingMembersEventMessage(ctx, tt.args.vsMembers, tt.args.vrMembers, tt.args.vnMembers, tt.args.vgMembers)
+			got := m.buildPendingMembersEventMessage(ctx, tt.args.vsMembers, tt.args.vrMembers, tt.args.vnMembers,
+				tt.args.vgMembers, tt.args.grMembers)
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_pendingMembersFinalizer_findGatewayRouteMembers(t *testing.T) {
+	ms := &appmesh.Mesh{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "mesh-1",
+			UID:  "uid-1",
+		},
+	}
+	grInMesh_1 := &appmesh.GatewayRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-1",
+			Name:      "gr-1",
+		},
+		Spec: appmesh.GatewayRouteSpec{
+			MeshRef: &appmesh.MeshReference{
+				Name: "mesh-1",
+				UID:  "uid-1",
+			},
+		},
+	}
+	grInMesh_2 := &appmesh.GatewayRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-2",
+			Name:      "gr-2",
+		},
+		Spec: appmesh.GatewayRouteSpec{
+			MeshRef: &appmesh.MeshReference{
+				Name: "mesh-1",
+				UID:  "uid-1",
+			},
+		},
+	}
+	grNotInMesh_1 := &appmesh.GatewayRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-3",
+			Name:      "gr-3",
+		},
+		Spec: appmesh.GatewayRouteSpec{
+			MeshRef: &appmesh.MeshReference{
+				Name: "mesh-2",
+				UID:  "uid-2",
+			},
+		},
+	}
+	grNotInMesh_2 := &appmesh.GatewayRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-4",
+			Name:      "gr-4",
+		},
+		Spec: appmesh.GatewayRouteSpec{
+			MeshRef: &appmesh.MeshReference{
+				Name: "mesh-1",
+				UID:  "uid-2",
+			},
+		},
+	}
+
+	type env struct {
+		gatewayRoutes []*appmesh.GatewayRoute
+	}
+	type args struct {
+		ms *appmesh.Mesh
+	}
+	tests := []struct {
+		name    string
+		env     env
+		args    args
+		want    []*appmesh.GatewayRoute
+		wantErr error
+	}{
+		{
+			name: "found no gatewayRoute",
+			env: env{
+				gatewayRoutes: []*appmesh.GatewayRoute{},
+			},
+			args: args{
+				ms: ms,
+			},
+			want: []*appmesh.GatewayRoute{},
+		},
+		{
+			name: "found gatewayRoutes that matches",
+			env: env{
+				gatewayRoutes: []*appmesh.GatewayRoute{
+					grInMesh_1, grInMesh_2, grNotInMesh_1, grNotInMesh_2,
+				},
+			},
+			args: args{
+				ms: ms,
+			},
+			want: []*appmesh.GatewayRoute{grInMesh_1, grInMesh_2},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			k8sSchema := runtime.NewScheme()
+			clientgoscheme.AddToScheme(k8sSchema)
+			appmesh.AddToScheme(k8sSchema)
+			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			eventRecorder := record.NewFakeRecorder(1)
+			m := &pendingMembersFinalizer{
+				k8sClient:        k8sClient,
+				eventRecorder:    eventRecorder,
+				log:              &log.NullLogger{},
+				evaluateInterval: pendingMembersFinalizerEvaluateInterval,
+			}
+
+			for _, gr := range tt.env.gatewayRoutes {
+				err := k8sClient.Create(ctx, gr.DeepCopy())
+				assert.NoError(t, err)
+			}
+
+			got, err := m.findGatewayRouteMembers(ctx, tt.args.ms)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				opts := cmp.Options{
+					equality.IgnoreFakeClientPopulatedFields(),
+					cmpopts.SortSlices(compareGatewayRoute),
+				}
+				assert.True(t, cmp.Equal(tt.want, got, opts), "diff", cmp.Diff(tt.want, got, opts))
+			}
 		})
 	}
 }
@@ -826,5 +983,9 @@ func compareVirtualRouter(a *appmesh.VirtualRouter, b *appmesh.VirtualRouter) bo
 }
 
 func compareVirtualGateway(a *appmesh.VirtualGateway, b *appmesh.VirtualGateway) bool {
+	return k8s.NamespacedName(a).String() < k8s.NamespacedName(b).String()
+}
+
+func compareGatewayRoute(a *appmesh.GatewayRoute, b *appmesh.GatewayRoute) bool {
 	return k8s.NamespacedName(a).String() < k8s.NamespacedName(b).String()
 }

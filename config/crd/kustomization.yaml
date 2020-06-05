@@ -7,7 +7,7 @@ resources:
 - bases/appmesh.k8s.aws_virtualnodes.yaml
 - bases/appmesh.k8s.aws_virtualrouters.yaml
 - bases/appmesh.k8s.aws_virtualgateways.yaml
-#- bases/appmesh.k8s.aws_gatewayroutes.yaml
+- bases/appmesh.k8s.aws_gatewayroutes.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
