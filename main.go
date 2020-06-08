@@ -105,7 +105,7 @@ func main() {
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
 		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "f4abe831.k8s.aws",
+		LeaderElectionID:   "appmesh-manager-leader-election",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
