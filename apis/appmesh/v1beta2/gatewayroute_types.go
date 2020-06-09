@@ -23,8 +23,12 @@ import (
 
 // GatewayRouteVirtualService refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
 type GatewayRouteVirtualService struct {
-	// The virtual service reference to associate with the gateway route virtual service target.
-	VirtualServiceRef VirtualServiceReference `json:"virtualServiceRef"`
+	// Reference to Kubernetes VirtualService CR in cluster to associate with the gateway route virtual service target. Exactly one of 'virtualServiceRef' or 'virtualServiceARN' must be specified.
+	// +optional
+	VirtualServiceRef *VirtualServiceReference `json:"virtualServiceRef,omitempty"`
+	// Amazon Resource Name to AppMesh VirtualService object to associate with the gateway route virtual service target. Exactly one of 'virtualServiceRef' or 'virtualServiceARN' must be specified.
+	// +optional
+	VirtualServiceARN *string `json:"virtualServiceARN,omitempty"`
 }
 
 // GatewayRouteTarget refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html

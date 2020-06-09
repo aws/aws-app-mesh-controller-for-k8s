@@ -29,8 +29,12 @@ type VirtualRouterListener struct {
 
 // WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
 type WeightedTarget struct {
-	// The virtual node to associate with the weighted target.
-	VirtualNodeRef VirtualNodeReference `json:"virtualNodeRef"`
+	// Reference to Kubernetes VirtualNode CR in cluster to associate with the weighted target. Exactly one of 'virtualNodeRef' or 'virtualNodeARN' must be specified.
+	// +optional
+	VirtualNodeRef *VirtualNodeReference `json:"virtualNodeRef,omitempty"`
+	// Amazon Resource Name to AppMesh VirtualNode object to associate with the weighted target. Exactly one of 'virtualNodeRef' or 'virtualNodeARN' must be specified.
+	// +optional
+	VirtualNodeARN *string `json:"virtualNodeARN,omitempty"`
 	// The relative weight of the weighted target.
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=100
