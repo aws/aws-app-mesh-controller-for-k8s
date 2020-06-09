@@ -244,6 +244,12 @@ type VirtualGatewaySpec struct {
 	// This field follows standard label selector semantics; if present but empty, it selects all namespaces.
 	// +optional
 	NamespaceSelector *metav1.LabelSelector `json:"namespaceSelector,omitempty"`
+	// PodSelector selects Pods using labels to designate VirtualGateway membership.
+	// This field follows standard label selector semantics:
+	//	if present but empty, it selects all pods within namespace.
+	// 	if absent, it selects no pod.
+	// +optional
+	PodSelector *metav1.LabelSelector `json:"podSelector,omitempty"`
 	// The listener that the virtual gateway is expected to receive inbound traffic from
 	// +kubebuilder:validation:MinItems=0
 	// +kubebuilder:validation:MaxItems=1

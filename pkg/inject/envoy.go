@@ -123,7 +123,7 @@ type envoyMutator struct {
 }
 
 func (m *envoyMutator) mutate(pod *corev1.Pod) error {
-	if containsEnvoyContainer(pod) {
+	if ok, _ := containsEnvoyContainer(pod); ok {
 		return nil
 	}
 	secretMounts, err := m.getSecretMounts(pod)
@@ -221,16 +221,6 @@ func (m *envoyMutator) getSecretMounts(pod *corev1.Pod) (map[string]string, erro
 		}
 	}
 	return secretMounts, nil
-}
-
-// containsEnvoyContainer checks whether pod already contains "envoy" container
-func containsEnvoyContainer(pod *corev1.Pod) bool {
-	for _, container := range pod.Spec.Containers {
-		if container.Name == envoyContainerName {
-			return true
-		}
-	}
-	return false
 }
 
 // containsEnvoyTracingConfigVolume checks whether pod already contains "envoy-tracing-config" volume
