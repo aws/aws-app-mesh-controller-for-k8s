@@ -11,8 +11,15 @@ func Convert_CRD_VirtualNodeServiceProvider_To_SDK_VirtualNodeServiceProvider(cr
 	sdkObj *appmeshsdk.VirtualNodeServiceProvider, scope conversion.Scope) error {
 
 	sdkObj.VirtualNodeName = aws.String("")
-	if err := scope.Convert(crdObj.VirtualNodeRef, sdkObj.VirtualNodeName, scope.Flags()); err != nil {
-		return err
+	if crdObj.VirtualNodeRef != nil {
+		if err := scope.Convert(crdObj.VirtualNodeRef, sdkObj.VirtualNodeName, scope.Flags()); err != nil {
+			return err
+		}
+	}
+	if crdObj.VirtualNodeARN != nil {
+		if err := Convert_CRD_VirtualNodeARN_To_SDK_VirtualNodeName(crdObj.VirtualNodeARN, sdkObj.VirtualNodeName, scope); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -21,9 +28,17 @@ func Convert_CRD_VirtualRouterServiceProvider_To_SDK_VirtualRouterServiceProvide
 	sdkObj *appmeshsdk.VirtualRouterServiceProvider, scope conversion.Scope) error {
 
 	sdkObj.VirtualRouterName = aws.String("")
-	if err := scope.Convert(crdObj.VirtualRouterRef, sdkObj.VirtualRouterName, scope.Flags()); err != nil {
-		return err
+	if crdObj.VirtualRouterRef != nil {
+		if err := scope.Convert(crdObj.VirtualRouterRef, sdkObj.VirtualRouterName, scope.Flags()); err != nil {
+			return err
+		}
 	}
+	if crdObj.VirtualRouterARN != nil {
+		if err := Convert_CRD_VirtualRouterARN_To_SDK_VirtualRouterName(crdObj.VirtualRouterARN, sdkObj.VirtualRouterName, scope); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

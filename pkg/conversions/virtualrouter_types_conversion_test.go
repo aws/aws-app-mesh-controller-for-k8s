@@ -72,7 +72,7 @@ func TestConvert_CRD_WeightedTarget_To_SDK_WeightedTarget(t *testing.T) {
 		wantErr    error
 	}{
 		{
-			name: "normal case",
+			name: "use virtualNodeRef",
 			args: args{
 				crdObj: &appmesh.WeightedTarget{
 					VirtualNodeRef: &appmesh.VirtualNodeReference{
@@ -94,6 +94,20 @@ func TestConvert_CRD_WeightedTarget_To_SDK_WeightedTarget(t *testing.T) {
 				Weight:      aws.Int64(100),
 			},
 		},
+		{
+			name: "use virtualNodeARN",
+			args: args{
+				crdObj: &appmesh.WeightedTarget{
+					VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
+					Weight:         int64(100),
+				},
+				sdkObj: &appmeshsdk.WeightedTarget{},
+			},
+			wantSDKObj: &appmeshsdk.WeightedTarget{
+				VirtualNode: aws.String("vn-name"),
+				Weight:      aws.Int64(100),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -103,7 +117,7 @@ func TestConvert_CRD_WeightedTarget_To_SDK_WeightedTarget(t *testing.T) {
 			if tt.args.scopeConvertFunc != nil {
 				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc)
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource)
+			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_WeightedTarget_To_SDK_WeightedTarget(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {

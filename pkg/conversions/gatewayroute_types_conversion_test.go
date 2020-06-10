@@ -25,7 +25,7 @@ func TestConvert_CRD_GatewayRouteVirtualService_To_SDK_GatewayRouteVirtualServic
 		wantErr    error
 	}{
 		{
-			name: "normal case",
+			name: "use virtualServiceRef",
 			args: args{
 				crdObj: &appmesh.GatewayRouteVirtualService{
 					VirtualServiceRef: &appmesh.VirtualServiceReference{
@@ -43,6 +43,18 @@ func TestConvert_CRD_GatewayRouteVirtualService_To_SDK_GatewayRouteVirtualServic
 			},
 			wantSDKObj: &appmeshsdk.GatewayRouteVirtualService{
 				VirtualServiceName: aws.String("vs-1.ns-1"),
+			},
+		},
+		{
+			name: "use virtualServiceArn",
+			args: args{
+				crdObj: &appmesh.GatewayRouteVirtualService{
+					VirtualServiceARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualService/vs-name"),
+				},
+				sdkObj: &appmeshsdk.GatewayRouteVirtualService{},
+			},
+			wantSDKObj: &appmeshsdk.GatewayRouteVirtualService{
+				VirtualServiceName: aws.String("vs-name"),
 			},
 		},
 	}

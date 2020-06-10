@@ -25,7 +25,7 @@ func TestConvert_CRD_VirtualNodeServiceProvider_To_SDK_VirtualNodeServiceProvide
 		wantErr    error
 	}{
 		{
-			name: "normal case",
+			name: "use virtualNodeRef",
 			args: args{
 				crdObj: &appmesh.VirtualNodeServiceProvider{
 					VirtualNodeRef: &appmesh.VirtualNodeReference{
@@ -45,6 +45,18 @@ func TestConvert_CRD_VirtualNodeServiceProvider_To_SDK_VirtualNodeServiceProvide
 				VirtualNodeName: aws.String("vn-1.ns-1"),
 			},
 		},
+		{
+			name: "use virtualNodeARN",
+			args: args{
+				crdObj: &appmesh.VirtualNodeServiceProvider{
+					VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
+				},
+				sdkObj: &appmeshsdk.VirtualNodeServiceProvider{},
+			},
+			wantSDKObj: &appmeshsdk.VirtualNodeServiceProvider{
+				VirtualNodeName: aws.String("vn-name"),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -54,7 +66,7 @@ func TestConvert_CRD_VirtualNodeServiceProvider_To_SDK_VirtualNodeServiceProvide
 			if tt.args.scopeConvertFunc != nil {
 				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc)
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource)
+			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_VirtualNodeServiceProvider_To_SDK_VirtualNodeServiceProvider(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
@@ -80,7 +92,7 @@ func TestConvert_CRD_VirtualRouterServiceProvider_To_SDK_VirtualRouterServicePro
 		wantErr    error
 	}{
 		{
-			name: "normal case",
+			name: "use virtualRouterRef",
 			args: args{
 				crdObj: &appmesh.VirtualRouterServiceProvider{
 					VirtualRouterRef: &appmesh.VirtualRouterReference{
@@ -100,6 +112,18 @@ func TestConvert_CRD_VirtualRouterServiceProvider_To_SDK_VirtualRouterServicePro
 				VirtualRouterName: aws.String("vr-1.ns-1"),
 			},
 		},
+		{
+			name: "use virtualRouterARN",
+			args: args{
+				crdObj: &appmesh.VirtualRouterServiceProvider{
+					VirtualRouterARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualRouter/vr-name"),
+				},
+				sdkObj: &appmeshsdk.VirtualRouterServiceProvider{},
+			},
+			wantSDKObj: &appmeshsdk.VirtualRouterServiceProvider{
+				VirtualRouterName: aws.String("vr-name"),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -109,7 +133,7 @@ func TestConvert_CRD_VirtualRouterServiceProvider_To_SDK_VirtualRouterServicePro
 			if tt.args.scopeConvertFunc != nil {
 				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc)
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource)
+			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_VirtualRouterServiceProvider_To_SDK_VirtualRouterServiceProvider(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
