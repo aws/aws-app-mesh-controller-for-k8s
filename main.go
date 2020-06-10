@@ -172,7 +172,7 @@ func main() {
 	meshMembershipDesignator := mesh.NewMembershipDesignator(mgr.GetClient())
 	vgMembershipDesignator := virtualgateway.NewMembershipDesignator(mgr.GetClient())
 	vnMembershipDesignator := virtualnode.NewMembershipDesignator(mgr.GetClient())
-	sidecarInjector := inject.NewSidecarInjector(injectConfig, cloud.Region(), mgr.GetClient(), referencesResolver, vnMembershipDesignator)
+	sidecarInjector := inject.NewSidecarInjector(injectConfig, cloud.AccountID(), cloud.Region(), mgr.GetClient(), referencesResolver, vnMembershipDesignator)
 	appmeshwebhook.NewMeshMutator().SetupWithManager(mgr)
 	appmeshwebhook.NewMeshValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualGatewayMutator(meshMembershipDesignator).SetupWithManager(mgr)

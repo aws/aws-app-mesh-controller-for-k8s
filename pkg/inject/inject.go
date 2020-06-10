@@ -20,18 +20,20 @@ type PodMutator interface {
 
 type SidecarInjector struct {
 	config                 Config
+	accountID              string
 	awsRegion              string
 	k8sClient              client.Client
 	referenceResolver      references.Resolver
 	vnMembershipDesignator virtualnode.MembershipDesignator
 }
 
-func NewSidecarInjector(cfg Config, awsRegion string,
+func NewSidecarInjector(cfg Config, accountID string, awsRegion string,
 	k8sClient client.Client,
 	referenceResolver references.Resolver,
 	vnMembershipDesignator virtualnode.MembershipDesignator) *SidecarInjector {
 	return &SidecarInjector{
 		config:                 cfg,
+		accountID:              accountID,
 		awsRegion:              awsRegion,
 		k8sClient:              k8sClient,
 		referenceResolver:      referenceResolver,
@@ -77,6 +79,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 			},
 		}, vn),
 		newEnvoyMutator(envoyMutatorConfig{
+			accountID:             m.accountID,
 			awsRegion:             m.awsRegion,
 			preview:               m.config.Preview,
 			logLevel:              m.config.LogLevel,

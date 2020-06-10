@@ -1038,3 +1038,70 @@ func Test_envoyMutator_getSecretMounts(t *testing.T) {
 		})
 	}
 }
+
+func Test_envoyMutator_getAugmentedMeshName(t *testing.T) {
+	type fields struct {
+		ms            *appmesh.Mesh
+		mutatorConfig envoyMutatorConfig
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
+	}{
+		{
+			name: "virtualNode's resourceOwner is same as meshOwner - meshOwner unset",
+			fields: fields{
+				ms: &appmesh.Mesh{
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+					},
+				},
+				mutatorConfig: envoyMutatorConfig{
+					accountID: "000000000000",
+				},
+			},
+			want: "my-mesh",
+		},
+		{
+			name: "virtualNode's resourceOwner is same as meshOwner - meshOwner set",
+			fields: fields{
+				ms: &appmesh.Mesh{
+					Spec: appmesh.MeshSpec{
+						AWSName:   aws.String("my-mesh"),
+						MeshOwner: aws.String("000000000000"),
+					},
+				},
+				mutatorConfig: envoyMutatorConfig{
+					accountID: "000000000000",
+				},
+			},
+			want: "my-mesh",
+		},
+		{
+			name: "virtualNode's resourceOwner is different than meshOwner",
+			fields: fields{
+				ms: &appmesh.Mesh{
+					Spec: appmesh.MeshSpec{
+						AWSName:   aws.String("my-mesh"),
+						MeshOwner: aws.String("111111111111"),
+					},
+				},
+				mutatorConfig: envoyMutatorConfig{
+					accountID: "000000000000",
+				},
+			},
+			want: "my-mesh@111111111111",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &envoyMutator{
+				ms:            tt.fields.ms,
+				mutatorConfig: tt.fields.mutatorConfig,
+			}
+			got := m.getAugmentedMeshName()
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
