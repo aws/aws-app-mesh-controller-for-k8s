@@ -18,7 +18,7 @@ func Convert_CRD_WeightedTarget_To_SDK_WeightedTarget(crdObj *appmesh.WeightedTa
 	sdkObj *appmeshsdk.WeightedTarget, scope conversion.Scope) error {
 
 	sdkObj.VirtualNode = aws.String("")
-	if err := scope.Convert(&crdObj.VirtualNodeRef, sdkObj.VirtualNode, scope.Flags()); err != nil {
+	if err := scope.Convert(crdObj.VirtualNodeRef, sdkObj.VirtualNode, scope.Flags()); err != nil {
 		return err
 	}
 	sdkObj.Weight = aws.Int64(crdObj.Weight)

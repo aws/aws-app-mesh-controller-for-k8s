@@ -130,7 +130,7 @@ func (b *ManifestBuilder) BuildNodeVirtualNode(instanceName string, backendVirtu
 	for _, backendVS := range backendVirtualServices {
 		backends = append(backends, appmesh.Backend{
 			VirtualService: appmesh.VirtualServiceBackend{
-				VirtualServiceRef: appmesh.VirtualServiceReference{
+				VirtualServiceRef: &appmesh.VirtualServiceReference{
 					Namespace: aws.String(backendVS.Namespace),
 					Name:      backendVS.Name,
 				},
@@ -198,7 +198,7 @@ func (b *ManifestBuilder) BuildServiceVirtualRouter(instanceName string, routeCf
 		var targets []appmesh.WeightedTarget
 		for _, weightedTarget := range routeCfg.WeightedTargets {
 			targets = append(targets, appmesh.WeightedTarget{
-				VirtualNodeRef: appmesh.VirtualNodeReference{
+				VirtualNodeRef: &appmesh.VirtualNodeReference{
 					Namespace: aws.String(weightedTarget.VirtualNode.Namespace),
 					Name:      weightedTarget.VirtualNode.Name,
 				},
@@ -250,7 +250,7 @@ func (b *ManifestBuilder) BuildServiceVirtualService(instanceName string) *appme
 			AWSName: aws.String(vsDNS),
 			Provider: &appmesh.VirtualServiceProvider{
 				VirtualRouter: &appmesh.VirtualRouterServiceProvider{
-					VirtualRouterRef: appmesh.VirtualRouterReference{
+					VirtualRouterRef: &appmesh.VirtualRouterReference{
 						Namespace: aws.String(b.Namespace),
 						Name:      vrName,
 					},

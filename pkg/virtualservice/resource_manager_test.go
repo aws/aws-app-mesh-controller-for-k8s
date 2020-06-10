@@ -269,7 +269,7 @@ func Test_BuildSDKVirtualServiceSpec(t *testing.T) {
 					Spec: appmesh.VirtualServiceSpec{
 						Provider: &appmesh.VirtualServiceProvider{
 							VirtualNode: &appmesh.VirtualNodeServiceProvider{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Name: "vn",
 								},
 							},
@@ -303,7 +303,7 @@ func Test_BuildSDKVirtualServiceSpec(t *testing.T) {
 					Spec: appmesh.VirtualServiceSpec{
 						Provider: &appmesh.VirtualServiceProvider{
 							VirtualNode: &appmesh.VirtualNodeServiceProvider{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("my-other-ns"),
 									Name:      "vn",
 								},
@@ -338,7 +338,7 @@ func Test_BuildSDKVirtualServiceSpec(t *testing.T) {
 					Spec: appmesh.VirtualServiceSpec{
 						Provider: &appmesh.VirtualServiceProvider{
 							VirtualRouter: &appmesh.VirtualRouterServiceProvider{
-								VirtualRouterRef: appmesh.VirtualRouterReference{
+								VirtualRouterRef: &appmesh.VirtualRouterReference{
 									Name: "vr",
 								},
 							},
@@ -372,7 +372,7 @@ func Test_BuildSDKVirtualServiceSpec(t *testing.T) {
 					Spec: appmesh.VirtualServiceSpec{
 						Provider: &appmesh.VirtualServiceProvider{
 							VirtualRouter: &appmesh.VirtualRouterServiceProvider{
-								VirtualRouterRef: appmesh.VirtualRouterReference{
+								VirtualRouterRef: &appmesh.VirtualRouterReference{
 									Namespace: aws.String("my-other-ns"),
 									Name:      "vr",
 								},

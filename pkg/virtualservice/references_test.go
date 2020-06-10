@@ -29,7 +29,7 @@ func TestVirtualNodeReferenceIndexFunc(t *testing.T) {
 					Spec: appmesh.VirtualServiceSpec{
 						Provider: &appmesh.VirtualServiceProvider{
 							VirtualNode: &appmesh.VirtualNodeServiceProvider{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("other-ns"),
 									Name:      "vn",
 								},
@@ -55,7 +55,7 @@ func TestVirtualNodeReferenceIndexFunc(t *testing.T) {
 					Spec: appmesh.VirtualServiceSpec{
 						Provider: &appmesh.VirtualServiceProvider{
 							VirtualNode: &appmesh.VirtualNodeServiceProvider{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Name: "vn",
 								},
 							},
@@ -80,10 +80,28 @@ func TestVirtualNodeReferenceIndexFunc(t *testing.T) {
 					Spec: appmesh.VirtualServiceSpec{
 						Provider: &appmesh.VirtualServiceProvider{
 							VirtualRouter: &appmesh.VirtualRouterServiceProvider{
-								VirtualRouterRef: appmesh.VirtualRouterReference{
+								VirtualRouterRef: &appmesh.VirtualRouterReference{
 									Namespace: aws.String("other-ns"),
 									Name:      "vr",
 								},
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "using virtualNodeProvider with ARN",
+			args: args{
+				obj: &appmesh.VirtualService{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-ns",
+					},
+					Spec: appmesh.VirtualServiceSpec{
+						Provider: &appmesh.VirtualServiceProvider{
+							VirtualNode: &appmesh.VirtualNodeServiceProvider{
+								VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 							},
 						},
 					},
@@ -133,7 +151,7 @@ func TestVirtualRouterReferenceIndexFunc(t *testing.T) {
 					Spec: appmesh.VirtualServiceSpec{
 						Provider: &appmesh.VirtualServiceProvider{
 							VirtualRouter: &appmesh.VirtualRouterServiceProvider{
-								VirtualRouterRef: appmesh.VirtualRouterReference{
+								VirtualRouterRef: &appmesh.VirtualRouterReference{
 									Namespace: aws.String("other-ns"),
 									Name:      "vr",
 								},
@@ -159,7 +177,7 @@ func TestVirtualRouterReferenceIndexFunc(t *testing.T) {
 					Spec: appmesh.VirtualServiceSpec{
 						Provider: &appmesh.VirtualServiceProvider{
 							VirtualRouter: &appmesh.VirtualRouterServiceProvider{
-								VirtualRouterRef: appmesh.VirtualRouterReference{
+								VirtualRouterRef: &appmesh.VirtualRouterReference{
 									Name: "vr",
 								},
 							},
@@ -184,10 +202,28 @@ func TestVirtualRouterReferenceIndexFunc(t *testing.T) {
 					Spec: appmesh.VirtualServiceSpec{
 						Provider: &appmesh.VirtualServiceProvider{
 							VirtualNode: &appmesh.VirtualNodeServiceProvider{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("other-ns"),
 									Name:      "vn",
 								},
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "using virtualRouterProvider with ARN",
+			args: args{
+				obj: &appmesh.VirtualService{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-ns",
+					},
+					Spec: appmesh.VirtualServiceSpec{
+						Provider: &appmesh.VirtualServiceProvider{
+							VirtualRouter: &appmesh.VirtualRouterServiceProvider{
+								VirtualRouterARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualRouter/vr-name"),
 							},
 						},
 					},

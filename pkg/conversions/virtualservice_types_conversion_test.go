@@ -28,7 +28,7 @@ func TestConvert_CRD_VirtualNodeServiceProvider_To_SDK_VirtualNodeServiceProvide
 			name: "normal case",
 			args: args{
 				crdObj: &appmesh.VirtualNodeServiceProvider{
-					VirtualNodeRef: appmesh.VirtualNodeReference{
+					VirtualNodeRef: &appmesh.VirtualNodeReference{
 						Namespace: aws.String("ns-1"),
 						Name:      "vn-1",
 					},
@@ -83,7 +83,7 @@ func TestConvert_CRD_VirtualRouterServiceProvider_To_SDK_VirtualRouterServicePro
 			name: "normal case",
 			args: args{
 				crdObj: &appmesh.VirtualRouterServiceProvider{
-					VirtualRouterRef: appmesh.VirtualRouterReference{
+					VirtualRouterRef: &appmesh.VirtualRouterReference{
 						Namespace: aws.String("ns-1"),
 						Name:      "vr-1",
 					},
@@ -139,7 +139,7 @@ func TestConvert_CRD_VirtualServiceProvider_To_SDK_VirtualServiceProvider(t *tes
 			args: args{
 				crdObj: &appmesh.VirtualServiceProvider{
 					VirtualNode: &appmesh.VirtualNodeServiceProvider{
-						VirtualNodeRef: appmesh.VirtualNodeReference{
+						VirtualNodeRef: &appmesh.VirtualNodeReference{
 							Namespace: aws.String("ns-1"),
 							Name:      "vn-1",
 						},
@@ -166,7 +166,7 @@ func TestConvert_CRD_VirtualServiceProvider_To_SDK_VirtualServiceProvider(t *tes
 			args: args{
 				crdObj: &appmesh.VirtualServiceProvider{
 					VirtualRouter: &appmesh.VirtualRouterServiceProvider{
-						VirtualRouterRef: appmesh.VirtualRouterReference{
+						VirtualRouterRef: &appmesh.VirtualRouterReference{
 							Namespace: aws.String("ns-1"),
 							Name:      "vr-1",
 						},
@@ -229,7 +229,7 @@ func TestConvert_CRD_VirtualServiceSpec_To_SDK_VirtualServiceSpec(t *testing.T) 
 					AWSName: aws.String("app1"),
 					Provider: &appmesh.VirtualServiceProvider{
 						VirtualNode: &appmesh.VirtualNodeServiceProvider{
-							VirtualNodeRef: appmesh.VirtualNodeReference{
+							VirtualNodeRef: &appmesh.VirtualNodeReference{
 								Namespace: aws.String("ns-1"),
 								Name:      "vn-1",
 							},

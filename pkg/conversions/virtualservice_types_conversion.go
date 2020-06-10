@@ -11,7 +11,7 @@ func Convert_CRD_VirtualNodeServiceProvider_To_SDK_VirtualNodeServiceProvider(cr
 	sdkObj *appmeshsdk.VirtualNodeServiceProvider, scope conversion.Scope) error {
 
 	sdkObj.VirtualNodeName = aws.String("")
-	if err := scope.Convert(&crdObj.VirtualNodeRef, sdkObj.VirtualNodeName, scope.Flags()); err != nil {
+	if err := scope.Convert(crdObj.VirtualNodeRef, sdkObj.VirtualNodeName, scope.Flags()); err != nil {
 		return err
 	}
 	return nil
@@ -21,7 +21,7 @@ func Convert_CRD_VirtualRouterServiceProvider_To_SDK_VirtualRouterServiceProvide
 	sdkObj *appmeshsdk.VirtualRouterServiceProvider, scope conversion.Scope) error {
 
 	sdkObj.VirtualRouterName = aws.String("")
-	if err := scope.Convert(&crdObj.VirtualRouterRef, sdkObj.VirtualRouterName, scope.Flags()); err != nil {
+	if err := scope.Convert(crdObj.VirtualRouterRef, sdkObj.VirtualRouterName, scope.Flags()); err != nil {
 		return err
 	}
 	return nil

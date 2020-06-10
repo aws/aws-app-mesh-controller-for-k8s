@@ -28,7 +28,7 @@ func TestConvert_CRD_GatewayRouteVirtualService_To_SDK_GatewayRouteVirtualServic
 			name: "normal case",
 			args: args{
 				crdObj: &appmesh.GatewayRouteVirtualService{
-					VirtualServiceRef: appmesh.VirtualServiceReference{
+					VirtualServiceRef: &appmesh.VirtualServiceReference{
 						Namespace: aws.String("ns-1"),
 						Name:      "vs-1",
 					},
@@ -84,7 +84,7 @@ func TestConvert_CRD_GatewayRouteTarget_To_SDK_GatewayRouteTarget(t *testing.T) 
 			args: args{
 				crdObj: &appmesh.GatewayRouteTarget{
 					VirtualService: appmesh.GatewayRouteVirtualService{
-						VirtualServiceRef: appmesh.VirtualServiceReference{
+						VirtualServiceRef: &appmesh.VirtualServiceReference{
 							Namespace: aws.String("ns-1"),
 							Name:      "vs-1",
 						},
@@ -193,7 +193,7 @@ func TestConvert_CRD_HTTPGatewayRouteAction_To_SDK_HttpGatewayRouteAction(t *tes
 				crdObj: &appmesh.HTTPGatewayRouteAction{
 					Target: appmesh.GatewayRouteTarget{
 						VirtualService: appmesh.GatewayRouteVirtualService{
-							VirtualServiceRef: appmesh.VirtualServiceReference{
+							VirtualServiceRef: &appmesh.VirtualServiceReference{
 								Namespace: aws.String("ns-1"),
 								Name:      "vs-1",
 							},
@@ -260,7 +260,7 @@ func TestConvert_CRD_HTTPGatewayRoute_To_SDK_HttpGatewayRoute(t *testing.T) {
 					Action: appmesh.HTTPGatewayRouteAction{
 						Target: appmesh.GatewayRouteTarget{
 							VirtualService: appmesh.GatewayRouteVirtualService{
-								VirtualServiceRef: appmesh.VirtualServiceReference{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
 									Namespace: aws.String("ns-1"),
 									Name:      "vs-1",
 								},
@@ -378,7 +378,7 @@ func TestConvert_CRD_GRPCGatewayRouteAction_To_SDK_GrpcGatewayRouteAction(t *tes
 				crdObj: &appmesh.GRPCGatewayRouteAction{
 					Target: appmesh.GatewayRouteTarget{
 						VirtualService: appmesh.GatewayRouteVirtualService{
-							VirtualServiceRef: appmesh.VirtualServiceReference{
+							VirtualServiceRef: &appmesh.VirtualServiceReference{
 								Namespace: aws.String("ns-1"),
 								Name:      "vs-1",
 							},
@@ -445,7 +445,7 @@ func TestConvert_CRD_GRPCGatewayRoute_To_SDK_GrpcGatewayRoute(t *testing.T) {
 					Action: appmesh.GRPCGatewayRouteAction{
 						Target: appmesh.GatewayRouteTarget{
 							VirtualService: appmesh.GatewayRouteVirtualService{
-								VirtualServiceRef: appmesh.VirtualServiceReference{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
 									Namespace: aws.String("ns-1"),
 									Name:      "vs-1",
 								},
@@ -519,7 +519,7 @@ func TestConvert_CRD_GatewayRouteSpec_To_SDK_GatewayRouteSpec(t *testing.T) {
 						Action: appmesh.GRPCGatewayRouteAction{
 							Target: appmesh.GatewayRouteTarget{
 								VirtualService: appmesh.GatewayRouteVirtualService{
-									VirtualServiceRef: appmesh.VirtualServiceReference{
+									VirtualServiceRef: &appmesh.VirtualServiceReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vs-1",
 									},
@@ -534,7 +534,7 @@ func TestConvert_CRD_GatewayRouteSpec_To_SDK_GatewayRouteSpec(t *testing.T) {
 						Action: appmesh.HTTPGatewayRouteAction{
 							Target: appmesh.GatewayRouteTarget{
 								VirtualService: appmesh.GatewayRouteVirtualService{
-									VirtualServiceRef: appmesh.VirtualServiceReference{
+									VirtualServiceRef: &appmesh.VirtualServiceReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vs-1",
 									},
@@ -549,7 +549,7 @@ func TestConvert_CRD_GatewayRouteSpec_To_SDK_GatewayRouteSpec(t *testing.T) {
 						Action: appmesh.HTTPGatewayRouteAction{
 							Target: appmesh.GatewayRouteTarget{
 								VirtualService: appmesh.GatewayRouteVirtualService{
-									VirtualServiceRef: appmesh.VirtualServiceReference{
+									VirtualServiceRef: &appmesh.VirtualServiceReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vs-1",
 									},
@@ -616,7 +616,7 @@ func TestConvert_CRD_GatewayRouteSpec_To_SDK_GatewayRouteSpec(t *testing.T) {
 						Action: appmesh.GRPCGatewayRouteAction{
 							Target: appmesh.GatewayRouteTarget{
 								VirtualService: appmesh.GatewayRouteVirtualService{
-									VirtualServiceRef: appmesh.VirtualServiceReference{
+									VirtualServiceRef: &appmesh.VirtualServiceReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vs-1",
 									},
@@ -631,7 +631,7 @@ func TestConvert_CRD_GatewayRouteSpec_To_SDK_GatewayRouteSpec(t *testing.T) {
 						Action: appmesh.HTTPGatewayRouteAction{
 							Target: appmesh.GatewayRouteTarget{
 								VirtualService: appmesh.GatewayRouteVirtualService{
-									VirtualServiceRef: appmesh.VirtualServiceReference{
+									VirtualServiceRef: &appmesh.VirtualServiceReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vs-1",
 									},
@@ -688,7 +688,7 @@ func TestConvert_CRD_GatewayRouteSpec_To_SDK_GatewayRouteSpec(t *testing.T) {
 						Action: appmesh.GRPCGatewayRouteAction{
 							Target: appmesh.GatewayRouteTarget{
 								VirtualService: appmesh.GatewayRouteVirtualService{
-									VirtualServiceRef: appmesh.VirtualServiceReference{
+									VirtualServiceRef: &appmesh.VirtualServiceReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vs-1",
 									},
@@ -703,7 +703,7 @@ func TestConvert_CRD_GatewayRouteSpec_To_SDK_GatewayRouteSpec(t *testing.T) {
 						Action: appmesh.HTTPGatewayRouteAction{
 							Target: appmesh.GatewayRouteTarget{
 								VirtualService: appmesh.GatewayRouteVirtualService{
-									VirtualServiceRef: appmesh.VirtualServiceReference{
+									VirtualServiceRef: &appmesh.VirtualServiceReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vs-1",
 									},
@@ -761,7 +761,7 @@ func TestConvert_CRD_GatewayRouteSpec_To_SDK_GatewayRouteSpec(t *testing.T) {
 						Action: appmesh.HTTPGatewayRouteAction{
 							Target: appmesh.GatewayRouteTarget{
 								VirtualService: appmesh.GatewayRouteVirtualService{
-									VirtualServiceRef: appmesh.VirtualServiceReference{
+									VirtualServiceRef: &appmesh.VirtualServiceReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vs-1",
 									},
@@ -776,7 +776,7 @@ func TestConvert_CRD_GatewayRouteSpec_To_SDK_GatewayRouteSpec(t *testing.T) {
 						Action: appmesh.HTTPGatewayRouteAction{
 							Target: appmesh.GatewayRouteTarget{
 								VirtualService: appmesh.GatewayRouteVirtualService{
-									VirtualServiceRef: appmesh.VirtualServiceReference{
+									VirtualServiceRef: &appmesh.VirtualServiceReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vs-1",
 									},

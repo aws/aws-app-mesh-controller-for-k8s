@@ -79,7 +79,7 @@ func Convert_CRD_ClientPolicy_To_SDK_ClientPolicy(crdObj *appmesh.ClientPolicy, 
 
 func Convert_CRD_VirtualServiceBackend_To_SDK_VirtualServiceBackend(crdObj *appmesh.VirtualServiceBackend, sdkObj *appmeshsdk.VirtualServiceBackend, scope conversion.Scope) error {
 	sdkObj.VirtualServiceName = aws.String("")
-	if err := scope.Convert(&crdObj.VirtualServiceRef, sdkObj.VirtualServiceName, scope.Flags()); err != nil {
+	if err := scope.Convert(crdObj.VirtualServiceRef, sdkObj.VirtualServiceName, scope.Flags()); err != nil {
 		return err
 	}
 

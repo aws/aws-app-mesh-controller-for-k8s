@@ -11,7 +11,7 @@ func Convert_CRD_GatewayRouteVirtualService_To_SDK_GatewayRouteVirtualService(cr
 	sdkObj *appmeshsdk.GatewayRouteVirtualService, scope conversion.Scope) error {
 
 	sdkObj.VirtualServiceName = aws.String("")
-	if err := scope.Convert(&crdObj.VirtualServiceRef, sdkObj.VirtualServiceName, scope.Flags()); err != nil {
+	if err := scope.Convert(crdObj.VirtualServiceRef, sdkObj.VirtualServiceName, scope.Flags()); err != nil {
 		return err
 	}
 	return nil

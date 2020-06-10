@@ -17,22 +17,30 @@ func ExtractVirtualNodeReferences(vr *appmesh.VirtualRouter) []appmesh.VirtualNo
 	for _, route := range vr.Spec.Routes {
 		if route.GRPCRoute != nil {
 			for _, target := range route.GRPCRoute.Action.WeightedTargets {
-				vnRefs = append(vnRefs, target.VirtualNodeRef)
+				if target.VirtualNodeRef != nil {
+					vnRefs = append(vnRefs, *target.VirtualNodeRef)
+				}
 			}
 		}
 		if route.HTTPRoute != nil {
 			for _, target := range route.HTTPRoute.Action.WeightedTargets {
-				vnRefs = append(vnRefs, target.VirtualNodeRef)
+				if target.VirtualNodeRef != nil {
+					vnRefs = append(vnRefs, *target.VirtualNodeRef)
+				}
 			}
 		}
 		if route.HTTP2Route != nil {
 			for _, target := range route.HTTP2Route.Action.WeightedTargets {
-				vnRefs = append(vnRefs, target.VirtualNodeRef)
+				if target.VirtualNodeRef != nil {
+					vnRefs = append(vnRefs, *target.VirtualNodeRef)
+				}
 			}
 		}
 		if route.TCPRoute != nil {
 			for _, target := range route.TCPRoute.Action.WeightedTargets {
-				vnRefs = append(vnRefs, target.VirtualNodeRef)
+				if target.VirtualNodeRef != nil {
+					vnRefs = append(vnRefs, *target.VirtualNodeRef)
+				}
 			}
 		}
 	}

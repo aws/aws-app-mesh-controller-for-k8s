@@ -236,14 +236,14 @@ func Test_BuildSDKRouteSpec(t *testing.T) {
 						Action: appmesh.GRPCRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -385,14 +385,14 @@ func Test_BuildSDKRouteSpec(t *testing.T) {
 						Action: appmesh.HTTPRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -533,14 +533,14 @@ func Test_BuildSDKRouteSpec(t *testing.T) {
 						Action: appmesh.HTTPRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -646,14 +646,14 @@ func Test_BuildSDKRouteSpec(t *testing.T) {
 						Action: appmesh.TCPRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
