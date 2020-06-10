@@ -203,9 +203,17 @@ spec:
                             - validation
                             type: object
                         type: object
+                      virtualServiceARN:
+                        description: Amazon Resource Name to AppMesh VirtualService
+                          object that is acting as a virtual node backend. Exactly
+                          one of 'virtualServiceRef' or 'virtualServiceARN' must be
+                          specified.
+                        type: string
                       virtualServiceRef:
-                        description: The VirtualService that is acting as a virtual
-                          node backend.
+                        description: Reference to Kubernetes VirtualService CR in
+                          cluster that is acting as a virtual node backend. Exactly
+                          one of 'virtualServiceRef' or 'virtualServiceARN' must be
+                          specified.
                         properties:
                           name:
                             description: Name is the name of VirtualService CR
@@ -218,8 +226,6 @@ spec:
                         required:
                         - name
                         type: object
-                    required:
-                    - virtualServiceRef
                     type: object
                 required:
                 - virtualService
