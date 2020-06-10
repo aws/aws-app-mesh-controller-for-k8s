@@ -2,6 +2,7 @@ package inject
 
 import (
 	"encoding/json"
+	"fmt"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
@@ -93,6 +94,7 @@ type EnvoyTemplateVariables struct {
 }
 
 type envoyMutatorConfig struct {
+	accountID             string
 	awsRegion             string
 	preview               bool
 	logLevel              string
@@ -144,7 +146,7 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 }
 
 func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVariables {
-	meshName := aws.StringValue(m.ms.Spec.AWSName)
+	meshName := m.getAugmentedMeshName()
 	virtualNodeName := aws.StringValue(m.vn.Spec.AWSName)
 	preview := m.getPreview(pod)
 
@@ -164,6 +166,14 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		EnableStatsTags:              m.mutatorConfig.enableStatsTags,
 		EnableStatsD:                 m.mutatorConfig.enableStatsD,
 	}
+}
+
+func (m *envoyMutator) getAugmentedMeshName() string {
+	meshName := aws.StringValue(m.ms.Spec.AWSName)
+	if m.ms.Spec.MeshOwner != nil && aws.StringValue(m.ms.Spec.MeshOwner) != m.mutatorConfig.accountID {
+		return fmt.Sprintf("%v@%v", meshName, aws.StringValue(m.ms.Spec.MeshOwner))
+	}
+	return meshName
 }
 
 func (m *envoyMutator) getPreview(pod *corev1.Pod) string {
