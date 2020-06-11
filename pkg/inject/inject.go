@@ -4,6 +4,7 @@ import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualgateway"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -24,19 +25,22 @@ type SidecarInjector struct {
 	awsRegion              string
 	k8sClient              client.Client
 	referenceResolver      references.Resolver
+	vgMembershipDesignator virtualgateway.MembershipDesignator
 	vnMembershipDesignator virtualnode.MembershipDesignator
 }
 
 func NewSidecarInjector(cfg Config, accountID string, awsRegion string,
 	k8sClient client.Client,
 	referenceResolver references.Resolver,
-	vnMembershipDesignator virtualnode.MembershipDesignator) *SidecarInjector {
+	vnMembershipDesignator virtualnode.MembershipDesignator,
+	vgMembershipDesignator virtualgateway.MembershipDesignator) *SidecarInjector {
 	return &SidecarInjector{
 		config:                 cfg,
 		accountID:              accountID,
 		awsRegion:              awsRegion,
 		k8sClient:              k8sClient,
 		referenceResolver:      referenceResolver,
+		vgMembershipDesignator: vgMembershipDesignator,
 		vnMembershipDesignator: vnMembershipDesignator,
 	}
 }
@@ -54,60 +58,92 @@ func (m *SidecarInjector) Inject(ctx context.Context, pod *corev1.Pod) error {
 		return err
 	}
 
-	if vn == nil || vn.Spec.MeshRef == nil {
-		if injectMode == sidecarInjectModeEnabled {
-			return errors.New("sidecarInject enabled but no matching VirtualNode found")
-		}
-		return nil
-	}
-	ms, err := m.referenceResolver.ResolveMeshReference(ctx, *vn.Spec.MeshRef)
+	vg, err := m.vgMembershipDesignator.DesignateForPod(ctx, pod)
 	if err != nil {
 		return err
 	}
-	return m.injectAppMeshPatches(ms, vn, pod)
+
+	if vn != nil && vg != nil {
+		return errors.Errorf("sidecarInject enabled for both virtualNode %s and virtualGateway %s on pod %s. Please use podSelector on one", vn.Name, vg.Name, pod.Name)
+	}
+
+	if (vn == nil || vn.Spec.MeshRef == nil) && (vg == nil || vg.Spec.MeshRef == nil) {
+		if injectMode == sidecarInjectModeEnabled {
+			return errors.New("sidecarInject enabled but no matching VirtualNode or VirtualGateway found")
+		}
+		return nil
+	}
+
+	var msRef *appmesh.MeshReference
+	if vn != nil {
+		msRef = vn.Spec.MeshRef
+	} else if vg != nil {
+		msRef = vg.Spec.MeshRef
+	} else {
+		return errors.New("No matching VirtualNode or VirtualGateway found to resolve Mesh reference")
+	}
+
+	ms, err := m.referenceResolver.ResolveMeshReference(ctx, *msRef)
+	if err != nil {
+		return err
+	}
+	return m.injectAppMeshPatches(ms, vn, vg, pod)
 }
 
-func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.VirtualNode, pod *corev1.Pod) error {
+func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.VirtualNode, vg *appmesh.VirtualGateway, pod *corev1.Pod) error {
 	// List out all the mutators in sequence
-	var mutators = []PodMutator{
-		newProxyMutator(proxyMutatorConfig{
-			egressIgnoredIPs: m.config.IgnoredIPs,
-			initProxyMutatorConfig: initProxyMutatorConfig{
-				containerImage: m.config.InitImage,
-				cpuRequests:    m.config.SidecarCpu,
-				memoryRequests: m.config.SidecarMemory,
-			},
-		}, vn),
-		newEnvoyMutator(envoyMutatorConfig{
-			accountID:             m.accountID,
-			awsRegion:             m.awsRegion,
-			preview:               m.config.Preview,
-			logLevel:              m.config.LogLevel,
-			sidecarImage:          m.config.SidecarImage,
-			sidecarCPURequests:    m.config.SidecarCpu,
-			sidecarMemoryRequests: m.config.SidecarMemory,
-			enableXrayTracing:     m.config.EnableXrayTracing,
-			enableJaegerTracing:   m.config.EnableJaegerTracing,
-			enableDatadogTracing:  m.config.EnableDatadogTracing,
-			enableStatsTags:       m.config.EnableStatsTags,
-			enableStatsD:          m.config.EnableStatsD,
-		}, ms, vn),
-		newXrayMutator(xrayMutatorConfig{
-			awsRegion:             m.awsRegion,
-			sidecarCPURequests:    m.config.SidecarCpu,
-			sidecarMemoryRequests: m.config.SidecarMemory,
-		}, m.config.EnableXrayTracing),
-		newDatadogMutator(datadogMutatorConfig{
-			datadogAddress: m.config.DatadogAddress,
-			datadogPort:    m.config.DatadogPort,
-		}, m.config.EnableDatadogTracing),
-		newJaegerMutator(jaegerMutatorConfig{
-			jaegerAddress: m.config.JaegerAddress,
-			jaegerPort:    m.config.JaegerPort,
-		}, m.config.EnableJaegerTracing),
-		newCloudMapHealthyReadinessGate(vn),
-		newIAMForServiceAccountsMutator(m.config.EnableIAMForServiceAccounts),
-		newECRSecretMutator(m.config.EnableECRSecret),
+	var mutators []PodMutator
+
+	if vn != nil {
+		mutators = []PodMutator{
+			newProxyMutator(proxyMutatorConfig{
+				egressIgnoredIPs: m.config.IgnoredIPs,
+				initProxyMutatorConfig: initProxyMutatorConfig{
+					containerImage: m.config.InitImage,
+					cpuRequests:    m.config.SidecarCpu,
+					memoryRequests: m.config.SidecarMemory,
+				},
+			}, vn),
+			newEnvoyMutator(envoyMutatorConfig{
+				accountID:             m.accountID,
+				awsRegion:             m.awsRegion,
+				preview:               m.config.Preview,
+				logLevel:              m.config.LogLevel,
+				sidecarImage:          m.config.SidecarImage,
+				sidecarCPURequests:    m.config.SidecarCpu,
+				sidecarMemoryRequests: m.config.SidecarMemory,
+				enableXrayTracing:     m.config.EnableXrayTracing,
+				enableJaegerTracing:   m.config.EnableJaegerTracing,
+				enableDatadogTracing:  m.config.EnableDatadogTracing,
+				enableStatsTags:       m.config.EnableStatsTags,
+				enableStatsD:          m.config.EnableStatsD,
+			}, ms, vn),
+			newXrayMutator(xrayMutatorConfig{
+				awsRegion:             m.awsRegion,
+				sidecarCPURequests:    m.config.SidecarCpu,
+				sidecarMemoryRequests: m.config.SidecarMemory,
+			}, m.config.EnableXrayTracing),
+			newDatadogMutator(datadogMutatorConfig{
+				datadogAddress: m.config.DatadogAddress,
+				datadogPort:    m.config.DatadogPort,
+			}, m.config.EnableDatadogTracing),
+			newJaegerMutator(jaegerMutatorConfig{
+				jaegerAddress: m.config.JaegerAddress,
+				jaegerPort:    m.config.JaegerPort,
+			}, m.config.EnableJaegerTracing),
+			newCloudMapHealthyReadinessGate(vn),
+			newIAMForServiceAccountsMutator(m.config.EnableIAMForServiceAccounts),
+			newECRSecretMutator(m.config.EnableECRSecret),
+		}
+	} else if vg != nil {
+		mutators = []PodMutator{newVirtualGatewayEnvoyConfig(virtualGatwayEnvoyConfig{
+			accountID:    m.accountID,
+			awsRegion:    m.awsRegion,
+			preview:      m.config.Preview,
+			logLevel:     m.config.LogLevel,
+			sidecarImage: m.config.SidecarImage,
+		}, ms, vg),
+		}
 	}
 
 	for _, mutator := range mutators {
