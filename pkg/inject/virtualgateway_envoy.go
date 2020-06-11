@@ -142,9 +142,9 @@ func (m *virtualGatewayEnvoyConfig) virtualGatewayImageOverride(pod *corev1.Pod)
 	}
 
 	switch strings.ToLower(imageOverrideAnnotation) {
-	case "enabled":
+	case gatewayImageOverrideModeEnabled:
 		return false
-	case "disabled":
+	case gatewayImageOverrideModeDisabled:
 		return true
 	default:
 		return true
