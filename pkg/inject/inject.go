@@ -137,7 +137,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 		}
 	} else if vg != nil {
 		mutators = []PodMutator{newVirtualGatewayEnvoyConfig(virtualGatwayEnvoyConfig{
-			accountID:             m.accountID,
+			accountID:    m.accountID,
 			awsRegion:    m.awsRegion,
 			preview:      m.config.Preview,
 			logLevel:     m.config.LogLevel,

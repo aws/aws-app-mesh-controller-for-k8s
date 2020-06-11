@@ -2,6 +2,7 @@ package inject
 
 import (
 	"encoding/json"
+	"fmt"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
@@ -28,6 +29,7 @@ type VirtualGatewayEnvoyVariables struct {
 }
 
 type virtualGatwayEnvoyConfig struct {
+	accountID    string
 	awsRegion    string
 	preview      bool
 	logLevel     string
@@ -96,7 +98,7 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 }
 
 func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) VirtualGatewayEnvoyVariables {
-	meshName := aws.StringValue(m.ms.Spec.AWSName)
+	meshName := m.getAugmentedMeshName()
 	virtualGatewayName := aws.StringValue(m.vg.Spec.AWSName)
 	preview := m.getPreview(pod)
 
@@ -118,4 +120,12 @@ func (m *virtualGatewayEnvoyConfig) getPreview(pod *corev1.Pod) string {
 		return "1"
 	}
 	return "0"
+}
+
+func (m *virtualGatewayEnvoyConfig) getAugmentedMeshName() string {
+	meshName := aws.StringValue(m.ms.Spec.AWSName)
+	if m.ms.Spec.MeshOwner != nil && aws.StringValue(m.ms.Spec.MeshOwner) != m.mutatorConfig.accountID {
+		return fmt.Sprintf("%v@%v", meshName, aws.StringValue(m.ms.Spec.MeshOwner))
+	}
+	return meshName
 }
