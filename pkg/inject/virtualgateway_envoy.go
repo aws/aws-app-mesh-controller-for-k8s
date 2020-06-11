@@ -111,7 +111,7 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 func (m *virtualGatewayEnvoyConfig) getPreview(pod *corev1.Pod) string {
 	preview := m.mutatorConfig.preview
 	if v, ok := pod.ObjectMeta.Annotations[AppMeshPreviewAnnotation]; ok {
-		preview = strings.ToLower(v) == "true"
+		preview = strings.ToLower(v) == "enabled"
 	}
 	if preview {
 		return "1"
@@ -127,12 +127,27 @@ func (m *virtualGatewayEnvoyConfig) getAugmentedMeshName() string {
 	return meshName
 }
 
+const (
+	// when enabled, a virtual gateway image will not be overriden
+	gatewayImageSkipOverrideModeEnabled = "enabled"
+	// when disabled, a virtual gateway image will be overriden. This is also the default behavior
+	gatewayImageSkipOverrideModeDisabled = "disabled"
+)
+
 func (m *virtualGatewayEnvoyConfig) virtualGatewayImageOverride(pod *corev1.Pod) bool {
 
+	var imageOverrideAnnotation string
 	if v, ok := pod.ObjectMeta.Annotations[AppMeshGatewaySkipImageOverride]; ok {
-		if v == "true" {
-			return false
-		}
+		imageOverrideAnnotation = v
 	}
-	return true
+
+	switch strings.ToLower(imageOverrideAnnotation) {
+	case gatewayImageSkipOverrideModeEnabled:
+		return false
+	case gatewayImageSkipOverrideModeDisabled:
+		return true
+	default:
+		return true
+	}
+
 }

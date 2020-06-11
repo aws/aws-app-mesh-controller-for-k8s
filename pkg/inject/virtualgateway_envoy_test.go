@@ -49,7 +49,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 			Namespace: "my-ns",
 			Name:      "my-pod",
 			Annotations: map[string]string{
-				"appmesh.k8s.aws/virtualGatewaySkipImageOverride": "true",
+				"appmesh.k8s.aws/virtualGatewaySkipImageOverride": "enabled",
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -237,7 +237,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					Namespace: "my-ns",
 					Name:      "my-pod",
 					Annotations: map[string]string{
-						"appmesh.k8s.aws/virtualGatewaySkipImageOverride": "true",
+						"appmesh.k8s.aws/virtualGatewaySkipImageOverride": "enabled",
 					},
 				},
 				Spec: corev1.PodSpec{
