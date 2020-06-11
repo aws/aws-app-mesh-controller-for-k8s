@@ -129,9 +129,9 @@ func (m *virtualGatewayEnvoyConfig) getAugmentedMeshName() string {
 
 const (
 	// when enabled, a virtual gateway image will not be overriden
-	gatewayImageOverrideModeEnabled = "enabled"
+	gatewayImageSkipOverrideModeEnabled = "enabled"
 	// when disabled, a virtual gateway image will be overriden. This is also the default behavior
-	gatewayImageOverrideModeDisabled = "disabled"
+	gatewayImageSkipOverrideModeDisabled = "disabled"
 )
 
 func (m *virtualGatewayEnvoyConfig) virtualGatewayImageOverride(pod *corev1.Pod) bool {
@@ -142,9 +142,9 @@ func (m *virtualGatewayEnvoyConfig) virtualGatewayImageOverride(pod *corev1.Pod)
 	}
 
 	switch strings.ToLower(imageOverrideAnnotation) {
-	case gatewayImageOverrideModeEnabled:
+	case gatewayImageSkipOverrideModeEnabled:
 		return false
-	case gatewayImageOverrideModeDisabled:
+	case gatewayImageSkipOverrideModeDisabled:
 		return true
 	default:
 		return true
