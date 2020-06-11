@@ -31,6 +31,9 @@ const (
 	AppMeshSidecarInjectAnnotation = "appmesh.k8s.aws/sidecarInjectorWebhook"
 	//AppMeshSecretMountsAnnotation specifies the list of Secret that need to be mounted to the proxy as a volume
 	AppMeshSecretMountsAnnotation = "appmesh.k8s.aws/secretMounts"
+	//AppMeshGatewaySkipImageOverride specifies if Virtual Gateway sidecar image override needs to be skipped for customers to
+	//for customers to use their own sidecare image for Virtual Gateway
+	AppMeshGatewaySkipImageOverride = "appmesh.k8s.aws/virtualGatewaySkipImageOverride"
 
 	//Pod Labels
 

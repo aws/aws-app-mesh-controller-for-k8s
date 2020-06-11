@@ -5,7 +5,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,6 +39,24 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 				{
 					Name:  "envoy",
 					Image: "envoy:v2",
+				},
+			},
+		},
+	}
+
+	podSkipOverride := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "my-pod",
+			Annotations: map[string]string{
+				"appmesh.k8s.aws/virtualGatewaySkipImageOverride": "true",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "envoy",
+					Image: "envoy:custom_version",
 				},
 			},
 		},
@@ -201,6 +218,57 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 			},
 		},
 		{
+			name: "skip image override",
+			fields: fields{
+				vg: vg,
+				ms: ms,
+				mutatorConfig: virtualGatwayEnvoyConfig{
+					awsRegion:    "us-west-2",
+					preview:      false,
+					logLevel:     "debug",
+					sidecarImage: "envoy:v2",
+				},
+			},
+			args: args{
+				pod: podSkipOverride,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+					Annotations: map[string]string{
+						"appmesh.k8s.aws/virtualGatewaySkipImageOverride": "true",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "envoy",
+							Image: "envoy:custom_version",
+							Env: []corev1.EnvVar{
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "pod multiple containers",
 			fields: fields{
 				vg: vg,
@@ -307,7 +375,6 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.New("invalid envoy image name for injection envoy:v2, expected name: injector-envoy-image"),
 		},
 		{
 			name: "pod with image stub",
