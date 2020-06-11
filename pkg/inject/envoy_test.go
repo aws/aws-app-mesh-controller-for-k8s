@@ -811,7 +811,7 @@ func Test_envoyMutator_getPreview(t *testing.T) {
 				pod: &corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							"appmesh.k8s.aws/preview": "true",
+							"appmesh.k8s.aws/preview": "enabled",
 						},
 					},
 				},
@@ -829,7 +829,7 @@ func Test_envoyMutator_getPreview(t *testing.T) {
 				pod: &corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							"appmesh.k8s.aws/preview": "false",
+							"appmesh.k8s.aws/preview": "disabled",
 						},
 					},
 				},

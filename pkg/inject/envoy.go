@@ -179,7 +179,7 @@ func (m *envoyMutator) getAugmentedMeshName() string {
 func (m *envoyMutator) getPreview(pod *corev1.Pod) string {
 	preview := m.mutatorConfig.preview
 	if v, ok := pod.ObjectMeta.Annotations[AppMeshPreviewAnnotation]; ok {
-		preview = strings.ToLower(v) == "true"
+		preview = strings.ToLower(v) == "enabled"
 	}
 	if preview {
 		return "1"
