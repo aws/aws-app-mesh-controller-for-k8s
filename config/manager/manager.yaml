@@ -2,25 +2,25 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: manager
   name: system
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller-manager
+  name: manager
   namespace: system
   labels:
-    control-plane: controller-manager
+    control-plane: manager
 spec:
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: manager
   replicas: 1
   template:
     metadata:
       labels:
-        control-plane: controller-manager
+        control-plane: manager
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
