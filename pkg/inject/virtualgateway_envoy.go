@@ -5,7 +5,6 @@ import (
 	"fmt"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"strings"
 )
@@ -74,10 +73,8 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 
 	//we override the image to latest Envoy so customers do not have to manually manage
 	// envoy versions and let controller handle consistency versions across the mesh
-	if pod.Spec.Containers[envoyIdx].Image == envoyImageStub || pod.Spec.Containers[envoyIdx].Image == m.mutatorConfig.sidecarImage {
+	if m.virtualGatewayImageOverride(pod) {
 		pod.Spec.Containers[envoyIdx].Image = m.mutatorConfig.sidecarImage
-	} else {
-		return errors.Errorf("invalid envoy image name for injection %s, expected name: %s", pod.Spec.Containers[envoyIdx].Image, envoyImageStub)
 	}
 
 	for idx, env := range pod.Spec.Containers[envoyIdx].Env {
@@ -128,4 +125,14 @@ func (m *virtualGatewayEnvoyConfig) getAugmentedMeshName() string {
 		return fmt.Sprintf("%v@%v", meshName, aws.StringValue(m.ms.Spec.MeshOwner))
 	}
 	return meshName
+}
+
+func (m *virtualGatewayEnvoyConfig) virtualGatewayImageOverride(pod *corev1.Pod) bool {
+
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshGatewaySkipImageOverride]; ok {
+		if v == "true" {
+			return false
+		}
+	}
+	return true
 }
