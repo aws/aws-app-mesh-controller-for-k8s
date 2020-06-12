@@ -9,7 +9,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 )
@@ -38,12 +37,8 @@ func (d *membershipDesignator) Designate(ctx context.Context, pod *corev1.Pod) (
 
 	// see https://github.com/kubernetes/kubernetes/issues/88282 and https://github.com/kubernetes/kubernetes/issues/76680
 	req := webhook.ContextGetAdmissionRequest(ctx)
-	podNS := &corev1.Namespace{}
-	if err := d.k8sClient.Get(ctx, types.NamespacedName{Name: req.Namespace}, podNS); err != nil {
-		return nil, err
-	}
 	vnList := appmesh.VirtualNodeList{}
-	if err := d.k8sClient.List(ctx, &vnList, client.InNamespace(podNS.Name)); err != nil {
+	if err := d.k8sClient.List(ctx, &vnList, client.InNamespace(req.Namespace)); err != nil {
 		return nil, errors.Wrap(err, "failed to list VirtualNodes in cluster")
 	}
 

@@ -40,13 +40,8 @@ func (d *membershipDesignator) DesignateForPod(ctx context.Context, pod *corev1.
 
 	// see https://github.com/kubernetes/kubernetes/issues/88282 and https://github.com/kubernetes/kubernetes/issues/76680
 	req := webhook.ContextGetAdmissionRequest(ctx)
-	podNS := &corev1.Namespace{}
-	if err := d.k8sClient.Get(ctx, types.NamespacedName{Name: req.Namespace}, podNS); err != nil {
-		return nil, err
-	}
-
 	vgList := appmesh.VirtualGatewayList{}
-	if err := d.k8sClient.List(ctx, &vgList, client.InNamespace(podNS.Name)); err != nil {
+	if err := d.k8sClient.List(ctx, &vgList, client.InNamespace(req.Namespace)); err != nil {
 		return nil, errors.Wrap(err, "failed to list VirtualGateways in cluster")
 	}
 
