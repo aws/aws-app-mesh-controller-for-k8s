@@ -4,14 +4,17 @@ import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	testclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 	"testing"
 )
 
@@ -414,8 +417,11 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 				err := k8sClient.Create(ctx, mesh.DeepCopy())
 				assert.NoError(t, err)
 			}
+			ctx = webhook.ContextWithAdmissionRequest(ctx, admission.Request{
+				AdmissionRequest: admissionv1beta1.AdmissionRequest{Namespace: "awesome-ns"},
+			})
 
-			got, err := designator.Designate(context.Background(), tt.args.pod)
+			got, err := designator.Designate(ctx, tt.args.pod)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
