@@ -4,10 +4,12 @@ import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
 )
@@ -33,8 +35,15 @@ type membershipDesignator struct {
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes,verbs=get;list;watch
 
 func (d *membershipDesignator) Designate(ctx context.Context, pod *corev1.Pod) (*appmesh.VirtualNode, error) {
+
+	// see https://github.com/kubernetes/kubernetes/issues/88282 and https://github.com/kubernetes/kubernetes/issues/76680
+	req := webhook.ContextGetAdmissionRequest(ctx)
+	podNS := &corev1.Namespace{}
+	if err := d.k8sClient.Get(ctx, types.NamespacedName{Name: req.Namespace}, podNS); err != nil {
+		return nil, err
+	}
 	vnList := appmesh.VirtualNodeList{}
-	if err := d.k8sClient.List(ctx, &vnList, client.InNamespace(pod.Namespace)); err != nil {
+	if err := d.k8sClient.List(ctx, &vnList, client.InNamespace(podNS.Name)); err != nil {
 		return nil, errors.Wrap(err, "failed to list VirtualNodes in cluster")
 	}
 
