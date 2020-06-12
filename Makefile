@@ -4,14 +4,9 @@ IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
-
-# By default app mesh aws-sdk-go override is disabled for master
-GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
-ifeq ($(GIT_BRANCH), master)
-APPMESH_SDK_OVERRIDE := "n"
-else
-APPMESH_SDK_OVERRIDE := "y"
-endif
+# app mesh aws-sdk-go override in case we need to build against a custom version
+# TODO(fawadkhaliq) disable this when App Mesh preview SDK is released
+APPMESH_SDK_OVERRIDE ?= "y"
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
