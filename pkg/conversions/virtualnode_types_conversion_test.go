@@ -468,7 +468,7 @@ func TestConvert_CRD_VirtualServiceBackend_To_SDK_VirtualServiceBackend(t *testi
 			name: "normal case",
 			args: args{
 				crdObj: &appmesh.VirtualServiceBackend{
-					VirtualServiceRef: appmesh.VirtualServiceReference{
+					VirtualServiceRef: &appmesh.VirtualServiceReference{
 						Namespace: aws.String("my-ns"),
 						Name:      "my-vs",
 					},
@@ -515,7 +515,7 @@ func TestConvert_CRD_VirtualServiceBackend_To_SDK_VirtualServiceBackend(t *testi
 			name: "normal case + nil ClientPolicy",
 			args: args{
 				crdObj: &appmesh.VirtualServiceBackend{
-					VirtualServiceRef: appmesh.VirtualServiceReference{
+					VirtualServiceRef: &appmesh.VirtualServiceReference{
 						Namespace: aws.String("my-ns"),
 						Name:      "my-vs",
 					},
@@ -535,10 +535,48 @@ func TestConvert_CRD_VirtualServiceBackend_To_SDK_VirtualServiceBackend(t *testi
 			},
 		},
 		{
+			name: "use virtualServiceARN",
+			args: args{
+				crdObj: &appmesh.VirtualServiceBackend{
+					VirtualServiceARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualService/vs-name"),
+					ClientPolicy: &appmesh.ClientPolicy{
+						TLS: &appmesh.ClientPolicyTLS{
+							Enforce: aws.Bool(true),
+							Ports:   []appmesh.PortNumber{80, 443},
+							Validation: appmesh.TLSValidationContext{
+								Trust: appmesh.TLSValidationContextTrust{
+									ACM: &appmesh.TLSValidationContextACMTrust{
+										CertificateAuthorityARNs: []string{"arn-1", "arn-2"},
+									},
+								},
+							},
+						},
+					},
+				},
+				sdkObj: &appmeshsdk.VirtualServiceBackend{},
+			},
+			wantSDKObj: &appmeshsdk.VirtualServiceBackend{
+				VirtualServiceName: aws.String("vs-name"),
+				ClientPolicy: &appmeshsdk.ClientPolicy{
+					Tls: &appmeshsdk.ClientPolicyTls{
+						Enforce: aws.Bool(true),
+						Ports:   []*int64{aws.Int64(80), aws.Int64(443)},
+						Validation: &appmeshsdk.TlsValidationContext{
+							Trust: &appmeshsdk.TlsValidationContextTrust{
+								Acm: &appmeshsdk.TlsValidationContextAcmTrust{
+									CertificateAuthorityArns: []*string{aws.String("arn-1"), aws.String("arn-2")},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "error when convert VirtualServiceReference",
 			args: args{
 				crdObj: &appmesh.VirtualServiceBackend{
-					VirtualServiceRef: appmesh.VirtualServiceReference{
+					VirtualServiceRef: &appmesh.VirtualServiceReference{
 						Namespace: aws.String("my-ns"),
 						Name:      "my-vs",
 					},
@@ -560,7 +598,7 @@ func TestConvert_CRD_VirtualServiceBackend_To_SDK_VirtualServiceBackend(t *testi
 			if tt.args.scopeConvertFunc != nil {
 				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc)
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource)
+			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_VirtualServiceBackend_To_SDK_VirtualServiceBackend(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
@@ -590,7 +628,7 @@ func TestConvert_CRD_Backend_To_SDK_Backend(t *testing.T) {
 			args: args{
 				crdObj: &appmesh.Backend{
 					VirtualService: appmesh.VirtualServiceBackend{
-						VirtualServiceRef: appmesh.VirtualServiceReference{
+						VirtualServiceRef: &appmesh.VirtualServiceReference{
 							Namespace: aws.String("my-ns"),
 							Name:      "my-vs",
 						},
@@ -1946,7 +1984,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 					Backends: []appmesh.Backend{
 						{
 							VirtualService: appmesh.VirtualServiceBackend{
-								VirtualServiceRef: appmesh.VirtualServiceReference{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
 									Namespace: aws.String("ns-1"),
 									Name:      "vs-1",
 								},
@@ -1967,7 +2005,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 						},
 						{
 							VirtualService: appmesh.VirtualServiceBackend{
-								VirtualServiceRef: appmesh.VirtualServiceReference{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
 									Namespace: aws.String("ns-2"),
 									Name:      "vs-2",
 								},
@@ -2105,7 +2143,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 					Backends: []appmesh.Backend{
 						{
 							VirtualService: appmesh.VirtualServiceBackend{
-								VirtualServiceRef: appmesh.VirtualServiceReference{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
 									Namespace: aws.String("ns-1"),
 									Name:      "vs-1",
 								},
@@ -2126,7 +2164,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 						},
 						{
 							VirtualService: appmesh.VirtualServiceBackend{
-								VirtualServiceRef: appmesh.VirtualServiceReference{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
 									Namespace: aws.String("ns-2"),
 									Name:      "vs-2",
 								},
@@ -2260,7 +2298,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 					Backends: []appmesh.Backend{
 						{
 							VirtualService: appmesh.VirtualServiceBackend{
-								VirtualServiceRef: appmesh.VirtualServiceReference{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
 									Namespace: aws.String("ns-1"),
 									Name:      "vs-1",
 								},
@@ -2281,7 +2319,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 						},
 						{
 							VirtualService: appmesh.VirtualServiceBackend{
-								VirtualServiceRef: appmesh.VirtualServiceReference{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
 									Namespace: aws.String("ns-2"),
 									Name:      "vs-2",
 								},
@@ -2580,7 +2618,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 					Backends: []appmesh.Backend{
 						{
 							VirtualService: appmesh.VirtualServiceBackend{
-								VirtualServiceRef: appmesh.VirtualServiceReference{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
 									Namespace: aws.String("ns-1"),
 									Name:      "vs-1",
 								},
@@ -2601,7 +2639,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 						},
 						{
 							VirtualService: appmesh.VirtualServiceBackend{
-								VirtualServiceRef: appmesh.VirtualServiceReference{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
 									Namespace: aws.String("ns-2"),
 									Name:      "vs-2",
 								},
@@ -2741,7 +2779,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 					Backends: []appmesh.Backend{
 						{
 							VirtualService: appmesh.VirtualServiceBackend{
-								VirtualServiceRef: appmesh.VirtualServiceReference{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
 									Namespace: aws.String("ns-1"),
 									Name:      "vs-1",
 								},
@@ -2762,7 +2800,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 						},
 						{
 							VirtualService: appmesh.VirtualServiceBackend{
-								VirtualServiceRef: appmesh.VirtualServiceReference{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
 									Namespace: aws.String("ns-2"),
 									Name:      "vs-2",
 								},

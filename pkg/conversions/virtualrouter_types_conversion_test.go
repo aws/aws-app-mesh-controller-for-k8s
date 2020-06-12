@@ -72,10 +72,10 @@ func TestConvert_CRD_WeightedTarget_To_SDK_WeightedTarget(t *testing.T) {
 		wantErr    error
 	}{
 		{
-			name: "normal case",
+			name: "use virtualNodeRef",
 			args: args{
 				crdObj: &appmesh.WeightedTarget{
-					VirtualNodeRef: appmesh.VirtualNodeReference{
+					VirtualNodeRef: &appmesh.VirtualNodeReference{
 						Namespace: aws.String("ns-1"),
 						Name:      "vn-1",
 					},
@@ -94,6 +94,20 @@ func TestConvert_CRD_WeightedTarget_To_SDK_WeightedTarget(t *testing.T) {
 				Weight:      aws.Int64(100),
 			},
 		},
+		{
+			name: "use virtualNodeARN",
+			args: args{
+				crdObj: &appmesh.WeightedTarget{
+					VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
+					Weight:         int64(100),
+				},
+				sdkObj: &appmeshsdk.WeightedTarget{},
+			},
+			wantSDKObj: &appmeshsdk.WeightedTarget{
+				VirtualNode: aws.String("vn-name"),
+				Weight:      aws.Int64(100),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -103,7 +117,7 @@ func TestConvert_CRD_WeightedTarget_To_SDK_WeightedTarget(t *testing.T) {
 			if tt.args.scopeConvertFunc != nil {
 				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc)
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource)
+			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_WeightedTarget_To_SDK_WeightedTarget(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
@@ -611,14 +625,14 @@ func TestConvert_CRD_HTTPRouteAction_To_SDK_HttpRouteAction(t *testing.T) {
 				crdObj: &appmesh.HTTPRouteAction{
 					WeightedTargets: []appmesh.WeightedTarget{
 						{
-							VirtualNodeRef: appmesh.VirtualNodeReference{
+							VirtualNodeRef: &appmesh.VirtualNodeReference{
 								Namespace: aws.String("ns-1"),
 								Name:      "vn-1",
 							},
 							Weight: int64(100),
 						},
 						{
-							VirtualNodeRef: appmesh.VirtualNodeReference{
+							VirtualNodeRef: &appmesh.VirtualNodeReference{
 								Namespace: aws.String("ns-2"),
 								Name:      "vn-2",
 							},
@@ -869,14 +883,14 @@ func TestConvert_CRD_HTTPRoute_To_SDK_HttpRoute(t *testing.T) {
 					Action: appmesh.HTTPRouteAction{
 						WeightedTargets: []appmesh.WeightedTarget{
 							{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("ns-1"),
 									Name:      "vn-1",
 								},
 								Weight: int64(100),
 							},
 							{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("ns-2"),
 									Name:      "vn-2",
 								},
@@ -1023,14 +1037,14 @@ func TestConvert_CRD_HTTPRoute_To_SDK_HttpRoute(t *testing.T) {
 					Action: appmesh.HTTPRouteAction{
 						WeightedTargets: []appmesh.WeightedTarget{
 							{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("ns-1"),
 									Name:      "vn-1",
 								},
 								Weight: int64(100),
 							},
 							{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("ns-2"),
 									Name:      "vn-2",
 								},
@@ -1139,14 +1153,14 @@ func TestConvert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(t *testing.T) {
 				crdObj: &appmesh.TCPRouteAction{
 					WeightedTargets: []appmesh.WeightedTarget{
 						{
-							VirtualNodeRef: appmesh.VirtualNodeReference{
+							VirtualNodeRef: &appmesh.VirtualNodeReference{
 								Namespace: aws.String("ns-1"),
 								Name:      "vn-1",
 							},
 							Weight: int64(100),
 						},
 						{
-							VirtualNodeRef: appmesh.VirtualNodeReference{
+							VirtualNodeRef: &appmesh.VirtualNodeReference{
 								Namespace: aws.String("ns-2"),
 								Name:      "vn-2",
 							},
@@ -1297,14 +1311,14 @@ func TestConvert_CRD_TCPRoute_To_SDK_TcpRoute(t *testing.T) {
 					Action: appmesh.TCPRouteAction{
 						WeightedTargets: []appmesh.WeightedTarget{
 							{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("ns-1"),
 									Name:      "vn-1",
 								},
 								Weight: int64(100),
 							},
 							{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("ns-2"),
 									Name:      "vn-2",
 								},
@@ -1769,14 +1783,14 @@ func TestConvert_CRD_GRPCRouteAction_To_SDK_GrpcRouteAction(t *testing.T) {
 				crdObj: &appmesh.GRPCRouteAction{
 					WeightedTargets: []appmesh.WeightedTarget{
 						{
-							VirtualNodeRef: appmesh.VirtualNodeReference{
+							VirtualNodeRef: &appmesh.VirtualNodeReference{
 								Namespace: aws.String("ns-1"),
 								Name:      "vn-1",
 							},
 							Weight: int64(100),
 						},
 						{
-							VirtualNodeRef: appmesh.VirtualNodeReference{
+							VirtualNodeRef: &appmesh.VirtualNodeReference{
 								Namespace: aws.String("ns-2"),
 								Name:      "vn-2",
 							},
@@ -2159,14 +2173,14 @@ func TestConvert_CRD_GRPCRoute_To_SDK_GrpcRoute(t *testing.T) {
 					Action: appmesh.GRPCRouteAction{
 						WeightedTargets: []appmesh.WeightedTarget{
 							{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("ns-1"),
 									Name:      "vn-1",
 								},
 								Weight: int64(100),
 							},
 							{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("ns-2"),
 									Name:      "vn-2",
 								},
@@ -2294,14 +2308,14 @@ func TestConvert_CRD_GRPCRoute_To_SDK_GrpcRoute(t *testing.T) {
 					Action: appmesh.GRPCRouteAction{
 						WeightedTargets: []appmesh.WeightedTarget{
 							{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("ns-1"),
 									Name:      "vn-1",
 								},
 								Weight: int64(100),
 							},
 							{
-								VirtualNodeRef: appmesh.VirtualNodeReference{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
 									Namespace: aws.String("ns-2"),
 									Name:      "vn-2",
 								},
@@ -2447,14 +2461,14 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 						Action: appmesh.GRPCRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -2513,14 +2527,14 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 						Action: appmesh.HTTPRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -2578,14 +2592,14 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 						Action: appmesh.HTTPRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -2607,14 +2621,14 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 						Action: appmesh.TCPRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -2870,14 +2884,14 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 						Action: appmesh.HTTPRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -2935,14 +2949,14 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 						Action: appmesh.HTTPRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -2964,14 +2978,14 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 						Action: appmesh.TCPRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -3168,14 +3182,14 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 						Action: appmesh.GRPCRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -3234,14 +3248,14 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 						Action: appmesh.HTTPRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -3263,14 +3277,14 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 						Action: appmesh.TCPRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -3467,14 +3481,14 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 						Action: appmesh.GRPCRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},
@@ -3532,14 +3546,14 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 						Action: appmesh.HTTPRouteAction{
 							WeightedTargets: []appmesh.WeightedTarget{
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-1"),
 										Name:      "vn-1",
 									},
 									Weight: int64(100),
 								},
 								{
-									VirtualNodeRef: appmesh.VirtualNodeReference{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
 										Namespace: aws.String("ns-2"),
 										Name:      "vn-2",
 									},

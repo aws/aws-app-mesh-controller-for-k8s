@@ -28,7 +28,7 @@ func Test_extractVirtualServiceReferences(t *testing.T) {
 							Action: appmesh.GRPCGatewayRouteAction{
 								Target: appmesh.GatewayRouteTarget{
 									VirtualService: appmesh.GatewayRouteVirtualService{
-										VirtualServiceRef: appmesh.VirtualServiceReference{
+										VirtualServiceRef: &appmesh.VirtualServiceReference{
 											Namespace: aws.String("my-ns"),
 											Name:      "vs-1",
 										},
@@ -55,7 +55,7 @@ func Test_extractVirtualServiceReferences(t *testing.T) {
 							Action: appmesh.HTTPGatewayRouteAction{
 								Target: appmesh.GatewayRouteTarget{
 									VirtualService: appmesh.GatewayRouteVirtualService{
-										VirtualServiceRef: appmesh.VirtualServiceReference{
+										VirtualServiceRef: &appmesh.VirtualServiceReference{
 											Namespace: aws.String("my-ns"),
 											Name:      "vs-1",
 										},
@@ -82,7 +82,7 @@ func Test_extractVirtualServiceReferences(t *testing.T) {
 							Action: appmesh.HTTPGatewayRouteAction{
 								Target: appmesh.GatewayRouteTarget{
 									VirtualService: appmesh.GatewayRouteVirtualService{
-										VirtualServiceRef: appmesh.VirtualServiceReference{
+										VirtualServiceRef: &appmesh.VirtualServiceReference{
 											Namespace: aws.String("my-ns"),
 											Name:      "vs-1",
 										},
@@ -109,7 +109,7 @@ func Test_extractVirtualServiceReferences(t *testing.T) {
 							Action: appmesh.HTTPGatewayRouteAction{
 								Target: appmesh.GatewayRouteTarget{
 									VirtualService: appmesh.GatewayRouteVirtualService{
-										VirtualServiceRef: appmesh.VirtualServiceReference{
+										VirtualServiceRef: &appmesh.VirtualServiceReference{
 											Namespace: aws.String("my-ns"),
 											Name:      "vs-1",
 										},
@@ -121,7 +121,7 @@ func Test_extractVirtualServiceReferences(t *testing.T) {
 							Action: appmesh.HTTPGatewayRouteAction{
 								Target: appmesh.GatewayRouteTarget{
 									VirtualService: appmesh.GatewayRouteVirtualService{
-										VirtualServiceRef: appmesh.VirtualServiceReference{
+										VirtualServiceRef: &appmesh.VirtualServiceReference{
 											Namespace: aws.String("my-ns"),
 											Name:      "vs-2",
 										},
@@ -173,7 +173,7 @@ func TestVirtualServiceReferenceIndexFunc(t *testing.T) {
 							Action: appmesh.HTTPGatewayRouteAction{
 								Target: appmesh.GatewayRouteTarget{
 									VirtualService: appmesh.GatewayRouteVirtualService{
-										VirtualServiceRef: appmesh.VirtualServiceReference{
+										VirtualServiceRef: &appmesh.VirtualServiceReference{
 											Namespace: aws.String("other-ns"),
 											Name:      "vs-1",
 										},
@@ -203,7 +203,7 @@ func TestVirtualServiceReferenceIndexFunc(t *testing.T) {
 							Action: appmesh.HTTPGatewayRouteAction{
 								Target: appmesh.GatewayRouteTarget{
 									VirtualService: appmesh.GatewayRouteVirtualService{
-										VirtualServiceRef: appmesh.VirtualServiceReference{
+										VirtualServiceRef: &appmesh.VirtualServiceReference{
 											Name: "vs-1",
 										},
 									},
@@ -229,7 +229,7 @@ func TestVirtualServiceReferenceIndexFunc(t *testing.T) {
 							Action: appmesh.GRPCGatewayRouteAction{
 								Target: appmesh.GatewayRouteTarget{
 									VirtualService: appmesh.GatewayRouteVirtualService{
-										VirtualServiceRef: appmesh.VirtualServiceReference{
+										VirtualServiceRef: &appmesh.VirtualServiceReference{
 											Namespace: aws.String("my-ns"),
 											Name:      "vs-1",
 										},
@@ -241,7 +241,7 @@ func TestVirtualServiceReferenceIndexFunc(t *testing.T) {
 							Action: appmesh.HTTPGatewayRouteAction{
 								Target: appmesh.GatewayRouteTarget{
 									VirtualService: appmesh.GatewayRouteVirtualService{
-										VirtualServiceRef: appmesh.VirtualServiceReference{
+										VirtualServiceRef: &appmesh.VirtualServiceReference{
 											Namespace: aws.String("my-ns"),
 											Name:      "vs-2",
 										},

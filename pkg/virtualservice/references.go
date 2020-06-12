@@ -13,19 +13,17 @@ const (
 )
 
 func ExtractVirtualNodeReferences(vs *appmesh.VirtualService) []appmesh.VirtualNodeReference {
-	if vs.Spec.Provider == nil || vs.Spec.Provider.VirtualNode == nil {
+	if vs.Spec.Provider == nil || vs.Spec.Provider.VirtualNode == nil || vs.Spec.Provider.VirtualNode.VirtualNodeRef == nil {
 		return nil
 	}
-	vnRef := vs.Spec.Provider.VirtualNode.VirtualNodeRef
-	return []appmesh.VirtualNodeReference{vnRef}
+	return []appmesh.VirtualNodeReference{*vs.Spec.Provider.VirtualNode.VirtualNodeRef}
 }
 
 func ExtractVirtualRouterReferences(vs *appmesh.VirtualService) []appmesh.VirtualRouterReference {
-	if vs.Spec.Provider == nil || vs.Spec.Provider.VirtualRouter == nil {
+	if vs.Spec.Provider == nil || vs.Spec.Provider.VirtualRouter == nil || vs.Spec.Provider.VirtualRouter.VirtualRouterRef == nil {
 		return nil
 	}
-	vrRef := vs.Spec.Provider.VirtualRouter.VirtualRouterRef
-	return []appmesh.VirtualRouterReference{vrRef}
+	return []appmesh.VirtualRouterReference{*vs.Spec.Provider.VirtualRouter.VirtualRouterRef}
 }
 
 func VirtualNodeReferenceIndexFunc(obj runtime.Object) []types.NamespacedName {

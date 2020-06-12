@@ -8,8 +8,9 @@ import (
 func ExtractVirtualServiceReferences(vn *appmesh.VirtualNode) []appmesh.VirtualServiceReference {
 	var vsRefs []appmesh.VirtualServiceReference
 	for _, backend := range vn.Spec.Backends {
-		vsRef := backend.VirtualService.VirtualServiceRef
-		vsRefs = append(vsRefs, vsRef)
+		if backend.VirtualService.VirtualServiceRef != nil {
+			vsRefs = append(vsRefs, *backend.VirtualService.VirtualServiceRef)
+		}
 	}
 	return vsRefs
 }

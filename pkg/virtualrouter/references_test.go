@@ -30,16 +30,19 @@ func Test_ExtractVirtualNodeReferences(t *testing.T) {
 									Action: appmesh.GRPCRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-1",
 												},
 											},
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-2",
 												},
+											},
+											{
+												VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 											},
 										},
 									},
@@ -71,16 +74,19 @@ func Test_ExtractVirtualNodeReferences(t *testing.T) {
 									Action: appmesh.HTTPRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-1",
 												},
 											},
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-2",
 												},
+											},
+											{
+												VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 											},
 										},
 									},
@@ -112,16 +118,19 @@ func Test_ExtractVirtualNodeReferences(t *testing.T) {
 									Action: appmesh.HTTPRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-1",
 												},
 											},
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-2",
 												},
+											},
+											{
+												VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 											},
 										},
 									},
@@ -153,16 +162,19 @@ func Test_ExtractVirtualNodeReferences(t *testing.T) {
 									Action: appmesh.TCPRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-1",
 												},
 											},
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-2",
 												},
+											},
+											{
+												VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 											},
 										},
 									},
@@ -194,10 +206,13 @@ func Test_ExtractVirtualNodeReferences(t *testing.T) {
 									Action: appmesh.GRPCRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-1",
 												},
+											},
+											{
+												VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 											},
 										},
 									},
@@ -206,10 +221,13 @@ func Test_ExtractVirtualNodeReferences(t *testing.T) {
 									Action: appmesh.HTTPRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-2",
 												},
+											},
+											{
+												VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 											},
 										},
 									},
@@ -218,10 +236,13 @@ func Test_ExtractVirtualNodeReferences(t *testing.T) {
 									Action: appmesh.HTTPRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-3",
 												},
+											},
+											{
+												VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 											},
 										},
 									},
@@ -230,10 +251,13 @@ func Test_ExtractVirtualNodeReferences(t *testing.T) {
 									Action: appmesh.TCPRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-4",
 												},
+											},
+											{
+												VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 											},
 										},
 									},
@@ -294,10 +318,13 @@ func TestVirtualNodeReferenceIndexFunc(t *testing.T) {
 									Action: appmesh.GRPCRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("other-ns"),
 													Name:      "vn-1",
 												},
+											},
+											{
+												VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 											},
 										},
 									},
@@ -328,9 +355,12 @@ func TestVirtualNodeReferenceIndexFunc(t *testing.T) {
 									Action: appmesh.GRPCRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Name: "vn-1",
 												},
+											},
+											{
+												VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 											},
 										},
 									},
@@ -358,10 +388,13 @@ func TestVirtualNodeReferenceIndexFunc(t *testing.T) {
 									Action: appmesh.GRPCRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-1",
 												},
+											},
+											{
+												VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 											},
 										},
 									},
@@ -370,10 +403,13 @@ func TestVirtualNodeReferenceIndexFunc(t *testing.T) {
 									Action: appmesh.HTTPRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
 											{
-												VirtualNodeRef: appmesh.VirtualNodeReference{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
 													Namespace: aws.String("my-ns"),
 													Name:      "vn-2",
 												},
+											},
+											{
+												VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
 											},
 										},
 									},

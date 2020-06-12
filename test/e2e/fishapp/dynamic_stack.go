@@ -172,7 +172,7 @@ func (s *DynamicStack) Check(ctx context.Context, f *framework.Framework) {
 
 		vsIndexes := sets.NewInt()
 		for _, backend := range vn.Spec.Backends {
-			vsKey := references.ObjectKeyForVirtualServiceReference(vn, backend.VirtualService.VirtualServiceRef)
+			vsKey := references.ObjectKeyForVirtualServiceReference(vn, *backend.VirtualService.VirtualServiceRef)
 			vsIndex := vsIndexByKey[vsKey]
 			vsIndexes.Insert(vsIndex)
 		}
@@ -852,7 +852,7 @@ func (s *DynamicStack) grantVirtualNodesBackendAccess(ctx context.Context, f *fr
 					vs := s.createdServiceVSs[nextVirtualServiceIndex]
 					vnBackends = append(vnBackends, appmesh.Backend{
 						VirtualService: appmesh.VirtualServiceBackend{
-							VirtualServiceRef: appmesh.VirtualServiceReference{
+							VirtualServiceRef: &appmesh.VirtualServiceReference{
 								Namespace: aws.String(vs.Namespace),
 								Name:      vs.Name,
 							},

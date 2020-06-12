@@ -133,18 +133,20 @@ func (m *defaultResourceManager) validateMeshDependencies(ctx context.Context, m
 }
 
 func (m *defaultResourceManager) findVirtualNodeDependencies(ctx context.Context, vs *appmesh.VirtualService) (map[types.NamespacedName]*appmesh.VirtualNode, error) {
-	if vs.Spec.Provider == nil || vs.Spec.Provider.VirtualNode == nil {
-		return nil, nil
+	vnRefs := ExtractVirtualNodeReferences(vs)
+	vnByKey := make(map[types.NamespacedName]*appmesh.VirtualNode)
+	for _, vnRef := range vnRefs {
+		vnKey := references.ObjectKeyForVirtualNodeReference(vs, vnRef)
+		if _, ok := vnByKey[vnKey]; ok {
+			continue
+		}
+		vn, err := m.referencesResolver.ResolveVirtualNodeReference(ctx, vs, vnRef)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to resolve virtualNodeRef")
+		}
+		vnByKey[vnKey] = vn
 	}
-	vnRef := vs.Spec.Provider.VirtualNode.VirtualNodeRef
-	vnKey := references.ObjectKeyForVirtualNodeReference(vs, vnRef)
-	vn, err := m.referencesResolver.ResolveVirtualNodeReference(ctx, vs, vnRef)
-	if err != nil {
-		return nil, err
-	}
-	return map[types.NamespacedName]*appmesh.VirtualNode{
-		vnKey: vn,
-	}, nil
+	return vnByKey, nil
 }
 
 func (m *defaultResourceManager) validateVirtualNodeDependencies(ctx context.Context, ms *appmesh.Mesh, vnByKey map[types.NamespacedName]*appmesh.VirtualNode) error {
@@ -160,18 +162,20 @@ func (m *defaultResourceManager) validateVirtualNodeDependencies(ctx context.Con
 }
 
 func (m *defaultResourceManager) findVirtualRouterDependencies(ctx context.Context, vs *appmesh.VirtualService) (map[types.NamespacedName]*appmesh.VirtualRouter, error) {
-	if vs.Spec.Provider == nil || vs.Spec.Provider.VirtualRouter == nil {
-		return nil, nil
+	vrRefs := ExtractVirtualRouterReferences(vs)
+	vrByKey := make(map[types.NamespacedName]*appmesh.VirtualRouter)
+	for _, vrRef := range vrRefs {
+		vrKey := references.ObjectKeyForVirtualRouterReference(vs, vrRef)
+		if _, ok := vrByKey[vrKey]; ok {
+			continue
+		}
+		vr, err := m.referencesResolver.ResolveVirtualRouterReference(ctx, vs, vrRef)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to resolve virtualRouterRef")
+		}
+		vrByKey[vrKey] = vr
 	}
-	vrRef := vs.Spec.Provider.VirtualRouter.VirtualRouterRef
-	vrKey := references.ObjectKeyForVirtualRouterReference(vs, vrRef)
-	vr, err := m.referencesResolver.ResolveVirtualRouterReference(ctx, vs, vrRef)
-	if err != nil {
-		return nil, err
-	}
-	return map[types.NamespacedName]*appmesh.VirtualRouter{
-		vrKey: vr,
-	}, nil
+	return vrByKey, nil
 }
 
 func (m *defaultResourceManager) validateVirtualRouterDependencies(ctx context.Context, ms *appmesh.Mesh, vrByKey map[types.NamespacedName]*appmesh.VirtualRouter) error {

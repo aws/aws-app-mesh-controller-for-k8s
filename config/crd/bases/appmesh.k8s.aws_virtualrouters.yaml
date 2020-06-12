@@ -120,9 +120,17 @@ spec:
                             items:
                               description: WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
                               properties:
+                                virtualNodeARN:
+                                  description: Amazon Resource Name to AppMesh VirtualNode
+                                    object to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
+                                  type: string
                                 virtualNodeRef:
-                                  description: The virtual node to associate with
-                                    the weighted target.
+                                  description: Reference to Kubernetes VirtualNode
+                                    CR in cluster to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
                                   properties:
                                     name:
                                       description: Name is the name of VirtualNode
@@ -144,7 +152,6 @@ spec:
                                   minimum: 0
                                   type: integer
                               required:
-                              - virtualNodeRef
                               - weight
                               type: object
                             maxItems: 10
@@ -351,9 +358,17 @@ spec:
                             items:
                               description: WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
                               properties:
+                                virtualNodeARN:
+                                  description: Amazon Resource Name to AppMesh VirtualNode
+                                    object to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
+                                  type: string
                                 virtualNodeRef:
-                                  description: The virtual node to associate with
-                                    the weighted target.
+                                  description: Reference to Kubernetes VirtualNode
+                                    CR in cluster to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
                                   properties:
                                     name:
                                       description: Name is the name of VirtualNode
@@ -375,7 +390,6 @@ spec:
                                   minimum: 0
                                   type: integer
                               required:
-                              - virtualNodeRef
                               - weight
                               type: object
                             maxItems: 10
@@ -584,9 +598,17 @@ spec:
                             items:
                               description: WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
                               properties:
+                                virtualNodeARN:
+                                  description: Amazon Resource Name to AppMesh VirtualNode
+                                    object to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
+                                  type: string
                                 virtualNodeRef:
-                                  description: The virtual node to associate with
-                                    the weighted target.
+                                  description: Reference to Kubernetes VirtualNode
+                                    CR in cluster to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
                                   properties:
                                     name:
                                       description: Name is the name of VirtualNode
@@ -608,7 +630,6 @@ spec:
                                   minimum: 0
                                   type: integer
                               required:
-                              - virtualNodeRef
                               - weight
                               type: object
                             maxItems: 10
@@ -825,9 +846,17 @@ spec:
                             items:
                               description: WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
                               properties:
+                                virtualNodeARN:
+                                  description: Amazon Resource Name to AppMesh VirtualNode
+                                    object to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
+                                  type: string
                                 virtualNodeRef:
-                                  description: The virtual node to associate with
-                                    the weighted target.
+                                  description: Reference to Kubernetes VirtualNode
+                                    CR in cluster to associate with the weighted target.
+                                    Exactly one of 'virtualNodeRef' or 'virtualNodeARN'
+                                    must be specified.
                                   properties:
                                     name:
                                       description: Name is the name of VirtualNode
@@ -849,7 +878,6 @@ spec:
                                   minimum: 0
                                   type: integer
                               required:
-                              - virtualNodeRef
                               - weight
                               type: object
                             maxItems: 10

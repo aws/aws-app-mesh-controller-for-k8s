@@ -15,14 +15,14 @@ const (
 func extractVirtualServiceReferences(gr *appmesh.GatewayRoute) []appmesh.VirtualServiceReference {
 	var vsRefs []appmesh.VirtualServiceReference
 
-	if gr.Spec.GRPCRoute != nil {
-		vsRefs = append(vsRefs, gr.Spec.GRPCRoute.Action.Target.VirtualService.VirtualServiceRef)
+	if gr.Spec.GRPCRoute != nil && gr.Spec.GRPCRoute.Action.Target.VirtualService.VirtualServiceRef != nil {
+		vsRefs = append(vsRefs, *gr.Spec.GRPCRoute.Action.Target.VirtualService.VirtualServiceRef)
 	}
-	if gr.Spec.HTTPRoute != nil {
-		vsRefs = append(vsRefs, gr.Spec.HTTPRoute.Action.Target.VirtualService.VirtualServiceRef)
+	if gr.Spec.HTTPRoute != nil && gr.Spec.HTTPRoute.Action.Target.VirtualService.VirtualServiceRef != nil {
+		vsRefs = append(vsRefs, *gr.Spec.HTTPRoute.Action.Target.VirtualService.VirtualServiceRef)
 	}
-	if gr.Spec.HTTP2Route != nil {
-		vsRefs = append(vsRefs, gr.Spec.HTTP2Route.Action.Target.VirtualService.VirtualServiceRef)
+	if gr.Spec.HTTP2Route != nil && gr.Spec.HTTP2Route.Action.Target.VirtualService.VirtualServiceRef != nil {
+		vsRefs = append(vsRefs, *gr.Spec.HTTP2Route.Action.Target.VirtualService.VirtualServiceRef)
 	}
 
 	return vsRefs

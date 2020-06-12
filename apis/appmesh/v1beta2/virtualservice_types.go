@@ -23,14 +23,22 @@ import (
 
 // VirtualNodeServiceProvider refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualNodeServiceProvider.html
 type VirtualNodeServiceProvider struct {
-	// The virtual node that is acting as a service provider.
-	VirtualNodeRef VirtualNodeReference `json:"virtualNodeRef"`
+	// Reference to Kubernetes VirtualNode CR in cluster that is acting as a service provider. Exactly one of 'virtualNodeRef' or 'virtualNodeARN' must be specified.
+	// +optional
+	VirtualNodeRef *VirtualNodeReference `json:"virtualNodeRef,omitempty"`
+	// Amazon Resource Name to AppMesh VirtualNode object that is acting as a service provider. Exactly one of 'virtualNodeRef' or 'virtualNodeARN' must be specified.
+	// +optional
+	VirtualNodeARN *string `json:"virtualNodeARN,omitempty"`
 }
 
 // VirtualRouterServiceProvider refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualRouterServiceProvider.html
 type VirtualRouterServiceProvider struct {
-	// The virtual router that is acting as a service provider.
-	VirtualRouterRef VirtualRouterReference `json:"virtualRouterRef"`
+	// Reference to Kubernetes VirtualRouter CR in cluster that is acting as a service provider. Exactly one of 'virtualRouterRef' or 'virtualRouterARN' must be specified.
+	// +optional
+	VirtualRouterRef *VirtualRouterReference `json:"virtualRouterRef,omitempty"`
+	// Amazon Resource Name to AppMesh VirtualRouter object that is acting as a service provider. Exactly one of 'virtualRouterRef' or 'virtualRouterARN' must be specified.
+	// +optional
+	VirtualRouterARN *string `json:"virtualRouterARN,omitempty"`
 }
 
 // VirtualServiceProvider refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceProvider.html

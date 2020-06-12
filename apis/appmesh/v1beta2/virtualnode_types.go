@@ -75,8 +75,12 @@ type ClientPolicy struct {
 
 // VirtualServiceBackend refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceBackend.html
 type VirtualServiceBackend struct {
-	// The VirtualService that is acting as a virtual node backend.
-	VirtualServiceRef VirtualServiceReference `json:"virtualServiceRef"`
+	// Reference to Kubernetes VirtualService CR in cluster that is acting as a virtual node backend. Exactly one of 'virtualServiceRef' or 'virtualServiceARN' must be specified.
+	// +optional
+	VirtualServiceRef *VirtualServiceReference `json:"virtualServiceRef,omitempty"`
+	// Amazon Resource Name to AppMesh VirtualService object that is acting as a virtual node backend. Exactly one of 'virtualServiceRef' or 'virtualServiceARN' must be specified.
+	// +optional
+	VirtualServiceARN *string `json:"virtualServiceARN,omitempty"`
 	// A reference to an object that represents the client policy for a backend.
 	// +optional
 	ClientPolicy *ClientPolicy `json:"clientPolicy,omitempty"`
