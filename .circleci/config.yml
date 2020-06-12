@@ -26,6 +26,9 @@ jobs:
     steps:
       - checkout_and_cache_dependencies
       - run:
+          name: Unit test
+          command: make test
+      - run:
           name: Build
           command: make manager
       - run:
