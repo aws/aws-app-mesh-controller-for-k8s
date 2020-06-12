@@ -9,6 +9,14 @@ commands:
     description: "checkout code and cache go dependencies"
     steps:
       - checkout
+      - run:
+          name: kubebuilder install
+          command: |
+            arch=$(go env GOARCH)
+            os=$(go env GOOS)
+            curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/
+            sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
+            export PATH=$PATH:/usr/local/kubebuilder/bin
       - restore_cache:
           key: go-mod-{{ checksum "go.sum" }}
       - run:
