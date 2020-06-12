@@ -4,6 +4,7 @@ import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,8 +37,16 @@ type membershipDesignator struct {
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualgateways,verbs=get;list;watch
 
 func (d *membershipDesignator) DesignateForPod(ctx context.Context, pod *corev1.Pod) (*appmesh.VirtualGateway, error) {
+
+	// see https://github.com/kubernetes/kubernetes/issues/88282 and https://github.com/kubernetes/kubernetes/issues/76680
+	req := webhook.ContextGetAdmissionRequest(ctx)
+	podNS := &corev1.Namespace{}
+	if err := d.k8sClient.Get(ctx, types.NamespacedName{Name: req.Namespace}, podNS); err != nil {
+		return nil, err
+	}
+
 	vgList := appmesh.VirtualGatewayList{}
-	if err := d.k8sClient.List(ctx, &vgList, client.InNamespace(pod.Namespace)); err != nil {
+	if err := d.k8sClient.List(ctx, &vgList, client.InNamespace(podNS.Name)); err != nil {
 		return nil, errors.Wrap(err, "failed to list VirtualGateways in cluster")
 	}
 
@@ -68,8 +77,11 @@ func (d *membershipDesignator) DesignateForPod(ctx context.Context, pod *corev1.
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch
 
 func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj *appmesh.GatewayRoute) (*appmesh.VirtualGateway, error) {
+
+	// see https://github.com/kubernetes/kubernetes/issues/88282 and https://github.com/kubernetes/kubernetes/issues/76680
+	req := webhook.ContextGetAdmissionRequest(ctx)
 	objNS := corev1.Namespace{}
-	if err := d.k8sClient.Get(ctx, types.NamespacedName{Name: obj.GetNamespace()}, &objNS); err != nil {
+	if err := d.k8sClient.Get(ctx, types.NamespacedName{Name: req.Namespace}, &objNS); err != nil {
 		return nil, errors.Wrapf(err, "failed to get namespace: %s", obj.GetNamespace())
 	}
 	vgList := appmesh.VirtualGatewayList{}
