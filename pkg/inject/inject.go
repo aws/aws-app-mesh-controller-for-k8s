@@ -137,12 +137,18 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 		}
 	} else if vg != nil {
 		mutators = []PodMutator{newVirtualGatewayEnvoyConfig(virtualGatwayEnvoyConfig{
-			accountID:    m.accountID,
-			awsRegion:    m.awsRegion,
-			preview:      m.config.Preview,
-			logLevel:     m.config.LogLevel,
-			sidecarImage: m.config.SidecarImage,
+			accountID:         m.accountID,
+			awsRegion:         m.awsRegion,
+			preview:           m.config.Preview,
+			logLevel:          m.config.LogLevel,
+			sidecarImage:      m.config.SidecarImage,
+			enableXrayTracing: m.config.EnableXrayTracing,
 		}, ms, vg),
+			newXrayMutator(xrayMutatorConfig{
+				awsRegion:             m.awsRegion,
+				sidecarCPURequests:    m.config.SidecarCpu,
+				sidecarMemoryRequests: m.config.SidecarMemory,
+			}, m.config.EnableXrayTracing),
 		}
 	}
 

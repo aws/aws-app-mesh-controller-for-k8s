@@ -15,7 +15,8 @@ const envoyVirtualGatewayEnvMap = `
   "APPMESH_VIRTUAL_NODE_NAME": "mesh/{{ .MeshName }}/virtualGateway/{{ .VirtualGatewayName }}",
   "APPMESH_PREVIEW": "{{ .Preview }}",
   "ENVOY_LOG_LEVEL": "{{ .LogLevel }}",
-  "AWS_REGION": "{{ .AWSRegion }}"
+  "AWS_REGION": "{{ .AWSRegion }}"{{ if .EnableXrayTracing }},
+  "ENABLE_ENVOY_XRAY_TRACING": "1"{{ end }}
 }
 `
 
@@ -25,14 +26,16 @@ type VirtualGatewayEnvoyVariables struct {
 	VirtualGatewayName string
 	Preview            string
 	LogLevel           string
+	EnableXrayTracing  bool
 }
 
 type virtualGatwayEnvoyConfig struct {
-	accountID    string
-	awsRegion    string
-	preview      bool
-	logLevel     string
-	sidecarImage string
+	accountID         string
+	awsRegion         string
+	preview           bool
+	logLevel          string
+	sidecarImage      string
+	enableXrayTracing bool
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -105,6 +108,7 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 		VirtualGatewayName: virtualGatewayName,
 		Preview:            preview,
 		LogLevel:           m.mutatorConfig.logLevel,
+		EnableXrayTracing:  m.mutatorConfig.enableXrayTracing,
 	}
 }
 
