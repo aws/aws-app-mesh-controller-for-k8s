@@ -28,5 +28,3 @@ require (
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.6.0
 )
-
-replace github.com/aws/aws-sdk-go => ./vendor/github.com/aws/aws-sdk-go
