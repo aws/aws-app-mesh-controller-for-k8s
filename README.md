@@ -1,7 +1,7 @@
 [![CircleCI](https://circleci.com/gh/aws/aws-app-mesh-controller-for-k8s/tree/master.svg?style=svg)](https://circleci.com/gh/aws/aws-app-mesh-controller-for-k8s/tree/master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aws/aws-app-mesh-controller-for-k8s)](https://goreportcard.com/report/github.com/aws/aws-app-mesh-controller-for-k8s) 
 
-## Note: This [master branch](https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/master) is for our new release candidate of [appmesh-manager](https://github.com/aws/eks-charts/tree/master/stable/appmesh-manager). Please refer to [legacy-controller branch](https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/legacy-controller) for old versions.
+## Note: This [master branch](https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/master) is for our new release candidate of [appmesh-controller](https://github.com/aws/eks-charts/tree/master/stable/appmesh-controller). Please refer to [legacy-controller branch](https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/legacy-controller) for old versions.
 
 
 <p>

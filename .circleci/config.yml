@@ -27,10 +27,10 @@ jobs:
       - checkout_and_cache_dependencies
       - run:
           name: Build
-          command: make manager
+          command: make controller
       - run:
           name: Run
-          command: ./bin/manager -h || true
+          command: ./bin/controller -h || true
 workflows:
   version: 2
   check:
