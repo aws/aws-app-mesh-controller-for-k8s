@@ -480,6 +480,59 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "xray",
+			fields: fields{
+				vg: vg,
+				ms: ms,
+				mutatorConfig: virtualGatwayEnvoyConfig{
+					awsRegion:         "us-west-2",
+					preview:           false,
+					logLevel:          "debug",
+					sidecarImage:      "envoy:v2",
+					enableXrayTracing: true,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							Env: []corev1.EnvVar{
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENABLE_ENVOY_XRAY_TRACING",
+									Value: "1",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
