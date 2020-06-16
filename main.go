@@ -73,11 +73,11 @@ func main() {
 	fs := pflag.NewFlagSet("", pflag.ExitOnError)
 	fs.StringVar(&metricsAddr, "metrics-addr", "0.0.0.0:8080", "The address the metric endpoint binds to.")
 	fs.BoolVar(&enableLeaderElection, "enable-leader-election", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
+		"Enable leader election for controller. "+
+			"Enabling this will ensure there is only one active controller.")
 	fs.BoolVar(&enableCustomHealthCheck, "enable-custom-health-check", false,
 		"Enable custom healthCheck when using cloudMap serviceDiscovery")
-	fs.StringVar(&logLevel, "log-level", "info", "Set the controller manager log level - info(default), debug")
+	fs.StringVar(&logLevel, "log-level", "info", "Set the controller log level - info(default), debug")
 	awsCloudConfig.BindFlags(fs)
 	injectConfig.BindFlags(fs)
 	if err := fs.Parse(os.Args); err != nil {
@@ -105,10 +105,10 @@ func main() {
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
 		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "appmesh-manager-leader-election",
+		LeaderElectionID:   "appmesh-controller-leader-election",
 	})
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
+		setupLog.Error(err, "unable to start app mesh controller")
 		os.Exit(1)
 	}
 
@@ -189,9 +189,9 @@ func main() {
 
 	// +kubebuilder:scaffold:builder
 
-	setupLog.Info("starting manager")
+	setupLog.Info("starting controller")
 	if err := mgr.Start(stopChan); err != nil {
-		setupLog.Error(err, "problem running manager")
+		setupLog.Error(err, "problem running controller")
 		os.Exit(1)
 	}
 }

@@ -1,9 +1,9 @@
-# This patch inject a sidecar container which is a HTTP proxy for the 
-# controller manager, it performs RBAC authorization against the Kubernetes API using SubjectAccessReviews.
+# This patch injects a sidecar container which is a HTTP proxy for the controller,
+# it performs RBAC authorization against the Kubernetes API using SubjectAccessReviews.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: manager
+  name: controller
   namespace: system
 spec:
   template:
@@ -19,7 +19,7 @@ spec:
         ports:
         - containerPort: 8443
           name: https
-      - name: manager
+      - name: controller
         args:
         - "--metrics-addr=127.0.0.1:8080"
         - "--enable-leader-election"
