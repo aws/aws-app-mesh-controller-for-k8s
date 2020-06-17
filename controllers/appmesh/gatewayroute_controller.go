@@ -58,8 +58,8 @@ type gatewayRouteReconciler struct {
 	log                                    logr.Logger
 }
 
-// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=gatewayroutes,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=gatewayroutes/status,verbs=get;update;patch
+//// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=gatewayroutes,verbs=get;list;watch;create;update;patch;delete
+//// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=gatewayroutes/status,verbs=get;update;patch
 
 func (r *gatewayRouteReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return runtime.HandleReconcileError(r.reconcile(req), r.log)

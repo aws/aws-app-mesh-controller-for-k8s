@@ -224,7 +224,7 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			inj := NewSidecarInjector(tt.conf, "000000000000", "us-west-2", nil, nil, nil, nil)
+			inj := NewSidecarInjector(tt.conf, "000000000000", "us-west-2", nil, nil, nil)
 			pod := tt.args.pod
 			inj.injectAppMeshPatches(tt.args.ms, tt.args.vn, nil, pod)
 			assert.Equal(t, tt.want.init, len(pod.Spec.InitContainers), "Numbers of init containers mismatch")
