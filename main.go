@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
 	"github.com/spf13/pflag"
 	"os"
+	"time"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 
@@ -64,6 +65,7 @@ func init() {
 }
 
 func main() {
+	var syncPeriod time.Duration
 	var metricsAddr string
 	var enableLeaderElection bool
 	var enableCustomHealthCheck bool
@@ -71,6 +73,7 @@ func main() {
 	awsCloudConfig := aws.CloudConfig{ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig()}
 	injectConfig := inject.Config{}
 	fs := pflag.NewFlagSet("", pflag.ExitOnError)
+	fs.DurationVar(&syncPeriod, "sync-period", 10*time.Hour, "SyncPeriod determines the minimum frequency at which watched resources are reconciled.")
 	fs.StringVar(&metricsAddr, "metrics-addr", "0.0.0.0:8080", "The address the metric endpoint binds to.")
 	fs.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller. "+
@@ -102,6 +105,7 @@ func main() {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
+		SyncPeriod:         &syncPeriod,
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
 		LeaderElection:     enableLeaderElection,
