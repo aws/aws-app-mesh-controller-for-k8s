@@ -1,8 +1,8 @@
 # Image URL to use all building/pushing image targets
-IMAGE=amazon/appmesh-controller
-REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE)
-VERSION ?= latest
-DEV_VERSION=$(shell git describe --dirty --tags)
+IMAGE_NAME=amazon/appmesh-controller
+REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE_NAME)
+VERSION ?= $(shell git describe --dirty --tags)
+IMAGE ?= $(REPO):$(VERSION)
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
@@ -42,7 +42,7 @@ uninstall: manifests
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests
-	cd config/controller && kustomize edit set image controller=${IMAGE}:${DEV_VERSION}
+	cd config/controller && kustomize edit set image controller=$(IMAGE)
 	kustomize build config/default | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
@@ -62,20 +62,11 @@ generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 # Build the docker image
-docker-build: test
-	docker build . -t ${IMAGE}:${DEV_VERSION}
-
-# Build the release docker image
-docker-build-release: test
-	docker build . -t ${IMAGE}:${VERSION}
+docker-build: check-env test
+	docker build . -t $(IMAGE)
 
 docker-push: check-env
-	docker tag ${IMAGE}:${DEV_VERSION} ${REPO}:${DEV_VERSION}
-	docker push ${REPO}:${DEV_VERSION}
-
-docker-push-release: check-env
-	docker tag ${IMAGE}:${VERSION} ${REPO}:${VERSION}
-	docker push ${REPO}:${VERSION}
+	docker push $(IMAGE)
 
 setup-appmesh-sdk-override:
 	@if [ "$(APPMESH_SDK_OVERRIDE)" = "y" ] ; then \
@@ -105,9 +96,12 @@ CONTROLLER_GEN=$(shell which controller-gen)
 endif
 
 check-env:
-ifndef AWS_ACCOUNT
-	$(error AWS_ACCOUNT is undefined)
-endif
-ifndef AWS_REGION
-        $(error AWS_REGION is undefined)
-endif
+	@:$(call check_var, AWS_ACCOUNT, AWS account ID for publishing docker images)
+	@:$(call check_var, AWS_REGION, AWS region for publishing docker images)
+
+check_var = \
+    $(strip $(foreach 1,$1, \
+        $(call __check_var,$1,$(strip $(value 2)))))
+__check_var = \
+    $(if $(value $1),, \
+      $(error Undefined variable $1$(if $2, ($2))))
