@@ -1,3 +1,5 @@
+// +build preview
+
 package conversions
 
 import (

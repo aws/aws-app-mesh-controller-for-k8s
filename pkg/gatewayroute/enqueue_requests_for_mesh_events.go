@@ -1,3 +1,5 @@
+// +build preview
+
 package gatewayroute
 
 import (
