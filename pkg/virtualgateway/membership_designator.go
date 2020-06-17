@@ -34,7 +34,7 @@ type membershipDesignator struct {
 	k8sClient client.Client
 }
 
-// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualgateways,verbs=get;list;watch
+//// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualgateways,verbs=get;list;watch
 
 func (d *membershipDesignator) DesignateForPod(ctx context.Context, pod *corev1.Pod) (*appmesh.VirtualGateway, error) {
 
@@ -69,7 +69,7 @@ func (d *membershipDesignator) DesignateForPod(ctx context.Context, pod *corev1.
 	return vgCandidates[0], nil
 }
 
-// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch
+//// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch
 
 func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj *appmesh.GatewayRoute) (*appmesh.VirtualGateway, error) {
 

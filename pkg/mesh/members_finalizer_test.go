@@ -23,8 +23,6 @@ func Test_pendingMembersFinalizer_buildPendingMembersEventMessage(t *testing.T) 
 		vsMembers []*appmesh.VirtualService
 		vrMembers []*appmesh.VirtualRouter
 		vnMembers []*appmesh.VirtualNode
-		vgMembers []*appmesh.VirtualGateway
-		grMembers []*appmesh.GatewayRoute
 	}
 	tests := []struct {
 		name string
@@ -113,54 +111,6 @@ func Test_pendingMembersFinalizer_buildPendingMembersEventMessage(t *testing.T) 
 			},
 			want: "objects belong to this mesh exists, please delete them to proceed. virtualService: 1, virtualNode: 1",
 		},
-		{
-			name: "two virtualGateway pending",
-			args: args{
-				vgMembers: []*appmesh.VirtualGateway{
-					{
-						ObjectMeta: metav1.ObjectMeta{
-							Namespace: "ns-1",
-							Name:      "vg-1",
-						},
-					},
-					{
-						ObjectMeta: metav1.ObjectMeta{
-							Namespace: "ns-2",
-							Name:      "vg-2",
-						},
-					},
-				},
-			},
-			want: "objects belong to this mesh exists, please delete them to proceed. virtualGateway: 2",
-		},
-		{
-			name: "2 gatewayRoutes and 1 virtualnode pending",
-			args: args{
-				grMembers: []*appmesh.GatewayRoute{
-					{
-						ObjectMeta: metav1.ObjectMeta{
-							Namespace: "ns-1",
-							Name:      "gr-1",
-						},
-					},
-					{
-						ObjectMeta: metav1.ObjectMeta{
-							Namespace: "ns-2",
-							Name:      "gr-2",
-						},
-					},
-				},
-				vnMembers: []*appmesh.VirtualNode{
-					{
-						ObjectMeta: metav1.ObjectMeta{
-							Namespace: "ns-1",
-							Name:      "vn-1",
-						},
-					},
-				},
-			},
-			want: "objects belong to this mesh exists, please delete them to proceed. virtualNode: 1, gatewayRoute: 2",
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -175,8 +125,7 @@ func Test_pendingMembersFinalizer_buildPendingMembersEventMessage(t *testing.T) 
 				eventRecorder: eventRecorder,
 				log:           &log.NullLogger{},
 			}
-			got := m.buildPendingMembersEventMessage(ctx, tt.args.vsMembers, tt.args.vrMembers, tt.args.vnMembers,
-				tt.args.vgMembers, tt.args.grMembers)
+			got := m.buildPendingMembersEventMessage(ctx, tt.args.vsMembers, tt.args.vrMembers, tt.args.vnMembers)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -848,18 +797,6 @@ func Test_pendingMembersFinalizer_Finalize(t *testing.T) {
 			},
 		},
 	}
-	vg := &appmesh.VirtualGateway{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "my-ns",
-			Name:      "vg-1",
-		},
-		Spec: appmesh.VirtualGatewaySpec{
-			MeshRef: &appmesh.MeshReference{
-				Name: "my-mesh",
-				UID:  "uid-1",
-			},
-		},
-	}
 	vr := &appmesh.VirtualRouter{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "my-ns",
@@ -879,7 +816,6 @@ func Test_pendingMembersFinalizer_Finalize(t *testing.T) {
 		virtualServices []*appmesh.VirtualService
 		virtualNodes    []*appmesh.VirtualNode
 		virtualRouters  []*appmesh.VirtualRouter
-		virtualGateways []*appmesh.VirtualGateway
 	}
 	type args struct {
 		ms *appmesh.Mesh
@@ -915,14 +851,6 @@ func Test_pendingMembersFinalizer_Finalize(t *testing.T) {
 			wantErr: errors.New("pending members deletion"),
 		},
 		{
-			name: "when pending virtualGateway deletion",
-			env: env{
-				virtualGateways: []*appmesh.VirtualGateway{vg},
-			},
-			args:    args{ms: ms},
-			wantErr: errors.New("pending members deletion"),
-		},
-		{
 			name:    "when pending no member deletion",
 			env:     env{},
 			args:    args{ms: ms},
@@ -953,10 +881,6 @@ func Test_pendingMembersFinalizer_Finalize(t *testing.T) {
 			}
 			for _, vn := range tt.env.virtualNodes {
 				err := k8sClient.Create(ctx, vn)
-				assert.NoError(t, err)
-			}
-			for _, vg := range tt.env.virtualGateways {
-				err := k8sClient.Create(ctx, vg)
 				assert.NoError(t, err)
 			}
 
