@@ -1,15 +1,14 @@
 # Image URL to use all building/pushing image targets
 IMAGE_NAME=amazon/appmesh-controller
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE_NAME)
-VERSION ?= $(shell git describe --dirty --tags)
+VERSION ?= $(shell git describe --dirty --tags --always)
 IMAGE ?= $(REPO):$(VERSION)
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
 # app mesh aws-sdk-go override in case we need to build against a custom version
-# TODO(fawadkhaliq) disable this when App Mesh preview SDK is released
-APPMESH_SDK_OVERRIDE ?= "y"
+APPMESH_SDK_OVERRIDE ?= "n"
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -41,7 +40,7 @@ uninstall: manifests
 	kustomize build config/crd | kubectl delete -f -
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests
+deploy: check-env manifests
 	cd config/controller && kustomize edit set image controller=$(IMAGE)
 	kustomize build config/default | kubectl apply -f -
 

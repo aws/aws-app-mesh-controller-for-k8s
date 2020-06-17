@@ -1,4 +1,7 @@
+// +build preview
+
 package gatewayroute
+
 
 import (
 	"context"
