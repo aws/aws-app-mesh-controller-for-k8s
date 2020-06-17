@@ -1,6 +1,9 @@
-
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMAGE=amazon/appmesh-controller
+REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE)
+VERSION ?= latest
+DEV_VERSION=$(shell git describe --dirty --tags)
+
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -39,7 +42,7 @@ uninstall: manifests
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests
-	cd config/controller && kustomize edit set image controller=${IMG}
+	cd config/controller && kustomize edit set image controller=${IMAGE}:${DEV_VERSION}
 	kustomize build config/default | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
@@ -60,11 +63,19 @@ generate: controller-gen
 
 # Build the docker image
 docker-build: test
-	docker build . -t ${IMG}
+	docker build . -t ${IMAGE}:${DEV_VERSION}
 
-# Push the docker image
-docker-push:
-	docker push ${IMG}
+# Build the release docker image
+docker-build-release: test
+	docker build . -t ${IMAGE}:${VERSION}
+
+docker-push: check-env
+	docker tag ${IMAGE}:${DEV_VERSION} ${REPO}:${DEV_VERSION}
+	docker push ${REPO}:${DEV_VERSION}
+
+docker-push-release: check-env
+	docker tag ${IMAGE}:${VERSION} ${REPO}:${VERSION}
+	docker push ${REPO}:${VERSION}
 
 setup-appmesh-sdk-override:
 	@if [ "$(APPMESH_SDK_OVERRIDE)" = "y" ] ; then \
@@ -91,4 +102,12 @@ ifeq (, $(shell which controller-gen))
 CONTROLLER_GEN=$(GOBIN)/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)
+endif
+
+check-env:
+ifndef AWS_ACCOUNT
+	$(error AWS_ACCOUNT is undefined)
+endif
+ifndef AWS_REGION
+        $(error AWS_REGION is undefined)
 endif
