@@ -97,7 +97,6 @@ endif
 check-env:
 	@:$(call check_var, AWS_ACCOUNT, AWS account ID for publishing docker images)
 	@:$(call check_var, AWS_REGION, AWS region for publishing docker images)
-	@echo ${IMAGE}
 
 check_var = \
     $(strip $(foreach 1,$1, \
