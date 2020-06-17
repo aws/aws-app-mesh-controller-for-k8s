@@ -148,14 +148,18 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualService")
 		os.Exit(1)
 	}
-	//if err = vgReconciler.SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "VirtualGateway")
-	//	os.Exit(1)
-	//}
-	//if err = grReconciler.SetupWithManager(mgr); err != nil {
-	//	setupLog.Error(err, "unable to create controller", "controller", "GatewayRoute")
-	//	os.Exit(1)
-	//}
+
+	/*
+		if err = vgReconciler.SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "VirtualGateway")
+			os.Exit(1)
+		}
+		if err = grReconciler.SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "GatewayRoute")
+			os.Exit(1)
+		}
+	*/
+
 	if err = vnReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "VirtualNode")
 		os.Exit(1)
