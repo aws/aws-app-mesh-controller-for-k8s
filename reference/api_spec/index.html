@@ -1,0 +1,4828 @@
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="shortcut icon" href="../../assets/images/aws_appmesh_icon.svg">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.2.0">
+    
+    
+      
+        <title>APISpec - AWS App Mesh Controller</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.18ac144a.min.css">
+      
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.616af814.min.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#3f51b5">
+      
+    
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="../.." title="AWS App Mesh Controller" class="md-header-nav__button md-logo" aria-label="AWS App Mesh Controller">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      
+        <div class="md-header-nav__ellipsis">
+          <span class="md-header-nav__topic md-ellipsis">
+            AWS App Mesh Controller
+          </span>
+          <span class="md-header-nav__topic md-ellipsis">
+            
+              APISpec
+            
+          </span>
+        </div>
+      
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active">
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header-nav__source">
+        
+<a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aws/aws-app-mesh-controller-for-k8s
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+        
+      
+      
+        
+          
+
+  
+
+<nav class="md-tabs md-tabs--active" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  <li class="md-tabs__item">
+    
+      <a href="../.." class="md-tabs__link">
+        Home
+      </a>
+    
+  </li>
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../guide/installation/" class="md-tabs__link">
+          Guide
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../tutorials/walkthroughs/" class="md-tabs__link">
+          Tutorials
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="./" class="md-tabs__link md-tabs__link--active">
+          Reference
+        </a>
+      
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="AWS App Mesh Controller" class="md-nav__button md-logo" aria-label="AWS App Mesh Controller">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    AWS App Mesh Controller
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    aws/aws-app-mesh-controller-for-k8s
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../.." title="Home" class="md-nav__link">
+      Home
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+    
+    <label class="md-nav__link" for="nav-2">
+      Guide
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
+      </span>
+    </label>
+    <nav class="md-nav" aria-label="Guide" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        </span>
+        Guide
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../guide/installation/" title="Installation" class="md-nav__link">
+      Installation
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../guide/monitoring/" title="Monitoring" class="md-nav__link">
+      Monitoring
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../guide/tracing/" title="Tracing" class="md-nav__link">
+      Tracing
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../guide/troubleshooting/" title="Troubleshooting" class="md-nav__link">
+      Troubleshooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Tutorials
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
+      </span>
+    </label>
+    <nav class="md-nav" aria-label="Tutorials" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        </span>
+        Tutorials
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../tutorials/walkthroughs/" title="Walkthroughs" class="md-nav__link">
+      Walkthroughs
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+    
+    <label class="md-nav__link" for="nav-4">
+      Reference
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
+      </span>
+    </label>
+    <nav class="md-nav" aria-label="Reference" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        </span>
+        Reference
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+    
+    <a href="./" title="APISpec" class="md-nav__link md-nav__link--active">
+      APISpec
+    </a>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../api_design/" title="APIDesign" class="md-nav__link">
+      APIDesign
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/reference/api_spec.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                  
+                
+                
+                  <h1>APISpec</h1>
+                
+                <p>Packages:</p>
+
+<ul>
+<li>
+<a href="#appmesh.k8s.aws%2fv1beta2">appmesh.k8s.aws/v1beta2</a>
+</li>
+</ul>
+
+<h2 id="appmesh.k8s.aws/v1beta2">appmesh.k8s.aws/v1beta2</h2>
+
+<p>Resource Types:
+<ul><li>
+<a href="#appmesh.k8s.aws/v1beta2.Mesh">Mesh</a>
+</li><li>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNode">VirtualNode</a>
+</li><li>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouter">VirtualRouter</a>
+</li><li>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualService">VirtualService</a>
+</li></ul>
+<h3 id="appmesh.k8s.aws/v1beta2.Mesh">Mesh
+</h3>
+<p>
+<p>Mesh is the Schema for the meshes API</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>apiVersion</code></br>
+string</td>
+<td>
+<code>
+appmesh.k8s.aws/v1beta2
+</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>kind</code></br>
+string
+</td>
+<td><code>Mesh</code></td>
+</tr>
+<tr>
+<td>
+<code>metadata</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#objectmeta-v1-meta">
+Kubernetes meta/v1.ObjectMeta
+</a>
+</em>
+</td>
+<td>
+Refer to the Kubernetes API documentation for the fields of the
+<code>metadata</code> field.
+</td>
+</tr>
+<tr>
+<td>
+<code>spec</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshSpec">
+MeshSpec
+</a>
+</em>
+</td>
+<td>
+<br/>
+<br/>
+<table>
+<tr>
+<td>
+<code>awsName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AWSName is the AppMesh Mesh object&rsquo;s name.
+If unspecified or empty, it defaults to be &ldquo;${name}&rdquo; of k8s Mesh</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>namespaceSelector</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#labelselector-v1-meta">
+Kubernetes meta/v1.LabelSelector
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>NamespaceSelector selects Namespaces using labels to designate mesh membership.
+This field follows standard label selector semantics:
+if present but empty, it selects all namespaces.
+if absent, it selects no namespace.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>egressFilter</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.EgressFilter">
+EgressFilter
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The egress filter rules for the service mesh.
+If unspecified, default settings from AWS API will be applied. Refer to AWS Docs for default settings.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>meshOwner</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The AWS IAM account ID of the service mesh owner.
+Required if the account ID is not your own.</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshStatus">
+MeshStatus
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualNode">VirtualNode
+</h3>
+<p>
+<p>VirtualNode is the Schema for the virtualnodes API</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>apiVersion</code></br>
+string</td>
+<td>
+<code>
+appmesh.k8s.aws/v1beta2
+</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>kind</code></br>
+string
+</td>
+<td><code>VirtualNode</code></td>
+</tr>
+<tr>
+<td>
+<code>metadata</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#objectmeta-v1-meta">
+Kubernetes meta/v1.ObjectMeta
+</a>
+</em>
+</td>
+<td>
+Refer to the Kubernetes API documentation for the fields of the
+<code>metadata</code> field.
+</td>
+</tr>
+<tr>
+<td>
+<code>spec</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeSpec">
+VirtualNodeSpec
+</a>
+</em>
+</td>
+<td>
+<br/>
+<br/>
+<table>
+<tr>
+<td>
+<code>awsName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AWSName is the AppMesh VirtualNode object&rsquo;s name.
+If unspecified or empty, it defaults to be &ldquo;${name}<em>${namespace}&rdquo; of k8s VirtualNode</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>podSelector</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#labelselector-v1-meta">
+Kubernetes meta/v1.LabelSelector
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>PodSelector selects Pods using labels to designate VirtualNode membership.
+This field follows standard label selector semantics:
+if present but empty, it selects all pods within namespace.
+if absent, it selects no pod.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>listeners</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Listener">
+[]Listener
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The listener that the virtual node is expected to receive inbound traffic from</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>serviceDiscovery</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ServiceDiscovery">
+ServiceDiscovery
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The service discovery information for the virtual node.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>backends</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Backend">
+[]Backend
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The backends that the virtual node is expected to send outbound traffic to.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>backendDefaults</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.BackendDefaults">
+BackendDefaults
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents the defaults for backends.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>logging</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Logging">
+Logging
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The inbound and outbound access logging information for the virtual node.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>meshRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshReference">
+MeshReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to k8s Mesh CR that this VirtualNode belongs to.
+The admission controller populates it using Meshes&rsquo;s selector, and prevents users from setting this field.</p>
+<p>Populated by the system.
+Read-only.</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeStatus">
+VirtualNodeStatus
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualRouter">VirtualRouter
+</h3>
+<p>
+<p>VirtualRouter is the Schema for the virtualrouters API</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>apiVersion</code></br>
+string</td>
+<td>
+<code>
+appmesh.k8s.aws/v1beta2
+</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>kind</code></br>
+string
+</td>
+<td><code>VirtualRouter</code></td>
+</tr>
+<tr>
+<td>
+<code>metadata</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#objectmeta-v1-meta">
+Kubernetes meta/v1.ObjectMeta
+</a>
+</em>
+</td>
+<td>
+Refer to the Kubernetes API documentation for the fields of the
+<code>metadata</code> field.
+</td>
+</tr>
+<tr>
+<td>
+<code>spec</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterSpec">
+VirtualRouterSpec
+</a>
+</em>
+</td>
+<td>
+<br/>
+<br/>
+<table>
+<tr>
+<td>
+<code>awsName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AWSName is the AppMesh VirtualRouter object&rsquo;s name.
+If unspecified or empty, it defaults to be &ldquo;${name}</em>${namespace}&rdquo; of k8s VirtualRouter</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>listeners</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterListener">
+[]VirtualRouterListener
+</a>
+</em>
+</td>
+<td>
+<p>The listeners that the virtual router is expected to receive inbound traffic from</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>routes</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Route">
+[]Route
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The routes associated with VirtualRouter</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>meshRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshReference">
+MeshReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to k8s Mesh CR that this VirtualRouter belongs to.
+The admission controller populates it using Meshes&rsquo;s selector, and prevents users from setting this field.</p>
+<p>Populated by the system.
+Read-only.</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterStatus">
+VirtualRouterStatus
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualService">VirtualService
+</h3>
+<p>
+<p>VirtualService is the Schema for the virtualservices API</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>apiVersion</code></br>
+string</td>
+<td>
+<code>
+appmesh.k8s.aws/v1beta2
+</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>kind</code></br>
+string
+</td>
+<td><code>VirtualService</code></td>
+</tr>
+<tr>
+<td>
+<code>metadata</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#objectmeta-v1-meta">
+Kubernetes meta/v1.ObjectMeta
+</a>
+</em>
+</td>
+<td>
+Refer to the Kubernetes API documentation for the fields of the
+<code>metadata</code> field.
+</td>
+</tr>
+<tr>
+<td>
+<code>spec</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceSpec">
+VirtualServiceSpec
+</a>
+</em>
+</td>
+<td>
+<br/>
+<br/>
+<table>
+<tr>
+<td>
+<code>awsName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AWSName is the AppMesh VirtualService object&rsquo;s name.
+If unspecified or empty, it defaults to be &ldquo;${name}.${namespace}&rdquo; of k8s VirtualService</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>provider</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceProvider">
+VirtualServiceProvider
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The provider for virtual services. You can specify a single virtual node or virtual router.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>meshRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshReference">
+MeshReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to k8s Mesh CR that this VirtualService belongs to.
+The admission controller populates it using Meshes&rsquo;s selector, and prevents users from setting this field.</p>
+<p>Populated by the system.
+Read-only.</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceStatus">
+VirtualServiceStatus
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.AWSCloudMapInstanceAttribute">AWSCloudMapInstanceAttribute
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.AWSCloudMapServiceDiscovery">AWSCloudMapServiceDiscovery</a>)
+</p>
+<p>
+<p>AWSCloudMapInstanceAttribute refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapInstanceAttribute.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapInstanceAttribute.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>key</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The name of an AWS Cloud Map service instance attribute key.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>value</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The value of an AWS Cloud Map service instance attribute key.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.AWSCloudMapServiceDiscovery">AWSCloudMapServiceDiscovery
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ServiceDiscovery">ServiceDiscovery</a>)
+</p>
+<p>
+<p>AWSCloudMapServiceDiscovery refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapServiceDiscovery.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AwsCloudMapServiceDiscovery.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>namespaceName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The name of the AWS Cloud Map namespace to use.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>serviceName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The name of the AWS Cloud Map service to use.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>attributes</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.AWSCloudMapInstanceAttribute">
+[]AWSCloudMapInstanceAttribute
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A string map that contains attributes with values that you can use to filter instances by any custom attribute that you specified when you registered the instance</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.AccessLog">AccessLog
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.Logging">Logging</a>)
+</p>
+<p>
+<p>AccessLog refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AccessLog.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AccessLog.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>file</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.FileAccessLog">
+FileAccessLog
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The file object to send virtual node access logs to.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.Backend">Backend
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeSpec">VirtualNodeSpec</a>)
+</p>
+<p>
+<p>Backend refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Backend.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Backend.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>virtualService</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceBackend">
+VirtualServiceBackend
+</a>
+</em>
+</td>
+<td>
+<p>Specifies a virtual service to use as a backend for a virtual node.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.BackendDefaults">BackendDefaults
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeSpec">VirtualNodeSpec</a>)
+</p>
+<p>
+<p>BackendDefaults refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_BackendDefaults.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_BackendDefaults.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>clientPolicy</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ClientPolicy">
+ClientPolicy
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents a client policy.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.ClientPolicy">ClientPolicy
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.BackendDefaults">BackendDefaults</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceBackend">VirtualServiceBackend</a>)
+</p>
+<p>
+<p>ClientPolicy refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ClientPolicy.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ClientPolicy.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>tls</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ClientPolicyTLS">
+ClientPolicyTLS
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents a Transport Layer Security (TLS) client policy.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.ClientPolicyTLS">ClientPolicyTLS
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ClientPolicy">ClientPolicy</a>)
+</p>
+<p>
+<p>ClientPolicyTLS refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ClientPolicyTls.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ClientPolicyTls.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>enforce</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Whether the policy is enforced.
+If unspecified, default settings from AWS API will be applied. Refer to AWS Docs for default settings.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>ports</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.PortNumber">
+[]PortNumber
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The range of ports that the policy is enforced for.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>validation</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContext">
+TLSValidationContext
+</a>
+</em>
+</td>
+<td>
+<p>A reference to an object that represents a TLS validation context.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.DNSServiceDiscovery">DNSServiceDiscovery
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ServiceDiscovery">ServiceDiscovery</a>)
+</p>
+<p>
+<p>DNSServiceDiscovery refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_DnsServiceDiscovery.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_DnsServiceDiscovery.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>hostname</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Specifies the DNS service discovery hostname for the virtual node.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.Duration">Duration
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.GRPCTimeout">GRPCTimeout</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">HTTPRetryPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPTimeout">HTTPTimeout</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.TCPTimeout">TCPTimeout</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>unit</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.DurationUnit">
+DurationUnit
+</a>
+</em>
+</td>
+<td>
+<p>A unit of time.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>value</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<p>A number of time units.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.DurationUnit">DurationUnit
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.Duration">Duration</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.EgressFilter">EgressFilter
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshSpec">MeshSpec</a>)
+</p>
+<p>
+<p>EgressFilter refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_EgressFilter.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_EgressFilter.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>type</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.EgressFilterType">
+EgressFilterType
+</a>
+</em>
+</td>
+<td>
+<p>The egress filter type.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.EgressFilterType">EgressFilterType
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.EgressFilter">EgressFilter</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.FileAccessLog">FileAccessLog
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.AccessLog">AccessLog</a>)
+</p>
+<p>
+<p>FileAccessLog refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_FileAccessLog.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_FileAccessLog.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>path</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The file path to write access logs to.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRoute">GRPCRoute</a>)
+</p>
+<p>
+<p>GRPCRetryPolicy refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRetryPolicy.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRetryPolicy.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>grpcRetryEvents</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicyEvent">
+[]GRPCRetryPolicyEvent
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+<tr>
+<td>
+<code>httpRetryEvents</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicyEvent">
+[]HTTPRetryPolicyEvent
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+<tr>
+<td>
+<code>tcpRetryEvents</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TCPRetryPolicyEvent">
+[]TCPRetryPolicyEvent
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+<tr>
+<td>
+<code>maxRetries</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<p>The maximum number of retry attempts.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>perRetryTimeout</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Duration">
+Duration
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents a duration of time.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GRPCRetryPolicyEvent">GRPCRetryPolicyEvent
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.GRPCRoute">GRPCRoute
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.Route">Route</a>)
+</p>
+<p>
+<p>GRPCRoute refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRoute.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRoute.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>match</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteMatch">
+GRPCRouteMatch
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the criteria for determining a request match.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>action</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteAction">
+GRPCRouteAction
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the action to take if a match is determined.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>retryPolicy</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">
+GRPCRetryPolicy
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a retry policy.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>timeout</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCTimeout">
+GRPCTimeout
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a grpc timeout.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GRPCRouteAction">GRPCRouteAction
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRoute">GRPCRoute</a>)
+</p>
+<p>
+<p>GRPCRouteAction refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteAction.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteAction.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>weightedTargets</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.WeightedTarget">
+[]WeightedTarget
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the targets that traffic is routed to when a request matches the route.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GRPCRouteMatch">GRPCRouteMatch
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRoute">GRPCRoute</a>)
+</p>
+<p>
+<p>GRPCRouteMatch refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMatch.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMatch.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>methodName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The method name to match from the request. If you specify a name, you must also specify a serviceName.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>serviceName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The fully qualified domain name for the service to match from the request.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>metadata</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteMetadata">
+[]GRPCRouteMetadata
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the data to match from the request.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GRPCRouteMetadata">GRPCRouteMetadata
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteMatch">GRPCRouteMatch</a>)
+</p>
+<p>
+<p>GRPCRouteMetadata refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadata.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadata.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The name of the route.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>match</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteMetadataMatchMethod">
+GRPCRouteMetadataMatchMethod
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the data to match from the request.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>invert</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Specify True to match anything except the match criteria. The default value is False.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GRPCRouteMetadataMatchMethod">GRPCRouteMetadataMatchMethod
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteMetadata">GRPCRouteMetadata</a>)
+</p>
+<p>
+<p>GRPCRouteMetadataMatchMethod refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadataMatchMethod.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadataMatchMethod.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>exact</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The value sent by the client must match the specified value exactly.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>prefix</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The value sent by the client must begin with the specified characters.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>range</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MatchRange">
+MatchRange
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the range of values to match on</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>regex</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The value sent by the client must include the specified characters.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>suffix</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The value sent by the client must end with the specified characters.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GRPCTimeout">GRPCTimeout
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRoute">GRPCRoute</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>perRequest</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Duration">
+Duration
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents per request timeout duration.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>idle</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Duration">
+Duration
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents idle timeout duration.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">HTTPRetryPolicy
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRoute">HTTPRoute</a>)
+</p>
+<p>
+<p>HTTPRetryPolicy refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRetryPolicy.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRetryPolicy.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>httpRetryEvents</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicyEvent">
+[]HTTPRetryPolicyEvent
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+<tr>
+<td>
+<code>tcpRetryEvents</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TCPRetryPolicyEvent">
+[]TCPRetryPolicyEvent
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+<tr>
+<td>
+<code>maxRetries</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<p>The maximum number of retry attempts.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>perRetryTimeout</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Duration">
+Duration
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents a duration of time</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPRetryPolicyEvent">HTTPRetryPolicyEvent
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">HTTPRetryPolicy</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPRoute">HTTPRoute
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.Route">Route</a>)
+</p>
+<p>
+<p>HTTPRoute refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRoute.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRoute.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>match</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRouteMatch">
+HTTPRouteMatch
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the criteria for determining a request match.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>action</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRouteAction">
+HTTPRouteAction
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the action to take if a match is determined.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>retryPolicy</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">
+HTTPRetryPolicy
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a retry policy.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>timeout</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPTimeout">
+HTTPTimeout
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a http timeout.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPRouteAction">HTTPRouteAction
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRoute">HTTPRoute</a>)
+</p>
+<p>
+<p>HTTPRouteAction refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteAction.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteAction.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>weightedTargets</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.WeightedTarget">
+[]WeightedTarget
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the targets that traffic is routed to when a request matches the route.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPRouteHeader">HTTPRouteHeader
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRouteMatch">HTTPRouteMatch</a>)
+</p>
+<p>
+<p>HTTPRouteHeader refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>A name for the HTTP header in the client request that will be matched on.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>match</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HeaderMatchMethod">
+HeaderMatchMethod
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The HeaderMatchMethod object.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>invert</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Specify True to match anything except the match criteria. The default value is False.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPRouteMatch">HTTPRouteMatch
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRoute">HTTPRoute</a>)
+</p>
+<p>
+<p>HTTPRouteMatch refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteMatch.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteMatch.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>headers</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRouteHeader">
+[]HTTPRouteHeader
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the client request headers to match on.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>method</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The client request method to match on.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>prefix</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Specifies the path to match requests with</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>scheme</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The client request scheme to match on</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPTimeout">HTTPTimeout
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRoute">HTTPRoute</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>perRequest</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Duration">
+Duration
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents per request timeout duration.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>idle</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Duration">
+Duration
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents idle timeout duration.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HeaderMatchMethod">HeaderMatchMethod
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRouteHeader">HTTPRouteHeader</a>)
+</p>
+<p>
+<p>HeaderMatchMethod refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HeaderMatchMethod.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HeaderMatchMethod.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>exact</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The value sent by the client must match the specified value exactly.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>prefix</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The value sent by the client must begin with the specified characters.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>range</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MatchRange">
+MatchRange
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the range of values to match on.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>regex</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The value sent by the client must include the specified characters.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>suffix</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The value sent by the client must end with the specified characters.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HealthCheckPolicy">HealthCheckPolicy
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.Listener">Listener</a>)
+</p>
+<p>
+<p>HealthCheckPolicy refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HealthCheckPolicy.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HealthCheckPolicy.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>healthyThreshold</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<p>The number of consecutive successful health checks that must occur before declaring listener healthy.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>intervalMillis</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<p>The time period in milliseconds between each health check execution.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>path</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The destination path for the health check request.
+This value is only used if the specified protocol is http or http2. For any other protocol, this value is ignored.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>port</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.PortNumber">
+PortNumber
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The destination port for the health check request.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>protocol</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.PortProtocol">
+PortProtocol
+</a>
+</em>
+</td>
+<td>
+<p>The protocol for the health check request</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>timeoutMillis</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<p>The amount of time to wait when receiving a response from the health check, in milliseconds.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>unhealthyThreshold</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<p>The number of consecutive failed health checks that must occur before declaring a virtual node unhealthy.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.Listener">Listener
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeSpec">VirtualNodeSpec</a>)
+</p>
+<p>
+<p>Listener refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Listener.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Listener.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>portMapping</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.PortMapping">
+PortMapping
+</a>
+</em>
+</td>
+<td>
+<p>The port mapping information for the listener.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>healthCheck</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HealthCheckPolicy">
+HealthCheckPolicy
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The health check information for the listener.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>tls</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLS">
+ListenerTLS
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents the Transport Layer Security (TLS) properties for a listener.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>timeout</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTimeout">
+ListenerTimeout
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.ListenerTLS">ListenerTLS
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.Listener">Listener</a>)
+</p>
+<p>
+<p>ListenerTLS refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTls.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTls.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>certificate</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSCertificate">
+ListenerTLSCertificate
+</a>
+</em>
+</td>
+<td>
+<p>A reference to an object that represents a listener&rsquo;s TLS certificate.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>mode</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSMode">
+ListenerTLSMode
+</a>
+</em>
+</td>
+<td>
+<p>ListenerTLS mode</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.ListenerTLSACMCertificate">ListenerTLSACMCertificate
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSCertificate">ListenerTLSCertificate</a>)
+</p>
+<p>
+<p>ListenerTLSACMCertificate refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsAcmCertificate.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsAcmCertificate.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>certificateARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The Amazon Resource Name (ARN) for the certificate.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.ListenerTLSCertificate">ListenerTLSCertificate
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLS">ListenerTLS</a>)
+</p>
+<p>
+<p>ListenerTLSCertificate refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsCertificate.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsCertificate.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>acm</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSACMCertificate">
+ListenerTLSACMCertificate
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents an AWS Certificate Manager (ACM) certificate.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>file</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSFileCertificate">
+ListenerTLSFileCertificate
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents a local file certificate.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.ListenerTLSFileCertificate">ListenerTLSFileCertificate
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSCertificate">ListenerTLSCertificate</a>)
+</p>
+<p>
+<p>ListenerTLSFileCertificate refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsFileCertificate.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsFileCertificate.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>certificateChain</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The certificate chain for the certificate.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>privateKey</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The private key for a certificate stored on the file system of the virtual node that the proxy is running on.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.ListenerTLSMode">ListenerTLSMode
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLS">ListenerTLS</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.Listener">Listener</a>)
+</p>
+<p>
+<p>ListenerTimeout refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTimeout.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTimeout.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>tcp</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TCPTimeout">
+TCPTimeout
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Specifies tcp timeout information for the virtual node.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>http</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPTimeout">
+HTTPTimeout
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Specifies http timeout information for the virtual node.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>http2</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPTimeout">
+HTTPTimeout
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Specifies http2 information for the virtual node.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>grpc</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCTimeout">
+GRPCTimeout
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Specifies grpc timeout information for the virtual node.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.Logging">Logging
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeSpec">VirtualNodeSpec</a>)
+</p>
+<p>
+<p>Logging refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Logging.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Logging.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>accessLog</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.AccessLog">
+AccessLog
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The access log configuration for a virtual node.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.MatchRange">MatchRange
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteMetadataMatchMethod">GRPCRouteMetadataMatchMethod</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HeaderMatchMethod">HeaderMatchMethod</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>start</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The start of the range.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>end</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The end of the range.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.MeshCondition">MeshCondition
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshStatus">MeshStatus</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>type</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshConditionType">
+MeshConditionType
+</a>
+</em>
+</td>
+<td>
+<p>Type of mesh condition.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#conditionstatus-v1-core">
+Kubernetes core/v1.ConditionStatus
+</a>
+</em>
+</td>
+<td>
+<p>Status of the condition, one of True, False, Unknown.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>lastTransitionTime</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#time-v1-meta">
+Kubernetes meta/v1.Time
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Last time the condition transitioned from one status to another.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>reason</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The reason for the condition&rsquo;s last transition.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>message</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A human readable message indicating details about the transition.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.MeshConditionType">MeshConditionType
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshCondition">MeshCondition</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.MeshReference">MeshReference
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeSpec">VirtualNodeSpec</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterSpec">VirtualRouterSpec</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceSpec">VirtualServiceSpec</a>)
+</p>
+<p>
+<p>MeshReference holds a reference to Mesh.appmesh.k8s.aws</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Name is the name of Mesh CR</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>uid</code></br>
+<em>
+k8s.io/apimachinery/pkg/types.UID
+</em>
+</td>
+<td>
+<p>UID is the UID of Mesh CR</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.MeshSpec">MeshSpec
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.Mesh">Mesh</a>)
+</p>
+<p>
+<p>MeshSpec defines the desired state of Mesh
+refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_MeshSpec.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_MeshSpec.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>awsName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AWSName is the AppMesh Mesh object&rsquo;s name.
+If unspecified or empty, it defaults to be &ldquo;${name}&rdquo; of k8s Mesh</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>namespaceSelector</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#labelselector-v1-meta">
+Kubernetes meta/v1.LabelSelector
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>NamespaceSelector selects Namespaces using labels to designate mesh membership.
+This field follows standard label selector semantics:
+if present but empty, it selects all namespaces.
+if absent, it selects no namespace.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>egressFilter</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.EgressFilter">
+EgressFilter
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The egress filter rules for the service mesh.
+If unspecified, default settings from AWS API will be applied. Refer to AWS Docs for default settings.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>meshOwner</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The AWS IAM account ID of the service mesh owner.
+Required if the account ID is not your own.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.MeshStatus">MeshStatus
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.Mesh">Mesh</a>)
+</p>
+<p>
+<p>MeshStatus defines the observed state of Mesh</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>meshARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>MeshARN is the AppMesh Mesh object&rsquo;s Amazon Resource Name</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>conditions</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshCondition">
+[]MeshCondition
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The current Mesh status.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>observedGeneration</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The generation observed by the Mesh controller.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.PortMapping">PortMapping
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.Listener">Listener</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterListener">VirtualRouterListener</a>)
+</p>
+<p>
+<p>PortMapping refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_PortMapping.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_PortMapping.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>port</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.PortNumber">
+PortNumber
+</a>
+</em>
+</td>
+<td>
+<p>The port used for the port mapping.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>protocol</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.PortProtocol">
+PortProtocol
+</a>
+</em>
+</td>
+<td>
+<p>The protocol used for the port mapping.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.PortNumber">PortNumber
+(<code>int64</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ClientPolicyTLS">ClientPolicyTLS</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HealthCheckPolicy">HealthCheckPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.PortMapping">PortMapping</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.PortProtocol">PortProtocol
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HealthCheckPolicy">HealthCheckPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.PortMapping">PortMapping</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.Route">Route
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterSpec">VirtualRouterSpec</a>)
+</p>
+<p>
+<p>Route refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_RouteSpec.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_RouteSpec.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Route&rsquo;s name</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>grpcRoute</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRoute">
+GRPCRoute
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the specification of a gRPC route.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>httpRoute</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRoute">
+HTTPRoute
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the specification of an HTTP route.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>http2Route</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRoute">
+HTTPRoute
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the specification of an HTTP/2 route.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>tcpRoute</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TCPRoute">
+TCPRoute
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the specification of a TCP route.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>priority</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The priority for the route.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.ServiceDiscovery">ServiceDiscovery
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeSpec">VirtualNodeSpec</a>)
+</p>
+<p>
+<p>ServiceDiscovery refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ServiceDiscovery.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ServiceDiscovery.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>awsCloudMap</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.AWSCloudMapServiceDiscovery">
+AWSCloudMapServiceDiscovery
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Specifies any AWS Cloud Map information for the virtual node.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>dns</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.DNSServiceDiscovery">
+DNSServiceDiscovery
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Specifies the DNS information for the virtual node.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.TCPRetryPolicyEvent">TCPRetryPolicyEvent
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">HTTPRetryPolicy</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.TCPRoute">TCPRoute
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.Route">Route</a>)
+</p>
+<p>
+<p>TCPRoute refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRoute.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRoute.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>action</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TCPRouteAction">
+TCPRouteAction
+</a>
+</em>
+</td>
+<td>
+<p>The action to take if a match is determined.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>timeout</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TCPTimeout">
+TCPTimeout
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a tcp timeout.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.TCPRouteAction">TCPRouteAction
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.TCPRoute">TCPRoute</a>)
+</p>
+<p>
+<p>TCPRouteAction refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRouteAction.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRouteAction.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>weightedTargets</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.WeightedTarget">
+[]WeightedTarget
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the targets that traffic is routed to when a request matches the route.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.TCPTimeout">TCPTimeout
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.TCPRoute">TCPRoute</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>idle</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Duration">
+Duration
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents idle timeout duration.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.TLSValidationContext">TLSValidationContext
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ClientPolicyTLS">ClientPolicyTLS</a>)
+</p>
+<p>
+<p>TLSValidationContext refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContext.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContext.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>trust</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextTrust">
+TLSValidationContextTrust
+</a>
+</em>
+</td>
+<td>
+<p>A reference to an object that represents a TLS validation context trust</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.TLSValidationContextACMTrust">TLSValidationContextACMTrust
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextTrust">TLSValidationContextTrust</a>)
+</p>
+<p>
+<p>TLSValidationContextACMTrust refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextAcmTrust.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextAcmTrust.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>certificateAuthorityARNs</code></br>
+<em>
+[]string
+</em>
+</td>
+<td>
+<p>One or more ACM Amazon Resource Name (ARN)s.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.TLSValidationContextFileTrust">TLSValidationContextFileTrust
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextTrust">TLSValidationContextTrust</a>)
+</p>
+<p>
+<p>TLSValidationContextFileTrust refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextFileTrust.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextFileTrust.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>certificateChain</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The certificate trust chain for a certificate stored on the file system of the virtual node that the proxy is running on.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.TLSValidationContextTrust">TLSValidationContextTrust
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContext">TLSValidationContext</a>)
+</p>
+<p>
+<p>TLSValidationContextTrust refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextTrust.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextTrust.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>acm</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextACMTrust">
+TLSValidationContextACMTrust
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents a TLS validation context trust for an AWS Certicate Manager (ACM) certificate.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>file</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextFileTrust">
+TLSValidationContextFileTrust
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a TLS validation context trust for a local file.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualNodeCondition">VirtualNodeCondition
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeStatus">VirtualNodeStatus</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>type</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeConditionType">
+VirtualNodeConditionType
+</a>
+</em>
+</td>
+<td>
+<p>Type of VirtualNode condition.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#conditionstatus-v1-core">
+Kubernetes core/v1.ConditionStatus
+</a>
+</em>
+</td>
+<td>
+<p>Status of the condition, one of True, False, Unknown.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>lastTransitionTime</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#time-v1-meta">
+Kubernetes meta/v1.Time
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Last time the condition transitioned from one status to another.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>reason</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The reason for the condition&rsquo;s last transition.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>message</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A human readable message indicating details about the transition.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualNodeConditionType">VirtualNodeConditionType
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeCondition">VirtualNodeCondition</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualNodeReference">VirtualNodeReference
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeServiceProvider">VirtualNodeServiceProvider</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.WeightedTarget">WeightedTarget</a>)
+</p>
+<p>
+<p>VirtualNodeReference holds a reference to VirtualNode.appmesh.k8s.aws</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>namespace</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Namespace is the namespace of VirtualNode CR.
+If unspecified, defaults to the referencing object&rsquo;s namespace</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Name is the name of VirtualNode CR</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualNodeServiceProvider">VirtualNodeServiceProvider
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceProvider">VirtualServiceProvider</a>)
+</p>
+<p>
+<p>VirtualNodeServiceProvider refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualNodeServiceProvider.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualNodeServiceProvider.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>virtualNodeRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeReference">
+VirtualNodeReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Reference to Kubernetes VirtualNode CR in cluster that is acting as a service provider. Exactly one of &lsquo;virtualNodeRef&rsquo; or &lsquo;virtualNodeARN&rsquo; must be specified.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>virtualNodeARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Amazon Resource Name to AppMesh VirtualNode object that is acting as a service provider. Exactly one of &lsquo;virtualNodeRef&rsquo; or &lsquo;virtualNodeARN&rsquo; must be specified.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualNodeSpec">VirtualNodeSpec
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNode">VirtualNode</a>)
+</p>
+<p>
+<p>VirtualNodeSpec defines the desired state of VirtualNode
+refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualNodeSpec.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualNodeSpec.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>awsName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AWSName is the AppMesh VirtualNode object&rsquo;s name.
+If unspecified or empty, it defaults to be &ldquo;${name}<em>${namespace}&rdquo; of k8s VirtualNode</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>podSelector</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#labelselector-v1-meta">
+Kubernetes meta/v1.LabelSelector
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>PodSelector selects Pods using labels to designate VirtualNode membership.
+This field follows standard label selector semantics:
+if present but empty, it selects all pods within namespace.
+if absent, it selects no pod.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>listeners</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Listener">
+[]Listener
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The listener that the virtual node is expected to receive inbound traffic from</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>serviceDiscovery</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ServiceDiscovery">
+ServiceDiscovery
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The service discovery information for the virtual node.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>backends</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Backend">
+[]Backend
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The backends that the virtual node is expected to send outbound traffic to.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>backendDefaults</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.BackendDefaults">
+BackendDefaults
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents the defaults for backends.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>logging</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Logging">
+Logging
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The inbound and outbound access logging information for the virtual node.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>meshRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshReference">
+MeshReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to k8s Mesh CR that this VirtualNode belongs to.
+The admission controller populates it using Meshes&rsquo;s selector, and prevents users from setting this field.</p>
+<p>Populated by the system.
+Read-only.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualNodeStatus">VirtualNodeStatus
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNode">VirtualNode</a>)
+</p>
+<p>
+<p>VirtualNodeStatus defines the observed state of VirtualNode</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>virtualNodeARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>VirtualNodeARN is the AppMesh VirtualNode object&rsquo;s Amazon Resource Name</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>conditions</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeCondition">
+[]VirtualNodeCondition
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The current VirtualNode status.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>observedGeneration</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The generation observed by the VirtualNode controller.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualRouterCondition">VirtualRouterCondition
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterStatus">VirtualRouterStatus</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>type</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterConditionType">
+VirtualRouterConditionType
+</a>
+</em>
+</td>
+<td>
+<p>Type of VirtualRouter condition.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#conditionstatus-v1-core">
+Kubernetes core/v1.ConditionStatus
+</a>
+</em>
+</td>
+<td>
+<p>Status of the condition, one of True, False, Unknown.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>lastTransitionTime</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#time-v1-meta">
+Kubernetes meta/v1.Time
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Last time the condition transitioned from one status to another.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>reason</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The reason for the condition&rsquo;s last transition.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>message</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A human readable message indicating details about the transition.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualRouterConditionType">VirtualRouterConditionType
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterCondition">VirtualRouterCondition</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualRouterListener">VirtualRouterListener
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterSpec">VirtualRouterSpec</a>)
+</p>
+<p>
+<p>VirtualRouterListener refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualRouterListener.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualRouterListener.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>portMapping</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.PortMapping">
+PortMapping
+</a>
+</em>
+</td>
+<td>
+<p>The port mapping information for the listener.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualRouterReference">VirtualRouterReference
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterServiceProvider">VirtualRouterServiceProvider</a>)
+</p>
+<p>
+<p>VirtualRouterReference holds a reference to VirtualRouter.appmesh.k8s.aws</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>namespace</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Namespace is the namespace of VirtualRouter CR.
+If unspecified, defaults to the referencing object&rsquo;s namespace</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Name is the name of VirtualRouter CR</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualRouterServiceProvider">VirtualRouterServiceProvider
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceProvider">VirtualServiceProvider</a>)
+</p>
+<p>
+<p>VirtualRouterServiceProvider refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualRouterServiceProvider.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualRouterServiceProvider.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>virtualRouterRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterReference">
+VirtualRouterReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Reference to Kubernetes VirtualRouter CR in cluster that is acting as a service provider. Exactly one of &lsquo;virtualRouterRef&rsquo; or &lsquo;virtualRouterARN&rsquo; must be specified.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>virtualRouterARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Amazon Resource Name to AppMesh VirtualRouter object that is acting as a service provider. Exactly one of &lsquo;virtualRouterRef&rsquo; or &lsquo;virtualRouterARN&rsquo; must be specified.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualRouterSpec">VirtualRouterSpec
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouter">VirtualRouter</a>)
+</p>
+<p>
+<p>VirtualRouterSpec defines the desired state of VirtualRouter
+refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualRouterSpec.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualRouterSpec.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>awsName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AWSName is the AppMesh VirtualRouter object&rsquo;s name.
+If unspecified or empty, it defaults to be &ldquo;${name}</em>${namespace}&rdquo; of k8s VirtualRouter</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>listeners</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterListener">
+[]VirtualRouterListener
+</a>
+</em>
+</td>
+<td>
+<p>The listeners that the virtual router is expected to receive inbound traffic from</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>routes</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.Route">
+[]Route
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The routes associated with VirtualRouter</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>meshRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshReference">
+MeshReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to k8s Mesh CR that this VirtualRouter belongs to.
+The admission controller populates it using Meshes&rsquo;s selector, and prevents users from setting this field.</p>
+<p>Populated by the system.
+Read-only.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualRouterStatus">VirtualRouterStatus
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouter">VirtualRouter</a>)
+</p>
+<p>
+<p>VirtualRouterStatus defines the observed state of VirtualRouter</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>virtualRouterARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>VirtualRouterARN is the AppMesh VirtualRouter object&rsquo;s Amazon Resource Name.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>routeARNs</code></br>
+<em>
+map[string]string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>RouteARNs is a map of AppMesh Route objects&rsquo; Amazon Resource Names, indexed by route name.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>conditions</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterCondition">
+[]VirtualRouterCondition
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The current VirtualRouter status.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>observedGeneration</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The generation observed by the VirtualRouter controller.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualServiceBackend">VirtualServiceBackend
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.Backend">Backend</a>)
+</p>
+<p>
+<p>VirtualServiceBackend refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceBackend.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceBackend.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>virtualServiceRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceReference">
+VirtualServiceReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Reference to Kubernetes VirtualService CR in cluster that is acting as a virtual node backend. Exactly one of &lsquo;virtualServiceRef&rsquo; or &lsquo;virtualServiceARN&rsquo; must be specified.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>virtualServiceARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Amazon Resource Name to AppMesh VirtualService object that is acting as a virtual node backend. Exactly one of &lsquo;virtualServiceRef&rsquo; or &lsquo;virtualServiceARN&rsquo; must be specified.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>clientPolicy</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ClientPolicy">
+ClientPolicy
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents the client policy for a backend.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualServiceCondition">VirtualServiceCondition
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceStatus">VirtualServiceStatus</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>type</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceConditionType">
+VirtualServiceConditionType
+</a>
+</em>
+</td>
+<td>
+<p>Type of VirtualService condition.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#conditionstatus-v1-core">
+Kubernetes core/v1.ConditionStatus
+</a>
+</em>
+</td>
+<td>
+<p>Status of the condition, one of True, False, Unknown.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>lastTransitionTime</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#time-v1-meta">
+Kubernetes meta/v1.Time
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Last time the condition transitioned from one status to another.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>reason</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The reason for the condition&rsquo;s last transition.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>message</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A human readable message indicating details about the transition.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualServiceConditionType">VirtualServiceConditionType
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceCondition">VirtualServiceCondition</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualServiceProvider">VirtualServiceProvider
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceSpec">VirtualServiceSpec</a>)
+</p>
+<p>
+<p>VirtualServiceProvider refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceProvider.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceProvider.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>virtualNode</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeServiceProvider">
+VirtualNodeServiceProvider
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The virtual node associated with a virtual service.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>virtualRouter</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterServiceProvider">
+VirtualRouterServiceProvider
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The virtual router associated with a virtual service.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualServiceReference">VirtualServiceReference
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceBackend">VirtualServiceBackend</a>)
+</p>
+<p>
+<p>VirtualServiceReference holds a reference to VirtualService.appmesh.k8s.aws</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>namespace</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Namespace is the namespace of VirtualService CR.
+If unspecified, defaults to the referencing object&rsquo;s namespace</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Name is the name of VirtualService CR</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualServiceSpec">VirtualServiceSpec
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualService">VirtualService</a>)
+</p>
+<p>
+<p>VirtualServiceSpec defines the desired state of VirtualService
+refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>awsName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AWSName is the AppMesh VirtualService object&rsquo;s name.
+If unspecified or empty, it defaults to be &ldquo;${name}.${namespace}&rdquo; of k8s VirtualService</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>provider</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceProvider">
+VirtualServiceProvider
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The provider for virtual services. You can specify a single virtual node or virtual router.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>meshRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshReference">
+MeshReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to k8s Mesh CR that this VirtualService belongs to.
+The admission controller populates it using Meshes&rsquo;s selector, and prevents users from setting this field.</p>
+<p>Populated by the system.
+Read-only.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualServiceStatus">VirtualServiceStatus
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualService">VirtualService</a>)
+</p>
+<p>
+<p>VirtualServiceStatus defines the observed state of VirtualService</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>virtualServiceARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>VirtualServiceARN is the AppMesh VirtualService object&rsquo;s Amazon Resource Name.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>conditions</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceCondition">
+[]VirtualServiceCondition
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The current VirtualService status.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>observedGeneration</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The generation observed by the VirtualService controller.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.WeightedTarget">WeightedTarget
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteAction">GRPCRouteAction</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRouteAction">HTTPRouteAction</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.TCPRouteAction">TCPRouteAction</a>)
+</p>
+<p>
+<p>WeightedTarget refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>virtualNodeRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeReference">
+VirtualNodeReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Reference to Kubernetes VirtualNode CR in cluster to associate with the weighted target. Exactly one of &lsquo;virtualNodeRef&rsquo; or &lsquo;virtualNodeARN&rsquo; must be specified.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>virtualNodeARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Amazon Resource Name to AppMesh VirtualNode object to associate with the weighted target. Exactly one of &lsquo;virtualNodeRef&rsquo; or &lsquo;virtualNodeARN&rsquo; must be specified.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>weight</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<p>The relative weight of the weighted target.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<p><em>
+Generated with <code>gen-crd-api-reference-docs</code>
+on git commit <code>0b14b71</code>.
+</em></p></p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../../tutorials/walkthroughs/" title="Walkthroughs" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Walkthroughs
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../api_design/" title="APIDesign" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                APIDesign
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/vendor.d710d30a.min.js"></script>
+      <script src="../../assets/javascripts/bundle.5f27aba8.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      
+      <script>
+        app = initialize({
+          base: "../..",
+          features: ["tabs"],
+          search: Object.assign({
+            worker: "../../assets/javascripts/worker/search.27c6a5e6.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+    
+  </body>
+</html>

@@ -10,18 +10,18 @@
       
       
       
-      <link rel="shortcut icon" href="../assets/images/aws_appmesh_icon.svg">
+      <link rel="shortcut icon" href="../../assets/images/aws_appmesh_icon.svg">
       <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.2.0">
     
     
       
-        <title>Troubleshooting - AWS App Mesh Controller</title>
+        <title>Monitoring - AWS App Mesh Controller</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.18ac144a.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.18ac144a.min.css">
       
-        <link rel="stylesheet" href="../assets/stylesheets/palette.616af814.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.616af814.min.css">
       
       
         
@@ -57,7 +57,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#troubleshooting" class="md-skip">
+        <a href="#appmesh-monitoring-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -68,7 +68,7 @@
     
       <header class="md-header" data-md-component="header">
   <nav class="md-header-nav md-grid" aria-label="Header">
-    <a href=".." title="AWS App Mesh Controller" class="md-header-nav__button md-logo" aria-label="AWS App Mesh Controller">
+    <a href="../.." title="AWS App Mesh Controller" class="md-header-nav__button md-logo" aria-label="AWS App Mesh Controller">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
@@ -85,7 +85,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              Troubleshooting
+              Monitoring
             
           </span>
         </div>
@@ -156,7 +156,7 @@
         
   <li class="md-tabs__item">
     
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         Home
       </a>
     
@@ -168,8 +168,8 @@
   
     <li class="md-tabs__item">
       
-        <a href="../api_design/" class="md-tabs__link">
-          API
+        <a href="../installation/" class="md-tabs__link md-tabs__link--active">
+          Guide
         </a>
       
     </li>
@@ -181,8 +181,21 @@
   
     <li class="md-tabs__item">
       
-        <a href="./" class="md-tabs__link md-tabs__link--active">
-          Guide
+        <a href="../../tutorials/walkthroughs/" class="md-tabs__link">
+          Tutorials
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../reference/api_spec/" class="md-tabs__link">
+          Reference
         </a>
       
     </li>
@@ -203,7 +216,7 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="AWS App Mesh Controller" class="md-nav__button md-logo" aria-label="AWS App Mesh Controller">
+    <a href="../.." title="AWS App Mesh Controller" class="md-nav__button md-logo" aria-label="AWS App Mesh Controller">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
@@ -233,7 +246,7 @@
 
 
   <li class="md-nav__item">
-    <a href=".." title="Home" class="md-nav__link">
+    <a href="../.." title="Home" class="md-nav__link">
       Home
     </a>
   </li>
@@ -243,23 +256,25 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
     
     <label class="md-nav__link" for="nav-2">
-      API
+      Guide
       <span class="md-nav__icon md-icon">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
       </span>
     </label>
-    <nav class="md-nav" aria-label="API" data-md-level="1">
+    <nav class="md-nav" aria-label="Guide" data-md-level="1">
       <label class="md-nav__title" for="nav-2">
         <span class="md-nav__icon md-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
         </span>
-        API
+        Guide
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -270,8 +285,93 @@
 
 
   <li class="md-nav__item">
-    <a href="../api_design/" title="Design" class="md-nav__link">
-      Design
+    <a href="../installation/" title="Installation" class="md-nav__link">
+      Installation
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Monitoring
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
+        </span>
+      </label>
+    
+    <a href="./" title="Monitoring" class="md-nav__link md-nav__link--active">
+      Monitoring
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install-prometheus" class="md-nav__link">
+    Install Prometheus
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-grafana" class="md-nav__link">
+    Install Grafana
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../tracing/" title="Tracing" class="md-nav__link">
+      Tracing
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../troubleshooting/" title="Troubleshooting" class="md-nav__link">
+      Troubleshooting
     </a>
   </li>
 
@@ -285,25 +385,23 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
     
     <label class="md-nav__link" for="nav-3">
-      Guide
+      Tutorials
       <span class="md-nav__icon md-icon">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
       </span>
     </label>
-    <nav class="md-nav" aria-label="Guide" data-md-level="1">
+    <nav class="md-nav" aria-label="Tutorials" data-md-level="1">
       <label class="md-nav__title" for="nav-3">
         <span class="md-nav__icon md-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
         </span>
-        Guide
+        Tutorials
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -312,49 +410,65 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Troubleshooting
-        <span class="md-nav__icon md-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
-        </span>
-      </label>
-    
-    <a href="./" title="Troubleshooting" class="md-nav__link md-nav__link--active">
-      Troubleshooting
+  <li class="md-nav__item">
+    <a href="../../tutorials/walkthroughs/" title="Walkthroughs" class="md-nav__link">
+      Walkthroughs
     </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
     
       
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      Reference
       <span class="md-nav__icon md-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
       </span>
-      Table of contents
     </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    Troubleshooting
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
+    <nav class="md-nav" aria-label="Reference" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        </span>
+        Reference
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../reference/api_spec/" title="APISpec" class="md-nav__link">
+      APISpec
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../reference/api_design/" title="APIDesign" class="md-nav__link">
+      APIDesign
+    </a>
   </li>
 
         
@@ -377,6 +491,8 @@
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon">
@@ -387,8 +503,15 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    Troubleshooting
+  <a href="#install-prometheus" class="md-nav__link">
+    Install Prometheus
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-grafana" class="md-nav__link">
+    Install Grafana
   </a>
   
 </li>
@@ -405,7 +528,7 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/troubleshooting.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/guide/monitoring.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
@@ -413,30 +536,12 @@
                   
                 
                 
-                  <h1>Troubleshooting</h1>
-                
-                <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<p>Tail the controller logs:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">APPMESH_SYSTEM_NAMESPACE</span><span class="o">=</span>appmesh-system
-kubectl logs -n <span class="s2">&quot;</span><span class="si">${</span><span class="nv">APPMESH_SYSTEM_NAMESPACE</span><span class="si">}</span><span class="s2">&quot;</span> -f --since 10s <span class="se">\</span>
-    <span class="k">$(</span>kubectl get pods -n <span class="s2">&quot;</span><span class="si">${</span><span class="nv">APPMESH_SYSTEM_NAMESPACE</span><span class="si">}</span><span class="s2">&quot;</span> -o name <span class="p">|</span> grep controller<span class="k">)</span>
-</code></pre></div>
-
-<p>Tail envoy logs:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">APPLICATION_NAMESPACE</span><span class="o">=</span>&lt;your namespace&gt;
-<span class="nb">export</span> <span class="nv">APPLICATION</span><span class="o">=</span>&lt;your pod or deployment&gt; <span class="c1"># i.e. deploy/my-app</span>
-kubectl logs -n <span class="s2">&quot;</span><span class="si">${</span><span class="nv">APPLICATION_NAMESPACE</span><span class="si">}</span><span class="s2"> &quot;</span><span class="si">${</span><span class="nv">APPLICATION_POD</span><span class="si">}</span><span class="s2">&quot; envoy -f --since 10s</span>
-</code></pre></div>
-
-<p>View envoy configuration:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">APPLICATION_NAMESPACE</span><span class="o">=</span>&lt;your namespace&gt;
-<span class="nb">export</span> <span class="nv">APPLICATION</span><span class="o">=</span>&lt;your pod&gt;
-kubectl port-forward -n <span class="s2">&quot;</span><span class="si">${</span><span class="nv">APPLICATION_NAMESPACE</span><span class="si">}</span><span class="s2">&quot;</span> <span class="se">\</span>
-    <span class="k">$(</span>kubectl get pod -n <span class="s2">&quot;</span><span class="si">${</span><span class="nv">APPLICATION_NAMESPACE</span><span class="si">}</span><span class="s2">&quot;</span> <span class="p">|</span> grep <span class="s2">&quot;</span><span class="si">${</span><span class="nv">APPLICATION</span><span class="si">}</span><span class="s2">&quot;</span> <span class="p">|</span>awk <span class="s1">&#39;{print $1}&#39;</span><span class="k">)</span> <span class="se">\</span>
-    <span class="m">9901</span>
-</code></pre></div>
-
-<p>Then navigate to <code>localhost:9901/</code> for the index or <code>localhost:9901/config_dump</code> for the envoy config.</p>
+                <h1 id="appmesh-monitoring-guide">AppMesh Monitoring Guide<a class="headerlink" href="#appmesh-monitoring-guide" title="Permanent link">&para;</a></h1>
+<p>AppMesh controller supports monitoring the control plane with Prometheus and Grafana.</p>
+<h2 id="install-prometheus">Install Prometheus<a class="headerlink" href="#install-prometheus" title="Permanent link">&para;</a></h2>
+<p>Follow instructions in <a href="https://github.com/aws/eks-charts/tree/master/stable/appmesh-prometheus">appmesh-prometheus</a> helm chart.</p>
+<h2 id="install-grafana">Install Grafana<a class="headerlink" href="#install-grafana" title="Permanent link">&para;</a></h2>
+<p>Follow instructions in <a href="https://github.com/aws/eks-charts/tree/master/stable/appmesh-grafana">appmesh-grafana</a> helm chart.</p>
                 
               
               
@@ -455,7 +560,7 @@ kubectl port-forward -n <span class="s2">&quot;</span><span class="si">${</span>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../api_design/" title="Design" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../installation/" title="Installation" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -464,11 +569,25 @@ kubectl port-forward -n <span class="s2">&quot;</span><span class="si">${</span>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Design
+                Installation
               </div>
             </div>
           </a>
         
+        
+          <a href="../tracing/" title="Tracing" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Tracing
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
         
       </nav>
     </div>
@@ -489,15 +608,15 @@ kubectl port-forward -n <span class="s2">&quot;</span><span class="si">${</span>
       
     </div>
     
-      <script src="../assets/javascripts/vendor.d710d30a.min.js"></script>
-      <script src="../assets/javascripts/bundle.5f27aba8.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../../assets/javascripts/vendor.d710d30a.min.js"></script>
+      <script src="../../assets/javascripts/bundle.5f27aba8.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
-          base: "..",
+          base: "../..",
           features: ["tabs"],
           search: Object.assign({
-            worker: "../assets/javascripts/worker/search.27c6a5e6.min.js"
+            worker: "../../assets/javascripts/worker/search.27c6a5e6.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>
