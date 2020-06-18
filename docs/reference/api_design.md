@@ -55,7 +55,7 @@ We’ll use four CRD to represent AppMesh objects:
 * VirtualService: Represents an AppMesh virtualService object, which can use either VirtualRouter or VirtualNode as provider.
 * VirtualRouter: Represents an AppMesh virtualRouter object and embeds virtualRoute.
 
-![Image: api_overview.png](assets/images/api_overview.png)
+![Image: api_overview.png](../assets/images/api_overview.png)
 
 Detailed changes are discussed below:
 

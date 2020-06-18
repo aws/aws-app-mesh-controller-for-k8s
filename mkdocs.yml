@@ -5,10 +5,15 @@ strict: true
 
 nav:
   - Home: index.md
-  - API:
-      - Design: api_design.md
   - Guide:
-      - Troubleshooting: troubleshooting.md
+      - Installation: guide/installation.md
+      - Monitoring: guide/monitoring.md
+      - Tracing: guide/tracing.md
+      - Troubleshooting: guide/troubleshooting.md
+  - Tutorials:
+      - Walkthroughs: tutorials/walkthroughs.md
+  - Reference:
+      - APIDesign: reference/api_design.md
 plugins:
   - search
 theme:
