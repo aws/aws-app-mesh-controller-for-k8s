@@ -4,7 +4,7 @@ repo_url: https://github.com/aws/aws-app-mesh-controller-for-k8s
 strict: true
 
 nav:
-  - Home: index.md
+  - Home: README.md
   - Guide:
       - Installation: guide/installation.md
       - Monitoring: guide/monitoring.md
