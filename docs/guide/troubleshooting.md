@@ -9,8 +9,9 @@ Your can adjust this limit by adjust the "Connected Envoy processes per virtual 
 
 ### Namespaces is not labeled correctly
 Namespaces must be labeled with two kind of labels:
-* `appmesh.k8s.aws/sidecarInjectorWebhook: enabled` is required on namespaces where pod should be injected with envoy sidecars.
-* customized labels to make `mesh` CustomResource selects the namespace via `mesh.spec.namespaceSelector`. (optional if you have a single Mesh selects all namespaces)
+
+  * `appmesh.k8s.aws/sidecarInjectorWebhook: enabled` is required on namespaces where pod should be injected with envoy sidecars.
+  * customized labels to make `mesh` CustomResource selects the namespace via `mesh.spec.namespaceSelector`. (optional if you have a single Mesh selects all namespaces)
 
 ## Troubleshooting
 

@@ -293,7 +293,7 @@ type VirtualNodeCondition struct {
 }
 
 // VirtualNodeSpec defines the desired state of VirtualNode
-// refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html
+// refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualNodeSpec.html
 type VirtualNodeSpec struct {
 	// AWSName is the AppMesh VirtualNode object's name.
 	// If unspecified or empty, it defaults to be "${name}_${namespace}" of k8s VirtualNode
