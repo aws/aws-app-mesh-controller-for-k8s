@@ -13,6 +13,7 @@ nav:
   - Tutorials:
       - Walkthroughs: tutorials/walkthroughs.md
   - Reference:
+      - APISpec: reference/api_spec.md
       - APIDesign: reference/api_design.md
 plugins:
   - search

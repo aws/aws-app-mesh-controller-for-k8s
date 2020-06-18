@@ -75,6 +75,7 @@ type VirtualServiceCondition struct {
 }
 
 // VirtualServiceSpec defines the desired state of VirtualService
+// refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html
 type VirtualServiceSpec struct {
 	// AWSName is the AppMesh VirtualService object's name.
 	// If unspecified or empty, it defaults to be "${name}.${namespace}" of k8s VirtualService
