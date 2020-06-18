@@ -282,6 +282,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#security-disclosures" class="md-nav__link">
+    Security disclosures
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#documentation" class="md-nav__link">
     Documentation
   </a>
@@ -500,6 +507,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#security-disclosures" class="md-nav__link">
+    Security disclosures
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#documentation" class="md-nav__link">
     Documentation
   </a>
@@ -518,7 +532,7 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/index.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/README.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
@@ -535,7 +549,10 @@
 </p>
 
 <h2 id="aws-app-mesh-controller-for-k8s">AWS App Mesh Controller For K8s<a class="headerlink" href="#aws-app-mesh-controller-for-k8s" title="Permanent link">&para;</a></h2>
-<p>AWS App Mesh Controller For K8s is a controller to help manage <a href="https://aws.amazon.com/app-mesh/">App Mesh</a> resources for a Kubernetes cluster.  The controller watches custom resources for changes and reflects those changes into the <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/Welcome.html">App Mesh API</a>. It is accompanied by the deployment of three custom resource definitions (<a href="https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/">CRDs</a>): meshes, virtualnodes, and virtualservices.  These map to App Mesh API objects which the controller manages for you.</p>
+<p>AWS App Mesh Controller For K8s is a controller to help manage <a href="https://aws.amazon.com/app-mesh/">App Mesh</a> resources for a Kubernetes cluster and injecting sidecars to Kubernetes <a href="https://kubernetes.io/docs/concepts/workloads/pods/pod/">Pods</a>.  The controller watches custom resources for changes and reflects those changes into the <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/Welcome.html">App Mesh API</a>. The controller maintains the custom resources (<a href="https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/">CRDs</a>): meshes, virtualnodes, virtualrouters and virtualservices.  The custom resources map to App Mesh API objects.</p>
+<p>Note: For v0.5.0 or older versions of the controller, please refer to <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/legacy-controller">legacy-controller branch</a></p>
+<h2 id="security-disclosures">Security disclosures<a class="headerlink" href="#security-disclosures" title="Permanent link">&para;</a></h2>
+<p>If you think you’ve found a potential security issue, please do not post it in the Issues.  Instead, please follow the instructions <a href="https://aws.amazon.com/security/vulnerability-reporting/">here</a> or <a href="mailto:aws-security@amazon.com">email AWS security directly</a>.</p>
 <h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
 <p>Checkout our <a href="https://aws.github.io/aws-app-mesh-controller-for-k8s/">Live Docs</a>!</p>
                 
