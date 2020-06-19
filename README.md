@@ -8,9 +8,9 @@
     <img src="docs/assets/images/aws_appmesh_icon.svg" alt="App Mesh Logo" width="200" />
 </p>
 
-## AWS App Mesh Controller For K8s
+## AWS App Mesh Controller For K8s (Preview)
 
-AWS App Mesh Controller For K8s is a controller to help manage [App Mesh](https://aws.amazon.com/app-mesh/) resources for a Kubernetes cluster.  The controller watches custom resources for changes and reflects those changes into the [App Mesh API](https://docs.aws.amazon.com/app-mesh/latest/APIReference/Welcome.html). It is accompanied by the deployment of three custom resource definitions ([CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)): meshes, virtualnodes, virtualservices, virtualgateways and gatewayroutes.  These map to App Mesh API objects which the controller manages for you.
+AWS App Mesh Controller For K8s is a controller to help manage [App Mesh](https://aws.amazon.com/app-mesh/) resources for a Kubernetes cluster and injecting sidecars to Kubernetes [Pods](https://kubernetes.io/docs/concepts/workloads/pods/pod/).  The controller watches custom resources for changes and reflects those changes into the [App Mesh API](https://docs.aws.amazon.com/app-mesh/latest/APIReference/Welcome.html). The controller maintains the custom resources ([CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)): meshes, virtualnodes, virtualrouters, virtualservices, virtualgateway and gatewayroutes.  The custom resources map to App Mesh API objects
 
 ## Documentation
 Checkout our [Live Docs](https://aws.github.io/aws-app-mesh-controller-for-k8s/)!

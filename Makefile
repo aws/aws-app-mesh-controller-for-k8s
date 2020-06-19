@@ -68,7 +68,7 @@ docker-push:
 
 setup-appmesh-sdk-override:
 	@if [ "$(APPMESH_SDK_OVERRIDE)" = "y" ] ; then \
-	    ./appmesh_models_override/setup.sh ; \
+	    APPMESH_PREVIEW=1 ./appmesh_models_override/setup.sh ; \
 	fi
 
 cleanup-appmesh-sdk-override:
