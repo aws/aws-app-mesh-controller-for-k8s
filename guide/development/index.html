@@ -10,18 +10,18 @@
       
       
       
-      <link rel="shortcut icon" href="/assets/images/aws_appmesh_icon.svg">
+      <link rel="shortcut icon" href="../../assets/images/aws_appmesh_icon.svg">
       <meta name="generator" content="mkdocs-1.1, mkdocs-material-5.1.3">
     
     
       
-        <title>AWS App Mesh Controller</title>
+        <title>Development - AWS App Mesh Controller</title>
       
     
     
-      <link rel="stylesheet" href="/assets/stylesheets/main.62d34fff.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.62d34fff.min.css">
       
-        <link rel="stylesheet" href="/assets/stylesheets/palette.c8acc6db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.c8acc6db.min.css">
       
       
         
@@ -55,6 +55,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#app-mesh-controller-development-guide" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -62,7 +67,7 @@
     
       <header class="md-header" data-md-component="header">
   <nav class="md-header-nav md-grid" aria-label="Header">
-    <a href="/." title="AWS App Mesh Controller" class="md-header-nav__button md-logo" aria-label="AWS App Mesh Controller">
+    <a href="../.." title="AWS App Mesh Controller" class="md-header-nav__button md-logo" aria-label="AWS App Mesh Controller">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,8A3,3 0 0,0 15,5A3,3 0 0,0 12,2A3,3 0 0,0 9,5A3,3 0 0,0 12,8M12,11.54C9.64,9.35 6.5,8 3,8V19C6.5,19 9.64,20.35 12,22.54C14.36,20.35 17.5,19 21,19V8C17.5,8 14.36,9.35 12,11.54Z" /></svg>
@@ -79,7 +84,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              
+              Development
             
           </span>
         </div>
@@ -141,14 +146,16 @@
         
           
 
-<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  
+
+<nav class="md-tabs md-tabs--active" aria-label="Tabs" data-md-component="tabs">
   <div class="md-tabs__inner md-grid">
     <ul class="md-tabs__list">
       
         
   <li class="md-tabs__item">
     
-      <a href="/." class="md-tabs__link md-tabs__link--active">
+      <a href="../.." class="md-tabs__link">
         Home
       </a>
     
@@ -160,7 +167,7 @@
   
     <li class="md-tabs__item">
       
-        <a href="/guide/installation/" class="md-tabs__link">
+        <a href="../installation/" class="md-tabs__link md-tabs__link--active">
           Guide
         </a>
       
@@ -173,7 +180,7 @@
   
     <li class="md-tabs__item">
       
-        <a href="/tutorials/walkthroughs/" class="md-tabs__link">
+        <a href="../../tutorials/walkthroughs/" class="md-tabs__link">
           Tutorials
         </a>
       
@@ -186,7 +193,7 @@
   
     <li class="md-tabs__item">
       
-        <a href="/reference/api_spec/" class="md-tabs__link">
+        <a href="../../reference/api_spec/" class="md-tabs__link">
           Reference
         </a>
       
@@ -208,7 +215,7 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/." title="AWS App Mesh Controller" class="md-nav__button md-logo" aria-label="AWS App Mesh Controller">
+    <a href="../.." title="AWS App Mesh Controller" class="md-nav__button md-logo" aria-label="AWS App Mesh Controller">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,8A3,3 0 0,0 15,5A3,3 0 0,0 12,2A3,3 0 0,0 9,5A3,3 0 0,0 12,8M12,11.54C9.64,9.35 6.5,8 3,8V19C6.5,19 9.64,20.35 12,22.54C14.36,20.35 17.5,19 21,19V8C17.5,8 14.36,9.35 12,11.54Z" /></svg>
@@ -238,7 +245,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/." title="Home" class="md-nav__link">
+    <a href="../.." title="Home" class="md-nav__link">
       Home
     </a>
   </li>
@@ -248,10 +255,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
     
     <label class="md-nav__link" for="nav-2">
       Guide
@@ -275,7 +284,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/guide/installation/" title="Installation" class="md-nav__link">
+    <a href="../installation/" title="Installation" class="md-nav__link">
       Installation
     </a>
   </li>
@@ -287,7 +296,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/guide/monitoring/" title="Monitoring" class="md-nav__link">
+    <a href="../monitoring/" title="Monitoring" class="md-nav__link">
       Monitoring
     </a>
   </li>
@@ -299,7 +308,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/guide/tracing/" title="Tracing" class="md-nav__link">
+    <a href="../tracing/" title="Tracing" class="md-nav__link">
       Tracing
     </a>
   </li>
@@ -311,7 +320,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/guide/troubleshooting/" title="Troubleshooting" class="md-nav__link">
+    <a href="../troubleshooting/" title="Troubleshooting" class="md-nav__link">
       Troubleshooting
     </a>
   </li>
@@ -321,11 +330,67 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="/guide/development/" title="Development" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Development
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,9H17V7H3V9M3,13H17V11H3V13M3,17H17V15H3V17M19,17H21V15H19V17M19,7V9H21V7H19M19,13H21V11H19V13Z" /></svg>
+        </span>
+      </label>
+    
+    <a href="./" title="Development" class="md-nav__link md-nav__link--active">
       Development
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-the-controller" class="md-nav__link">
+    Building the Controller
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-for-app-mesh-preview" class="md-nav__link">
+    Building for App Mesh Preview
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -365,7 +430,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/tutorials/walkthroughs/" title="Walkthroughs" class="md-nav__link">
+    <a href="../../tutorials/walkthroughs/" title="Walkthroughs" class="md-nav__link">
       Walkthroughs
     </a>
   </li>
@@ -407,7 +472,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/reference/api_spec/" title="APISpec" class="md-nav__link">
+    <a href="../../reference/api_spec/" title="APISpec" class="md-nav__link">
       APISpec
     </a>
   </li>
@@ -419,7 +484,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/reference/api_design/" title="APIDesign" class="md-nav__link">
+    <a href="../../reference/api_design/" title="APIDesign" class="md-nav__link">
       APIDesign
     </a>
   </li>
@@ -437,12 +502,94 @@
               </div>
             
             
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    Prerequisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-the-controller" class="md-nav__link">
+    Building the Controller
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-for-app-mesh-preview" class="md-nav__link">
+    Building for App Mesh Preview
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           <div class="md-content">
             <article class="md-content__inner md-typeset">
               
-  <h1>404 - Not found</h1>
+                
+                  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/guide/development.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" /></svg>
+                  </a>
+                
+                
+                  
+                
+                
+                <h1 id="app-mesh-controller-development-guide">App Mesh Controller Development Guide<a class="headerlink" href="#app-mesh-controller-development-guide" title="Permanent link">&para;</a></h1>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://golang.org/">Go 1.13+</a></li>
+<li><a href="https://www.docker.com/">Docker</a></li>
+<li><a href="https://man7.org/linux/man-pages/man1/make.1.html">Make</a></li>
+<li><a href="https://stedolan.github.io/jq/">jq</a></li>
+</ul>
+<h2 id="building-the-controller">Building the Controller<a class="headerlink" href="#building-the-controller" title="Permanent link">&para;</a></h2>
+<p>The controller Docker image can be built via:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">AWS_REGION</span><span class="o">=</span>&lt;region&gt; <span class="nv">AWS_ACCOUNT</span><span class="o">=</span>&lt;account ID&gt; make docker-build
+</code></pre></div>
 
+<p>This command will compile the controller, run unit tests, and generate a Docker image using the ECR repository format (e.g. <code>&lt;account ID&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com/amazon/appmesh-controller</code>).</p>
+<p>The image can be pushed to your local ECR repository via:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">AWS_REGION</span><span class="o">=</span>&lt;region&gt; <span class="nv">AWS_ACCOUNT</span><span class="o">=</span>&lt;account ID&gt; make docker-push
+</code></pre></div>
+
+<p>Once the image has been pushed, you can run the following to install the controller and CRDs to your configured cluster (defined in <code>~/.kube/config</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="nv">AWS_REGION</span><span class="o">=</span>&lt;region&gt; <span class="nv">AWS_ACCOUNT</span><span class="o">=</span>&lt;account ID&gt; make deploy
+</code></pre></div>
+
+<h2 id="building-for-app-mesh-preview">Building for App Mesh Preview<a class="headerlink" href="#building-for-app-mesh-preview" title="Permanent link">&para;</a></h2>
+<p><strong>Important</strong>: The preview version of the controller will not work against App Mesh's production environment (and vice versa). App Mesh's endpoint and signing name are chosen during the build process.</p>
+<p>When working against the App Mesh Preview environment, the preview SDK models are downloaded and used to generate the AWS SDK for Go dynamically. The steps for building and deploying the controller are the same as above, but with two new variables for the <code>docker-build</code> step.</p>
+<div class="highlight"><pre><span></span><code><span class="nv">AWS_REGION</span><span class="o">=</span>&lt;region&gt; <span class="nv">AWS_ACCOUNT</span><span class="o">=</span>&lt;account ID&gt; <span class="nv">APPMESH_SDK_OVERRIDE</span><span class="o">=</span>y <span class="nv">APPMESH_PREVIEW</span><span class="o">=</span>y make docker-build
+</code></pre></div>
+                
+              
               
                 
 
@@ -455,6 +602,41 @@
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../troubleshooting/" title="Troubleshooting" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Troubleshooting
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../../tutorials/walkthroughs/" title="Walkthroughs" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Walkthroughs
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" /></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -472,15 +654,15 @@
       
     </div>
     
-      <script src="/assets/javascripts/vendor.f81b9e8b.min.js"></script>
-      <script src="/assets/javascripts/bundle.23546af0.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../../assets/javascripts/vendor.f81b9e8b.min.js"></script>
+      <script src="../../assets/javascripts/bundle.23546af0.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
-          base: "/",
+          base: "../..",
           features: ["tabs"],
           search: Object.assign({
-            worker: "/assets/javascripts/worker/search.58d22e8e.min.js"
+            worker: "../../assets/javascripts/worker/search.58d22e8e.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>
