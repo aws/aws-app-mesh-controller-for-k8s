@@ -8,7 +8,7 @@ SDK_MODEL_SOURCE=https://raw.githubusercontent.com/aws/aws-app-mesh-roadmap/mast
 SDK_VENDOR_PATH=./vendor/github.com/aws/aws-sdk-go
 API_VERSION=2019-01-25
 API_PATH=$SDK_VENDOR_PATH/models/apis/appmesh/$API_VERSION
-SERVICE_NAME=$([ "$APPMESH_PREVIEW" == "1" ] && echo "appmesh-preview" || echo "appmesh" )
+SERVICE_NAME=$([ "$APPMESH_PREVIEW" == "y" ] && echo "appmesh-preview" || echo "appmesh" )
 
 # Clone the SDK to the vendor path (removing an old one if necessary)
 rm -rf $SDK_VENDOR_PATH
