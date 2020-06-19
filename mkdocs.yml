@@ -10,6 +10,7 @@ nav:
       - Monitoring: guide/monitoring.md
       - Tracing: guide/tracing.md
       - Troubleshooting: guide/troubleshooting.md
+      - Development: guide/development.md
   - Tutorials:
       - Walkthroughs: tutorials/walkthroughs.md
   - Reference:
