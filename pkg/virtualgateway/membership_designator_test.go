@@ -1,5 +1,3 @@
-// +build preview
-
 package virtualgateway
 
 import (

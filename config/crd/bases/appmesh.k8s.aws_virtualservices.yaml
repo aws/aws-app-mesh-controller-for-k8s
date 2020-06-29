@@ -45,6 +45,7 @@ spec:
           type: object
         spec:
           description: VirtualServiceSpec defines the desired state of VirtualService
+            refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html
           properties:
             awsName:
               description: AWSName is the AppMesh VirtualService object's name. If
