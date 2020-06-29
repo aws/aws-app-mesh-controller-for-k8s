@@ -1,5 +1,3 @@
-// +build preview
-
 package appmesh
 
 import (
@@ -72,7 +70,7 @@ func (m *virtualGatewayMutator) designateMeshMembership(ctx context.Context, vg 
 	return nil
 }
 
-//// +kubebuilder:webhook:path=/mutate-appmesh-k8s-aws-v1beta2-virtualgateway,mutating=true,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualgateways,verbs=create;update,versions=v1beta2,name=mvirtualgateway.appmesh.k8s.aws
+// +kubebuilder:webhook:path=/mutate-appmesh-k8s-aws-v1beta2-virtualgateway,mutating=true,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualgateways,verbs=create;update,versions=v1beta2,name=mvirtualgateway.appmesh.k8s.aws
 
 func (m *virtualGatewayMutator) SetupWithManager(mgr ctrl.Manager) {
 	mgr.GetWebhookServer().Register(apiPathMutateAppMeshVirtualGateway, webhook.MutatingWebhookForMutator(m))

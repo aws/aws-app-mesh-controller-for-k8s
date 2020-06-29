@@ -55,11 +55,19 @@ func (m *pendingMembersFinalizer) Finalize(ctx context.Context, ms *appmesh.Mesh
 	if err != nil {
 		return err
 	}
-	if len(vsMembers) == 0 && len(vrMembers) == 0 && len(vnMembers) == 0 {
+	vgMembers, err := m.findVirtualGatewayMembers(ctx, ms)
+	if err != nil {
+		return err
+	}
+	grMembers, err := m.findGatewayRouteMembers(ctx, ms)
+	if err != nil {
+		return err
+	}
+	if len(vsMembers) == 0 && len(vrMembers) == 0 && len(vnMembers) == 0 && len(vgMembers) == 0 && len(grMembers) == 0 {
 		return nil
 	}
 
-	message := m.buildPendingMembersEventMessage(ctx, vsMembers, vrMembers, vnMembers)
+	message := m.buildPendingMembersEventMessage(ctx, vsMembers, vrMembers, vnMembers, vgMembers, grMembers)
 	m.eventRecorder.Eventf(ms, corev1.EventTypeWarning, "PendingMembersDeletion", message)
 	return runtime.NewRequeueAfterError(errors.New("pending members deletion"), m.evaluateInterval)
 }
@@ -151,7 +159,8 @@ func (m *pendingMembersFinalizer) findGatewayRouteMembers(ctx context.Context, m
 
 func (m *pendingMembersFinalizer) buildPendingMembersEventMessage(ctx context.Context,
 	vsMembers []*appmesh.VirtualService, vrMembers []*appmesh.VirtualRouter,
-	vnMembers []*appmesh.VirtualNode) string {
+	vnMembers []*appmesh.VirtualNode, vgMembers []*appmesh.VirtualGateway,
+	grMembers []*appmesh.GatewayRoute) string {
 	var messagePerObjectTypes []string
 	if len(vsMembers) != 0 {
 		message := fmt.Sprintf("virtualService: %v", len(vsMembers))
@@ -165,5 +174,14 @@ func (m *pendingMembersFinalizer) buildPendingMembersEventMessage(ctx context.Co
 		message := fmt.Sprintf("virtualNode: %v", len(vnMembers))
 		messagePerObjectTypes = append(messagePerObjectTypes, message)
 	}
+	if len(vgMembers) != 0 {
+		message := fmt.Sprintf("virtualGateway: %v", len(vgMembers))
+		messagePerObjectTypes = append(messagePerObjectTypes, message)
+	}
+	if len(grMembers) != 0 {
+		message := fmt.Sprintf("gatewayRoute: %v", len(grMembers))
+		messagePerObjectTypes = append(messagePerObjectTypes, message)
+	}
+
 	return "objects belong to this mesh exists, please delete them to proceed. " + strings.Join(messagePerObjectTypes, ", ")
 }

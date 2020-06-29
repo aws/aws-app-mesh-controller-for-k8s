@@ -53,6 +53,26 @@ rules:
 - apiGroups:
   - appmesh.k8s.aws
   resources:
+  - gatewayroutes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - gatewayroutes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
   - meshes
   verbs:
   - create
@@ -66,6 +86,26 @@ rules:
   - appmesh.k8s.aws
   resources:
   - meshes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualgateways
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - virtualgateways/status
   verbs:
   - get
   - patch

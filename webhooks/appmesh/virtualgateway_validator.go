@@ -1,5 +1,3 @@
-// +build preview
-
 package appmesh
 
 import (
@@ -62,7 +60,7 @@ func (v *virtualGatewayValidator) enforceFieldsImmutability(newVGateway *appmesh
 	return nil
 }
 
-//// +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-virtualgateway,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualgateways,verbs=create;update,versions=v1beta2,name=vvirtualgateway.appmesh.k8s.aws
+// +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-virtualgateway,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualgateways,verbs=create;update,versions=v1beta2,name=vvirtualgateway.appmesh.k8s.aws
 
 func (v *virtualGatewayValidator) SetupWithManager(mgr ctrl.Manager) {
 	mgr.GetWebhookServer().Register(apiPathValidateAppMeshVirtualGateway, webhook.ValidatingWebhookForValidator(v))
