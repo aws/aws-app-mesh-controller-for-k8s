@@ -197,14 +197,6 @@ func Convert_CRD_VirtualGatewayListener_To_SDK_VirtualGatewayListener(crdObj *ap
 	} else {
 		sdkObj.Tls = nil
 	}
-	if crdObj.Logging != nil {
-		sdkObj.Logging = &appmeshsdk.VirtualGatewayLogging{}
-		if err := Convert_CRD_VirtualGatewayLogging_To_SDK_VirtualGatewayLogging(crdObj.Logging, sdkObj.Logging, scope); err != nil {
-			return err
-		}
-	} else {
-		sdkObj.Logging = nil
-	}
 	return nil
 }
 
@@ -221,6 +213,15 @@ func Convert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(crdObj *appmesh.Vi
 		}
 	}
 	sdkObj.Listeners = sdkListeners
+
+	if crdObj.Logging != nil {
+		sdkObj.Logging = &appmeshsdk.VirtualGatewayLogging{}
+		if err := Convert_CRD_VirtualGatewayLogging_To_SDK_VirtualGatewayLogging(crdObj.Logging, sdkObj.Logging, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Logging = nil
+	}
 
 	if crdObj.BackendDefaults != nil {
 		sdkObj.BackendDefaults = &appmeshsdk.VirtualGatewayBackendDefaults{}
