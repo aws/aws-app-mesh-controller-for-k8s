@@ -7,4 +7,5 @@
 * [howto-k8s-http-headers](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-http-headers): This example shows how http routes can use headers for matching incoming requests.
 * [howto-k8s-http2](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-http2): This example shows how to manage HTTP/2 routes in App Mesh using Kubernetes deployments
 * [howto-k8s-retry-policy](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-retry-policy): This example shows how retry-policies can be used to for Kubernetes applications within the context of App Mesh.
+* [howto-k8s-ingress-gateway](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-ingress-gateway): This example shows how to use App Mesh Virtual Gateways for ingress connectivity towards Kubernetes applications.
 
