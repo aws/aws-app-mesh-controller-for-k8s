@@ -169,9 +169,6 @@ type VirtualGatewayListener struct {
 	// A reference to an object that represents the Transport Layer Security (TLS) properties for a listener.
 	// +optional
 	TLS *VirtualGatewayListenerTLS `json:"tls,omitempty"`
-	// The inbound and outbound access logging information for the virtual gateway.
-	// +optional
-	Logging *VirtualGatewayLogging `json:"logging,omitempty"`
 }
 
 // VirtualGatewayTLSValidationContextACMTrust refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
@@ -254,6 +251,9 @@ type VirtualGatewaySpec struct {
 	// +kubebuilder:validation:MinItems=0
 	// +kubebuilder:validation:MaxItems=1
 	Listeners []VirtualGatewayListener `json:"listeners,omitempty"`
+	// The inbound and outbound access logging information for the virtual gateway.
+	// +optional
+	Logging *VirtualGatewayLogging `json:"logging,omitempty"`
 	// A reference to an object that represents the defaults for backend GatewayRoutes.
 	// +optional
 	BackendDefaults *VirtualGatewayBackendDefaults `json:"backendDefaults,omitempty"`

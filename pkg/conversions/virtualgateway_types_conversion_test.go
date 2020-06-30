@@ -992,13 +992,6 @@ func TestConvert_CRD_VirtualGatewayListener_To_SDK_VirtualGatewayListener(t *tes
 						},
 						Mode: appmesh.VirtualGatewayListenerTLSModeStrict,
 					},
-					Logging: &appmesh.VirtualGatewayLogging{
-						AccessLog: &appmesh.VirtualGatewayAccessLog{
-							File: &appmesh.VirtualGatewayFileAccessLog{
-								Path: "/",
-							},
-						},
-					},
 				},
 				sdkObj: &appmeshsdk.VirtualGatewayListener{},
 				scope:  nil,
@@ -1025,13 +1018,6 @@ func TestConvert_CRD_VirtualGatewayListener_To_SDK_VirtualGatewayListener(t *tes
 					},
 					Mode: aws.String("STRICT"),
 				},
-				Logging: &appmeshsdk.VirtualGatewayLogging{
-					AccessLog: &appmeshsdk.VirtualGatewayAccessLog{
-						File: &appmeshsdk.VirtualGatewayFileAccessLog{
-							Path: aws.String("/"),
-						},
-					},
-				},
 			},
 		},
 		{
@@ -1051,13 +1037,6 @@ func TestConvert_CRD_VirtualGatewayListener_To_SDK_VirtualGatewayListener(t *tes
 						},
 						Mode: appmesh.VirtualGatewayListenerTLSModeStrict,
 					},
-					Logging: &appmesh.VirtualGatewayLogging{
-						AccessLog: &appmesh.VirtualGatewayAccessLog{
-							File: &appmesh.VirtualGatewayFileAccessLog{
-								Path: "/",
-							},
-						},
-					},
 				},
 				sdkObj: &appmeshsdk.VirtualGatewayListener{},
 				scope:  nil,
@@ -1075,13 +1054,6 @@ func TestConvert_CRD_VirtualGatewayListener_To_SDK_VirtualGatewayListener(t *tes
 						},
 					},
 					Mode: aws.String("STRICT"),
-				},
-				Logging: &appmeshsdk.VirtualGatewayLogging{
-					AccessLog: &appmeshsdk.VirtualGatewayAccessLog{
-						File: &appmeshsdk.VirtualGatewayFileAccessLog{
-							Path: aws.String("/"),
-						},
-					},
 				},
 			},
 		},
@@ -1103,13 +1075,6 @@ func TestConvert_CRD_VirtualGatewayListener_To_SDK_VirtualGatewayListener(t *tes
 						UnhealthyThreshold: 2,
 					},
 					TLS: nil,
-					Logging: &appmesh.VirtualGatewayLogging{
-						AccessLog: &appmesh.VirtualGatewayAccessLog{
-							File: &appmesh.VirtualGatewayFileAccessLog{
-								Path: "/",
-							},
-						},
-					},
 				},
 				sdkObj: &appmeshsdk.VirtualGatewayListener{},
 				scope:  nil,
@@ -1129,68 +1094,6 @@ func TestConvert_CRD_VirtualGatewayListener_To_SDK_VirtualGatewayListener(t *tes
 					UnhealthyThreshold: aws.Int64(2),
 				},
 				Tls: nil,
-				Logging: &appmeshsdk.VirtualGatewayLogging{
-					AccessLog: &appmeshsdk.VirtualGatewayAccessLog{
-						File: &appmeshsdk.VirtualGatewayFileAccessLog{
-							Path: aws.String("/"),
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "normal case + nil Logging",
-			args: args{
-				crdObj: &appmesh.VirtualGatewayListener{
-					PortMapping: appmesh.VirtualGatewayPortMapping{
-						Port:     port80,
-						Protocol: protocolHTTP,
-					},
-					HealthCheck: &appmesh.VirtualGatewayHealthCheckPolicy{
-						HealthyThreshold:   3,
-						IntervalMillis:     60,
-						Path:               aws.String("/"),
-						Port:               &port80,
-						Protocol:           protocolHTTP,
-						TimeoutMillis:      30,
-						UnhealthyThreshold: 2,
-					},
-					TLS: &appmesh.VirtualGatewayListenerTLS{
-						Certificate: appmesh.VirtualGatewayListenerTLSCertificate{
-							ACM: &appmesh.VirtualGatewayListenerTLSACMCertificate{
-								CertificateARN: "arn-1",
-							},
-						},
-						Mode: appmesh.VirtualGatewayListenerTLSModeStrict,
-					},
-					Logging: nil,
-				},
-				sdkObj: &appmeshsdk.VirtualGatewayListener{},
-				scope:  nil,
-			},
-			wantSDKObj: &appmeshsdk.VirtualGatewayListener{
-				PortMapping: &appmeshsdk.VirtualGatewayPortMapping{
-					Port:     aws.Int64(80),
-					Protocol: aws.String("http"),
-				},
-				HealthCheck: &appmeshsdk.VirtualGatewayHealthCheckPolicy{
-					HealthyThreshold:   aws.Int64(3),
-					IntervalMillis:     aws.Int64(60),
-					Path:               aws.String("/"),
-					Port:               aws.Int64(80),
-					Protocol:           aws.String("http"),
-					TimeoutMillis:      aws.Int64(30),
-					UnhealthyThreshold: aws.Int64(2),
-				},
-				Tls: &appmeshsdk.VirtualGatewayListenerTls{
-					Certificate: &appmeshsdk.VirtualGatewayListenerTlsCertificate{
-						Acm: &appmeshsdk.VirtualGatewayListenerTlsAcmCertificate{
-							CertificateArn: aws.String("arn-1"),
-						},
-					},
-					Mode: aws.String(appmeshsdk.VirtualGatewayListenerTlsModeStrict),
-				},
-				Logging: nil,
 			},
 		},
 		{
@@ -1273,18 +1176,18 @@ func TestConvert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(t *testing.T) 
 								},
 								Mode: appmesh.VirtualGatewayListenerTLSModeStrict,
 							},
-							Logging: &appmesh.VirtualGatewayLogging{
-								AccessLog: &appmesh.VirtualGatewayAccessLog{
-									File: &appmesh.VirtualGatewayFileAccessLog{
-										Path: "/",
-									},
-								},
-							},
 						},
 						{
 							PortMapping: appmesh.VirtualGatewayPortMapping{
 								Port:     port443,
 								Protocol: protocolHTTP2,
+							},
+						},
+					},
+					Logging: &appmesh.VirtualGatewayLogging{
+						AccessLog: &appmesh.VirtualGatewayAccessLog{
+							File: &appmesh.VirtualGatewayFileAccessLog{
+								Path: "/",
 							},
 						},
 					},
@@ -1337,18 +1240,18 @@ func TestConvert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(t *testing.T) 
 							},
 							Mode: aws.String("STRICT"),
 						},
-						Logging: &appmeshsdk.VirtualGatewayLogging{
-							AccessLog: &appmeshsdk.VirtualGatewayAccessLog{
-								File: &appmeshsdk.VirtualGatewayFileAccessLog{
-									Path: aws.String("/"),
-								},
-							},
-						},
 					},
 					{
 						PortMapping: &appmeshsdk.VirtualGatewayPortMapping{
 							Port:     aws.Int64(443),
 							Protocol: aws.String("http2"),
+						},
+					},
+				},
+				Logging: &appmeshsdk.VirtualGatewayLogging{
+					AccessLog: &appmeshsdk.VirtualGatewayAccessLog{
+						File: &appmeshsdk.VirtualGatewayFileAccessLog{
+							Path: aws.String("/"),
 						},
 					},
 				},
@@ -1445,18 +1348,18 @@ func TestConvert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(t *testing.T) 
 								},
 								Mode: appmesh.VirtualGatewayListenerTLSModeStrict,
 							},
-							Logging: &appmesh.VirtualGatewayLogging{
-								AccessLog: &appmesh.VirtualGatewayAccessLog{
-									File: &appmesh.VirtualGatewayFileAccessLog{
-										Path: "/",
-									},
-								},
-							},
 						},
 						{
 							PortMapping: appmesh.VirtualGatewayPortMapping{
 								Port:     port443,
 								Protocol: protocolHTTP2,
+							},
+						},
+					},
+					Logging: &appmesh.VirtualGatewayLogging{
+						AccessLog: &appmesh.VirtualGatewayAccessLog{
+							File: &appmesh.VirtualGatewayFileAccessLog{
+								Path: "/",
 							},
 						},
 					},
@@ -1495,12 +1398,108 @@ func TestConvert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(t *testing.T) 
 							},
 							Mode: aws.String("STRICT"),
 						},
-						Logging: &appmeshsdk.VirtualGatewayLogging{
-							AccessLog: &appmeshsdk.VirtualGatewayAccessLog{
-								File: &appmeshsdk.VirtualGatewayFileAccessLog{
-									Path: aws.String("/"),
+					},
+					{
+						PortMapping: &appmeshsdk.VirtualGatewayPortMapping{
+							Port:     aws.Int64(443),
+							Protocol: aws.String("http2"),
+						},
+					},
+				},
+				Logging: &appmeshsdk.VirtualGatewayLogging{
+					AccessLog: &appmeshsdk.VirtualGatewayAccessLog{
+						File: &appmeshsdk.VirtualGatewayFileAccessLog{
+							Path: aws.String("/"),
+						},
+					},
+				},
+				BackendDefaults: nil,
+			},
+		},
+		{
+			name: "normal case + nil logging",
+			args: args{
+				crdObj: &appmesh.VirtualGatewaySpec{
+					Listeners: []appmesh.VirtualGatewayListener{
+						{
+							PortMapping: appmesh.VirtualGatewayPortMapping{
+								Port:     port80,
+								Protocol: protocolHTTP,
+							},
+							HealthCheck: &appmesh.VirtualGatewayHealthCheckPolicy{
+								HealthyThreshold:   3,
+								IntervalMillis:     60,
+								Path:               aws.String("/"),
+								Port:               &port80,
+								Protocol:           protocolHTTP,
+								TimeoutMillis:      30,
+								UnhealthyThreshold: 2,
+							},
+							TLS: &appmesh.VirtualGatewayListenerTLS{
+								Certificate: appmesh.VirtualGatewayListenerTLSCertificate{
+									ACM: &appmesh.VirtualGatewayListenerTLSACMCertificate{
+										CertificateARN: "arn-1",
+									},
+								},
+								Mode: appmesh.VirtualGatewayListenerTLSModeStrict,
+							},
+						},
+						{
+							PortMapping: appmesh.VirtualGatewayPortMapping{
+								Port:     port443,
+								Protocol: protocolHTTP2,
+							},
+						},
+					},
+					Logging: nil,
+					BackendDefaults: &appmesh.VirtualGatewayBackendDefaults{
+						ClientPolicy: &appmesh.VirtualGatewayClientPolicy{
+							TLS: &appmesh.VirtualGatewayClientPolicyTLS{
+								Enforce: aws.Bool(true),
+								Ports:   []appmesh.PortNumber{80, 443},
+								Validation: appmesh.VirtualGatewayTLSValidationContext{
+									Trust: appmesh.VirtualGatewayTLSValidationContextTrust{
+										ACM: &appmesh.VirtualGatewayTLSValidationContextACMTrust{
+											CertificateAuthorityARNs: []string{"arn-1", "arn-2"},
+										},
+									},
 								},
 							},
+						},
+					},
+					MeshRef: nil,
+				},
+				sdkObj: &appmeshsdk.VirtualGatewaySpec{},
+				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+					vsRef := src.(*appmesh.VirtualServiceReference)
+					vsNamePtr := dest.(*string)
+					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
+					return nil
+				},
+			},
+			wantSDKObj: &appmeshsdk.VirtualGatewaySpec{
+				Listeners: []*appmeshsdk.VirtualGatewayListener{
+					{
+						PortMapping: &appmeshsdk.VirtualGatewayPortMapping{
+							Port:     aws.Int64(80),
+							Protocol: aws.String("http"),
+						},
+						HealthCheck: &appmeshsdk.VirtualGatewayHealthCheckPolicy{
+							HealthyThreshold:   aws.Int64(3),
+							IntervalMillis:     aws.Int64(60),
+							Path:               aws.String("/"),
+							Port:               aws.Int64(80),
+							Protocol:           aws.String("http"),
+							TimeoutMillis:      aws.Int64(30),
+							UnhealthyThreshold: aws.Int64(2),
+						},
+						Tls: &appmeshsdk.VirtualGatewayListenerTls{
+							Certificate: &appmeshsdk.VirtualGatewayListenerTlsCertificate{
+								Acm: &appmeshsdk.VirtualGatewayListenerTlsAcmCertificate{
+									CertificateArn: aws.String("arn-1"),
+								},
+							},
+							Mode: aws.String("STRICT"),
 						},
 					},
 					{
@@ -1510,7 +1509,22 @@ func TestConvert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(t *testing.T) 
 						},
 					},
 				},
-				BackendDefaults: nil,
+				Logging: nil,
+				BackendDefaults: &appmeshsdk.VirtualGatewayBackendDefaults{
+					ClientPolicy: &appmeshsdk.VirtualGatewayClientPolicy{
+						Tls: &appmeshsdk.VirtualGatewayClientPolicyTls{
+							Enforce: aws.Bool(true),
+							Ports:   []*int64{aws.Int64(80), aws.Int64(443)},
+							Validation: &appmeshsdk.VirtualGatewayTlsValidationContext{
+								Trust: &appmeshsdk.VirtualGatewayTlsValidationContextTrust{
+									Acm: &appmeshsdk.VirtualGatewayTlsValidationContextAcmTrust{
+										CertificateAuthorityArns: []*string{aws.String("arn-1"), aws.String("arn-2")},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
