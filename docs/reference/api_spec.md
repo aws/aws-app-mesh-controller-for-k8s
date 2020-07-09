@@ -5,9 +5,16 @@
 </li>
 </ul>
 <h2 id="appmesh.k8s.aws/v1beta2">appmesh.k8s.aws/v1beta2</h2>
+<p>
+<p>Package v1beta2 contains API Schema definitions for the appmesh v1beta2 API group</p>
+</p>
 Resource Types:
 <ul><li>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRoute">GatewayRoute</a>
+</li><li>
 <a href="#appmesh.k8s.aws/v1beta2.Mesh">Mesh</a>
+</li><li>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGateway">VirtualGateway</a>
 </li><li>
 <a href="#appmesh.k8s.aws/v1beta2.VirtualNode">VirtualNode</a>
 </li><li>
@@ -15,6 +22,169 @@ Resource Types:
 </li><li>
 <a href="#appmesh.k8s.aws/v1beta2.VirtualService">VirtualService</a>
 </li></ul>
+<h3 id="appmesh.k8s.aws/v1beta2.GatewayRoute">GatewayRoute
+</h3>
+<p>
+<p>GatewayRoute is the Schema for the gatewayroutes API</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>apiVersion</code></br>
+string</td>
+<td>
+<code>
+appmesh.k8s.aws/v1beta2
+</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>kind</code></br>
+string
+</td>
+<td><code>GatewayRoute</code></td>
+</tr>
+<tr>
+<td>
+<code>metadata</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#objectmeta-v1-meta">
+Kubernetes meta/v1.ObjectMeta
+</a>
+</em>
+</td>
+<td>
+Refer to the Kubernetes API documentation for the fields of the
+<code>metadata</code> field.
+</td>
+</tr>
+<tr>
+<td>
+<code>spec</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteSpec">
+GatewayRouteSpec
+</a>
+</em>
+</td>
+<td>
+<br/>
+<br/>
+<table>
+<tr>
+<td>
+<code>awsName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AWSName is the AppMesh GatewayRoute object&rsquo;s name.
+If unspecified or empty, it defaults to be &ldquo;${name}_${namespace}&rdquo; of k8s GatewayRoute</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>grpcRoute</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRoute">
+GRPCGatewayRoute
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the specification of a gRPC gatewayRoute.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>httpRoute</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRoute">
+HTTPGatewayRoute
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the specification of an HTTP gatewayRoute.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>http2Route</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRoute">
+HTTPGatewayRoute
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the specification of an HTTP/2 gatewayRoute.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>virtualGatewayRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayReference">
+VirtualGatewayReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to k8s VirtualGateway CR that this GatewayRoute belongs to.
+The admission controller populates it using VirtualGateway&rsquo;s selector, and prevents users from setting this field.</p>
+<p>Populated by the system.
+Read-only.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>meshRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshReference">
+MeshReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to k8s Mesh CR that this GatewayRoute belongs to.
+The admission controller populates it using Meshes&rsquo;s selector, and prevents users from setting this field.</p>
+<p>Populated by the system.
+Read-only.</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteStatus">
+GatewayRouteStatus
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
 <h3 id="appmesh.k8s.aws/v1beta2.Mesh">Mesh
 </h3>
 <p>
@@ -139,6 +309,183 @@ Required if the account ID is not your own.</p>
 <em>
 <a href="#appmesh.k8s.aws/v1beta2.MeshStatus">
 MeshStatus
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGateway">VirtualGateway
+</h3>
+<p>
+<p>VirtualGateway is the Schema for the virtualgateways API</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>apiVersion</code></br>
+string</td>
+<td>
+<code>
+appmesh.k8s.aws/v1beta2
+</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>kind</code></br>
+string
+</td>
+<td><code>VirtualGateway</code></td>
+</tr>
+<tr>
+<td>
+<code>metadata</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#objectmeta-v1-meta">
+Kubernetes meta/v1.ObjectMeta
+</a>
+</em>
+</td>
+<td>
+Refer to the Kubernetes API documentation for the fields of the
+<code>metadata</code> field.
+</td>
+</tr>
+<tr>
+<td>
+<code>spec</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewaySpec">
+VirtualGatewaySpec
+</a>
+</em>
+</td>
+<td>
+<br/>
+<br/>
+<table>
+<tr>
+<td>
+<code>awsName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AWSName is the AppMesh VirtualGateway object&rsquo;s name.
+If unspecified or empty, it defaults to be &ldquo;${name}_${namespace}&rdquo; of k8s VirtualGateway</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>namespaceSelector</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#labelselector-v1-meta">
+Kubernetes meta/v1.LabelSelector
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>NamespaceSelector selects Namespaces using labels to designate GatewayRoute membership.
+This field follows standard label selector semantics; if present but empty, it selects all namespaces.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>podSelector</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#labelselector-v1-meta">
+Kubernetes meta/v1.LabelSelector
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>PodSelector selects Pods using labels to designate VirtualGateway membership.
+This field follows standard label selector semantics:
+if present but empty, it selects all pods within namespace.
+if absent, it selects no pod.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>listeners</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListener">
+[]VirtualGatewayListener
+</a>
+</em>
+</td>
+<td>
+<p>The listener that the virtual gateway is expected to receive inbound traffic from</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>logging</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayLogging">
+VirtualGatewayLogging
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The inbound and outbound access logging information for the virtual gateway.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>backendDefaults</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayBackendDefaults">
+VirtualGatewayBackendDefaults
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents the defaults for backend GatewayRoutes.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>meshRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshReference">
+MeshReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to k8s Mesh CR that this VirtualGateway belongs to.
+The admission controller populates it using Meshes&rsquo;s selector, and prevents users from setting this field.</p>
+<p>Populated by the system.
+Read-only.</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayStatus">
+VirtualGatewayStatus
 </a>
 </em>
 </td>
@@ -1028,6 +1375,114 @@ string
 </tr>
 </tbody>
 </table>
+<h3 id="appmesh.k8s.aws/v1beta2.GRPCGatewayRoute">GRPCGatewayRoute
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteSpec">GatewayRouteSpec</a>)
+</p>
+<p>
+<p>GRPCGatewayRoute refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>match</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRouteMatch">
+GRPCGatewayRouteMatch
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the criteria for determining a request match.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>action</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRouteAction">
+GRPCGatewayRouteAction
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the action to take if a match is determined.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GRPCGatewayRouteAction">GRPCGatewayRouteAction
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRoute">GRPCGatewayRoute</a>)
+</p>
+<p>
+<p>GRPCGatewayRouteAction refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>target</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteTarget">
+GatewayRouteTarget
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the target that traffic is routed to when a request matches the route.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GRPCGatewayRouteMatch">GRPCGatewayRouteMatch
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRoute">GRPCGatewayRoute</a>)
+</p>
+<p>
+<p>GRPCGatewayRouteMatch refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>serviceName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The fully qualified domain name for the service to match from the request.</p>
+</td>
+</tr>
+</tbody>
+</table>
 <h3 id="appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy
 </h3>
 <p>
@@ -1460,6 +1915,447 @@ Duration
 <td>
 <em>(Optional)</em>
 <p>An object that represents idle timeout duration.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GatewayRouteCondition">GatewayRouteCondition
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteStatus">GatewayRouteStatus</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>type</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteConditionType">
+GatewayRouteConditionType
+</a>
+</em>
+</td>
+<td>
+<p>Type of GatewayRoute condition.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#conditionstatus-v1-core">
+Kubernetes core/v1.ConditionStatus
+</a>
+</em>
+</td>
+<td>
+<p>Status of the condition, one of True, False, Unknown.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>lastTransitionTime</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#time-v1-meta">
+Kubernetes meta/v1.Time
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Last time the condition transitioned from one status to another.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>reason</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The reason for the condition&rsquo;s last transition.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>message</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A human readable message indicating details about the transition.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GatewayRouteConditionType">GatewayRouteConditionType
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteCondition">GatewayRouteCondition</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.GatewayRouteSpec">GatewayRouteSpec
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRoute">GatewayRoute</a>)
+</p>
+<p>
+<p>GatewayRouteSpec defines the desired state of GatewayRoute
+refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>awsName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AWSName is the AppMesh GatewayRoute object&rsquo;s name.
+If unspecified or empty, it defaults to be &ldquo;${name}_${namespace}&rdquo; of k8s GatewayRoute</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>grpcRoute</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRoute">
+GRPCGatewayRoute
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the specification of a gRPC gatewayRoute.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>httpRoute</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRoute">
+HTTPGatewayRoute
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the specification of an HTTP gatewayRoute.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>http2Route</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRoute">
+HTTPGatewayRoute
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the specification of an HTTP/2 gatewayRoute.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>virtualGatewayRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayReference">
+VirtualGatewayReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to k8s VirtualGateway CR that this GatewayRoute belongs to.
+The admission controller populates it using VirtualGateway&rsquo;s selector, and prevents users from setting this field.</p>
+<p>Populated by the system.
+Read-only.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>meshRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshReference">
+MeshReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to k8s Mesh CR that this GatewayRoute belongs to.
+The admission controller populates it using Meshes&rsquo;s selector, and prevents users from setting this field.</p>
+<p>Populated by the system.
+Read-only.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GatewayRouteStatus">GatewayRouteStatus
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRoute">GatewayRoute</a>)
+</p>
+<p>
+<p>GatewayRouteStatus defines the observed state of GatewayRoute</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>gatewayRouteARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>GatewayRouteARN is the AppMesh GatewayRoute object&rsquo;s Amazon Resource Name</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>conditions</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteCondition">
+[]GatewayRouteCondition
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The current GatewayRoute status.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>observedGeneration</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The generation observed by the GatewayRoute controller.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GatewayRouteTarget">GatewayRouteTarget
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRouteAction">GRPCGatewayRouteAction</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteAction">HTTPGatewayRouteAction</a>)
+</p>
+<p>
+<p>GatewayRouteTarget refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>virtualService</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteVirtualService">
+GatewayRouteVirtualService
+</a>
+</em>
+</td>
+<td>
+<p>The virtual service to associate with the gateway route target.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GatewayRouteVirtualService">GatewayRouteVirtualService
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteTarget">GatewayRouteTarget</a>)
+</p>
+<p>
+<p>GatewayRouteVirtualService refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>virtualServiceRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualServiceReference">
+VirtualServiceReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Reference to Kubernetes VirtualService CR in cluster to associate with the gateway route virtual service target. Exactly one of &lsquo;virtualServiceRef&rsquo; or &lsquo;virtualServiceARN&rsquo; must be specified.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>virtualServiceARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Amazon Resource Name to AppMesh VirtualService object to associate with the gateway route virtual service target. Exactly one of &lsquo;virtualServiceRef&rsquo; or &lsquo;virtualServiceARN&rsquo; must be specified.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPGatewayRoute">HTTPGatewayRoute
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteSpec">GatewayRouteSpec</a>)
+</p>
+<p>
+<p>HTTPGatewayRoute refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>match</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteMatch">
+HTTPGatewayRouteMatch
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the criteria for determining a request match.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>action</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteAction">
+HTTPGatewayRouteAction
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the action to take if a match is determined.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPGatewayRouteAction">HTTPGatewayRouteAction
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRoute">HTTPGatewayRoute</a>)
+</p>
+<p>
+<p>HTTPGatewayRouteAction refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>target</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteTarget">
+GatewayRouteTarget
+</a>
+</em>
+</td>
+<td>
+<p>An object that represents the target that traffic is routed to when a request matches the route.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPGatewayRouteMatch">HTTPGatewayRouteMatch
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRoute">HTTPGatewayRoute</a>)
+</p>
+<p>
+<p>HTTPGatewayRouteMatch refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>prefix</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Specifies the path to match requests with</p>
 </td>
 </tr>
 </tbody>
@@ -2492,6 +3388,8 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteSpec">GatewayRouteSpec</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewaySpec">VirtualGatewaySpec</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualNodeSpec">VirtualNodeSpec</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualRouterSpec">VirtualRouterSpec</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualServiceSpec">VirtualServiceSpec</a>)
@@ -2718,7 +3616,10 @@ PortProtocol
 (<em>Appears on:</em>
 <a href="#appmesh.k8s.aws/v1beta2.ClientPolicyTLS">ClientPolicyTLS</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.HealthCheckPolicy">HealthCheckPolicy</a>, 
-<a href="#appmesh.k8s.aws/v1beta2.PortMapping">PortMapping</a>)
+<a href="#appmesh.k8s.aws/v1beta2.PortMapping">PortMapping</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientPolicyTLS">VirtualGatewayClientPolicyTLS</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayHealthCheckPolicy">VirtualGatewayHealthCheckPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayPortMapping">VirtualGatewayPortMapping</a>)
 </p>
 <p>
 </p>
@@ -3125,6 +4026,1079 @@ TLSValidationContextACMTrust
 <em>
 <a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextFileTrust">
 TLSValidationContextFileTrust
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a TLS validation context trust for a local file.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayAccessLog">VirtualGatewayAccessLog
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayLogging">VirtualGatewayLogging</a>)
+</p>
+<p>
+<p>VirtualGatewayAccessLog refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>file</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayFileAccessLog">
+VirtualGatewayFileAccessLog
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The file object to send virtual gateway access logs to.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayBackendDefaults">VirtualGatewayBackendDefaults
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewaySpec">VirtualGatewaySpec</a>)
+</p>
+<p>
+<p>VirtualGatewayBackendDefaults refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>clientPolicy</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientPolicy">
+VirtualGatewayClientPolicy
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents a client policy.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayClientPolicy">VirtualGatewayClientPolicy
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayBackendDefaults">VirtualGatewayBackendDefaults</a>)
+</p>
+<p>
+<p>VirtualGatewayClientPolicy refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>tls</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientPolicyTLS">
+VirtualGatewayClientPolicyTLS
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents a Transport Layer Security (TLS) client policy.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayClientPolicyTLS">VirtualGatewayClientPolicyTLS
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientPolicy">VirtualGatewayClientPolicy</a>)
+</p>
+<p>
+<p>VirtualGatewayClientPolicyTLS refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>enforce</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Whether the policy is enforced.
+If unspecified, default settings from AWS API will be applied. Refer to AWS Docs for default settings.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>ports</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.PortNumber">
+[]PortNumber
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The range of ports that the policy is enforced for.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>validation</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContext">
+VirtualGatewayTLSValidationContext
+</a>
+</em>
+</td>
+<td>
+<p>A reference to an object that represents a TLS validation context.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayCondition">VirtualGatewayCondition
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayStatus">VirtualGatewayStatus</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>type</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayConditionType">
+VirtualGatewayConditionType
+</a>
+</em>
+</td>
+<td>
+<p>Type of VirtualGateway condition.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#conditionstatus-v1-core">
+Kubernetes core/v1.ConditionStatus
+</a>
+</em>
+</td>
+<td>
+<p>Status of the condition, one of True, False, Unknown.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>lastTransitionTime</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#time-v1-meta">
+Kubernetes meta/v1.Time
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Last time the condition transitioned from one status to another.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>reason</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The reason for the condition&rsquo;s last transition.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>message</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A human readable message indicating details about the transition.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayConditionType">VirtualGatewayConditionType
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayCondition">VirtualGatewayCondition</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayFileAccessLog">VirtualGatewayFileAccessLog
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayAccessLog">VirtualGatewayAccessLog</a>)
+</p>
+<p>
+<p>VirtualGatewayFileAccessLog refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>path</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The file path to write access logs to.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayHealthCheckPolicy">VirtualGatewayHealthCheckPolicy
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListener">VirtualGatewayListener</a>)
+</p>
+<p>
+<p>VirtualGatewayHealthCheckPolicy refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>healthyThreshold</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The number of consecutive successful health checks that must occur before declaring listener healthy.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>intervalMillis</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<p>The time period in milliseconds between each health check execution.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>path</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The destination path for the health check request.
+This value is only used if the specified protocol is http or http2. For any other protocol, this value is ignored.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>port</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.PortNumber">
+PortNumber
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The destination port for the health check request.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>protocol</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayPortProtocol">
+VirtualGatewayPortProtocol
+</a>
+</em>
+</td>
+<td>
+<p>The protocol for the health check request</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>timeoutMillis</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<p>The amount of time to wait when receiving a response from the health check, in milliseconds.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>unhealthyThreshold</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<p>The number of consecutive failed health checks that must occur before declaring a virtual Gateway unhealthy.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayListener">VirtualGatewayListener
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewaySpec">VirtualGatewaySpec</a>)
+</p>
+<p>
+<p>VirtualGatewayListener refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>portMapping</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayPortMapping">
+VirtualGatewayPortMapping
+</a>
+</em>
+</td>
+<td>
+<p>The port mapping information for the listener.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>healthCheck</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayHealthCheckPolicy">
+VirtualGatewayHealthCheckPolicy
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The health check information for the listener.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>tls</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLS">
+VirtualGatewayListenerTLS
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents the Transport Layer Security (TLS) properties for a listener.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLS">VirtualGatewayListenerTLS
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListener">VirtualGatewayListener</a>)
+</p>
+<p>
+<p>VirtualGatewayListenerTLS refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>certificate</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSCertificate">
+VirtualGatewayListenerTLSCertificate
+</a>
+</em>
+</td>
+<td>
+<p>A reference to an object that represents a listener&rsquo;s TLS certificate.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>mode</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSMode">
+VirtualGatewayListenerTLSMode
+</a>
+</em>
+</td>
+<td>
+<p>ListenerTLS mode</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSACMCertificate">VirtualGatewayListenerTLSACMCertificate
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSCertificate">VirtualGatewayListenerTLSCertificate</a>)
+</p>
+<p>
+<p>VirtualGatewayListenerTLSACMCertificate refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>certificateARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The Amazon Resource Name (ARN) for the certificate.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSCertificate">VirtualGatewayListenerTLSCertificate
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLS">VirtualGatewayListenerTLS</a>)
+</p>
+<p>
+<p>VirtualGatewayListenerTLSCertificate refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>acm</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSACMCertificate">
+VirtualGatewayListenerTLSACMCertificate
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents an AWS Certificate Manager (ACM) certificate.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>file</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSFileCertificate">
+VirtualGatewayListenerTLSFileCertificate
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents a local file certificate.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSFileCertificate">VirtualGatewayListenerTLSFileCertificate
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSCertificate">VirtualGatewayListenerTLSCertificate</a>)
+</p>
+<p>
+<p>VirtualGatewayListenerTLSFileCertificate refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>certificateChain</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The certificate chain for the certificate.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>privateKey</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The private key for a certificate stored on the file system of the virtual Gateway.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSMode">VirtualGatewayListenerTLSMode
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLS">VirtualGatewayListenerTLS</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayLogging">VirtualGatewayLogging
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewaySpec">VirtualGatewaySpec</a>)
+</p>
+<p>
+<p>VirtualGatewayLogging refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>accessLog</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayAccessLog">
+VirtualGatewayAccessLog
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The access log configuration for a virtual Gateway.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayPortMapping">VirtualGatewayPortMapping
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListener">VirtualGatewayListener</a>)
+</p>
+<p>
+<p>VirtualGatewayPortMapping refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>port</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.PortNumber">
+PortNumber
+</a>
+</em>
+</td>
+<td>
+<p>The port used for the port mapping.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>protocol</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayPortProtocol">
+VirtualGatewayPortProtocol
+</a>
+</em>
+</td>
+<td>
+<p>The protocol used for the port mapping.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayPortProtocol">VirtualGatewayPortProtocol
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayHealthCheckPolicy">VirtualGatewayHealthCheckPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayPortMapping">VirtualGatewayPortMapping</a>)
+</p>
+<p>
+</p>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayReference">VirtualGatewayReference
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteSpec">GatewayRouteSpec</a>)
+</p>
+<p>
+<p>VirtualGatewayReference holds a reference to VirtualGateway.appmesh.k8s.aws</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>namespace</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Namespace is the namespace of VirtualGateway CR.
+If unspecified, defaults to the referencing object&rsquo;s namespace</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Name is the name of VirtualGateway CR</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>uid</code></br>
+<em>
+k8s.io/apimachinery/pkg/types.UID
+</em>
+</td>
+<td>
+<p>UID is the UID of VirtualGateway CR</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewaySpec">VirtualGatewaySpec
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGateway">VirtualGateway</a>)
+</p>
+<p>
+<p>VirtualGatewaySpec defines the desired state of VirtualGateway
+refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>awsName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>AWSName is the AppMesh VirtualGateway object&rsquo;s name.
+If unspecified or empty, it defaults to be &ldquo;${name}_${namespace}&rdquo; of k8s VirtualGateway</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>namespaceSelector</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#labelselector-v1-meta">
+Kubernetes meta/v1.LabelSelector
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>NamespaceSelector selects Namespaces using labels to designate GatewayRoute membership.
+This field follows standard label selector semantics; if present but empty, it selects all namespaces.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>podSelector</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#labelselector-v1-meta">
+Kubernetes meta/v1.LabelSelector
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>PodSelector selects Pods using labels to designate VirtualGateway membership.
+This field follows standard label selector semantics:
+if present but empty, it selects all pods within namespace.
+if absent, it selects no pod.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>listeners</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListener">
+[]VirtualGatewayListener
+</a>
+</em>
+</td>
+<td>
+<p>The listener that the virtual gateway is expected to receive inbound traffic from</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>logging</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayLogging">
+VirtualGatewayLogging
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The inbound and outbound access logging information for the virtual gateway.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>backendDefaults</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayBackendDefaults">
+VirtualGatewayBackendDefaults
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents the defaults for backend GatewayRoutes.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>meshRef</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.MeshReference">
+MeshReference
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to k8s Mesh CR that this VirtualGateway belongs to.
+The admission controller populates it using Meshes&rsquo;s selector, and prevents users from setting this field.</p>
+<p>Populated by the system.
+Read-only.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayStatus">VirtualGatewayStatus
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGateway">VirtualGateway</a>)
+</p>
+<p>
+<p>VirtualGatewayStatus defines the observed state of VirtualGateway</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>virtualGatewayARN</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>VirtualGatewayARN is the AppMesh VirtualGateway object&rsquo;s Amazon Resource Name</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>conditions</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayCondition">
+[]VirtualGatewayCondition
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The current VirtualGateway status.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>observedGeneration</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The generation observed by the VirtualGateway controller.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContext">VirtualGatewayTLSValidationContext
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientPolicyTLS">VirtualGatewayClientPolicyTLS</a>)
+</p>
+<p>
+<p>VirtualGatewayTLSValidationContext refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>trust</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextTrust">
+VirtualGatewayTLSValidationContextTrust
+</a>
+</em>
+</td>
+<td>
+<p>A reference to an object that represents a TLS validation context trust</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextACMTrust">VirtualGatewayTLSValidationContextACMTrust
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextTrust">VirtualGatewayTLSValidationContextTrust</a>)
+</p>
+<p>
+<p>VirtualGatewayTLSValidationContextACMTrust refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>certificateAuthorityARNs</code></br>
+<em>
+[]string
+</em>
+</td>
+<td>
+<p>One or more ACM Amazon Resource Name (ARN)s.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextFileTrust">VirtualGatewayTLSValidationContextFileTrust
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextTrust">VirtualGatewayTLSValidationContextTrust</a>)
+</p>
+<p>
+<p>VirtualGatewayTLSValidationContextFileTrust refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>certificateChain</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The certificate trust chain for a certificate stored on the file system of the virtual Gateway.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextTrust">VirtualGatewayTLSValidationContextTrust
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContext">VirtualGatewayTLSValidationContext</a>)
+</p>
+<p>
+<p>VirtualGatewayTLSValidationContextTrust refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>acm</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextACMTrust">
+VirtualGatewayTLSValidationContextACMTrust
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents a TLS validation context trust for an AWS Certicate Manager (ACM) certificate.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>file</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextFileTrust">
+VirtualGatewayTLSValidationContextFileTrust
 </a>
 </em>
 </td>
@@ -4064,6 +6038,7 @@ VirtualRouterServiceProvider
 </h3>
 <p>
 (<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteVirtualService">GatewayRouteVirtualService</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualServiceBackend">VirtualServiceBackend</a>)
 </p>
 <p>
@@ -4283,7 +6258,3 @@ int64
 </tbody>
 </table>
 <hr/>
-<p><em>
-Generated with <code>gen-crd-api-reference-docs</code>
-on git commit <code>0b14b71</code>.
-</em></p>
