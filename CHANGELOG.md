@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## v1.1.0
+
+### Summary
+
+This release includes new custom resources (Virtual Gateway and Gateway Routes) and new default Envoy image.
+
+### Changes
+
+* Custom resources added:
+    * Virtual Gateway: A virtual gateway allows resources outside your mesh to communicate to resources that are inside your mesh. The virtual gateway represents an Envoy proxy running in a Kubernetes service. Unlike a virtual node, which represents a proxy running with an application, a virtual gateway represents the proxy deployed by itself ( [#249](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/249) @fawadkhaliq )
+    * Gateway Route: A gateway route is used to specify the routes from Virtual Gateway to the backend Virtual Services. ( [#256](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/256) @fawadkhaliq )
+* Bump Envoy image version to v1.12.4.0-prod ( [#301](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/301) @karanvasnani)
+* Added the support to inject Virtual Gateway configuration to Envoys ( [#262](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/262) @fawadkhaliq)
+* Updated APISpec and usage guide docs to include Virtual Gateways ([#304](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/304), [#307](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/307) @M00nF1sh @fawadkhaliq  )
+* Use latest aws-sdk-go for Virtual Gateways ( [#309](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/309) @achevuru)
+
 ## v1.0.0
 
 ## Summary
