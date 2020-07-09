@@ -8,8 +8,7 @@ IMAGE ?= $(REPO):$(VERSION)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
 # app mesh aws-sdk-go override in case we need to build against a custom version
-# TODO(fawadkhaliq/achevuru) remove the override when aws sdk with virtual gateway is released
-APPMESH_SDK_OVERRIDE ?= "y"
+APPMESH_SDK_OVERRIDE ?= "n"
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
