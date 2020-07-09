@@ -25,5 +25,6 @@ RUN yum update -y && \
 
 WORKDIR /
 COPY --from=builder /workspace/controller .
+COPY --from=builder /workspace/ATTRIBUTION.txt .
 
 ENTRYPOINT ["/controller"]
