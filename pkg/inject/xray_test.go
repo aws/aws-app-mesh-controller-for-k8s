@@ -1,13 +1,14 @@
 package inject
 
 import (
+	"testing"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func Test_xrayMutator_mutate(t *testing.T) {
@@ -31,6 +32,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 		awsRegion:             "us-west-2",
 		sidecarCPURequests:    cpuRequests.String(),
 		sidecarMemoryRequests: memoryRequests.String(),
+		xRayImage:             "amazon/aws-xray-daemon",
 	}
 	type fields struct {
 		enabled       bool

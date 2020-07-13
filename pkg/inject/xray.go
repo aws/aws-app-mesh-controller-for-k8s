@@ -2,6 +2,7 @@ package inject
 
 import (
 	"encoding/json"
+
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -9,7 +10,7 @@ const xrayDaemonContainerName = "xray-daemon"
 const xrayDaemonContainerTemplate = `
 {
   "name": "xray-daemon",
-  "image": "amazon/aws-xray-daemon",
+  "image": "{{ .XRayImage }}",
   "securityContext": {
     "runAsUser": 1337
   },
@@ -39,12 +40,14 @@ type XrayTemplateVariables struct {
 	AWSRegion             string
 	SidecarCPURequests    string
 	SidecarMemoryRequests string
+	XRayImage             string
 }
 
 type xrayMutatorConfig struct {
 	awsRegion             string
 	sidecarCPURequests    string
 	sidecarMemoryRequests string
+	xRayImage             string
 }
 
 func newXrayMutator(mutatorConfig xrayMutatorConfig, enabled bool) *xrayMutator {
@@ -85,6 +88,7 @@ func (m *xrayMutator) buildTemplateVariables(pod *corev1.Pod) XrayTemplateVariab
 		AWSRegion:             m.mutatorConfig.awsRegion,
 		SidecarCPURequests:    getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
 		SidecarMemoryRequests: getSidecarMemoryRequest(m.mutatorConfig.sidecarMemoryRequests, pod),
+		XRayImage:             m.mutatorConfig.xRayImage,
 	}
 }
 

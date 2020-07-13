@@ -2,6 +2,7 @@ package inject
 
 import (
 	"errors"
+
 	"github.com/spf13/pflag"
 )
 
@@ -27,6 +28,7 @@ const (
 	flagEnableXrayTracing    = "enable-xray-tracing"
 	flagEnableStatsTags      = "enable-stats-tags"
 	flagEnableStatsD         = "enable-statsd"
+	flagXRayImage            = "xray-image"
 )
 
 type Config struct {
@@ -57,6 +59,7 @@ type Config struct {
 	EnableXrayTracing    bool
 	EnableStatsTags      bool
 	EnableStatsD         bool
+	XRayImage            string
 }
 
 // MultipleTracer checks if more than one tracer is configured.
@@ -101,6 +104,8 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"Datadog Agent tracing port")
 	fs.BoolVar(&cfg.EnableXrayTracing, flagEnableXrayTracing, false,
 		"Enable Envoy X-Ray tracing integration and injects xray-daemon as sidecar")
+	fs.StringVar(&cfg.XRayImage, flagXRayImage, "amazon/aws-xray-daemon",
+		"X-Ray daemon container image")
 	fs.BoolVar(&cfg.EnableStatsTags, flagEnableStatsTags, false,
 		"Enable Envoy to tag stats")
 	fs.BoolVar(&cfg.EnableStatsD, flagEnableStatsD, false,
