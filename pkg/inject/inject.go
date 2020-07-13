@@ -109,6 +109,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				awsRegion:             m.awsRegion,
 				preview:               m.config.Preview,
 				logLevel:              m.config.LogLevel,
+				preStopDelay:          m.config.PreStopDelay,
 				sidecarImage:          m.config.SidecarImage,
 				sidecarCPURequests:    m.config.SidecarCpu,
 				sidecarMemoryRequests: m.config.SidecarMemory,
@@ -134,6 +135,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 			newCloudMapHealthyReadinessGate(vn),
 			newIAMForServiceAccountsMutator(m.config.EnableIAMForServiceAccounts),
 			newECRSecretMutator(m.config.EnableECRSecret),
+			newTerminationGracePeriodMutator(m.config.PreStopDelay),
 		}
 	} else if vg != nil {
 		mutators = []PodMutator{newVirtualGatewayEnvoyConfig(virtualGatwayEnvoyConfig{
