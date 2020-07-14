@@ -135,7 +135,6 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 			newCloudMapHealthyReadinessGate(vn),
 			newIAMForServiceAccountsMutator(m.config.EnableIAMForServiceAccounts),
 			newECRSecretMutator(m.config.EnableECRSecret),
-			newTerminationGracePeriodMutator(m.config.PreStopDelay),
 		}
 	} else if vg != nil {
 		mutators = []PodMutator{newVirtualGatewayEnvoyConfig(virtualGatwayEnvoyConfig{
