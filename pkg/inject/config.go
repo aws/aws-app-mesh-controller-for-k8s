@@ -15,6 +15,7 @@ const (
 	flagSidecarMemoryRequests = "sidecar-memory-requests"
 	flagPreview               = "preview"
 	flagLogLevel              = "sidecar-log-level"
+	flagPreStopDelay          = "prestop-delay"
 
 	flagInitImage  = "init-image"
 	flagIgnoredIPs = "ignored-ips"
@@ -44,6 +45,7 @@ type Config struct {
 	SidecarMemory string
 	Preview       bool
 	LogLevel      string
+	PreStopDelay  string
 
 	// Init container settings
 	InitImage  string
@@ -86,6 +88,8 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"Enable preview channel")
 	fs.StringVar(&cfg.LogLevel, flagLogLevel, "info",
 		"AWS App Mesh envoy log level")
+	fs.StringVar(&cfg.PreStopDelay, flagPreStopDelay, "20",
+		"AWS App Mesh envoy preStop hook sleep duration")
 	fs.StringVar(&cfg.InitImage, flagInitImage, "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
 		"Init container image.")
 	fs.StringVar(&cfg.IgnoredIPs, flagIgnoredIPs, "169.254.169.254",
