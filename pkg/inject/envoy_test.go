@@ -71,6 +71,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:             "us-west-2",
 					preview:               false,
 					logLevel:              "debug",
+					preStopDelay:          "20",
 					sidecarImage:          "envoy:v2",
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
@@ -101,6 +102,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:          "stats",
 									ContainerPort: 9901,
 									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
 								},
 							},
 							Env: []corev1.EnvVar{
@@ -141,6 +150,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:             "us-west-2",
 					preview:               true,
 					logLevel:              "debug",
+					preStopDelay:          "20",
 					sidecarImage:          "envoy:v2",
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
@@ -171,6 +181,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:          "stats",
 									ContainerPort: 9901,
 									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
 								},
 							},
 							Env: []corev1.EnvVar{
@@ -211,6 +229,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:             "us-west-2",
 					preview:               false,
 					logLevel:              "debug",
+					preStopDelay:          "20",
 					sidecarImage:          "envoy:v2",
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
@@ -242,6 +261,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:          "stats",
 									ContainerPort: 9901,
 									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
 								},
 							},
 							Env: []corev1.EnvVar{
@@ -286,6 +313,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:             "us-west-2",
 					preview:               false,
 					logLevel:              "debug",
+					preStopDelay:          "20",
 					sidecarImage:          "envoy:v2",
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
@@ -317,6 +345,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:          "stats",
 									ContainerPort: 9901,
 									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
 								},
 							},
 							Env: []corev1.EnvVar{
@@ -367,6 +403,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:             "us-west-2",
 					preview:               false,
 					logLevel:              "debug",
+					preStopDelay:          "20",
 					sidecarImage:          "envoy:v2",
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
@@ -398,6 +435,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:          "stats",
 									ContainerPort: 9901,
 									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
 								},
 							},
 							Env: []corev1.EnvVar{
@@ -448,6 +493,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:             "us-west-2",
 					preview:               false,
 					logLevel:              "debug",
+					preStopDelay:          "20",
 					sidecarImage:          "envoy:v2",
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
@@ -479,6 +525,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:          "stats",
 									ContainerPort: 9901,
 									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
 								},
 							},
 							Env: []corev1.EnvVar{
@@ -523,6 +577,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:             "us-west-2",
 					preview:               false,
 					logLevel:              "debug",
+					preStopDelay:          "20",
 					sidecarImage:          "envoy:v2",
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
@@ -554,6 +609,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:          "stats",
 									ContainerPort: 9901,
 									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
 								},
 							},
 							Env: []corev1.EnvVar{
@@ -598,6 +661,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:             "us-west-2",
 					preview:               false,
 					logLevel:              "debug",
+					preStopDelay:          "20",
 					sidecarImage:          "envoy:v2",
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
@@ -647,6 +711,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:          "stats",
 									ContainerPort: 9901,
 									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
 								},
 							},
 							Env: []corev1.EnvVar{
@@ -717,6 +789,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:             "us-west-2",
 					preview:               false,
 					logLevel:              "debug",
+					preStopDelay:          "20",
 					sidecarImage:          "envoy:v2",
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),

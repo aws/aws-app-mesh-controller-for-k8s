@@ -27,6 +27,17 @@ const envoyContainerTemplate = `
       "protocol": "TCP"
     }
   ],
+  "lifecycle": {
+     "preStop": {
+        "exec": {
+           "command": [
+              "sh",
+              "-c",
+              "sleep {{.PreStopDelay}}"
+           ]
+         }
+     }
+  },
   "env": [
     {
       "name": "APPMESH_VIRTUAL_NODE_NAME",
@@ -82,6 +93,7 @@ type EnvoyTemplateVariables struct {
 	VirtualNodeName              string
 	Preview                      string
 	LogLevel                     string
+	PreStopDelay                 string
 	SidecarImage                 string
 	SidecarCPURequests           string
 	SidecarMemoryRequests        string
@@ -98,6 +110,7 @@ type envoyMutatorConfig struct {
 	awsRegion             string
 	preview               bool
 	logLevel              string
+	preStopDelay          string
 	sidecarImage          string
 	sidecarCPURequests    string
 	sidecarMemoryRequests string
@@ -156,6 +169,7 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		VirtualNodeName:              virtualNodeName,
 		Preview:                      preview,
 		LogLevel:                     m.mutatorConfig.logLevel,
+		PreStopDelay:                 m.mutatorConfig.preStopDelay,
 		SidecarImage:                 m.mutatorConfig.sidecarImage,
 		SidecarCPURequests:           getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
 		SidecarMemoryRequests:        getSidecarMemoryRequest(m.mutatorConfig.sidecarMemoryRequests, pod),
