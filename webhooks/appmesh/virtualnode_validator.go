@@ -54,7 +54,7 @@ func (v *virtualNodeValidator) enforceFieldsImmutability(vn *appmesh.VirtualNode
 	if !reflect.DeepEqual(vn.Spec.MeshRef, oldVN.Spec.MeshRef) {
 		changedImmutableFields = append(changedImmutableFields, "spec.meshRef")
 	}
-	if !reflect.DeepEqual(vn.Spec.ServiceDiscovery.AWSCloudMap, oldVN.Spec.ServiceDiscovery.AWSCloudMap) {
+	if oldVN.Spec.ServiceDiscovery.AWSCloudMap != nil && !reflect.DeepEqual(vn.Spec.ServiceDiscovery.AWSCloudMap, oldVN.Spec.ServiceDiscovery.AWSCloudMap) {
 		changedImmutableFields = append(changedImmutableFields, "spec.serviceDiscovery.awsCloudMap")
 	}
 	if len(changedImmutableFields) != 0 {

@@ -78,7 +78,7 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
 						},
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
-							DNS: &appmesh.DNSServiceDiscovery{Hostname: "dns-hostname"},
+							DNS: &appmesh.DNSServiceDiscovery{Hostname: "dns-new-hostname"},
 						},
 					},
 				},
@@ -94,7 +94,48 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
 						},
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
-							DNS: &appmesh.DNSServiceDiscovery{Hostname: "dns-new-hostname"},
+							DNS: &appmesh.DNSServiceDiscovery{Hostname: "dns-hostname"},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "VirtualNode Servicediscovery mode change from DNS to CloudMap is allowed",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
+					},
+				},
+				oldVN: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							DNS: &appmesh.DNSServiceDiscovery{Hostname: "dns-hostname"},
 						},
 					},
 				},
@@ -249,8 +290,8 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 						},
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
 							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
-								NamespaceName: "cloudmap-ns",
-								ServiceName:   "cloudmap-svc",
+								NamespaceName: "new-cloudmap-ns",
+								ServiceName:   "new-cloudmap-svc",
 							},
 						},
 					},
@@ -268,8 +309,8 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 						},
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
 							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
-								NamespaceName: "new-cloudmap-ns",
-								ServiceName:   "new-cloudmap-svc",
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
 							},
 						},
 					},
