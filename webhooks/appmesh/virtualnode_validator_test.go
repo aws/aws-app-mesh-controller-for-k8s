@@ -64,6 +64,44 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "VirtualNode DNS Servicediscovery change is allowed",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							DNS: &appmesh.DNSServiceDiscovery{Hostname: "dns-hostname"},
+						},
+					},
+				},
+				oldVN: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							DNS: &appmesh.DNSServiceDiscovery{Hostname: "dns-new-hostname"},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
 			name: "VirtualNode field awsName changed",
 			args: args{
 				vn: &appmesh.VirtualNode{
