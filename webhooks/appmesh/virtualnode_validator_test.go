@@ -33,6 +33,12 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 							Name: "my-mesh",
 							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
 						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
 					},
 				},
 				oldVN: &appmesh.VirtualNode{
@@ -45,6 +51,12 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 						MeshRef: &appmesh.MeshReference{
 							Name: "my-mesh",
 							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
 						},
 					},
 				},
@@ -65,6 +77,12 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 							Name: "my-mesh",
 							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
 						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
 					},
 				},
 				oldVN: &appmesh.VirtualNode{
@@ -77,6 +95,12 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 						MeshRef: &appmesh.MeshReference{
 							Name: "my-mesh",
 							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
 						},
 					},
 				},
@@ -97,6 +121,12 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 							Name: "another-mesh",
 							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
 						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
 					},
 				},
 				oldVN: &appmesh.VirtualNode{
@@ -110,13 +140,63 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 							Name: "my-mesh",
 							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
 						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
 					},
 				},
 			},
 			wantErr: errors.New("VirtualNode update may not change these fields: spec.meshRef"),
 		},
 		{
-			name: "VirtualNode fields awsName and meshRef changed",
+			name: "VirtualNode field awsCloudMap changed",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "new-cloudmap-ns",
+								ServiceName:   "new-cloudmap-svc",
+							},
+						},
+					},
+				},
+				oldVN: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("VirtualNode update may not change these fields: spec.serviceDiscovery.awsCloudMap"),
+		},
+		{
+			name: "VirtualNode fields awsName, meshRef and awsCloudMap changed",
 			args: args{
 				vn: &appmesh.VirtualNode{
 					ObjectMeta: metav1.ObjectMeta{
@@ -129,6 +209,12 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 							Name: "another-mesh",
 							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
 						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
 					},
 				},
 				oldVN: &appmesh.VirtualNode{
@@ -142,10 +228,16 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 							Name: "my-mesh",
 							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
 						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "new-cloudmap-ns",
+								ServiceName:   "new-cloudmap-svc",
+							},
+						},
 					},
 				},
 			},
-			wantErr: errors.New("VirtualNode update may not change these fields: spec.awsName,spec.meshRef"),
+			wantErr: errors.New("VirtualNode update may not change these fields: spec.awsName,spec.meshRef,spec.serviceDiscovery.awsCloudMap"),
 		},
 	}
 	for _, tt := range tests {

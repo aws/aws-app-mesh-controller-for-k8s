@@ -97,8 +97,6 @@ func (r *cloudMapReconciler) reconcileVirtualNodeWithCloudMap(ctx context.Contex
 
 func (r *cloudMapReconciler) cleanupCloudMapResources(ctx context.Context, vNode *appmesh.VirtualNode) error {
 	if k8s.HasFinalizer(vNode, k8s.FinalizerAWSCloudMapResources) {
-		// TODO: choose one of the approach in https://github.com/aws/aws-app-mesh-controller-for-k8s/issues/305#issuecomment-654374069
-		// to completely fix the issue
 		if vNode.Spec.ServiceDiscovery != nil && vNode.Spec.ServiceDiscovery.AWSCloudMap != nil {
 			if err := r.cloudMapResourceManager.Cleanup(ctx, vNode); err != nil {
 				return err
