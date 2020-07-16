@@ -2,6 +2,8 @@ package inject
 
 import (
 	"context"
+	"strings"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualgateway"
@@ -10,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 var injectLogger = ctrl.Log.WithName("appmesh_inject")
@@ -123,6 +124,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				awsRegion:             m.awsRegion,
 				sidecarCPURequests:    m.config.SidecarCpu,
 				sidecarMemoryRequests: m.config.SidecarMemory,
+				xRayImage:             m.config.XRayImage,
 			}, m.config.EnableXrayTracing),
 			newDatadogMutator(datadogMutatorConfig{
 				datadogAddress: m.config.DatadogAddress,
@@ -149,6 +151,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				awsRegion:             m.awsRegion,
 				sidecarCPURequests:    m.config.SidecarCpu,
 				sidecarMemoryRequests: m.config.SidecarMemory,
+				xRayImage:             m.config.XRayImage,
 			}, m.config.EnableXrayTracing),
 		}
 	}
