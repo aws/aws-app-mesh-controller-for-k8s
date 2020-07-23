@@ -3,12 +3,15 @@ package virtualservice
 import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	mock_resolver "github.com/aws/aws-app-mesh-controller-for-k8s/mocks/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-sdk-go/aws"
 	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
+	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -405,6 +408,476 @@ func Test_BuildSDKVirtualServiceSpec(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func Test_defaultResourceManager_findMeshDependency(t *testing.T) {
+	type fields struct {
+		ResolveMeshReference func(ctx context.Context, ref appmesh.MeshReference) (*appmesh.Mesh, error)
+	}
+	type args struct {
+		vs *appmesh.VirtualService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *appmesh.Mesh
+		wantErr error
+	}{
+		{
+			name: "virtualService with mesh",
+			args: args{
+				vs: &appmesh.VirtualService{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "vs-1",
+					},
+					Spec: appmesh.VirtualServiceSpec{
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+						},
+					},
+					Status: appmesh.VirtualServiceStatus{},
+				},
+			},
+			fields: fields{
+				ResolveMeshReference: func(ctx context.Context, ref appmesh.MeshReference) (*appmesh.Mesh, error) {
+					return &appmesh.Mesh{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "my-mesh",
+							UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+						},
+						Spec: appmesh.MeshSpec{
+							AWSName: aws.String("my-mesh"),
+						},
+					}, nil
+				},
+			},
+			want: &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+					UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh"),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "virtualService with missing MeshRef",
+			args: args{
+				vs: &appmesh.VirtualService{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "vs-1",
+					},
+					Status: appmesh.VirtualServiceStatus{},
+				},
+			},
+			want: &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+					UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh"),
+				},
+			},
+			wantErr: errors.New("meshRef shouldn't be nil, please check webhook setup"),
+		},
+		{
+			name: "virtualService failed to resolve mesh",
+			args: args{
+				vs: &appmesh.VirtualService{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "vs-1",
+					},
+					Spec: appmesh.VirtualServiceSpec{
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+						},
+					},
+					Status: appmesh.VirtualServiceStatus{},
+				},
+			},
+			fields: fields{
+				ResolveMeshReference: func(ctx context.Context, ref appmesh.MeshReference) (*appmesh.Mesh, error) {
+					return nil, errors.New("mesh not found")
+				},
+			},
+			want: &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+					UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh"),
+				},
+			},
+			wantErr: errors.New("failed to resolve meshRef: mesh not found"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			resolver := mock_resolver.NewMockResolver(ctrl)
+
+			m := &defaultResourceManager{
+				referencesResolver: resolver,
+				log:                log.NullLogger{},
+			}
+
+			if tt.fields.ResolveMeshReference != nil {
+				resolver.EXPECT().ResolveMeshReference(gomock.Any(), gomock.Any()).DoAndReturn(tt.fields.ResolveMeshReference)
+			}
+
+			got_mesh, err := m.findMeshDependency(ctx, tt.args.vs)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got_mesh)
+			}
+		})
+	}
+}
+
+func Test_defaultResourceManager_validateMeshDependency(t *testing.T) {
+	type args struct {
+		mesh *appmesh.Mesh
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "valid mesh",
+			args: args{&appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh"),
+				},
+				Status: appmesh.MeshStatus{
+					Conditions: []appmesh.MeshCondition{
+						{
+							Type:   appmesh.MeshActive,
+							Status: corev1.ConditionTrue,
+						},
+					},
+				},
+			},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "inactive mesh",
+			args: args{&appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh"),
+				},
+				Status: appmesh.MeshStatus{
+					Conditions: []appmesh.MeshCondition{
+						{
+							Type:   appmesh.MeshActive,
+							Status: corev1.ConditionFalse,
+						},
+					},
+				},
+			},
+			},
+			wantErr: errors.New("mesh is not active yet"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			m := &defaultResourceManager{
+				log: log.NullLogger{},
+			}
+
+			err := m.validateMeshDependencies(ctx, tt.args.mesh)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test_defaultResourceManager_findVirtualNodeDependencies(t *testing.T) {
+	type fields struct {
+		ResolveVirtualNodeReference func(ctx context.Context, obj metav1.Object, ref appmesh.VirtualNodeReference) (*appmesh.VirtualNode, error)
+	}
+	type args struct {
+		vs *appmesh.VirtualService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    map[types.NamespacedName]*appmesh.VirtualNode
+		wantErr error
+	}{
+		{
+			name: "virtualService with a virtualnode backend",
+			args: args{
+				vs: &appmesh.VirtualService{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "ns-1",
+						Name:      "vs-1",
+					},
+					Spec: appmesh.VirtualServiceSpec{
+						AWSName: aws.String("app1"),
+						Provider: &appmesh.VirtualServiceProvider{
+							VirtualNode: &appmesh.VirtualNodeServiceProvider{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
+									Namespace: aws.String("ns-1"),
+									Name:      "vn-1",
+								},
+							},
+						}}}},
+			fields: fields{
+				ResolveVirtualNodeReference: func(ctx context.Context, obj metav1.Object, ref appmesh.VirtualNodeReference) (*appmesh.VirtualNode, error) {
+					return &appmesh.VirtualNode{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "vn-1",
+							Namespace: "ns-1",
+						},
+					}, nil
+				},
+			},
+			want: map[types.NamespacedName]*appmesh.VirtualNode{types.NamespacedName{
+				Namespace: "ns-1", Name: "vn-1"}: &appmesh.VirtualNode{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vn-1",
+					Namespace: "ns-1",
+				},
+			}},
+			wantErr: nil,
+		},
+		{
+			name: "virtualService failed virtualnode reference",
+			args: args{
+				vs: &appmesh.VirtualService{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "ns-1",
+						Name:      "vs-1",
+					},
+					Spec: appmesh.VirtualServiceSpec{
+						AWSName: aws.String("app1"),
+						Provider: &appmesh.VirtualServiceProvider{
+							VirtualNode: &appmesh.VirtualNodeServiceProvider{
+								VirtualNodeRef: &appmesh.VirtualNodeReference{
+									Namespace: aws.String("ns-1"),
+									Name:      "vn-1",
+								},
+							},
+						}}}},
+			fields: fields{
+				ResolveVirtualNodeReference: func(ctx context.Context, obj metav1.Object, ref appmesh.VirtualNodeReference) (*appmesh.VirtualNode, error) {
+					return nil, errors.New("virtual node not found")
+				},
+			},
+			want: map[types.NamespacedName]*appmesh.VirtualNode{types.NamespacedName{
+				Namespace: "ns-1", Name: "vn-1"}: &appmesh.VirtualNode{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vn-1",
+					Namespace: "ns-1",
+				},
+			}},
+			wantErr: errors.New("failed to resolve virtualNodeRef: virtual node not found"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			resolver := mock_resolver.NewMockResolver(ctrl)
+
+			m := &defaultResourceManager{
+				referencesResolver: resolver,
+				log:                log.NullLogger{},
+			}
+
+			if tt.fields.ResolveVirtualNodeReference != nil {
+				resolver.EXPECT().ResolveVirtualNodeReference(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.fields.ResolveVirtualNodeReference)
+			}
+
+			vnmap, err := m.findVirtualNodeDependencies(ctx, tt.args.vs)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, vnmap)
+			}
+		})
+	}
+}
+
+func Test_defaultResourceManager_findVirtualRouterDependencies(t *testing.T) {
+	type fields struct {
+		ResolveVirtualRouterReference func(ctx context.Context, obj metav1.Object, ref appmesh.VirtualRouterReference) (*appmesh.VirtualRouter, error)
+	}
+	type args struct {
+		vs *appmesh.VirtualService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    map[types.NamespacedName]*appmesh.VirtualRouter
+		wantErr error
+	}{
+		{
+			name: "virtualService with a virtualrouter backend",
+			args: args{
+				vs: &appmesh.VirtualService{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "ns-1",
+						Name:      "vs-1",
+					},
+					Spec: appmesh.VirtualServiceSpec{
+						AWSName: aws.String("app1"),
+						Provider: &appmesh.VirtualServiceProvider{
+							VirtualRouter: &appmesh.VirtualRouterServiceProvider{
+								VirtualRouterRef: &appmesh.VirtualRouterReference{
+									Namespace: aws.String("ns-1"),
+									Name:      "vr-1",
+								},
+							},
+						}}}},
+			fields: fields{
+				ResolveVirtualRouterReference: func(ctx context.Context, obj metav1.Object, ref appmesh.VirtualRouterReference) (*appmesh.VirtualRouter, error) {
+					return &appmesh.VirtualRouter{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "vr-1",
+							Namespace: "ns-1",
+						}, Spec: appmesh.VirtualRouterSpec{
+							Listeners: []appmesh.VirtualRouterListener{
+								{
+									PortMapping: appmesh.PortMapping{
+										Port:     80,
+										Protocol: "http",
+									},
+								},
+								{
+									PortMapping: appmesh.PortMapping{
+										Port:     443,
+										Protocol: "http",
+									},
+								},
+							},
+						},
+					}, nil
+				},
+			},
+			want: map[types.NamespacedName]*appmesh.VirtualRouter{types.NamespacedName{
+				Namespace: "ns-1", Name: "vr-1"}: &appmesh.VirtualRouter{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vr-1",
+					Namespace: "ns-1",
+				},
+				Spec: appmesh.VirtualRouterSpec{
+					Listeners: []appmesh.VirtualRouterListener{
+						{
+							PortMapping: appmesh.PortMapping{
+								Port:     80,
+								Protocol: "http",
+							},
+						},
+						{
+							PortMapping: appmesh.PortMapping{
+								Port:     443,
+								Protocol: "http",
+							},
+						},
+					}},
+			}},
+			wantErr: nil,
+		},
+		{
+			name: "virtualService with a virtualrouter backend",
+			args: args{
+				vs: &appmesh.VirtualService{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "ns-1",
+						Name:      "vs-1",
+					},
+					Spec: appmesh.VirtualServiceSpec{
+						AWSName: aws.String("app1"),
+						Provider: &appmesh.VirtualServiceProvider{
+							VirtualRouter: &appmesh.VirtualRouterServiceProvider{
+								VirtualRouterRef: &appmesh.VirtualRouterReference{
+									Namespace: aws.String("ns-1"),
+									Name:      "vr-1",
+								},
+							},
+						}}}},
+			fields: fields{
+				ResolveVirtualRouterReference: func(ctx context.Context, obj metav1.Object, ref appmesh.VirtualRouterReference) (*appmesh.VirtualRouter, error) {
+					return nil, errors.New("virtual router not found")
+				}},
+			want: map[types.NamespacedName]*appmesh.VirtualRouter{types.NamespacedName{
+				Namespace: "ns-1", Name: "vr-1"}: &appmesh.VirtualRouter{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vr-1",
+					Namespace: "ns-1",
+				},
+				Spec: appmesh.VirtualRouterSpec{
+					Listeners: []appmesh.VirtualRouterListener{
+						{
+							PortMapping: appmesh.PortMapping{
+								Port:     80,
+								Protocol: "http",
+							},
+						},
+						{
+							PortMapping: appmesh.PortMapping{
+								Port:     443,
+								Protocol: "http",
+							},
+						},
+					}},
+			}},
+			wantErr: errors.New("failed to resolve virtualRouterRef: virtual router not found"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			resolver := mock_resolver.NewMockResolver(ctrl)
+
+			m := &defaultResourceManager{
+				referencesResolver: resolver,
+				log:                log.NullLogger{},
+			}
+
+			if tt.fields.ResolveVirtualRouterReference != nil {
+				resolver.EXPECT().ResolveVirtualRouterReference(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.fields.ResolveVirtualRouterReference)
+			}
+
+			vrmap, err := m.findVirtualRouterDependencies(ctx, tt.args.vs)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, vrmap)
 			}
 		})
 	}
