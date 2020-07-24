@@ -3,12 +3,15 @@ package virtualgateway
 import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	mock_resolver "github.com/aws/aws-app-mesh-controller-for-k8s/mocks/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-sdk-go/aws"
 	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
+	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -241,6 +244,207 @@ func Test_defaultResourceManager_isSDKVirtualGatewayOwnedByCRDVirtualGateway(t *
 			}
 			got := m.isSDKVirtualGatewayOwnedByCRDVirtualGateway(ctx, tt.args.sdkVG, tt.args.vg)
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_defaultResourceManager_findMeshDependency(t *testing.T) {
+	type fields struct {
+		ResolveMeshReference func(ctx context.Context, ref appmesh.MeshReference) (*appmesh.Mesh, error)
+	}
+	type args struct {
+		vg *appmesh.VirtualGateway
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *appmesh.Mesh
+		wantErr error
+	}{
+		{
+			name: "virtualGateway with mesh",
+			args: args{
+				vg: &appmesh.VirtualGateway{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "vg-1",
+					},
+					Spec: appmesh.VirtualGatewaySpec{
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+						},
+					},
+				},
+			},
+			fields: fields{
+				ResolveMeshReference: func(ctx context.Context, ref appmesh.MeshReference) (*appmesh.Mesh, error) {
+					return &appmesh.Mesh{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "my-mesh",
+							UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+						},
+						Spec: appmesh.MeshSpec{
+							AWSName: aws.String("my-mesh"),
+						},
+					}, nil
+				},
+			},
+			want: &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+					UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh"),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "virtualGateway with missing MeshRef",
+			args: args{
+				vg: &appmesh.VirtualGateway{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "vg-1",
+					},
+				},
+			},
+			want: &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+					UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh"),
+				},
+			},
+			wantErr: errors.New("meshRef shouldn't be nil, please check webhook setup"),
+		},
+		{
+			name: "virtualGateway failed to resolve mesh",
+			args: args{
+				vg: &appmesh.VirtualGateway{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "vg-1",
+					},
+					Spec: appmesh.VirtualGatewaySpec{
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+						},
+					},
+				},
+			},
+			fields: fields{
+				ResolveMeshReference: func(ctx context.Context, ref appmesh.MeshReference) (*appmesh.Mesh, error) {
+					return nil, errors.New("mesh not found")
+				},
+			},
+			want: &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+					UID:  "a385048d-aba8-4235-9a11-4173764c8ab7",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh"),
+				},
+			},
+			wantErr: errors.New("failed to resolve meshRef: mesh not found"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			resolver := mock_resolver.NewMockResolver(ctrl)
+
+			m := &defaultResourceManager{
+				referencesResolver: resolver,
+				log:                log.NullLogger{},
+			}
+
+			if tt.fields.ResolveMeshReference != nil {
+				resolver.EXPECT().ResolveMeshReference(gomock.Any(), gomock.Any()).DoAndReturn(tt.fields.ResolveMeshReference)
+			}
+
+			got_mesh, err := m.findMeshDependency(ctx, tt.args.vg)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got_mesh)
+			}
+		})
+	}
+}
+
+func Test_defaultResourceManager_validateMeshDependency(t *testing.T) {
+	type args struct {
+		mesh *appmesh.Mesh
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "valid mesh",
+			args: args{&appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh"),
+				},
+				Status: appmesh.MeshStatus{
+					Conditions: []appmesh.MeshCondition{
+						{
+							Type:   appmesh.MeshActive,
+							Status: corev1.ConditionTrue,
+						},
+					},
+				},
+			},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "inactive mesh",
+			args: args{&appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh"),
+				},
+				Status: appmesh.MeshStatus{
+					Conditions: []appmesh.MeshCondition{
+						{
+							Type:   appmesh.MeshActive,
+							Status: corev1.ConditionFalse,
+						},
+					},
+				},
+			},
+			},
+			wantErr: errors.New("mesh is not active yet"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			m := &defaultResourceManager{
+				log: log.NullLogger{},
+			}
+
+			err := m.validateMeshDependencies(ctx, tt.args.mesh)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
