@@ -33,7 +33,7 @@ func Test_proxyMutator_mutate(t *testing.T) {
 	}
 	mutatorConfig := proxyMutatorConfig{
 		initProxyMutatorConfig: initProxyMutatorConfig{
-			containerImage: "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
+			containerImage: "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v3-prod",
 			cpuRequests:    cpuRequests.String(),
 			memoryRequests: memoryRequests.String(),
 		},
@@ -67,7 +67,7 @@ func Test_proxyMutator_mutate(t *testing.T) {
 					InitContainers: []corev1.Container{
 						{
 							Name:  "proxyinit",
-							Image: "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
+							Image: "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v3-prod",
 							SecurityContext: &corev1.SecurityContext{
 								Capabilities: &corev1.Capabilities{
 									Add: []corev1.Capability{

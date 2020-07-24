@@ -90,7 +90,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"AWS App Mesh envoy log level")
 	fs.StringVar(&cfg.PreStopDelay, flagPreStopDelay, "20",
 		"AWS App Mesh envoy preStop hook sleep duration")
-	fs.StringVar(&cfg.InitImage, flagInitImage, "111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v2",
+	fs.StringVar(&cfg.InitImage, flagInitImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v3-prod",
 		"Init container image.")
 	fs.StringVar(&cfg.IgnoredIPs, flagIgnoredIPs, "169.254.169.254",
 		"Init container ignored IPs.")
