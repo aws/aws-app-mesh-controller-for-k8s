@@ -2,8 +2,8 @@ package deployment
 
 import (
 	"context"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/k8s"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/utils"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"

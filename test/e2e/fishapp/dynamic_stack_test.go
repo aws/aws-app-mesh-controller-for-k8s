@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/fishapp"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/fishapp/shared"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	. "github.com/onsi/ginkgo"
 	"time"
 )

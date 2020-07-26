@@ -5,14 +5,14 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/helm"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/resource/deployment"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/resource/mesh"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/resource/namespace"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/resource/virtualnode"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/resource/virtualrouter"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/resource/virtualservice"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/utils"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/helm"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/deployment"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/mesh"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/namespace"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/virtualnode"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/virtualrouter"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/virtualservice"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -85,7 +85,7 @@ func New(options Options) *Framework {
 		HelmManager:    helm.NewManager(options.KubeConfig),
 		NSManager:      namespace.NewManager(k8sClient),
 		DPManager:      deployment.NewManager(k8sClient),
-		MeshManager:    mesh.NewManager(k8sClient),
+		MeshManager:    mesh.NewManager(k8sClient, cloud.AppMesh()),
 		VNManager:      virtualnode.NewManager(k8sClient, cloud.AppMesh()),
 		VSManager:      virtualservice.NewManager(k8sClient, cloud.AppMesh()),
 		VRManager:      virtualrouter.NewManager(k8sClient, cloud.AppMesh()),

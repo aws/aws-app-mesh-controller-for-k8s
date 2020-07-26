@@ -96,7 +96,7 @@ func (m *defaultResourceManager) findSDKMesh(ctx context.Context, ms *appmesh.Me
 }
 
 func (m *defaultResourceManager) createSDKMesh(ctx context.Context, ms *appmesh.Mesh) (*appmeshsdk.MeshData, error) {
-	sdkMSSpec, err := m.buildSDKMeshSpec(ctx, ms)
+	sdkMSSpec, err := BuildSDKMeshSpec(ctx, ms)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (m *defaultResourceManager) createSDKMesh(ctx context.Context, ms *appmesh.
 
 func (m *defaultResourceManager) updateSDKMesh(ctx context.Context, sdkMS *appmeshsdk.MeshData, ms *appmesh.Mesh) (*appmeshsdk.MeshData, error) {
 	actualSDKMSSpec := sdkMS.Spec
-	desiredSDKMSSpec, err := m.buildSDKMeshSpec(ctx, ms)
+	desiredSDKMSSpec, err := BuildSDKMeshSpec(ctx, ms)
 	if err != nil {
 		return nil, err
 	}
@@ -163,18 +163,6 @@ func (m *defaultResourceManager) deleteSDKMesh(ctx context.Context, sdkMS *appme
 	return nil
 }
 
-func (m *defaultResourceManager) buildSDKMeshSpec(ctx context.Context, ms *appmesh.Mesh) (*appmeshsdk.MeshSpec, error) {
-	converter := conversion.NewConverter(conversion.DefaultNameFunc)
-	converter.RegisterUntypedConversionFunc((*appmesh.MeshSpec)(nil), (*appmeshsdk.MeshSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return conversions.Convert_CRD_MeshSpec_To_SDK_MeshSpec(a.(*appmesh.MeshSpec), b.(*appmeshsdk.MeshSpec), scope)
-	})
-	sdkMSSpec := &appmeshsdk.MeshSpec{}
-	if err := converter.Convert(&ms.Spec, sdkMSSpec, conversion.DestFromSource, nil); err != nil {
-		return nil, err
-	}
-	return sdkMSSpec, nil
-}
-
 func (m *defaultResourceManager) updateCRDMesh(ctx context.Context, ms *appmesh.Mesh, sdkMS *appmeshsdk.MeshData) error {
 	oldMS := ms.DeepCopy()
 	needsUpdate := false
@@ -221,4 +209,16 @@ func (m *defaultResourceManager) isSDKMeshOwnedByCRDMesh(ctx context.Context, sd
 	// TODO: Adding tagging support, so a existing mesh in owner account but not ownership can be support.
 	// currently, mesh controllership == ownership, but it don't have to be so once we add tagging support.
 	return true
+}
+
+func BuildSDKMeshSpec(ctx context.Context, ms *appmesh.Mesh) (*appmeshsdk.MeshSpec, error) {
+	converter := conversion.NewConverter(conversion.DefaultNameFunc)
+	converter.RegisterUntypedConversionFunc((*appmesh.MeshSpec)(nil), (*appmeshsdk.MeshSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return conversions.Convert_CRD_MeshSpec_To_SDK_MeshSpec(a.(*appmesh.MeshSpec), b.(*appmeshsdk.MeshSpec), scope)
+	})
+	sdkMSSpec := &appmeshsdk.MeshSpec{}
+	if err := converter.Convert(&ms.Spec, sdkMSSpec, conversion.DestFromSource, nil); err != nil {
+		return nil, err
+	}
+	return sdkMSSpec, nil
 }
