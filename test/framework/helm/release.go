@@ -2,7 +2,7 @@ package helm
 
 import (
 	"fmt"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/utils"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"helm.sh/helm/v3/pkg/action"

@@ -3,8 +3,8 @@ package namespace
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/k8s"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/framework/utils"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
