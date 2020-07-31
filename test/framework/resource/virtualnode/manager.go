@@ -2,6 +2,8 @@ package virtualnode
 
 import (
 	"context"
+	"time"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
@@ -40,8 +42,15 @@ type defaultManager struct {
 func (m *defaultManager) WaitUntilVirtualNodeActive(ctx context.Context, vn *appmesh.VirtualNode) (*appmesh.VirtualNode, error) {
 	observedVN := &appmesh.VirtualNode{}
 	return observedVN, wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-		if err := m.k8sClient.Get(ctx, k8s.NamespacedName(vn), observedVN); err != nil {
-			return false, err
+
+		// sometimes there's a delay in the resource showing up
+		for i := 0; i < 5; i++ {
+			if err := m.k8sClient.Get(ctx, k8s.NamespacedName(vn), observedVN); err != nil {
+				if i >= 5 {
+					return false, err
+				}
+			}
+			time.Sleep(100 * time.Millisecond)
 		}
 
 		for _, condition := range observedVN.Status.Conditions {
