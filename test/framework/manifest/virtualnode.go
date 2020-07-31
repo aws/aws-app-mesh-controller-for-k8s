@@ -71,7 +71,24 @@ func (b *VNBuilder) BuildListener(protocol appmesh.PortProtocol, port appmesh.Po
 			Protocol: protocol,
 		},
 	}
+}
 
+func (b *VNBuilder) BuildListenerWithTimeout(protocol appmesh.PortProtocol, port appmesh.PortNumber, timeout int64, unit appmesh.DurationUnit) appmesh.Listener {
+	return appmesh.Listener{
+		PortMapping: appmesh.PortMapping{
+			Port:     port,
+			Protocol: protocol,
+		},
+		Timeout: &appmesh.ListenerTimeout{
+			HTTP: &appmesh.HTTPTimeout{
+				PerRequest: &appmesh.Duration{
+					Unit:  unit,
+					Value: timeout,
+				},
+				Idle: nil,
+			},
+		},
+	}
 }
 
 func (b *VNBuilder) buildDNSServiceDiscovery(instanceName string) *appmesh.ServiceDiscovery {
@@ -96,7 +113,6 @@ func (b *VNBuilder) buildCloudMapServiceDiscovery(instanceName string) *appmesh.
 
 func (b *VNBuilder) buildSelectors(instanceName string) map[string]string {
 	return map[string]string{
-		"app.kubernetes.io/name":     "virtualnode-integration-tests",
 		"app.kubernetes.io/instance": instanceName,
 	}
 }
