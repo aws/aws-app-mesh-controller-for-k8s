@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestFishApp(t *testing.T) {
+func TestTimeoutApp(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "FishApp Suite")
+	RunSpecs(t, "Timeout Suite")
 }
