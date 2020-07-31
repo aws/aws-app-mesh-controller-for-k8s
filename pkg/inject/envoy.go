@@ -106,19 +106,21 @@ type EnvoyTemplateVariables struct {
 }
 
 type envoyMutatorConfig struct {
-	accountID             string
-	awsRegion             string
-	preview               bool
-	logLevel              string
-	preStopDelay          string
-	sidecarImage          string
-	sidecarCPURequests    string
-	sidecarMemoryRequests string
-	enableXrayTracing     bool
-	enableJaegerTracing   bool
-	enableDatadogTracing  bool
-	enableStatsTags       bool
-	enableStatsD          bool
+	accountID                  string
+	awsRegion                  string
+	preview                    bool
+	logLevel                   string
+	preStopDelay               string
+	readinessProbeInitialDelay int32
+	readinessProbePeriod       int32
+	sidecarImage               string
+	sidecarCPURequests         string
+	sidecarMemoryRequests      string
+	enableXrayTracing          bool
+	enableJaegerTracing        bool
+	enableDatadogTracing       bool
+	enableStatsTags            bool
+	enableStatsD               bool
 }
 
 func newEnvoyMutator(mutatorConfig envoyMutatorConfig, ms *appmesh.Mesh, vn *appmesh.VirtualNode) *envoyMutator {
@@ -153,6 +155,10 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 	if err != nil {
 		return err
 	}
+
+	// add readiness probe
+	container.ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay, m.mutatorConfig.readinessProbePeriod)
+
 	m.mutateSecretMounts(pod, &container, secretMounts)
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
 	return nil

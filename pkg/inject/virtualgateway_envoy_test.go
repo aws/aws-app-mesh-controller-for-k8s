@@ -154,6 +154,34 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 		},
 	}
 
+	podExistingProbe := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "my-pod",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "envoy",
+					Image: "envoy:v2",
+					ReadinessProbe: &corev1.Probe{
+						Handler: corev1.Handler{
+
+							Exec: &corev1.ExecAction{Command: []string{
+								"sh", "-c", "curl -s http://localhost:8810/server_info | grep state | grep -q LIVE",
+							}},
+						},
+						InitialDelaySeconds: 20,
+						TimeoutSeconds:      1,
+						PeriodSeconds:       30,
+						SuccessThreshold:    2,
+						FailureThreshold:    3,
+					},
+				},
+			},
+		},
+	}
+
 	type fields struct {
 		vg            *appmesh.VirtualGateway
 		ms            *appmesh.Mesh
@@ -175,10 +203,12 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 				vg: vg,
 				ms: ms,
 				mutatorConfig: virtualGatwayEnvoyConfig{
-					awsRegion:    "us-west-2",
-					preview:      false,
-					logLevel:     "debug",
-					sidecarImage: "envoy:v2",
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					sidecarImage:               "envoy:v2",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
 				},
 			},
 			args: args{
@@ -212,6 +242,19 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "0",
 								},
 							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
 						},
 					},
 				},
@@ -223,10 +266,12 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 				vg: vg,
 				ms: ms,
 				mutatorConfig: virtualGatwayEnvoyConfig{
-					awsRegion:    "us-west-2",
-					preview:      false,
-					logLevel:     "debug",
-					sidecarImage: "envoy:v2",
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					sidecarImage:               "envoy:v2",
+					readinessProbeInitialDelay: 3,
+					readinessProbePeriod:       5,
 				},
 			},
 			args: args{
@@ -263,6 +308,19 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "0",
 								},
 							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 3,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       5,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
 						},
 					},
 				},
@@ -274,10 +332,12 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 				vg: vg,
 				ms: ms,
 				mutatorConfig: virtualGatwayEnvoyConfig{
-					awsRegion:    "us-west-2",
-					preview:      false,
-					logLevel:     "debug",
-					sidecarImage: "envoy:v2",
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					sidecarImage:               "envoy:v2",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
 				},
 			},
 			args: args{
@@ -319,6 +379,19 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "0",
 								},
 							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
 						},
 					},
 				},
@@ -330,10 +403,12 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 				vg: vg,
 				ms: ms,
 				mutatorConfig: virtualGatwayEnvoyConfig{
-					awsRegion:    "us-west-2",
-					preview:      false,
-					logLevel:     "debug",
-					sidecarImage: "envoy:v3",
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					sidecarImage:               "envoy:v3",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
 				},
 			},
 			args: args{
@@ -371,6 +446,19 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
 						},
 					},
 				},
@@ -382,10 +470,12 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 				vg: vg,
 				ms: ms,
 				mutatorConfig: virtualGatwayEnvoyConfig{
-					awsRegion:    "us-west-2",
-					preview:      false,
-					logLevel:     "debug",
-					sidecarImage: "envoy:v3",
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					sidecarImage:               "envoy:v3",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
 				},
 			},
 			args: args{
@@ -423,6 +513,19 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
 						},
 					},
 				},
@@ -434,10 +537,12 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 				vg: vg,
 				ms: ms,
 				mutatorConfig: virtualGatwayEnvoyConfig{
-					awsRegion:    "us-west-2",
-					preview:      false,
-					logLevel:     "debug",
-					sidecarImage: "envoy:v2",
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					sidecarImage:               "envoy:v2",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
 				},
 			},
 			args: args{
@@ -475,6 +580,19 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
 						},
 					},
 				},
@@ -486,11 +604,13 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 				vg: vg,
 				ms: ms,
 				mutatorConfig: virtualGatwayEnvoyConfig{
-					awsRegion:         "us-west-2",
-					preview:           false,
-					logLevel:          "debug",
-					sidecarImage:      "envoy:v2",
-					enableXrayTracing: true,
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					sidecarImage:               "envoy:v2",
+					enableXrayTracing:          true,
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
 				},
 			},
 			args: args{
@@ -527,6 +647,82 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "ENABLE_ENVOY_XRAY_TRACING",
 									Value: "1",
 								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "pod existing readiness probe",
+			fields: fields{
+				vg: vg,
+				ms: ms,
+				mutatorConfig: virtualGatwayEnvoyConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					sidecarImage:               "envoy:v2",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+				},
+			},
+			args: args{
+				pod: podExistingProbe,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							Env: []corev1.EnvVar{
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:8810/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 20,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       30,
+								SuccessThreshold:    2,
+								FailureThreshold:    3,
 							},
 						},
 					},
