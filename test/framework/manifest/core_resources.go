@@ -1,7 +1,6 @@
 package manifest
 
 import (
-	"fmt"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +15,8 @@ type ManifestBuilder struct {
 	CloudMapNamespace string
 }
 
-func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, appImage string, containerPort int32) *appsv1.Deployment {
+func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, appImage string, containerPort int32,
+	env []corev1.EnvVar) *appsv1.Deployment {
 	labels := b.buildNodeSelectors(instanceName)
 	dpName := b.buildNodeName(instanceName)
 	dp := &appsv1.Deployment{
@@ -41,16 +41,7 @@ func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, a
 									ContainerPort: containerPort,
 								},
 							},
-							Env: []corev1.EnvVar{
-								{
-									Name:  "SERVER_PORT",
-									Value: fmt.Sprintf("%d", containerPort),
-								},
-								{
-									Name:  "COLOR",
-									Value: instanceName,
-								},
-							},
+							Env: env,
 						},
 					},
 				},

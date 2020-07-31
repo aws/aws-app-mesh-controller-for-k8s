@@ -26,6 +26,9 @@ var _ = Describe("timeout feature test", func() {
 		var stacksPendingCleanUp []*timeout.TimeoutStack
 
 		BeforeEach(func() {
+			stackPrototype = timeout.TimeoutStack{
+				TimeoutValue:         45,
+			}
 			stacksPendingCleanUp = nil
 		})
 

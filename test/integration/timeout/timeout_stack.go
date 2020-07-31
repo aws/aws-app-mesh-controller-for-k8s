@@ -25,8 +25,10 @@ import (
 )
 
 const (
-	defaultFrontEndImage = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/timeout-e2e:feapp-final"
-	defaultBackEndImage  = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/timeout-e2e:colorapp-final-1"
+	//If you're not able to access below images, try to build them based on the app code under "timeout_app"
+	//directory and push it to any accessible ECR repo and update the below values
+	defaultFrontEndImage = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/timeout-e2e:frontend-image"
+	defaultBackEndImage  = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/timeout-e2e:backend-image"
 
 	timeoutTest      = "timeout-e2e"
 	AppContainerPort = 8080
@@ -37,14 +39,14 @@ const (
 
 // Timeout stack is setup as below
 //	FrontEnd ->
-//        - Exposes two endpoints "/default" and "/timeout" and reaches out to backend for both the endpoints
+//        - Exposes two endpoints "/defaultroute" and "/timeoutroute" and reaches out to backend for both the endpoints
 //        - Refers to "backend" VirtualService which in turn refers to "backend" VirtualRouter
 //
 //  Backend ->
-//        - Exposes "/default" and "/timeout" with a configured 45 seconds delay
+//        - Exposes "/defaultroute" and "/timeoutroute" with a configured 45 seconds delay
 //        - "backend" VN is configured with a Listener timeout of 60 seconds
 //        - "backend" VR has two routes "/default" and "/timeout"
-//        - "/default" path uses default timeout of 15s and "/timeout" path is configured with 60s timeout
+//        - "/defaultroute" path uses default timeout of 15s and "/timeoutroute" path is configured with 60s timeout
 //
 //  We then validate the timeout feature.
 //       - Call to "/default" from frontend pod should timeout with "upstream request timeout"
@@ -55,18 +57,20 @@ type TimeoutStack struct {
 	ServiceDiscoveryType manifest.ServiceDiscoveryType
 
 	// ====== runtime variables ======
-	mesh      *appmesh.Mesh
-	namespace *corev1.Namespace
+	mesh        *appmesh.Mesh
+	namespace   *corev1.Namespace
 
-	FrontEndVN *appmesh.VirtualNode
-	FrontEndDP *appsv1.Deployment
+	FrontEndVN  *appmesh.VirtualNode
+	FrontEndDP  *appsv1.Deployment
 
-	BackEndVN  *appmesh.VirtualNode
-	BackEndDP  *appsv1.Deployment
-	BackEndSVC *corev1.Service
+	BackEndVN   *appmesh.VirtualNode
+	BackEndDP   *appsv1.Deployment
+	BackEndSVC  *corev1.Service
 
-	BackEndVS *appmesh.VirtualService
-	BackEndVR *appmesh.VirtualRouter
+	BackEndVS    *appmesh.VirtualService
+	BackEndVR    *appmesh.VirtualRouter
+
+	TimeoutValue int
 }
 
 func (s *TimeoutStack) DeployTimeoutStack(ctx context.Context, f *framework.Framework) {
@@ -105,12 +109,12 @@ func (s *TimeoutStack) CleanupTimeoutStack(ctx context.Context, f *framework.Fra
 //Check Timeout behavior with and with timeout configured
 func (s *TimeoutStack) CheckTimeoutBehavior(ctx context.Context, f *framework.Framework) {
 	By(fmt.Sprintf("verify route timesout if it takes more than default 15s w/o listener timeout configured"), func() {
-		err := s.checkDefaultBackendRouteTimesout(ctx, f, s.FrontEndDP)
+		err := s.checkExpectedRouteBehavior(ctx, f, s.FrontEndDP, "defaultroute", false)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	By(fmt.Sprintf("verify the timeout behaviour with configured timeout value"), func() {
-		err := s.checkBehaviorOfRouteConfiguredWithTimeout(ctx, f, s.FrontEndDP)
+		err := s.checkExpectedRouteBehavior(ctx, f, s.FrontEndDP, "timeoutroute", true)
 		Expect(err).NotTo(HaveOccurred())
 	})
 }
@@ -229,7 +233,7 @@ func (s *TimeoutStack) createVirtualNodeResourcesForTimeoutStack(ctx context.Con
 		})
 
 		By(fmt.Sprintf("create frontend deployment"), func() {
-			dp := mb.BuildDeployment("frontend", 1, defaultFrontEndImage, AppContainerPort)
+			dp := mb.BuildDeployment("frontend", 1, defaultFrontEndImage, AppContainerPort, []corev1.EnvVar{})
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.FrontEndDP = dp
@@ -245,7 +249,21 @@ func (s *TimeoutStack) createVirtualNodeResourcesForTimeoutStack(ctx context.Con
 		})
 
 		By(fmt.Sprintf("create backend deployment"), func() {
-			dp := mb.BuildDeployment("backend", 1, defaultBackEndImage, AppContainerPort)
+			env := []corev1.EnvVar{
+				{
+					Name: "SERVER_PORT",
+					Value: fmt.Sprintf("%d", AppContainerPort),
+				},
+				{
+					Name:  "WHO_AM_I",
+					Value: "backend",
+				},
+				{
+					Name:  "TIMEOUT_VALUE",
+					Value: fmt.Sprintf("%d", s.TimeoutValue),
+				},
+			}
+			dp := mb.BuildDeployment("backend", 1, defaultBackEndImage, AppContainerPort, env)
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.BackEndDP = dp
@@ -391,6 +409,9 @@ func (s *TimeoutStack) createServicesForTimeoutStack(ctx context.Context, f *fra
 		By(fmt.Sprintf("Create VirtualRouter for backend service"), func() {
 			var routes []appmesh.Route
 			var weightedTargets []appmesh.WeightedTarget
+			vrBuilder := &manifest.VRBuilder{
+				Namespace:            timeoutTest,
+			}
 
 			weightedTargets = append(weightedTargets, appmesh.WeightedTarget{
 				VirtualNodeRef: &appmesh.VirtualNodeReference{
@@ -405,7 +426,7 @@ func (s *TimeoutStack) createServicesForTimeoutStack(ctx context.Context, f *fra
 				Name: "Timeout",
 				HTTPRoute: &appmesh.HTTPRoute{
 					Match: appmesh.HTTPRouteMatch{
-						Prefix: "/timeout",
+						Prefix: "/timeoutroute",
 					},
 					Action: appmesh.HTTPRouteAction{
 						WeightedTargets: weightedTargets,
@@ -424,7 +445,7 @@ func (s *TimeoutStack) createServicesForTimeoutStack(ctx context.Context, f *fra
 				Name: "No-Timeout",
 				HTTPRoute: &appmesh.HTTPRoute{
 					Match: appmesh.HTTPRouteMatch{
-						Prefix: "/default",
+						Prefix: "/defaultroute",
 					},
 					Action: appmesh.HTTPRouteAction{
 						WeightedTargets: weightedTargets,
@@ -432,23 +453,8 @@ func (s *TimeoutStack) createServicesForTimeoutStack(ctx context.Context, f *fra
 				},
 			})
 
-			vr := &appmesh.VirtualRouter{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "timeout-e2e",
-					Name:      "backend",
-				},
-				Spec: appmesh.VirtualRouterSpec{
-					Listeners: []appmesh.VirtualRouterListener{
-						{
-							PortMapping: appmesh.PortMapping{
-								Port:     AppContainerPort,
-								Protocol: "http",
-							},
-						},
-					},
-					Routes: routes,
-				},
-			}
+			vrBuilder.Listeners = []appmesh.VirtualRouterListener{vrBuilder.BuildVirtualRouterListener("http", 8080)}
+			vr := vrBuilder.BuildVirtualRouter("backend", routes)
 			err := f.K8sClient.Create(ctx, vr)
 			Expect(err).NotTo(HaveOccurred())
 			s.BackEndVR = vr
@@ -581,8 +587,8 @@ func (s *TimeoutStack) revokeVirtualNodeBackendAccessForTimeoutStack(ctx context
 	return deletionErrors
 }
 
-func (s *TimeoutStack) checkDefaultBackendRouteTimesout(ctx context.Context, f *framework.Framework,
-	dp *appsv1.Deployment) error {
+func (s *TimeoutStack) checkExpectedRouteBehavior(ctx context.Context, f *framework.Framework,
+	dp *appsv1.Deployment, path string, timeoutConfigured bool) error {
 	sel := labels.Set(dp.Spec.Selector.MatchLabels)
 	podList := &corev1.PodList{}
 	err := f.K8sClient.List(ctx, podList, client.InNamespace(dp.Namespace), client.MatchingLabelsSelector{Selector: sel.AsSelector()})
@@ -595,37 +601,11 @@ func (s *TimeoutStack) checkDefaultBackendRouteTimesout(ctx context.Context, f *
 
 	for i := range podList.Items {
 		pod := podList.Items[i].DeepCopy()
-		if response, err := s.verifyFrontEndPodToRouteConnectivity(ctx, f, pod, "default"); err != nil {
+		if response, err := s.verifyFrontEndPodToRouteConnectivity(ctx, f, pod, path); err != nil {
 			f.Logger.Error("error while reaching out to default endpoint of backend")
 			return err
 		} else {
-			if response != timeoutMessage {
-				return fmt.Errorf("failed to verify route timeout behavior")
-			}
-		}
-	}
-	return nil
-}
-
-func (s *TimeoutStack) checkBehaviorOfRouteConfiguredWithTimeout(ctx context.Context, f *framework.Framework,
-	dp *appsv1.Deployment) error {
-	sel := labels.Set(dp.Spec.Selector.MatchLabels)
-	podList := &corev1.PodList{}
-	err := f.K8sClient.List(ctx, podList, client.InNamespace(dp.Namespace), client.MatchingLabelsSelector{Selector: sel.AsSelector()})
-	if err != nil {
-		return errors.Wrapf(err, "failed to get pods for Deployment: %v", k8s.NamespacedName(dp).String())
-	}
-	if len(podList.Items) == 0 {
-		return errors.Wrapf(err, "Deployment have zero pods: %v", k8s.NamespacedName(dp).String())
-	}
-
-	for i := range podList.Items {
-		pod := podList.Items[i].DeepCopy()
-		if response, err := s.verifyFrontEndPodToRouteConnectivity(ctx, f, pod, "timeout"); err != nil {
-			f.Logger.Warn("error while reaching out to timeout endpoint of backend")
-			return err
-		} else {
-			if response != expectedBackendResponse {
+			if (!timeoutConfigured && response != timeoutMessage) || (timeoutConfigured && response != expectedBackendResponse)  {
 				return fmt.Errorf("failed to verify route timeout behavior")
 			}
 		}
