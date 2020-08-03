@@ -26,27 +26,21 @@ const xrayDaemonContainerTemplate = `
       "name": "AWS_REGION",
       "value": "{{ .AWSRegion }}"
     }
-  ],
-  "resources": {
-    "requests": {
-      "cpu": "{{ .SidecarCPURequests }}",
-      "memory": "{{ .SidecarMemoryRequests }}"
-    }
-  }
+  ]
 }
 `
 
 type XrayTemplateVariables struct {
-	AWSRegion             string
-	SidecarCPURequests    string
-	SidecarMemoryRequests string
-	XRayImage             string
+	AWSRegion string
+	XRayImage string
 }
 
 type xrayMutatorConfig struct {
 	awsRegion             string
 	sidecarCPURequests    string
 	sidecarMemoryRequests string
+	sidecarCPULimits      string
+	sidecarMemoryLimits   string
 	xRayImage             string
 }
 
@@ -74,21 +68,30 @@ func (m *xrayMutator) mutate(pod *corev1.Pod) error {
 	if err != nil {
 		return err
 	}
+
 	container := corev1.Container{}
 	err = json.Unmarshal([]byte(xrayDaemonSidecar), &container)
 	if err != nil {
 		return err
 	}
+
+	// add resource requests and limits
+	container.Resources, err = sidecarResources(getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
+		getSidecarMemoryRequest(m.mutatorConfig.sidecarMemoryRequests, pod),
+		getSidecarCPULimit(m.mutatorConfig.sidecarCPULimits, pod),
+		getSidecarMemoryLimit(m.mutatorConfig.sidecarMemoryLimits, pod))
+	if err != nil {
+		return err
+	}
+
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
 	return nil
 }
 
 func (m *xrayMutator) buildTemplateVariables(pod *corev1.Pod) XrayTemplateVariables {
 	return XrayTemplateVariables{
-		AWSRegion:             m.mutatorConfig.awsRegion,
-		SidecarCPURequests:    getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
-		SidecarMemoryRequests: getSidecarMemoryRequest(m.mutatorConfig.sidecarMemoryRequests, pod),
-		XRayImage:             m.mutatorConfig.xRayImage,
+		AWSRegion: m.mutatorConfig.awsRegion,
+		XRayImage: m.mutatorConfig.xRayImage,
 	}
 }
 

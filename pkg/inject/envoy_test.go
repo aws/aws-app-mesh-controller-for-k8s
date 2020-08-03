@@ -16,6 +16,10 @@ import (
 func Test_envoyMutator_mutate(t *testing.T) {
 	cpuRequests, _ := resource.ParseQuantity("32Mi")
 	memoryRequests, _ := resource.ParseQuantity("10m")
+
+	cpuLimits, _ := resource.ParseQuantity("64Mi")
+	memoryLimits, _ := resource.ParseQuantity("30m")
+
 	ms := &appmesh.Mesh{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "mesh",
@@ -47,6 +51,33 @@ func Test_envoyMutator_mutate(t *testing.T) {
 			},
 		},
 	}
+
+	annotationCpuRequest, _ := resource.ParseQuantity("128Mi")
+	annotationMemoryRequest, _ := resource.ParseQuantity("20m")
+	annotationCpuLimit, _ := resource.ParseQuantity("256Mi")
+	annotationMemoryLimit, _ := resource.ParseQuantity("80m")
+
+	podWithResourceAnnotations := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "my-pod",
+			Annotations: map[string]string{
+				AppMeshCPURequestAnnotation:    annotationCpuRequest.String(),
+				AppMeshMemoryRequestAnnotation: annotationMemoryRequest.String(),
+				AppMeshCPULimitAnnotation:      annotationCpuLimit.String(),
+				AppMeshMemoryLimitAnnotation:   annotationMemoryLimit.String(),
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "app",
+					Image: "app/v1",
+				},
+			},
+		},
+	}
+
 	type fields struct {
 		vn            *appmesh.VirtualNode
 		ms            *appmesh.Mesh
@@ -77,6 +108,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
+					sidecarCPULimits:           cpuLimits.String(),
+					sidecarMemoryLimits:        memoryLimits.String(),
 				},
 			},
 			args: args{
@@ -149,6 +182,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								Requests: corev1.ResourceList{
 									"cpu":    cpuRequests,
 									"memory": memoryRequests,
+								},
+								Limits: corev1.ResourceList{
+									"cpu":    cpuLimits,
+									"memory": memoryLimits,
 								},
 							},
 						},
@@ -893,6 +930,323 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
 									SecretName: "svc1-svc2-ca-bundle",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no cpu limits",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					sidecarMemoryLimits:        memoryLimits.String(),
+					enableStatsD:               true,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "ENABLE_ENVOY_DOG_STATSD",
+									Value: "1",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+								Limits: corev1.ResourceList{
+									"memory": memoryLimits,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no memory limits",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					sidecarCPULimits:           cpuLimits.String(),
+					enableStatsD:               true,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "ENABLE_ENVOY_DOG_STATSD",
+									Value: "1",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+								Limits: corev1.ResourceList{
+									"cpu": cpuLimits,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "resource requests and limits annotation override",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					sidecarCPULimits:           cpuLimits.String(),
+					sidecarMemoryLimits:        memoryLimits.String(),
+					enableStatsD:               true,
+				},
+			},
+			args: args{
+				pod: podWithResourceAnnotations,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+					Annotations: map[string]string{
+						AppMeshCPURequestAnnotation:    annotationCpuRequest.String(),
+						AppMeshMemoryRequestAnnotation: annotationMemoryRequest.String(),
+						AppMeshCPULimitAnnotation:      annotationCpuLimit.String(),
+						AppMeshMemoryLimitAnnotation:   annotationMemoryLimit.String(),
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "ENABLE_ENVOY_DOG_STATSD",
+									Value: "1",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    annotationCpuRequest,
+									"memory": annotationMemoryRequest,
+								},
+								Limits: corev1.ResourceList{
+									"cpu":    annotationCpuLimit,
+									"memory": annotationMemoryLimit,
 								},
 							},
 						},

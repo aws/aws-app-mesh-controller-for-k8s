@@ -57,18 +57,18 @@ type TimeoutStack struct {
 	ServiceDiscoveryType manifest.ServiceDiscoveryType
 
 	// ====== runtime variables ======
-	mesh        *appmesh.Mesh
-	namespace   *corev1.Namespace
+	mesh      *appmesh.Mesh
+	namespace *corev1.Namespace
 
-	FrontEndVN  *appmesh.VirtualNode
-	FrontEndDP  *appsv1.Deployment
+	FrontEndVN *appmesh.VirtualNode
+	FrontEndDP *appsv1.Deployment
 
-	BackEndVN   *appmesh.VirtualNode
-	BackEndDP   *appsv1.Deployment
-	BackEndSVC  *corev1.Service
+	BackEndVN  *appmesh.VirtualNode
+	BackEndDP  *appsv1.Deployment
+	BackEndSVC *corev1.Service
 
-	BackEndVS    *appmesh.VirtualService
-	BackEndVR    *appmesh.VirtualRouter
+	BackEndVS *appmesh.VirtualService
+	BackEndVR *appmesh.VirtualRouter
 
 	TimeoutValue int
 }
@@ -251,7 +251,7 @@ func (s *TimeoutStack) createVirtualNodeResourcesForTimeoutStack(ctx context.Con
 		By(fmt.Sprintf("create backend deployment"), func() {
 			env := []corev1.EnvVar{
 				{
-					Name: "SERVER_PORT",
+					Name:  "SERVER_PORT",
 					Value: fmt.Sprintf("%d", AppContainerPort),
 				},
 				{
@@ -410,7 +410,7 @@ func (s *TimeoutStack) createServicesForTimeoutStack(ctx context.Context, f *fra
 			var routes []appmesh.Route
 			var weightedTargets []appmesh.WeightedTarget
 			vrBuilder := &manifest.VRBuilder{
-				Namespace:            timeoutTest,
+				Namespace: timeoutTest,
 			}
 
 			weightedTargets = append(weightedTargets, appmesh.WeightedTarget{
@@ -605,7 +605,7 @@ func (s *TimeoutStack) checkExpectedRouteBehavior(ctx context.Context, f *framew
 			f.Logger.Error("error while reaching out to default endpoint of backend")
 			return err
 		} else {
-			if (!timeoutConfigured && response != timeoutMessage) || (timeoutConfigured && response != expectedBackendResponse)  {
+			if (!timeoutConfigured && response != timeoutMessage) || (timeoutConfigured && response != expectedBackendResponse) {
 				return fmt.Errorf("failed to verify route timeout behavior")
 			}
 		}

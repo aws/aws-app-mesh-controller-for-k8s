@@ -101,8 +101,10 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				egressIgnoredIPs: m.config.IgnoredIPs,
 				initProxyMutatorConfig: initProxyMutatorConfig{
 					containerImage: m.config.InitImage,
-					cpuRequests:    m.config.SidecarCpu,
-					memoryRequests: m.config.SidecarMemory,
+					cpuRequests:    m.config.SidecarCpuRequests,
+					memoryRequests: m.config.SidecarMemoryRequests,
+					cpuLimits:      m.config.SidecarCpuLimits,
+					memoryLimits:   m.config.SidecarMemoryLimits,
 				},
 			}, vn),
 			newEnvoyMutator(envoyMutatorConfig{
@@ -114,8 +116,10 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				readinessProbeInitialDelay: m.config.ReadinessProbeInitialDelay,
 				readinessProbePeriod:       m.config.ReadinessProbePeriod,
 				sidecarImage:               m.config.SidecarImage,
-				sidecarCPURequests:         m.config.SidecarCpu,
-				sidecarMemoryRequests:      m.config.SidecarMemory,
+				sidecarCPURequests:         m.config.SidecarCpuRequests,
+				sidecarMemoryRequests:      m.config.SidecarMemoryRequests,
+				sidecarCPULimits:           m.config.SidecarCpuLimits,
+				sidecarMemoryLimits:        m.config.SidecarMemoryLimits,
 				enableXrayTracing:          m.config.EnableXrayTracing,
 				enableJaegerTracing:        m.config.EnableJaegerTracing,
 				enableDatadogTracing:       m.config.EnableDatadogTracing,
@@ -124,8 +128,10 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 			}, ms, vn),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,
-				sidecarCPURequests:    m.config.SidecarCpu,
-				sidecarMemoryRequests: m.config.SidecarMemory,
+				sidecarCPURequests:    m.config.SidecarCpuRequests,
+				sidecarMemoryRequests: m.config.SidecarMemoryRequests,
+				sidecarCPULimits:      m.config.SidecarCpuLimits,
+				sidecarMemoryLimits:   m.config.SidecarMemoryLimits,
 				xRayImage:             m.config.XRayImage,
 			}, m.config.EnableXrayTracing),
 			newDatadogMutator(datadogMutatorConfig{
@@ -153,8 +159,10 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 		}, ms, vg),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,
-				sidecarCPURequests:    m.config.SidecarCpu,
-				sidecarMemoryRequests: m.config.SidecarMemory,
+				sidecarCPURequests:    m.config.SidecarCpuRequests,
+				sidecarMemoryRequests: m.config.SidecarMemoryRequests,
+				sidecarCPULimits:      m.config.SidecarCpuLimits,
+				sidecarMemoryLimits:   m.config.SidecarMemoryLimits,
 				xRayImage:             m.config.XRayImage,
 			}, m.config.EnableXrayTracing),
 		}
