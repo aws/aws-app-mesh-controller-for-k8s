@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"time"
 )
 
 type Manager interface {
@@ -41,8 +42,15 @@ type defaultManager struct {
 func (m *defaultManager) WaitUntilVirtualRouterActive(ctx context.Context, vr *appmesh.VirtualRouter) (*appmesh.VirtualRouter, error) {
 	observedVR := &appmesh.VirtualRouter{}
 	return observedVR, wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-		if err := m.k8sClient.Get(ctx, k8s.NamespacedName(vr), observedVR); err != nil {
-			return false, err
+
+		// sometimes there's a delay in the resource showing up
+		for i := 0; i < 5; i++ {
+			if err := m.k8sClient.Get(ctx, k8s.NamespacedName(vr), observedVR); err != nil {
+				if i >= 5 {
+					return false, err
+				}
+			}
+			time.Sleep(100 * time.Millisecond)
 		}
 
 		for _, condition := range observedVR.Status.Conditions {

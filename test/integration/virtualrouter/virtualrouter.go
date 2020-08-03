@@ -1,4 +1,4 @@
-package virtualnode
+package virtualrouter
 
 import (
 	"context"
@@ -15,67 +15,68 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type VirtualNodeTest struct {
-	Namespace    *corev1.Namespace
-	VirtualNodes map[string]*appmesh.VirtualNode
+type VirtualRouterTest struct {
+	Namespace      *corev1.Namespace
+	VirtualRouters map[string]*appmesh.VirtualRouter
 }
 
-func (m *VirtualNodeTest) Create(ctx context.Context, f *framework.Framework, vn *appmesh.VirtualNode) error {
-	err := f.K8sClient.Create(ctx, vn)
+func (m *VirtualRouterTest) Create(ctx context.Context, f *framework.Framework, vr *appmesh.VirtualRouter) error {
+	err := f.K8sClient.Create(ctx, vr)
 	if err != nil {
 		return err
 	}
-	_, err = f.VNManager.WaitUntilVirtualNodeActive(ctx, vn)
+	_, err = f.VRManager.WaitUntilVirtualRouterActive(ctx, vr)
 	if err != nil {
 		return err
 	}
-	m.VirtualNodes[vn.Name] = vn
+	m.VirtualRouters[vr.Name] = vr
 	return nil
 }
 
-func (m *VirtualNodeTest) Update(ctx context.Context, f *framework.Framework, newVN *appmesh.VirtualNode, vn *appmesh.VirtualNode) (*appmesh.VirtualNode, error) {
-	err := f.K8sClient.Patch(ctx, newVN, client.MergeFrom(vn))
+func (m *VirtualRouterTest) Update(ctx context.Context, f *framework.Framework, newVR *appmesh.VirtualRouter, vr *appmesh.VirtualRouter) (*appmesh.VirtualRouter, error) {
+	err := f.K8sClient.Patch(ctx, newVR, client.MergeFrom(vr))
 	if err != nil {
 		return nil, err
 	}
-	updatedVN, err := f.VNManager.WaitUntilVirtualNodeActive(ctx, newVN)
+	updatedVR, err := f.VRManager.WaitUntilVirtualRouterActive(ctx, newVR)
 	if err != nil {
 		return nil, err
 	}
 
-	m.VirtualNodes[vn.Name] = updatedVN
-	return updatedVN, nil
+	m.VirtualRouters[vr.Name] = updatedVR
+	return updatedVR, nil
 }
 
-func (m *VirtualNodeTest) Cleanup(ctx context.Context, f *framework.Framework) {
+func (m *VirtualRouterTest) Cleanup(ctx context.Context, f *framework.Framework) {
 	var deletionErrors []error
 
-	for _, vn := range m.VirtualNodes {
-		By(fmt.Sprintf("Delete virtual node %s", vn.Name), func() {
-			if err := f.K8sClient.Delete(ctx, vn,
+	for _, vr := range m.VirtualRouters {
+		By(fmt.Sprintf("Delete virtual router %s", vr.Name), func() {
+			if err := f.K8sClient.Delete(ctx, vr,
 				client.PropagationPolicy(metav1.DeletePropagationForeground), client.GracePeriodSeconds(0)); err != nil {
 
 				if apierrs.IsNotFound(err) {
-					f.Logger.Info("Virtual node already deleted",
-						zap.String("virtual node", vn.Name))
+					f.Logger.Info("Virtual router already deleted",
+						zap.String("virtual router", vr.Name))
 					return
 				}
-				f.Logger.Error("Failed to delete virtual node",
-					zap.String("virtual node", vn.Name),
+
+				f.Logger.Error("Failed to delete virtual router",
+					zap.String("virtual router", vr.Name),
 					zap.Error(err))
 				deletionErrors = append(deletionErrors, err)
 				return
 			}
 
-			By(fmt.Sprintf("Wait for virtual node to be deleted: %s", vn.Name), func() {
-				if err := f.VNManager.WaitUntilVirtualNodeDeleted(ctx, vn); err != nil {
-					f.Logger.Error("failed to wait virtual node deletion",
-						zap.String("virtual node", vn.Name),
+			By(fmt.Sprintf("Wait for virtual router to be deleted: %s", vr.Name), func() {
+				if err := f.VRManager.WaitUntilVirtualRouterDeleted(ctx, vr); err != nil {
+					f.Logger.Error("failed to wait virtual router deletion",
+						zap.String("virtual router", vr.Name),
 						zap.Error(err))
 					deletionErrors = append(deletionErrors, err)
 				}
 			})
-			delete(m.VirtualNodes, vn.Name)
+			delete(m.VirtualRouters, vr.Name)
 		})
 	}
 
@@ -85,7 +86,6 @@ func (m *VirtualNodeTest) Cleanup(ctx context.Context, f *framework.Framework) {
 				client.PropagationPolicy(metav1.DeletePropagationForeground), client.GracePeriodSeconds(0)); err != nil {
 
 				if !apierrs.IsNotFound(err) {
-
 					f.Logger.Error("failed to delete namespace",
 						zap.String("namespace", m.Namespace.Name),
 						zap.Error(err))
@@ -106,11 +106,11 @@ func (m *VirtualNodeTest) Cleanup(ctx context.Context, f *framework.Framework) {
 	}
 
 	for _, err := range deletionErrors {
-		f.Logger.Error("VirtualNode clean up failed", zap.Error(err))
+		f.Logger.Error("VirtualRouter clean up failed", zap.Error(err))
 	}
 	Expect(len(deletionErrors)).To(BeZero())
 }
 
-func (m *VirtualNodeTest) CheckInAWS(ctx context.Context, f *framework.Framework, ms *appmesh.Mesh, vn *appmesh.VirtualNode) error {
-	return f.VNManager.CheckVirtualNodeInAWS(ctx, ms, vn)
+func (m *VirtualRouterTest) CheckInAWS(ctx context.Context, f *framework.Framework, ms *appmesh.Mesh, vr *appmesh.VirtualRouter) error {
+	return f.VRManager.CheckVirtualRouterInAWS(ctx, ms, vr)
 }
