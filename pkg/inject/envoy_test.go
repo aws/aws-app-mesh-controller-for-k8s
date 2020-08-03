@@ -68,13 +68,15 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				vn: vn,
 				ms: ms,
 				mutatorConfig: envoyMutatorConfig{
-					awsRegion:             "us-west-2",
-					preview:               false,
-					logLevel:              "debug",
-					preStopDelay:          "20",
-					sidecarImage:          "envoy:v2",
-					sidecarCPURequests:    cpuRequests.String(),
-					sidecarMemoryRequests: memoryRequests.String(),
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
 				},
 			},
 			args: args{
@@ -111,6 +113,19 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										"sh", "-c", "sleep 20",
 									}},
 								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
 							},
 							Env: []corev1.EnvVar{
 								{
@@ -147,13 +162,15 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				vn: vn,
 				ms: ms,
 				mutatorConfig: envoyMutatorConfig{
-					awsRegion:             "us-west-2",
-					preview:               true,
-					logLevel:              "debug",
-					preStopDelay:          "20",
-					sidecarImage:          "envoy:v2",
-					sidecarCPURequests:    cpuRequests.String(),
-					sidecarMemoryRequests: memoryRequests.String(),
+					awsRegion:                  "us-west-2",
+					preview:                    true,
+					logLevel:                   "debug",
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 10,
+					readinessProbePeriod:       2,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
 				},
 			},
 			args: args{
@@ -190,6 +207,19 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										"sh", "-c", "sleep 20",
 									}},
 								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 10,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       2,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
 							},
 							Env: []corev1.EnvVar{
 								{
@@ -226,14 +256,16 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				vn: vn,
 				ms: ms,
 				mutatorConfig: envoyMutatorConfig{
-					awsRegion:             "us-west-2",
-					preview:               false,
-					logLevel:              "debug",
-					preStopDelay:          "20",
-					sidecarImage:          "envoy:v2",
-					sidecarCPURequests:    cpuRequests.String(),
-					sidecarMemoryRequests: memoryRequests.String(),
-					enableXrayTracing:     true,
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 3,
+					readinessProbePeriod:       5,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					enableXrayTracing:          true,
 				},
 			},
 			args: args{
@@ -270,6 +302,19 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										"sh", "-c", "sleep 20",
 									}},
 								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 3,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       5,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
 							},
 							Env: []corev1.EnvVar{
 								{
@@ -310,14 +355,16 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				vn: vn,
 				ms: ms,
 				mutatorConfig: envoyMutatorConfig{
-					awsRegion:             "us-west-2",
-					preview:               false,
-					logLevel:              "debug",
-					preStopDelay:          "20",
-					sidecarImage:          "envoy:v2",
-					sidecarCPURequests:    cpuRequests.String(),
-					sidecarMemoryRequests: memoryRequests.String(),
-					enableJaegerTracing:   true,
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					enableJaegerTracing:        true,
 				},
 			},
 			args: args{
@@ -354,6 +401,19 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										"sh", "-c", "sleep 20",
 									}},
 								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
 							},
 							Env: []corev1.EnvVar{
 								{
@@ -400,14 +460,16 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				vn: vn,
 				ms: ms,
 				mutatorConfig: envoyMutatorConfig{
-					awsRegion:             "us-west-2",
-					preview:               false,
-					logLevel:              "debug",
-					preStopDelay:          "20",
-					sidecarImage:          "envoy:v2",
-					sidecarCPURequests:    cpuRequests.String(),
-					sidecarMemoryRequests: memoryRequests.String(),
-					enableDatadogTracing:  true,
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					enableDatadogTracing:       true,
 				},
 			},
 			args: args{
@@ -444,6 +506,19 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										"sh", "-c", "sleep 20",
 									}},
 								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
 							},
 							Env: []corev1.EnvVar{
 								{
@@ -490,14 +565,16 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				vn: vn,
 				ms: ms,
 				mutatorConfig: envoyMutatorConfig{
-					awsRegion:             "us-west-2",
-					preview:               false,
-					logLevel:              "debug",
-					preStopDelay:          "20",
-					sidecarImage:          "envoy:v2",
-					sidecarCPURequests:    cpuRequests.String(),
-					sidecarMemoryRequests: memoryRequests.String(),
-					enableStatsTags:       true,
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					enableStatsTags:            true,
 				},
 			},
 			args: args{
@@ -534,6 +611,19 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										"sh", "-c", "sleep 20",
 									}},
 								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
 							},
 							Env: []corev1.EnvVar{
 								{
@@ -574,14 +664,16 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				vn: vn,
 				ms: ms,
 				mutatorConfig: envoyMutatorConfig{
-					awsRegion:             "us-west-2",
-					preview:               false,
-					logLevel:              "debug",
-					preStopDelay:          "20",
-					sidecarImage:          "envoy:v2",
-					sidecarCPURequests:    cpuRequests.String(),
-					sidecarMemoryRequests: memoryRequests.String(),
-					enableStatsD:          true,
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					enableStatsD:               true,
 				},
 			},
 			args: args{
@@ -618,6 +710,19 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										"sh", "-c", "sleep 20",
 									}},
 								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
 							},
 							Env: []corev1.EnvVar{
 								{
@@ -658,13 +763,15 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				vn: vn,
 				ms: ms,
 				mutatorConfig: envoyMutatorConfig{
-					awsRegion:             "us-west-2",
-					preview:               false,
-					logLevel:              "debug",
-					preStopDelay:          "20",
-					sidecarImage:          "envoy:v2",
-					sidecarCPURequests:    cpuRequests.String(),
-					sidecarMemoryRequests: memoryRequests.String(),
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
 				},
 			},
 			args: args{
@@ -720,6 +827,19 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										"sh", "-c", "sleep 20",
 									}},
 								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
 							},
 							Env: []corev1.EnvVar{
 								{
@@ -786,13 +906,15 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				vn: vn,
 				ms: ms,
 				mutatorConfig: envoyMutatorConfig{
-					awsRegion:             "us-west-2",
-					preview:               false,
-					logLevel:              "debug",
-					preStopDelay:          "20",
-					sidecarImage:          "envoy:v2",
-					sidecarCPURequests:    cpuRequests.String(),
-					sidecarMemoryRequests: memoryRequests.String(),
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
 				},
 			},
 			args: args{

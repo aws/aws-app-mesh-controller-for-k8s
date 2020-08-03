@@ -30,12 +30,14 @@ type VirtualGatewayEnvoyVariables struct {
 }
 
 type virtualGatwayEnvoyConfig struct {
-	accountID         string
-	awsRegion         string
-	preview           bool
-	logLevel          string
-	sidecarImage      string
-	enableXrayTracing bool
+	accountID                  string
+	awsRegion                  string
+	preview                    bool
+	logLevel                   string
+	sidecarImage               string
+	readinessProbeInitialDelay int32
+	readinessProbePeriod       int32
+	enableXrayTracing          bool
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -93,6 +95,11 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 		e := corev1.EnvVar{Name: name,
 			Value: value}
 		pod.Spec.Containers[envoyIdx].Env = append(pod.Spec.Containers[envoyIdx].Env, e)
+	}
+
+	// customer can bring their own envoy image/spec for virtual gateway so we will only set readiness probe if not already set
+	if pod.Spec.Containers[envoyIdx].ReadinessProbe == nil {
+		pod.Spec.Containers[envoyIdx].ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay, m.mutatorConfig.readinessProbePeriod)
 	}
 	return nil
 }

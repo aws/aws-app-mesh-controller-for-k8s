@@ -10,12 +10,14 @@ const (
 	flagEnableIAMForServiceAccounts = "enable-iam-for-service-accounts"
 	flagEnableECRSecret             = "enable-ecr-secret"
 
-	flagSidecarImage          = "sidecar-image"
-	flagSidecarCpuRequests    = "sidecar-cpu-requests"
-	flagSidecarMemoryRequests = "sidecar-memory-requests"
-	flagPreview               = "preview"
-	flagLogLevel              = "sidecar-log-level"
-	flagPreStopDelay          = "prestop-delay"
+	flagSidecarImage               = "sidecar-image"
+	flagSidecarCpuRequests         = "sidecar-cpu-requests"
+	flagSidecarMemoryRequests      = "sidecar-memory-requests"
+	flagPreview                    = "preview"
+	flagLogLevel                   = "sidecar-log-level"
+	flagPreStopDelay               = "prestop-delay"
+	flagReadinessProbeInitialDelay = "readiness-probe-initial-delay"
+	flagReadinessProbePeriod       = "readiness-probe-period"
 
 	flagInitImage  = "init-image"
 	flagIgnoredIPs = "ignored-ips"
@@ -40,12 +42,14 @@ type Config struct {
 	EnableECRSecret bool
 
 	// Sidecar settings
-	SidecarImage  string
-	SidecarCpu    string
-	SidecarMemory string
-	Preview       bool
-	LogLevel      string
-	PreStopDelay  string
+	SidecarImage               string
+	SidecarCpu                 string
+	SidecarMemory              string
+	Preview                    bool
+	LogLevel                   string
+	PreStopDelay               string
+	ReadinessProbeInitialDelay int32
+	ReadinessProbePeriod       int32
 
 	// Init container settings
 	InitImage  string
@@ -90,6 +94,10 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"AWS App Mesh envoy log level")
 	fs.StringVar(&cfg.PreStopDelay, flagPreStopDelay, "20",
 		"AWS App Mesh envoy preStop hook sleep duration")
+	fs.Int32Var(&cfg.ReadinessProbeInitialDelay, flagReadinessProbeInitialDelay, 1,
+		"Number of seconds after Envoy has started before readiness probes are initiated")
+	fs.Int32Var(&cfg.ReadinessProbePeriod, flagReadinessProbePeriod, 10,
+		"How often (in seconds) to perform the readiness probe on Envoy container")
 	fs.StringVar(&cfg.InitImage, flagInitImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v3-prod",
 		"Init container image.")
 	fs.StringVar(&cfg.IgnoredIPs, flagIgnoredIPs, "169.254.169.254",
