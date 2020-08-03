@@ -2,6 +2,8 @@ package virtualservice
 
 import (
 	"context"
+	"time"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
@@ -40,8 +42,18 @@ type defaultManager struct {
 func (m *defaultManager) WaitUntilVirtualServiceActive(ctx context.Context, vs *appmesh.VirtualService) (*appmesh.VirtualService, error) {
 	observedVS := &appmesh.VirtualService{}
 	return observedVS, wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-		if err := m.k8sClient.Get(ctx, k8s.NamespacedName(vs), observedVS); err != nil {
-			return false, err
+
+		// sometimes there's a delay in the resource showing up
+		for i := 0; i < 5; i++ {
+			err := m.k8sClient.Get(ctx, k8s.NamespacedName(vs), observedVS)
+			if err != nil {
+				if i >= 5 {
+					return false, err
+				}
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			break
 		}
 
 		for _, condition := range observedVS.Status.Conditions {
