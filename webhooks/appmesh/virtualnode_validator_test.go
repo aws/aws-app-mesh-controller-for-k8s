@@ -334,6 +334,8 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 
 func Test_virtualNodeValidator_checkVirtualNodeBackendsForDuplicates(t *testing.T) {
 	testARN := "testARN"
+	testPrimaryNamespace := "awesome-ns"
+	testSecondaryNamespace := "secondary-ns"
 	type args struct {
 		vn    *appmesh.VirtualNode
 		oldVN *appmesh.VirtualNode
@@ -366,12 +368,14 @@ func Test_virtualNodeValidator_checkVirtualNodeBackendsForDuplicates(t *testing.
 						Backends: []appmesh.Backend{
 							{VirtualService: appmesh.VirtualServiceBackend{
 								VirtualServiceRef: &appmesh.VirtualServiceReference{
-									Name: "testVS",
+									Name:      "testVS",
+									Namespace: &testPrimaryNamespace,
 								},
 							}},
 							{VirtualService: appmesh.VirtualServiceBackend{
 								VirtualServiceRef: &appmesh.VirtualServiceReference{
-									Name: "testVS",
+									Name:      "testVS",
+									Namespace: &testPrimaryNamespace,
 								},
 							},
 							},
@@ -439,7 +443,47 @@ func Test_virtualNodeValidator_checkVirtualNodeBackendsForDuplicates(t *testing.
 						Backends: []appmesh.Backend{
 							{VirtualService: appmesh.VirtualServiceBackend{
 								VirtualServiceRef: &appmesh.VirtualServiceReference{
-									Name: "testVS",
+									Name:      "testVS",
+									Namespace: &testPrimaryNamespace,
+								},
+							}},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Same VirtualService name across different namespaces",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
+						Backends: []appmesh.Backend{
+							{VirtualService: appmesh.VirtualServiceBackend{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
+									Name:      "testVS",
+									Namespace: &testPrimaryNamespace,
+								},
+							}},
+							{VirtualService: appmesh.VirtualServiceBackend{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
+									Name:      "testVS",
+									Namespace: &testSecondaryNamespace,
 								},
 							}},
 						},

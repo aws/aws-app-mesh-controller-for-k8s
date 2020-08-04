@@ -3,6 +3,7 @@ package appmesh
 import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -76,10 +77,12 @@ func (v *virtualNodeValidator) checkVirtualNodeBackendsForDuplicates(vn *appmesh
 
 	for _, backend := range backends {
 		if backend.VirtualService.VirtualServiceRef != nil {
-			if _, ok := backendMap[backend.VirtualService.VirtualServiceRef.Name]; ok {
+			backendNamespacedName := references.ObjectKeyForVirtualServiceReference(vn, *backend.VirtualService.VirtualServiceRef)
+			backendIdentifier := backendNamespacedName.Name + "-" + backendNamespacedName.Namespace
+			if _, ok := backendMap[backendIdentifier]; ok {
 				return errors.Errorf("%s-%s has duplicate VirtualServiceReferences %s", "VirtualNode", vn.Name, backend.VirtualService.VirtualServiceRef.Name)
 			} else {
-				backendMap[backend.VirtualService.VirtualServiceRef.Name] = true
+				backendMap[backendIdentifier] = true
 			}
 		} else if backend.VirtualService.VirtualServiceARN != nil {
 			if _, ok := backendMap[*backend.VirtualService.VirtualServiceARN]; ok {
