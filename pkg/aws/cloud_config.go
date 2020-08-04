@@ -22,6 +22,6 @@ type CloudConfig struct {
 
 func (cfg *CloudConfig) BindFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&cfg.Region, flagAWSRegion, "", "AWS Region for the kubernetes cluster")
-	fs.StringVar(&cfg.Region, flagAWSAccountID, "", "AWS AccountID for the kubernetes cluster")
+	fs.StringVar(&cfg.AccountID, flagAWSAccountID, "", "AWS AccountID for the kubernetes cluster")
 	fs.Var(cfg.ThrottleConfig, flagAWSAPIThrottle, "throttle settings for AWS APIs, format: serviceID1:operationRegex1=rate:burst,serviceID2:operationRegex2=rate:burst")
 }
