@@ -331,3 +331,134 @@ func Test_virtualNodeValidator_enforceFieldsImmutability(t *testing.T) {
 		})
 	}
 }
+
+func Test_virtualNodeValidator_checkVirtualNodeBackendsForDuplicates(t *testing.T) {
+	testARN := "testARN"
+	type args struct {
+		vn    *appmesh.VirtualNode
+		oldVN *appmesh.VirtualNode
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "Duplicate VirtualService Reference (By Name) included",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
+						Backends: []appmesh.Backend{
+							{VirtualService: appmesh.VirtualServiceBackend{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
+									Name: "testVS",
+								},
+							}},
+							{VirtualService: appmesh.VirtualServiceBackend{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
+									Name: "testVS",
+								},
+							},
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("VirtualNode-my-vn has duplicate VirtualServiceReferences testVS"),
+		},
+		{
+			name: "Duplicate VirtualService ARN included",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
+						Backends: []appmesh.Backend{
+							{VirtualService: appmesh.VirtualServiceBackend{
+								VirtualServiceARN: &testARN,
+							},
+							},
+							{VirtualService: appmesh.VirtualServiceBackend{
+								VirtualServiceARN: &testARN,
+							},
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("VirtualNode-my-vn has duplicate VirtualServiceReferenceARNs testARN"),
+		},
+		{
+			name: "No Duplicate Backends",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
+						Backends: []appmesh.Backend{
+							{VirtualService: appmesh.VirtualServiceBackend{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
+									Name: "testVS",
+								},
+							}},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := &virtualNodeValidator{}
+			err := v.checkVirtualNodeBackendsForDuplicates(tt.args.vn)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
