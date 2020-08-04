@@ -7,6 +7,7 @@ import (
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap"
@@ -15,9 +16,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-const retryAttempts = 5
-const retryWait = 200 * time.Millisecond
 
 type VirtualServiceTest struct {
 	Namespace       *corev1.Namespace
@@ -118,13 +116,13 @@ func (m *VirtualServiceTest) Cleanup(ctx context.Context, f *framework.Framework
 func (m *VirtualServiceTest) CheckInAWS(ctx context.Context, f *framework.Framework, ms *appmesh.Mesh, vs *appmesh.VirtualService) error {
 	var err error
 	// Reconcile may take a while so add re-tries
-	for i := 0; i < retryAttempts; i++ {
+	for i := 0; i < utils.PollRetries; i++ {
 		err = f.VSManager.CheckVirtualServiceInAWS(ctx, ms, vs)
 		if err != nil {
-			if i >= retryAttempts {
+			if i >= utils.PollRetries {
 				return err
 			}
-			time.Sleep(retryAttempts)
+			time.Sleep(utils.AWSPollIntervalShort)
 			continue
 		}
 		return err
