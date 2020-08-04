@@ -203,6 +203,179 @@ func Test_xrayMutator_mutate(t *testing.T) {
 			},
 		},
 		{
+			name: "no resource limits",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					awsRegion:             "us-west-2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					xRayImage:             "amazon/aws-xray-daemon",
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "xray-daemon",
+							Image: "amazon/aws-xray-daemon",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "xray",
+									ContainerPort: 2000,
+									Protocol:      "UDP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no cpu limits",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					awsRegion:             "us-west-2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					sidecarMemoryLimits:   memoryLimits.String(),
+					xRayImage:             "amazon/aws-xray-daemon",
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "xray-daemon",
+							Image: "amazon/aws-xray-daemon",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "xray",
+									ContainerPort: 2000,
+									Protocol:      "UDP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+								Limits: corev1.ResourceList{
+									"memory": memoryLimits,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no memory limits",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					awsRegion:             "us-west-2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					sidecarCPULimits:      cpuLimits.String(),
+					xRayImage:             "amazon/aws-xray-daemon",
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "xray-daemon",
+							Image: "amazon/aws-xray-daemon",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "xray",
+									ContainerPort: 2000,
+									Protocol:      "UDP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+								Limits: corev1.ResourceList{
+									"cpu": cpuLimits,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "resource requests and limits annotations",
 			fields: fields{
 				enabled:       true,
