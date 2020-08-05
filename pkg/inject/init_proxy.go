@@ -46,13 +46,7 @@ const proxyInitContainerTemplate = `
       "name": "APPMESH_EGRESS_IGNORED_PORTS",
       "value": "{{ .EgressIgnoredPorts }}"
     }
-  ],
-  "resources": {
-    "requests": {
-      "cpu": "{{ .CPURequests }}",
-      "memory": "{{ .MemoryRequests }}"
-    }
-  }
+  ]
 }
 `
 
@@ -64,14 +58,14 @@ type InitContainerTemplateVariables struct {
 	ProxyIngressPort   int64
 	ProxyUID           int64
 	ContainerImage     string
-	CPURequests        string
-	MemoryRequests     string
 }
 
 type initProxyMutatorConfig struct {
 	containerImage string
 	cpuRequests    string
 	memoryRequests string
+	cpuLimits      string
+	memoryLimits   string
 }
 
 // newInitProxyMutator constructs new initProxyMutator
@@ -102,6 +96,14 @@ func (m *initProxyMutator) mutate(pod *corev1.Pod) error {
 	if err != nil {
 		return err
 	}
+
+	// add resource requests and limits
+	container.Resources, err = sidecarResources(m.mutatorConfig.cpuRequests, m.mutatorConfig.memoryRequests,
+		m.mutatorConfig.cpuLimits, m.mutatorConfig.memoryLimits)
+	if err != nil {
+		return err
+	}
+
 	pod.Spec.InitContainers = append(pod.Spec.InitContainers, container)
 	return nil
 }
@@ -115,8 +117,6 @@ func (m *initProxyMutator) buildTemplateVariables() InitContainerTemplateVariabl
 		ProxyIngressPort:   m.proxyConfig.proxyIngressPort,
 		ProxyUID:           m.proxyConfig.proxyUID,
 		ContainerImage:     m.mutatorConfig.containerImage,
-		CPURequests:        m.mutatorConfig.cpuRequests,
-		MemoryRequests:     m.mutatorConfig.memoryRequests,
 	}
 }
 

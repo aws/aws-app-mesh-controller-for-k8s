@@ -57,6 +57,20 @@ func getSidecarMemoryRequest(defaultMemoryRequest string, pod *corev1.Pod) strin
 	return defaultMemoryRequest
 }
 
+func getSidecarCPULimit(defaultCPULimit string, pod *corev1.Pod) string {
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshCPULimitAnnotation]; ok {
+		return v
+	}
+	return defaultCPULimit
+}
+
+func getSidecarMemoryLimit(defaultMemoryLimit string, pod *corev1.Pod) string {
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshMemoryLimitAnnotation]; ok {
+		return v
+	}
+	return defaultMemoryLimit
+}
+
 // containsEnvoyContainer checks whether pod already contains "envoy" container and return the slice index
 func containsEnvoyContainer(pod *corev1.Pod) (bool, int) {
 	for idx, container := range pod.Spec.Containers {

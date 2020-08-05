@@ -13,6 +13,8 @@ const (
 	flagSidecarImage               = "sidecar-image"
 	flagSidecarCpuRequests         = "sidecar-cpu-requests"
 	flagSidecarMemoryRequests      = "sidecar-memory-requests"
+	flagSidecarCpuLimits           = "sidecar-cpu-limits"
+	flagSidecarMemoryLimits        = "sidecar-memory-limits"
 	flagPreview                    = "preview"
 	flagLogLevel                   = "sidecar-log-level"
 	flagPreStopDelay               = "prestop-delay"
@@ -43,8 +45,10 @@ type Config struct {
 
 	// Sidecar settings
 	SidecarImage               string
-	SidecarCpu                 string
-	SidecarMemory              string
+	SidecarCpuRequests         string
+	SidecarMemoryRequests      string
+	SidecarCpuLimits           string
+	SidecarMemoryLimits        string
 	Preview                    bool
 	LogLevel                   string
 	PreStopDelay               string
@@ -84,10 +88,14 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"If enabled, 'appmesh-ecr-secret' secret will be injected in the absence of it within pod imagePullSecrets")
 	fs.StringVar(&cfg.SidecarImage, flagSidecarImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.12.5.0-prod",
 		"Envoy sidecar container image.")
-	fs.StringVar(&cfg.SidecarCpu, flagSidecarCpuRequests, "10m",
-		"Envoy sidecar CPU resources requests.")
-	fs.StringVar(&cfg.SidecarMemory, flagSidecarMemoryRequests, "32Mi",
-		"Envoy sidecar memory resources requests.")
+	fs.StringVar(&cfg.SidecarCpuRequests, flagSidecarCpuRequests, "10m",
+		"Sidecar CPU resources requests.")
+	fs.StringVar(&cfg.SidecarMemoryRequests, flagSidecarMemoryRequests, "32Mi",
+		"Sidecar memory resources requests.")
+	fs.StringVar(&cfg.SidecarCpuLimits, flagSidecarCpuLimits, "",
+		"Sidecar CPU resources limits.")
+	fs.StringVar(&cfg.SidecarMemoryLimits, flagSidecarMemoryLimits, "",
+		"Sidecar memory resources limits.")
 	fs.BoolVar(&cfg.Preview, flagPreview, false,
 		"Enable preview channel")
 	fs.StringVar(&cfg.LogLevel, flagLogLevel, "info",

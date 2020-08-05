@@ -16,7 +16,6 @@ const envoyContainerName = "envoy"
 const envoyContainerTemplate = `
 {
   "name": "envoy",
-  "image": "{{ .SidecarImage }}",
   "securityContext": {
     "runAsUser": 1337
   },
@@ -78,12 +77,7 @@ const envoyContainerTemplate = `
       "name": "{{ .EnvoyTracingConfigVolumeName }}"
     }
   ]{{ end }},
-  "resources": {
-    "requests": {
-      "cpu": "{{ .SidecarCPURequests }}",
-      "memory": "{{ .SidecarMemoryRequests }}"
-    }
-  }
+  "image": "{{ .SidecarImage }}"
 }
 `
 
@@ -95,8 +89,6 @@ type EnvoyTemplateVariables struct {
 	LogLevel                     string
 	PreStopDelay                 string
 	SidecarImage                 string
-	SidecarCPURequests           string
-	SidecarMemoryRequests        string
 	EnvoyTracingConfigVolumeName string
 	EnableXrayTracing            bool
 	EnableJaegerTracing          bool
@@ -116,6 +108,8 @@ type envoyMutatorConfig struct {
 	sidecarImage               string
 	sidecarCPURequests         string
 	sidecarMemoryRequests      string
+	sidecarCPULimits           string
+	sidecarMemoryLimits        string
 	enableXrayTracing          bool
 	enableJaegerTracing        bool
 	enableDatadogTracing       bool
@@ -156,6 +150,15 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 
+	// add resource requests and limits
+	container.Resources, err = sidecarResources(getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
+		getSidecarMemoryRequest(m.mutatorConfig.sidecarMemoryRequests, pod),
+		getSidecarCPULimit(m.mutatorConfig.sidecarCPULimits, pod),
+		getSidecarMemoryLimit(m.mutatorConfig.sidecarMemoryLimits, pod))
+	if err != nil {
+		return err
+	}
+
 	// add readiness probe
 	container.ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay, m.mutatorConfig.readinessProbePeriod)
 
@@ -177,8 +180,6 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		LogLevel:                     m.mutatorConfig.logLevel,
 		PreStopDelay:                 m.mutatorConfig.preStopDelay,
 		SidecarImage:                 m.mutatorConfig.sidecarImage,
-		SidecarCPURequests:           getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
-		SidecarMemoryRequests:        getSidecarMemoryRequest(m.mutatorConfig.sidecarMemoryRequests, pod),
 		EnvoyTracingConfigVolumeName: envoyTracingConfigVolumeName,
 		EnableXrayTracing:            m.mutatorConfig.enableXrayTracing,
 		EnableJaegerTracing:          m.mutatorConfig.enableJaegerTracing,

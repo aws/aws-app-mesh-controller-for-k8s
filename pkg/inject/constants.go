@@ -6,6 +6,11 @@ const (
 	//AppMeshMemoryRequestAnnotation specifies the memory requests for proxy
 	AppMeshMemoryRequestAnnotation = "appmesh.k8s.aws/memoryRequest"
 
+	//AppMeshCPULimitAnnotation specifies the CPU limits for proxy
+	AppMeshCPULimitAnnotation = "appmesh.k8s.aws/cpuLimit"
+	//AppMeshMemoryLimitAnnotation specifies the memory limits for proxy
+	AppMeshMemoryLimitAnnotation = "appmesh.k8s.aws/memoryLimit"
+
 	// === begin proxy settings annotations ===
 	//AppMeshCNIAnnotation specifies that CNI will be used to configure traffic interception
 	AppMeshCNIAnnotation = "appmesh.k8s.aws/appmeshCNI"
