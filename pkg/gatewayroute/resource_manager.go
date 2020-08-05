@@ -162,7 +162,7 @@ func (m *defaultResourceManager) validateVirtualGatewayDependency(ctx context.Co
 
 // findVirtualServiceDependencies find the VirtualService dependency for this gatewayRoute.
 func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Context, gr *appmesh.GatewayRoute) (map[types.NamespacedName]*appmesh.VirtualService, error) {
-	vsRefs := extractVirtualServiceReferences(gr)
+	vsRefs := ExtractVirtualServiceReferences(gr)
 	vsByKey := make(map[types.NamespacedName]*appmesh.VirtualService)
 	for _, vsRef := range vsRefs {
 		vsKey := references.ObjectKeyForVirtualServiceReference(gr, vsRef)
@@ -209,7 +209,7 @@ func (m *defaultResourceManager) findSDKGatewayRoute(ctx context.Context, ms *ap
 }
 
 func (m *defaultResourceManager) createSDKGatewayRoute(ctx context.Context, ms *appmesh.Mesh, vg *appmesh.VirtualGateway, gr *appmesh.GatewayRoute, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.GatewayRouteData, error) {
-	sdkGRSpec, err := m.buildSDKGatewayRouteSpec(ctx, gr, vsByKey)
+	sdkGRSpec, err := BuildSDKGatewayRouteSpec(ctx, gr, vsByKey)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +228,7 @@ func (m *defaultResourceManager) createSDKGatewayRoute(ctx context.Context, ms *
 
 func (m *defaultResourceManager) updateSDKGatewayRoute(ctx context.Context, sdkGR *appmeshsdk.GatewayRouteData, ms *appmesh.Mesh, vg *appmesh.VirtualGateway, gr *appmesh.GatewayRoute, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.GatewayRouteData, error) {
 	actualSDKGRSpec := sdkGR.Spec
-	desiredSDKGRSpec, err := m.buildSDKGatewayRouteSpec(ctx, gr, vsByKey)
+	desiredSDKGRSpec, err := BuildSDKGatewayRouteSpec(ctx, gr, vsByKey)
 	if err != nil {
 		return nil, err
 	}
@@ -313,22 +313,6 @@ func (m *defaultResourceManager) updateCRDGatewayRoute(ctx context.Context, gr *
 	return m.k8sClient.Status().Patch(ctx, gr, client.MergeFrom(oldGR))
 }
 
-func (m *defaultResourceManager) buildSDKGatewayRouteSpec(ctx context.Context, gr *appmesh.GatewayRoute, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.GatewayRouteSpec, error) {
-	converter := conversion.NewConverter(conversion.DefaultNameFunc)
-	converter.RegisterUntypedConversionFunc((*appmesh.GatewayRouteSpec)(nil), (*appmeshsdk.GatewayRouteSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return conversions.Convert_CRD_GatewayRouteSpec_To_SDK_GatewayRouteSpec(a.(*appmesh.GatewayRouteSpec), b.(*appmeshsdk.GatewayRouteSpec), scope)
-	})
-	sdkVSRefConvertFunc := references.BuildSDKVirtualServiceReferenceConvertFunc(gr, vsByKey)
-	converter.RegisterUntypedConversionFunc((*appmesh.VirtualServiceReference)(nil), (*string)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return sdkVSRefConvertFunc(a.(*appmesh.VirtualServiceReference), b.(*string), scope)
-	})
-	sdkGRSpec := &appmeshsdk.GatewayRouteSpec{}
-	if err := converter.Convert(&gr.Spec, sdkGRSpec, conversion.DestFromSource, nil); err != nil {
-		return nil, err
-	}
-	return sdkGRSpec, nil
-}
-
 func (m *defaultResourceManager) buildSDKGatewayRouteTags(ctx context.Context, gr *appmesh.GatewayRoute) []*appmeshsdk.TagRef {
 	// TODO, support tags
 	return nil
@@ -353,4 +337,20 @@ func (m *defaultResourceManager) isSDKGatewayRouteOwnedByCRDGatewayRoute(ctx con
 	// TODO: Add tagging support.
 	// currently, gatewayRoute control == ownership, but it doesn't have to be so once we add tagging support.
 	return true
+}
+
+func BuildSDKGatewayRouteSpec(ctx context.Context, gr *appmesh.GatewayRoute, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.GatewayRouteSpec, error) {
+	converter := conversion.NewConverter(conversion.DefaultNameFunc)
+	converter.RegisterUntypedConversionFunc((*appmesh.GatewayRouteSpec)(nil), (*appmeshsdk.GatewayRouteSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return conversions.Convert_CRD_GatewayRouteSpec_To_SDK_GatewayRouteSpec(a.(*appmesh.GatewayRouteSpec), b.(*appmeshsdk.GatewayRouteSpec), scope)
+	})
+	sdkVSRefConvertFunc := references.BuildSDKVirtualServiceReferenceConvertFunc(gr, vsByKey)
+	converter.RegisterUntypedConversionFunc((*appmesh.VirtualServiceReference)(nil), (*string)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return sdkVSRefConvertFunc(a.(*appmesh.VirtualServiceReference), b.(*string), scope)
+	})
+	sdkGRSpec := &appmeshsdk.GatewayRouteSpec{}
+	if err := converter.Convert(&gr.Spec, sdkGRSpec, conversion.DestFromSource, nil); err != nil {
+		return nil, err
+	}
+	return sdkGRSpec, nil
 }

@@ -7,8 +7,10 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/helm"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/deployment"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/gatewayroute"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/namespace"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/virtualgateway"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/virtualnode"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/virtualrouter"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/virtualservice"
@@ -35,6 +37,8 @@ type Framework struct {
 	VNManager   virtualnode.Manager
 	VSManager   virtualservice.Manager
 	VRManager   virtualrouter.Manager
+	VGManager   virtualgateway.Manager
+	GRManager   gatewayroute.Manager
 	HelmManager helm.Manager
 
 	CloudMapClient services.CloudMap
@@ -89,6 +93,8 @@ func New(options Options) *Framework {
 		VNManager:      virtualnode.NewManager(k8sClient, cloud.AppMesh()),
 		VSManager:      virtualservice.NewManager(k8sClient, cloud.AppMesh()),
 		VRManager:      virtualrouter.NewManager(k8sClient, cloud.AppMesh()),
+		VGManager:      virtualgateway.NewManager(k8sClient, cloud.AppMesh()),
+		GRManager:      gatewayroute.NewManager(k8sClient, cloud.AppMesh()),
 		CloudMapClient: cloud.CloudMap(),
 		Logger:         utils.NewGinkgoLogger(),
 		StopChan:       stopChan,

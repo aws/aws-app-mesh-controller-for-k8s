@@ -7,5 +7,6 @@ const (
 	PollIntervalMedium = 10 * time.Second
 	PollRetries        = 5
 
-	AWSPollIntervalShort = 200 * time.Millisecond
+	AWSPollIntervalShort  = 1 * time.Second
+	AWSPollIntervalMedium = 5 * time.Second
 )

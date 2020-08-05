@@ -11,8 +11,8 @@ const (
 	ReferenceKindVirtualService = "VirtualService"
 )
 
-// extractVirtualServiceReferences extracts all virtualServiceReferences for this gatewayRoute
-func extractVirtualServiceReferences(gr *appmesh.GatewayRoute) []appmesh.VirtualServiceReference {
+// ExtractVirtualServiceReferences extracts all virtualServiceReferences for this gatewayRoute
+func ExtractVirtualServiceReferences(gr *appmesh.GatewayRoute) []appmesh.VirtualServiceReference {
 	var vsRefs []appmesh.VirtualServiceReference
 
 	if gr.Spec.GRPCRoute != nil && gr.Spec.GRPCRoute.Action.Target.VirtualService.VirtualServiceRef != nil {
@@ -30,7 +30,7 @@ func extractVirtualServiceReferences(gr *appmesh.GatewayRoute) []appmesh.Virtual
 
 func VirtualServiceReferenceIndexFunc(obj runtime.Object) []types.NamespacedName {
 	gr := obj.(*appmesh.GatewayRoute)
-	vsRefs := extractVirtualServiceReferences(gr)
+	vsRefs := ExtractVirtualServiceReferences(gr)
 	var vsKeys []types.NamespacedName
 	for _, vsRef := range vsRefs {
 		vsKeys = append(vsKeys, references.ObjectKeyForVirtualServiceReference(gr, vsRef))

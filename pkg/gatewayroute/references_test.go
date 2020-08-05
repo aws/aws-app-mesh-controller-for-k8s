@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func Test_extractVirtualServiceReferences(t *testing.T) {
+func Test_ExtractVirtualServiceReferences(t *testing.T) {
 	type args struct {
 		gr *appmesh.GatewayRoute
 	}
@@ -146,7 +146,7 @@ func Test_extractVirtualServiceReferences(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := extractVirtualServiceReferences(tt.args.gr)
+			got := ExtractVirtualServiceReferences(tt.args.gr)
 			assert.Equal(t, tt.want, got)
 		})
 	}
