@@ -160,3 +160,133 @@ func Test_virtualRouterValidator_enforceFieldsImmutability(t *testing.T) {
 		})
 	}
 }
+
+func Test_virtualRouterValidator_checkForDuplicateRouteEntries(t *testing.T) {
+	testRESTMethod := "GET"
+	type args struct {
+		vr    *appmesh.VirtualRouter
+		oldVR *appmesh.VirtualRouter
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "VirtualRouter has duplicate routes",
+			args: args{
+				vr: &appmesh.VirtualRouter{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vr",
+					},
+					Spec: appmesh.VirtualRouterSpec{
+						AWSName: aws.String("my-vr_awesome-ns-my-cluster"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "another-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						Routes: []appmesh.Route{
+							{
+								Name: "testRoute",
+								HTTPRoute: &appmesh.HTTPRoute{
+									Match: appmesh.HTTPRouteMatch{
+										Method: &testRESTMethod,
+										Prefix: "/",
+									},
+									Action: appmesh.HTTPRouteAction{
+										WeightedTargets: []appmesh.WeightedTarget{
+											{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
+													Name: "testVN",
+												},
+												Weight: 1,
+											},
+										},
+									},
+									RetryPolicy: nil,
+									Timeout:     nil,
+								},
+							},
+							{
+								Name: "testRoute",
+								HTTPRoute: &appmesh.HTTPRoute{
+									Match: appmesh.HTTPRouteMatch{
+										Method: &testRESTMethod,
+										Prefix: "/test",
+									},
+									Action: appmesh.HTTPRouteAction{
+										WeightedTargets: []appmesh.WeightedTarget{
+											{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
+													Name: "testVN",
+												},
+												Weight: 1,
+											},
+										},
+									},
+									RetryPolicy: nil,
+									Timeout:     nil,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("VirtualRouter-my-vr has duplicate route entries for testRoute"),
+		},
+		{
+			name: "No duplicate routes",
+			args: args{
+				vr: &appmesh.VirtualRouter{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vr",
+					},
+					Spec: appmesh.VirtualRouterSpec{
+						AWSName: aws.String("my-vr_awesome-ns-my-cluster"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "another-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						Routes: []appmesh.Route{
+							{
+								Name: "testRoute",
+								HTTPRoute: &appmesh.HTTPRoute{
+									Match: appmesh.HTTPRouteMatch{
+										Method: &testRESTMethod,
+										Prefix: "/",
+									},
+									Action: appmesh.HTTPRouteAction{
+										WeightedTargets: []appmesh.WeightedTarget{
+											{
+												VirtualNodeRef: &appmesh.VirtualNodeReference{
+													Name: "testVN",
+												},
+												Weight: 1,
+											},
+										},
+									},
+									RetryPolicy: nil,
+									Timeout:     nil,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := &virtualRouterValidator{}
+			err := v.checkForDuplicateRouteEntries(tt.args.vr)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

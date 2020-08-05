@@ -29,6 +29,10 @@ func (v *virtualRouterValidator) Prototype(req admission.Request) (runtime.Objec
 }
 
 func (v *virtualRouterValidator) ValidateCreate(ctx context.Context, obj runtime.Object) error {
+	vr := obj.(*appmesh.VirtualRouter)
+	if err := v.checkForDuplicateRouteEntries(vr); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -36,6 +40,9 @@ func (v *virtualRouterValidator) ValidateUpdate(ctx context.Context, obj runtime
 	vr := obj.(*appmesh.VirtualRouter)
 	oldVR := oldObj.(*appmesh.VirtualRouter)
 	if err := v.enforceFieldsImmutability(vr, oldVR); err != nil {
+		return err
+	}
+	if err := v.checkForDuplicateRouteEntries(vr); err != nil {
 		return err
 	}
 	return nil
@@ -56,6 +63,19 @@ func (v *virtualRouterValidator) enforceFieldsImmutability(vr *appmesh.VirtualRo
 	}
 	if len(changedImmutableFields) != 0 {
 		return errors.Errorf("%s update may not change these fields: %s", "VirtualRouter", strings.Join(changedImmutableFields, ","))
+	}
+	return nil
+}
+
+func (v *virtualRouterValidator) checkForDuplicateRouteEntries(vr *appmesh.VirtualRouter) error {
+	routes := vr.Spec.Routes
+	routeMap := make(map[string]bool, len(routes))
+	for _, route := range routes {
+		if _, ok := routeMap[route.Name]; ok {
+			return errors.Errorf("%s-%s has duplicate route entries for %s", "VirtualRouter", vr.Name, route.Name)
+		} else {
+			routeMap[route.Name] = true
+		}
 	}
 	return nil
 }

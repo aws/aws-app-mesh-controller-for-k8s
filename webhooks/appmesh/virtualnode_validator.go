@@ -3,6 +3,7 @@ package appmesh
 import (
 	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,6 +30,10 @@ func (v *virtualNodeValidator) Prototype(req admission.Request) (runtime.Object,
 }
 
 func (v *virtualNodeValidator) ValidateCreate(ctx context.Context, obj runtime.Object) error {
+	vn := obj.(*appmesh.VirtualNode)
+	if err := v.checkVirtualNodeBackendsForDuplicates(vn); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -36,6 +41,9 @@ func (v *virtualNodeValidator) ValidateUpdate(ctx context.Context, obj runtime.O
 	vn := obj.(*appmesh.VirtualNode)
 	oldVN := oldObj.(*appmesh.VirtualNode)
 	if err := v.enforceFieldsImmutability(vn, oldVN); err != nil {
+		return err
+	}
+	if err := v.checkVirtualNodeBackendsForDuplicates(vn); err != nil {
 		return err
 	}
 	return nil
@@ -59,6 +67,30 @@ func (v *virtualNodeValidator) enforceFieldsImmutability(vn *appmesh.VirtualNode
 	}
 	if len(changedImmutableFields) != 0 {
 		return errors.Errorf("%s update may not change these fields: %s", "VirtualNode", strings.Join(changedImmutableFields, ","))
+	}
+	return nil
+}
+
+func (v *virtualNodeValidator) checkVirtualNodeBackendsForDuplicates(vn *appmesh.VirtualNode) error {
+	backends := vn.Spec.Backends
+	backendMap := make(map[string]bool, len(backends))
+
+	for _, backend := range backends {
+		if backend.VirtualService.VirtualServiceRef != nil {
+			backendNamespacedName := references.ObjectKeyForVirtualServiceReference(vn, *backend.VirtualService.VirtualServiceRef)
+			backendIdentifier := backendNamespacedName.Name + "-" + backendNamespacedName.Namespace
+			if _, ok := backendMap[backendIdentifier]; ok {
+				return errors.Errorf("%s-%s has duplicate VirtualServiceReferences %s", "VirtualNode", vn.Name, backend.VirtualService.VirtualServiceRef.Name)
+			} else {
+				backendMap[backendIdentifier] = true
+			}
+		} else if backend.VirtualService.VirtualServiceARN != nil {
+			if _, ok := backendMap[*backend.VirtualService.VirtualServiceARN]; ok {
+				return errors.Errorf("%s-%s has duplicate VirtualServiceReferenceARNs %s", "VirtualNode", vn.Name, *backend.VirtualService.VirtualServiceARN)
+			} else {
+				backendMap[*backend.VirtualService.VirtualServiceARN] = true
+			}
+		}
 	}
 	return nil
 }
