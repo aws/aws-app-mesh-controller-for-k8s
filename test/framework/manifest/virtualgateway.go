@@ -36,21 +36,25 @@ func (b *VGBuilder) BuildVirtualGateway(instanceName string, listeners []appmesh
 	return vg
 }
 
-func (b *VGBuilder) BuildVGListener(protocol appmesh.VirtualGatewayPortProtocol, port appmesh.PortNumber) appmesh.VirtualGatewayListener {
+func (b *VGBuilder) BuildVGListener(protocol appmesh.VirtualGatewayPortProtocol, port appmesh.PortNumber, healthCheckPath string) appmesh.VirtualGatewayListener {
 	return appmesh.VirtualGatewayListener{
 		PortMapping: appmesh.VirtualGatewayPortMapping{
 			Port:     port,
 			Protocol: protocol,
 		},
-		HealthCheck: &appmesh.VirtualGatewayHealthCheckPolicy{
-			HealthyThreshold:   3,
-			IntervalMillis:     6000,
-			Path:               aws.String("/"),
-			Port:               &port,
-			Protocol:           protocol,
-			TimeoutMillis:      3000,
-			UnhealthyThreshold: 2,
-		},
+		HealthCheck: b.BuildHealthCheckPolicy(healthCheckPath, protocol, port),
+	}
+}
+
+func (b *VGBuilder) BuildHealthCheckPolicy(path string, protocol appmesh.VirtualGatewayPortProtocol, port appmesh.PortNumber) *appmesh.VirtualGatewayHealthCheckPolicy {
+	return &appmesh.VirtualGatewayHealthCheckPolicy{
+		HealthyThreshold:   3,
+		IntervalMillis:     6000,
+		Path:               aws.String(path),
+		Port:               &port,
+		Protocol:           protocol,
+		TimeoutMillis:      3000,
+		UnhealthyThreshold: 2,
 	}
 }
 

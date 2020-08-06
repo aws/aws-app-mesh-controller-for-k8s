@@ -111,7 +111,7 @@ var _ = Describe("VirtualGateway", func() {
 			})
 
 			vgName := fmt.Sprintf("vg-%s", utils.RandomDNS1123Label(8))
-			listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080)}
+			listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080, "/")}
 			nsSelector := map[string]string{"gateway": "ingress-gw"}
 			vg := vgBuilder.BuildVirtualGateway(vgName, listeners, nsSelector)
 
@@ -128,7 +128,7 @@ var _ = Describe("VirtualGateway", func() {
 
 			By("Create a virtual gateway resource with invalid listener protocol -  it should fail", func() {
 				vgName = fmt.Sprintf("vg-%s", utils.RandomDNS1123Label(8))
-				newListeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("https", 443)}
+				newListeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("https", 443, "/")}
 				vg = vgBuilder.BuildVirtualGateway(vgName, newListeners, nsSelector)
 				err := vgTest.Create(ctx, f, vg)
 				Expect(err).To(HaveOccurred())
@@ -199,7 +199,7 @@ var _ = Describe("VirtualGateway", func() {
 			})
 
 			vgName := fmt.Sprintf("vg-%s", utils.RandomDNS1123Label(8))
-			listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080)}
+			listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080, "/")}
 			nsSelector := map[string]string{"gateway": "ingress-gw"}
 			vg := vgBuilder.BuildVirtualGateway(vgName, listeners, nsSelector)
 
@@ -235,7 +235,7 @@ var _ = Describe("VirtualGateway", func() {
 
 			By("Update listeners in virtual gateway and validate", func() {
 				oldVG := vgTest.VirtualGateways[vg.Name].DeepCopy()
-				listeners = []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http2", 443)}
+				listeners = []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http2", 443, "/")}
 
 				vgTest.VirtualGateways[vg.Name].Spec.Listeners = listeners
 				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
@@ -300,7 +300,7 @@ var _ = Describe("VirtualGateway", func() {
 			})
 
 			vgName := fmt.Sprintf("vg-%s", utils.RandomDNS1123Label(8))
-			listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080)}
+			listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080, "/")}
 			nsSelector := map[string]string{"gateway": "ingress-gw"}
 			vg := vgBuilder.BuildVirtualGateway(vgName, listeners, nsSelector)
 

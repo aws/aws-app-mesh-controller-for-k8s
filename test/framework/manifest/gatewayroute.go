@@ -10,7 +10,7 @@ type GRBuilder struct {
 	Namespace string
 }
 
-func (b *GRBuilder) BuildGatewayRoute(instanceName string, vsName string, prefix string) *appmesh.GatewayRoute {
+func (b *GRBuilder) BuildGatewayRouteWithHTTP(instanceName string, vsName string, prefix string) *appmesh.GatewayRoute {
 	grName := b.buildServiceName(instanceName)
 
 	gr := &appmesh.GatewayRoute{

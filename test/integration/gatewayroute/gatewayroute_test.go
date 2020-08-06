@@ -133,7 +133,7 @@ var _ = Describe("GatewayRoute", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080)}
+			listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080, "/")}
 			nsSelector := map[string]string{"gateway": vgName}
 			vg := vgBuilder.BuildVirtualGateway(vgName, listeners, nsSelector)
 
@@ -163,7 +163,7 @@ var _ = Describe("GatewayRoute", func() {
 			})
 
 			grName := fmt.Sprintf("gr-%s", utils.RandomDNS1123Label(8))
-			gr := grBuilder.BuildGatewayRoute(grName, vsName, "testPrefix")
+			gr := grBuilder.BuildGatewayRouteWithHTTP(grName, vsName, "testPrefix")
 
 			By("Creating a gateway route resource in k8s", func() {
 				err := grTest.Create(ctx, f, gr)
@@ -188,7 +188,7 @@ var _ = Describe("GatewayRoute", func() {
 			})
 
 			grName = fmt.Sprintf("gr-%s", utils.RandomDNS1123Label(8))
-			gr = grBuilder.BuildGatewayRoute(grName, vsName, "testPrefix")
+			gr = grBuilder.BuildGatewayRouteWithHTTP(grName, vsName, "testPrefix")
 
 			By("Creating a gateway route resource in k8s when no mesh matches namespace", func() {
 				err := grTest.Create(ctx, f, gr)
@@ -247,7 +247,7 @@ var _ = Describe("GatewayRoute", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080)}
+			listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080, "/")}
 			nsSelector := map[string]string{"gateway": vgName}
 			vg := vgBuilder.BuildVirtualGateway(vgName, listeners, nsSelector)
 
@@ -277,7 +277,7 @@ var _ = Describe("GatewayRoute", func() {
 			})
 
 			grName := fmt.Sprintf("gr-%s", utils.RandomDNS1123Label(8))
-			gr := grBuilder.BuildGatewayRoute(grName, vsName, "testPrefix")
+			gr := grBuilder.BuildGatewayRouteWithHTTP(grName, vsName, "testPrefix")
 
 			By("Creating a gateway route resource in k8s", func() {
 				err := grTest.Create(ctx, f, gr)
@@ -392,7 +392,7 @@ var _ = Describe("GatewayRoute", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080)}
+			listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080, "/")}
 			nsSelector := map[string]string{"gateway": vgName}
 			vg := vgBuilder.BuildVirtualGateway(vgName, listeners, nsSelector)
 
@@ -422,7 +422,7 @@ var _ = Describe("GatewayRoute", func() {
 			})
 
 			grName := fmt.Sprintf("gr-%s", utils.RandomDNS1123Label(8))
-			gr := grBuilder.BuildGatewayRoute(grName, vsName, "testPrefix")
+			gr := grBuilder.BuildGatewayRouteWithHTTP(grName, vsName, "testPrefix")
 
 			By("Creating a gateway route resource in k8s", func() {
 				err := grTest.Create(ctx, f, gr)
