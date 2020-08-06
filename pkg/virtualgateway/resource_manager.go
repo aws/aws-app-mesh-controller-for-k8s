@@ -133,7 +133,7 @@ func (m *defaultResourceManager) findSDKVirtualGateway(ctx context.Context, ms *
 }
 
 func (m *defaultResourceManager) createSDKVirtualGateway(ctx context.Context, ms *appmesh.Mesh, vg *appmesh.VirtualGateway) (*appmeshsdk.VirtualGatewayData, error) {
-	sdkVGSpec, err := m.buildSDKVirtualGatewaySpec(ctx, vg)
+	sdkVGSpec, err := BuildSDKVirtualGatewaySpec(ctx, vg)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (m *defaultResourceManager) createSDKVirtualGateway(ctx context.Context, ms
 
 func (m *defaultResourceManager) updateSDKVirtualGateway(ctx context.Context, sdkVG *appmeshsdk.VirtualGatewayData, ms *appmesh.Mesh, vg *appmesh.VirtualGateway) (*appmeshsdk.VirtualGatewayData, error) {
 	actualSDKVGSpec := sdkVG.Spec
-	desiredSDKVGSpec, err := m.buildSDKVirtualGatewaySpec(ctx, vg)
+	desiredSDKVGSpec, err := BuildSDKVirtualGatewaySpec(ctx, vg)
 	if err != nil {
 		return nil, err
 	}
@@ -229,19 +229,6 @@ func (m *defaultResourceManager) updateCRDVirtualGateway(ctx context.Context, vg
 	return m.k8sClient.Status().Patch(ctx, vg, client.MergeFrom(oldVG))
 }
 
-func (m *defaultResourceManager) buildSDKVirtualGatewaySpec(ctx context.Context, vg *appmesh.VirtualGateway) (*appmeshsdk.VirtualGatewaySpec, error) {
-	converter := conversion.NewConverter(conversion.DefaultNameFunc)
-	converter.RegisterUntypedConversionFunc((*appmesh.VirtualGatewaySpec)(nil), (*appmeshsdk.VirtualGatewaySpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return conversions.Convert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(a.(*appmesh.VirtualGatewaySpec), b.(*appmeshsdk.VirtualGatewaySpec), scope)
-	})
-
-	sdkVGSpec := &appmeshsdk.VirtualGatewaySpec{}
-	if err := converter.Convert(&vg.Spec, sdkVGSpec, conversion.DestFromSource, nil); err != nil {
-		return nil, err
-	}
-	return sdkVGSpec, nil
-}
-
 func (m *defaultResourceManager) buildSDKVirtualGatewayTags(ctx context.Context, vg *appmesh.VirtualGateway) []*appmeshsdk.TagRef {
 	// TODO, support tags
 	return nil
@@ -266,4 +253,17 @@ func (m *defaultResourceManager) isSDKVirtualGatewayOwnedByCRDVirtualGateway(ctx
 	// TODO: Add tagging support.
 	// currently, virtualGateway control == ownership, but it doesn't have to be so once we add tagging support.
 	return true
+}
+
+func BuildSDKVirtualGatewaySpec(ctx context.Context, vg *appmesh.VirtualGateway) (*appmeshsdk.VirtualGatewaySpec, error) {
+	converter := conversion.NewConverter(conversion.DefaultNameFunc)
+	converter.RegisterUntypedConversionFunc((*appmesh.VirtualGatewaySpec)(nil), (*appmeshsdk.VirtualGatewaySpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return conversions.Convert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(a.(*appmesh.VirtualGatewaySpec), b.(*appmeshsdk.VirtualGatewaySpec), scope)
+	})
+
+	sdkVGSpec := &appmeshsdk.VirtualGatewaySpec{}
+	if err := converter.Convert(&vg.Spec, sdkVGSpec, conversion.DestFromSource, nil); err != nil {
+		return nil, err
+	}
+	return sdkVGSpec, nil
 }
