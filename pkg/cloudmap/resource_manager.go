@@ -334,7 +334,7 @@ func (m *defaultResourceManager) createCloudMapServiceUnderPrivateDNSNamespace(c
 			DnsRecords: []*servicediscovery.DnsRecord{
 				{
 					Type: awssdk.String(servicediscovery.RecordTypeA),
-					TTL:  &cloudMapTTL,
+					TTL:  awssdk.Int64(cloudMapTTL),
 				},
 			},
 		},

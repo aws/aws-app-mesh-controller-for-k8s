@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	flagSetCloudMapTTL = "cloudmap-ttl"
+	flagSetCloudMapTTL = "cloudmap-dns-ttl"
 )
 
 type Config struct {
