@@ -49,9 +49,11 @@ func NewDefaultResourceManager(
 	virtualNodeEndpointResolver VirtualNodeEndpointResolver,
 	instancesReconciler InstancesReconciler,
 	enableCustomHealthCheck bool,
-	log logr.Logger) ResourceManager {
+	log logr.Logger,
+	cfg Config) ResourceManager {
 
 	return &defaultResourceManager{
+		config:                      cfg,
 		k8sClient:                   k8sClient,
 		cloudMapSDK:                 cloudMapSDK,
 		referencesResolver:          referencesResolver,
@@ -66,6 +68,7 @@ func NewDefaultResourceManager(
 
 // defaultResourceManager implements ResourceManager
 type defaultResourceManager struct {
+	config                      Config
 	k8sClient                   client.Client
 	cloudMapSDK                 services.CloudMap
 	referencesResolver          references.Resolver
@@ -96,7 +99,7 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 		return err
 	}
 	if svcSummary == nil {
-		svcSummary, err = m.createCloudMapService(ctx, vn, nsSummary, cloudMapConfig.ServiceName)
+		svcSummary, err = m.createCloudMapService(ctx, vn, nsSummary, cloudMapConfig.ServiceName, m.config.CloudMapServiceTTL)
 		if err != nil {
 			return err
 		}
@@ -252,10 +255,11 @@ func (m *defaultResourceManager) findCloudMapServiceFromAWS(ctx context.Context,
 	return sdkSVCSummary, nil
 }
 
-func (m *defaultResourceManager) createCloudMapService(ctx context.Context, vn *appmesh.VirtualNode, nsSummary *servicediscovery.NamespaceSummary, serviceName string) (*serviceSummary, error) {
+func (m *defaultResourceManager) createCloudMapService(ctx context.Context, vn *appmesh.VirtualNode, nsSummary *servicediscovery.NamespaceSummary, serviceName string,
+	cloudMapTTL int64) (*serviceSummary, error) {
 	switch awssdk.StringValue(nsSummary.Type) {
 	case servicediscovery.NamespaceTypeDnsPrivate:
-		sdkService, err := m.createCloudMapServiceUnderPrivateDNSNamespace(ctx, vn, nsSummary, serviceName)
+		sdkService, err := m.createCloudMapServiceUnderPrivateDNSNamespace(ctx, vn, nsSummary, serviceName, cloudMapTTL)
 		if err != nil {
 			return nil, err
 		}
@@ -319,7 +323,7 @@ func (m *defaultResourceManager) deleteCloudMapService(ctx context.Context, vn *
 }
 
 func (m *defaultResourceManager) createCloudMapServiceUnderPrivateDNSNamespace(ctx context.Context, vn *appmesh.VirtualNode,
-	nsSummary *servicediscovery.NamespaceSummary, serviceName string) (*servicediscovery.Service, error) {
+	nsSummary *servicediscovery.NamespaceSummary, serviceName string, cloudMapTTL int64) (*servicediscovery.Service, error) {
 	creatorRequestID := string(vn.UID)
 	createServiceInput := &servicediscovery.CreateServiceInput{
 		CreatorRequestId: awssdk.String(creatorRequestID),
@@ -330,7 +334,7 @@ func (m *defaultResourceManager) createCloudMapServiceUnderPrivateDNSNamespace(c
 			DnsRecords: []*servicediscovery.DnsRecord{
 				{
 					Type: awssdk.String(servicediscovery.RecordTypeA),
-					TTL:  awssdk.Int64(defaultServiceDNSConfigTTL),
+					TTL:  awssdk.Int64(cloudMapTTL),
 				},
 			},
 		},
