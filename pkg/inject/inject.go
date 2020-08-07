@@ -8,8 +8,10 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualgateway"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -47,7 +49,7 @@ func NewSidecarInjector(cfg Config, accountID string, awsRegion string,
 }
 
 func (m *SidecarInjector) Inject(ctx context.Context, pod *corev1.Pod) error {
-	injectMode, err := m.determineSidecarInjectMode(pod)
+	injectMode, err := m.determineSidecarInjectMode(ctx, pod)
 	if err != nil {
 		return errors.Wrap(err, "failed to determine sidecarInject mode")
 	}
@@ -188,13 +190,32 @@ const (
 	sidecarInjectModeUnspecified = "unspecified"
 )
 
-func (m *SidecarInjector) determineSidecarInjectMode(pod *corev1.Pod) (sidecarInjectMode, error) {
+func (m *SidecarInjector) determineSidecarInjectMode(ctx context.Context, pod *corev1.Pod) (sidecarInjectMode, error) {
 	// The injector webhook uses the namespaceSelector to filter which requests
 	// are intercepted. This makes sure all the requests sent to the injector have
-	// have sidecar injection enabled based on the label defined by the user.
-	// That's why we enable the sidecar inection by default here.
-	// Namespace behavior can be overriden by pod level inject annotation
-	sidecarInjectAnnotation := sidecarInjectModeEnabled
+	// sidecar injection label `appmesh.k8s.aws/sidecarInjectorWebhook` specified with valid values: enabled and disabled
+
+	// appmesh.k8s.aws/sidecarInjectorWebhook: disabled
+	// The sidecar injector will not inject the sidecar into pods by default. Add the `appmesh.k8s.aws/sidecarInjectorWebhook` annotation
+	// with value `enabled` to the pod template spec to override the default and enable injection
+
+	// appmesh.k8s.aws/sidecarInjectorWebhook: enabled
+	// The sidecar injector will inject the sidecar into pods by default. Add the `appmesh.k8s.aws/sidecarInjectorWebhook` annotation
+	// with value `disabled` to the pod template spec to override the default and disable injection.
+
+	var namespaceDefaultInjectionMode string
+
+	// see https://github.com/kubernetes/kubernetes/issues/88282 and https://github.com/kubernetes/kubernetes/issues/76680
+	req := webhook.ContextGetAdmissionRequest(ctx)
+	objectNS := &corev1.Namespace{}
+	if err := m.k8sClient.Get(ctx, types.NamespacedName{Name: req.Namespace}, objectNS); err != nil {
+		return sidecarInjectModeUnspecified, err
+	}
+	if v, ok := objectNS.ObjectMeta.Labels[AppMeshSidecarInjectAnnotation]; ok {
+		namespaceDefaultInjectionMode = v
+	}
+
+	sidecarInjectAnnotation := namespaceDefaultInjectionMode
 
 	if v, ok := pod.ObjectMeta.Annotations[AppMeshSidecarInjectAnnotation]; ok {
 		sidecarInjectAnnotation = v

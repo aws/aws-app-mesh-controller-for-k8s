@@ -1,14 +1,18 @@
 package inject
 
 import (
+	"context"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
+	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	testclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 	"testing"
 )
 
@@ -252,6 +256,31 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 }
 
 func TestSidecarInjector_determineSidecarInjectMode(t *testing.T) {
+	nsEnabledSidecarInject := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "awesome-ns",
+			Labels: map[string]string{
+				"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
+			},
+		},
+	}
+
+	nsDisabledSidecarInject := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "awesome-ns",
+			Labels: map[string]string{
+				"appmesh.k8s.aws/sidecarInjectorWebhook": "disabled",
+			},
+		},
+	}
+
+	nsUnspecifiedSidecarInject := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "awesome-ns",
+			Labels: map[string]string{},
+		},
+	}
+
 	podEnabledSidecarInject := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "awesome-ns",
@@ -301,48 +330,125 @@ func TestSidecarInjector_determineSidecarInjectMode(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
+		env     env
 		args    args
 		want    sidecarInjectMode
 		wantErr error
 	}{
 		{
-			name: "when pod enable sidecar inject",
+			name: "when pod enable sidecar inject - ns inject enabled",
+			env: env{
+				namespaces: []*corev1.Namespace{nsEnabledSidecarInject},
+			},
 			args: args{
 				pod: podEnabledSidecarInject,
 			},
 			want: sidecarInjectModeEnabled,
 		},
 		{
-			name: "when pod disable sidecar inject",
+			name: "when pod disable sidecar inject - ns inject enabled",
+			env: env{
+				namespaces: []*corev1.Namespace{nsEnabledSidecarInject},
+			},
 			args: args{
 				pod: podDisabledSidecarInject,
 			},
 			want: sidecarInjectModeDisabled,
 		},
 		{
-			name: "when pod invalid string sidecar inject",
+			name: "when pod invalid string sidecar inject - ns inject enabled",
+			env: env{
+				namespaces: []*corev1.Namespace{nsEnabledSidecarInject},
+			},
 			args: args{
 				pod: podInvalidModeSidecarInject,
 			},
 			want: sidecarInjectModeUnspecified,
 		},
 		{
-			name: "when pod unspecified sidecar inject",
+			name: "when pod unspecified sidecar inject - ns inject enabled",
+			env: env{
+				namespaces: []*corev1.Namespace{nsEnabledSidecarInject},
+			},
 			args: args{
 				pod: podUnspecifiedSidecarInject,
 			},
 			want: sidecarInjectModeEnabled,
 		},
 		{
-			name: "when pod unspecified name and namespace",
+			name: "when pod unspecified name and namespace - ns inject enabled",
+			env: env{
+				namespaces: []*corev1.Namespace{nsEnabledSidecarInject},
+			},
 			args: args{
 				pod: podWithUnspecifiedNameAndNamespace,
 			},
 			want: sidecarInjectModeEnabled,
 		},
+		{
+			name: "when pod enable sidecar inject - ns inject disabled",
+			env: env{
+				namespaces: []*corev1.Namespace{nsDisabledSidecarInject},
+			},
+			args: args{
+				pod: podEnabledSidecarInject,
+			},
+			want: sidecarInjectModeEnabled,
+		},
+		{
+			name: "when pod disable sidecar inject - ns inject disabled",
+			env: env{
+				namespaces: []*corev1.Namespace{nsDisabledSidecarInject},
+			},
+			args: args{
+				pod: podDisabledSidecarInject,
+			},
+			want: sidecarInjectModeDisabled,
+		},
+		{
+			name: "when pod invalid string sidecar inject - ns inject disabled",
+			env: env{
+				namespaces: []*corev1.Namespace{nsDisabledSidecarInject},
+			},
+			args: args{
+				pod: podInvalidModeSidecarInject,
+			},
+			want: sidecarInjectModeUnspecified,
+		},
+		{
+			name: "when pod unspecified sidecar inject - ns inject disabled",
+			env: env{
+				namespaces: []*corev1.Namespace{nsDisabledSidecarInject},
+			},
+			args: args{
+				pod: podUnspecifiedSidecarInject,
+			},
+			want: sidecarInjectModeDisabled,
+		},
+		{
+			name: "when pod unspecified name and namespace - ns inject disabled",
+			env: env{
+				namespaces: []*corev1.Namespace{nsDisabledSidecarInject},
+			},
+			args: args{
+				pod: podWithUnspecifiedNameAndNamespace,
+			},
+			want: sidecarInjectModeDisabled,
+		},
+		{
+			name: "when pod unspecified sidecar inject - ns inject unspecified",
+			env: env{
+				namespaces: []*corev1.Namespace{nsUnspecifiedSidecarInject},
+			},
+			args: args{
+				pod: podUnspecifiedSidecarInject,
+			},
+			want: sidecarInjectModeUnspecified,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
@@ -351,7 +457,14 @@ func TestSidecarInjector_determineSidecarInjectMode(t *testing.T) {
 				k8sClient: k8sClient,
 			}
 
-			got, err := m.determineSidecarInjectMode(tt.args.pod)
+			for _, ns := range tt.env.namespaces {
+				err := k8sClient.Create(ctx, ns.DeepCopy())
+				assert.NoError(t, err)
+			}
+			ctx = webhook.ContextWithAdmissionRequest(ctx, admission.Request{
+				AdmissionRequest: admissionv1beta1.AdmissionRequest{Namespace: "awesome-ns"},
+			})
+			got, err := m.determineSidecarInjectMode(ctx, tt.args.pod)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
