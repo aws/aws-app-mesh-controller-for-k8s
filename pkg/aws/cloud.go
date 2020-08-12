@@ -23,6 +23,9 @@ type Cloud interface {
 
 	// Region for the kubernetes cluster
 	Region() string
+
+	// AWS STS Endpoint override for the controller
+	STSEndpoint() string
 }
 
 // NewCloud constructs new Cloud implementation.
@@ -50,7 +53,25 @@ func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, 
 		cfg.Region = region
 	}
 
-	awsCfg := aws.NewConfig().WithRegion(cfg.Region).WithSTSRegionalEndpoint(endpoints.RegionalSTSEndpoint)
+	var awsCfg *aws.Config
+	if len(cfg.STSEndpoint) == 0 {
+		awsCfg = aws.NewConfig().WithRegion(cfg.Region).WithSTSRegionalEndpoint(endpoints.RegionalSTSEndpoint)
+	} else {
+
+		stsEndpointOverride := func(service, region string, optFns ...func(*endpoints.Options)) (endpoints.ResolvedEndpoint, error) {
+			if service == endpoints.StsServiceID {
+				return endpoints.ResolvedEndpoint{
+					URL:           cfg.STSEndpoint,
+					SigningRegion: cfg.Region,
+				}, nil
+			}
+
+			return endpoints.DefaultResolver().EndpointFor(service, region, optFns...)
+		}
+
+		awsCfg = aws.NewConfig().WithEndpointResolver(endpoints.ResolverFunc(stsEndpointOverride)).WithRegion(cfg.Region)
+	}
+
 	sess = sess.Copy(awsCfg)
 	if len(cfg.AccountID) == 0 {
 		sts := services.NewSTS(sess)
@@ -90,4 +111,8 @@ func (c *defaultCloud) AccountID() string {
 
 func (c *defaultCloud) Region() string {
 	return c.cfg.Region
+}
+
+func (c *defaultCloud) STSEndpoint() string {
+	return c.cfg.STSEndpoint
 }
