@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## v1.1.1
+
+### Summary
+
+This release includes several minor enhancements and bug fixes. Some of the enhancements are Envoy preStop hook, expose ability to override default XRay image, readiness probe for Envoy, expose optional resource limits for sidecars and have a way to choose between default opt-in / opt-out sidecar injection mode per namespace
+
+### Changes
+
+- Envoy PreStop hook support ( [#312](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/312) @achevuru)
+- Controller gets stuck in a crash loop ( [#314](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/314)  @achevuru)
+- Expose configuration for x-ray sidecar image ( [#287](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/287)  @cmdallas)
+- Update proxy route manager to v3-prod ( [#321](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/321)  @flashyang)
+- Add readiness probe for envoy container ( [#325](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/325)  @fawadkhaliq)
+- Provide default opt-in and opt-out options for sidecar injection ( [#338](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/338) @fawadkhaliq )
+- Add optional resource limits for init and sidecar containers ( [#326](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/326)  @fawadkhaliq )
+- Fix the account ID flag setup in cloud config ( [#330](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/330) @fawadkhaliq )
+- Enhance Validation for VirtualNodes and VirtualRouters specs ( [#331](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/331)  @achevuru)
+- Enhanced unit and integration tests ( [#322](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/322)  [#332](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/332) [#323](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/323) [#324](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/324) [#327](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/327) @fawadkhaliq)
+- Add howto-k8s-tls-file-based tutorial ( [#335](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/335)  @fawadkhaliq)
+- Update default Envoy sidecar image to v1.15.0 ( [#336](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/336)  @lavignes @abaptiste)
+- Support to configure DNS TTL value of CloudMap services ( [#337](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/337)  @achevuru)
+
 ## v1.1.0
 
 ### Summary
