@@ -565,13 +565,19 @@
 <p>AppMesh controller supports integration with multiple tracing solutions for data plane.</p>
 <h2 id="aws-x-ray">AWS X-Ray<a class="headerlink" href="#aws-x-ray" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Enable X-Ray tracing for the App Mesh data plane
+<li>
+<p>Enable X-Ray tracing for the App Mesh data plane
     <div class="highlight"><pre><span></span><code>helm upgrade -i appmesh-controller eks/appmesh-controller <span class="se">\</span>
     --namespace appmesh-system <span class="se">\</span>
     --set tracing.enabled<span class="o">=</span><span class="nb">true</span> <span class="se">\</span>
     --set tracing.provider<span class="o">=</span>x-ray
 </code></pre></div>
-    The above configuration will inject the AWS X-Ray daemon sidecar in each pod scheduled to run on the mesh. </li>
+    The above configuration will inject the AWS X-Ray daemon sidecar in each pod scheduled to run on the mesh.</p>
+<p>You can optionally use a specific X-Ray image by setting the following flags in addition to the above:
+<div class="highlight"><pre><span></span><code>    --set xray.image.repository<span class="o">=</span>amazon/aws-xray-daemon <span class="se">\</span>
+    --set xray.image.tag<span class="o">=</span><span class="m">3</span>.2.0
+</code></pre></div></p>
+</li>
 </ol>
 <p><strong>Note</strong>: You should restart all pods running inside the mesh after enabling tracing.</p>
 <h2 id="datadog-tracing">Datadog tracing<a class="headerlink" href="#datadog-tracing" title="Permanent link">&para;</a></h2>
