@@ -30,8 +30,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const(
-	defaultAppImage = "970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest"
+const (
+	defaultAppImage  = "970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest"
 	AppContainerPort = 8080
 )
 
@@ -161,7 +161,7 @@ var _ = Describe("VirtualNode", func() {
 
 		})
 
-		It("should create a virtual node in CloudMap", func() {
+		It("should create a virtual node with CloudMap ServiceDiscovery enabled", func() {
 
 			meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
 			mesh := &appmesh.Mesh{
@@ -202,11 +202,11 @@ var _ = Describe("VirtualNode", func() {
 				vnTest.CloudMapNameSpace = cmNamespace
 			})
 			//Allow CloudMap Namespace to sync
-			time.Sleep(30*time.Second)
+			time.Sleep(30 * time.Second)
 
 			vnBuilder := &manifest.VNBuilder{
 				ServiceDiscoveryType: manifest.CloudMapServiceDiscovery,
-				CloudMapNamespace: cmNamespace,
+				CloudMapNamespace:    cmNamespace,
 			}
 
 			mb := &manifest.ManifestBuilder{
@@ -245,11 +245,11 @@ var _ = Describe("VirtualNode", func() {
 				dp := mb.BuildDeployment(vnName, 2, defaultAppImage, AppContainerPort, []corev1.EnvVar{})
 				err := f.K8sClient.Create(ctx, dp)
 				Expect(err).NotTo(HaveOccurred())
-				vnTest.Deployments[vnName]=dp
+				vnTest.Deployments[vnName] = dp
 			})
 
 			//Let Instances sync with CloudMap and Pod Readiness Gate go through
-			time.Sleep(30*time.Second)
+			time.Sleep(30 * time.Second)
 			By("validating the virtual node in AWS AppMesh & CloudMap", func() {
 				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
 				Expect(err).NotTo(HaveOccurred())

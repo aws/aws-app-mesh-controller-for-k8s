@@ -10,6 +10,7 @@ import (
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
@@ -34,35 +35,17 @@ type Manager interface {
 
 func NewManager(k8sClient client.Client, appMeshSDK services.AppMesh, cloudMapSDK services.CloudMap) Manager {
 	return &defaultManager{
-		k8sClient:  k8sClient,
-		appMeshSDK: appMeshSDK,
+		k8sClient:   k8sClient,
+		appMeshSDK:  appMeshSDK,
 		cloudMapSDK: cloudMapSDK,
 	}
 }
 
 type defaultManager struct {
-	k8sClient  client.Client
-	appMeshSDK services.AppMesh
+	k8sClient   client.Client
+	appMeshSDK  services.AppMesh
 	cloudMapSDK services.CloudMap
 }
-
-const (
-	// attrAWSInstanceIPV4 is a special attribute expected by CloudMap.
-	// See https://github.com/aws/aws-sdk-go/blob/fd304fe4cb2ea1027e7fc7e21062beb768915fcc/service/servicediscovery/api.go#L5161
-	attrAWSInstanceIPV4 = "AWS_INSTANCE_IPV4"
-
-	// attrK8sPod is a custom attribute injected by app-mesh controller
-	attrK8sPod = "k8s.io/pod"
-	// AttrK8sNamespace is a custom attribute injected by app-mesh controller
-	attrK8sNamespace = "k8s.io/namespace"
-	// AttrK8sPodRegion is a custom attribute injected by app-mesh controller
-	attrK8sPodRegion = "REGION"
-	// AttrK8sPodAZ is a custom attribute injected by app-mesh controller
-	attrK8sPodAZ = "AVAILABILITY_ZONE"
-
-	attrAppMeshMesh        = "appmesh.k8s.aws/mesh"
-	attrAppMeshVirtualNode = "appmesh.k8s.aws/virtualNode"
-)
 
 func (m *defaultManager) WaitUntilVirtualNodeActive(ctx context.Context, vn *appmesh.VirtualNode) (*appmesh.VirtualNode, error) {
 	observedVN := &appmesh.VirtualNode{}
@@ -130,7 +113,7 @@ func (m *defaultManager) CheckVirtualNodeInAWS(ctx context.Context, ms *appmesh.
 	}
 
 	if vn.Spec.ServiceDiscovery.AWSCloudMap != nil {
-		if err := m.CheckVirtualNodeInCloudMap(ctx,ms,vn); err!=nil{
+		if err := m.CheckVirtualNodeInCloudMap(ctx, ms, vn); err != nil {
 			return err
 		}
 	}
@@ -145,8 +128,8 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 	listOptions.LabelSelector, _ = metav1.LabelSelectorAsSelector(vn.Spec.PodSelector)
 	listOptions.Namespace = vn.Namespace
 
-	if err :=m.k8sClient.List(ctx, &podsList, &listOptions); err != nil {
-		return  err
+	if err := m.k8sClient.List(ctx, &podsList, &listOptions); err != nil {
+		return err
 	}
 
 	instanceCount := len(podsList.Items)
@@ -154,11 +137,11 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 	for i := range podsList.Items {
 		pod := &podsList.Items[i]
 		instanceAttributeMap := make(map[string]string)
-		instanceAttributeMap[attrAWSInstanceIPV4] = pod.Status.PodIP
-		instanceAttributeMap[attrK8sPod] = pod.Name
-		instanceAttributeMap[attrK8sNamespace] = pod.Namespace
-		instanceAttributeMap[attrAppMeshMesh] = awssdk.StringValue(ms.Spec.AWSName)
-		instanceAttributeMap[attrAppMeshVirtualNode] = awssdk.StringValue(vn.Spec.AWSName)
+		instanceAttributeMap[cloudmap.AttrAWSInstanceIPV4] = pod.Status.PodIP
+		instanceAttributeMap[cloudmap.AttrK8sPod] = pod.Name
+		instanceAttributeMap[cloudmap.AttrK8sNamespace] = pod.Namespace
+		instanceAttributeMap[cloudmap.AttrAppMeshMesh] = awssdk.StringValue(ms.Spec.AWSName)
+		instanceAttributeMap[cloudmap.AttrAppMeshVirtualNode] = awssdk.StringValue(vn.Spec.AWSName)
 
 		localInstanceInfoMap[pod.Status.PodIP] = instanceAttributeMap
 	}
@@ -215,11 +198,11 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 		func(listInstancesOutput *servicediscovery.ListInstancesOutput, lastPage bool) bool {
 			for _, instance := range listInstancesOutput.Instances {
 				cloudMapInstanceAttributes := make(map[string]string)
-				cloudMapInstanceAttributes[attrAWSInstanceIPV4] = *instance.Attributes[attrAWSInstanceIPV4]
-				cloudMapInstanceAttributes[attrK8sPod] = *instance.Attributes[attrK8sPod]
-				cloudMapInstanceAttributes[attrK8sNamespace] = *instance.Attributes[attrK8sNamespace]
-				cloudMapInstanceAttributes[attrAppMeshMesh] = *instance.Attributes[attrAppMeshMesh]
-				cloudMapInstanceAttributes[attrAppMeshVirtualNode] = *instance.Attributes[attrAppMeshVirtualNode]
+				cloudMapInstanceAttributes[cloudmap.AttrAWSInstanceIPV4] = *instance.Attributes[cloudmap.AttrAWSInstanceIPV4]
+				cloudMapInstanceAttributes[cloudmap.AttrK8sPod] = *instance.Attributes[cloudmap.AttrK8sPod]
+				cloudMapInstanceAttributes[cloudmap.AttrK8sNamespace] = *instance.Attributes[cloudmap.AttrK8sNamespace]
+				cloudMapInstanceAttributes[cloudmap.AttrAppMeshMesh] = *instance.Attributes[cloudmap.AttrAppMeshMesh]
+				cloudMapInstanceAttributes[cloudmap.AttrAppMeshVirtualNode] = *instance.Attributes[cloudmap.AttrAppMeshVirtualNode]
 
 				cloudMapInstanceInfoMap[*instance.Id] = cloudMapInstanceAttributes
 			}
@@ -232,7 +215,7 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 	if len(cloudMapInstanceInfoMap) != len(localInstanceInfoMap) {
 		return fmt.Errorf("instance count mismatch")
 	}
-	if err := compareInstances(cloudMapInstanceInfoMap, localInstanceInfoMap); err!=nil {
+	if err := compareInstances(cloudMapInstanceInfoMap, localInstanceInfoMap); err != nil {
 		return fmt.Errorf("instance info mismatch")
 	}
 	return nil
@@ -241,11 +224,11 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 func compareInstances(cloudMapInstanceInfo map[string]map[string]string, localInstanceInfo map[string]map[string]string) error {
 	for cloudMapInstanceId, cloudMapInstanceAttr := range cloudMapInstanceInfo {
 		localInstanceAttributes := localInstanceInfo[cloudMapInstanceId]
-		if cloudMapInstanceAttr[attrAWSInstanceIPV4] != localInstanceAttributes[attrAWSInstanceIPV4] ||
-			cloudMapInstanceAttr[attrK8sPod] != localInstanceAttributes[attrK8sPod] ||
-			cloudMapInstanceAttr[attrK8sNamespace] != localInstanceAttributes[attrK8sNamespace] ||
-			cloudMapInstanceAttr[attrAppMeshMesh] != localInstanceAttributes[attrAppMeshMesh] ||
-			cloudMapInstanceAttr[attrAppMeshVirtualNode] != localInstanceAttributes[attrAppMeshVirtualNode] {
+		if cloudMapInstanceAttr[cloudmap.AttrAWSInstanceIPV4] != localInstanceAttributes[cloudmap.AttrAWSInstanceIPV4] ||
+			cloudMapInstanceAttr[cloudmap.AttrK8sPod] != localInstanceAttributes[cloudmap.AttrK8sPod] ||
+			cloudMapInstanceAttr[cloudmap.AttrK8sNamespace] != localInstanceAttributes[cloudmap.AttrK8sNamespace] ||
+			cloudMapInstanceAttr[cloudmap.AttrAppMeshMesh] != localInstanceAttributes[cloudmap.AttrAppMeshMesh] ||
+			cloudMapInstanceAttr[cloudmap.AttrAppMeshVirtualNode] != localInstanceAttributes[cloudmap.AttrAppMeshVirtualNode] {
 			return fmt.Errorf("instance info mismatch")
 		}
 	}

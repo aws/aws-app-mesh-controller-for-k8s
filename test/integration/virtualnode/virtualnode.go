@@ -74,7 +74,7 @@ func (m *VirtualNodeTest) Cleanup(ctx context.Context, f *framework.Framework) {
 				return
 			}
 
-		    By(fmt.Sprintf("Wait for deployment to be deleted: %s", dp.Name), func() {
+			By(fmt.Sprintf("Wait for deployment to be deleted: %s", dp.Name), func() {
 				if err := f.DPManager.WaitUntilDeploymentDeleted(ctx, dp); err != nil {
 					f.Logger.Error("failed while waiting for deployment deletion",
 						zap.String("virtual node", dp.Name),
@@ -82,8 +82,8 @@ func (m *VirtualNodeTest) Cleanup(ctx context.Context, f *framework.Framework) {
 					deletionErrors = append(deletionErrors, err)
 				}
 			})
-		delete(m.Deployments, dp.Name)
-	    })
+			delete(m.Deployments, dp.Name)
+		})
 	}
 
 	for _, vn := range m.VirtualNodes {
@@ -147,7 +147,7 @@ func (m *VirtualNodeTest) Cleanup(ctx context.Context, f *framework.Framework) {
 			var cmNamespaceID string
 			f.CloudMapClient.ListNamespacesPagesWithContext(ctx, &servicediscovery.ListNamespacesInput{}, func(output *servicediscovery.ListNamespacesOutput, b bool) bool {
 				for _, ns := range output.Namespaces {
-					if aws.StringValue(ns.Name) == m.CloudMapNameSpace{
+					if aws.StringValue(ns.Name) == m.CloudMapNameSpace {
 						cmNamespaceID = aws.StringValue(ns.Id)
 						return true
 					}
@@ -162,7 +162,7 @@ func (m *VirtualNodeTest) Cleanup(ctx context.Context, f *framework.Framework) {
 					zap.Error(err),
 				)
 			}
-			m.CloudMapNameSpace=""
+			m.CloudMapNameSpace = ""
 		})
 	}
 

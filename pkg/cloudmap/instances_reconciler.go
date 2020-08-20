@@ -16,19 +16,19 @@ import (
 const (
 	// attrAWSInstanceIPV4 is a special attribute expected by CloudMap.
 	// See https://github.com/aws/aws-sdk-go/blob/fd304fe4cb2ea1027e7fc7e21062beb768915fcc/service/servicediscovery/api.go#L5161
-	attrAWSInstanceIPV4 = "AWS_INSTANCE_IPV4"
+	AttrAWSInstanceIPV4 = "AWS_INSTANCE_IPV4"
 
 	// attrK8sPod is a custom attribute injected by app-mesh controller
-	attrK8sPod = "k8s.io/pod"
+	AttrK8sPod = "k8s.io/pod"
 	// AttrK8sNamespace is a custom attribute injected by app-mesh controller
-	attrK8sNamespace = "k8s.io/namespace"
+	AttrK8sNamespace = "k8s.io/namespace"
 	// AttrK8sPodRegion is a custom attribute injected by app-mesh controller
-	attrK8sPodRegion = "REGION"
+	AttrK8sPodRegion = "REGION"
 	// AttrK8sPodAZ is a custom attribute injected by app-mesh controller
-	attrK8sPodAZ = "AVAILABILITY_ZONE"
+	AttrK8sPodAZ = "AVAILABILITY_ZONE"
 
-	attrAppMeshMesh        = "appmesh.k8s.aws/mesh"
-	attrAppMeshVirtualNode = "appmesh.k8s.aws/virtualNode"
+	AttrAppMeshMesh        = "appmesh.k8s.aws/mesh"
+	AttrAppMeshVirtualNode = "appmesh.k8s.aws/virtualNode"
 
 	// how long to synchronously wait for instances reconcile operation
 	defaultInstancesReconcileWaitTimeout = 5 * time.Second
@@ -150,17 +150,17 @@ func (r *defaultInstancesReconciler) buildInstanceAttributes(ms *appmesh.Mesh, v
 		attr[cmAttr.Key] = cmAttr.Value
 	}
 	podsNodeName := pod.Spec.NodeName
-	attr[attrAWSInstanceIPV4] = pod.Status.PodIP
-	attr[attrK8sPod] = pod.Name
-	attr[attrK8sNamespace] = pod.Namespace
-	attr[attrAppMeshMesh] = aws.StringValue(ms.Spec.AWSName)
-	attr[attrAppMeshVirtualNode] = aws.StringValue(vn.Spec.AWSName)
+	attr[AttrAWSInstanceIPV4] = pod.Status.PodIP
+	attr[AttrK8sPod] = pod.Name
+	attr[AttrK8sNamespace] = pod.Namespace
+	attr[AttrAppMeshMesh] = aws.StringValue(ms.Spec.AWSName)
+	attr[AttrAppMeshVirtualNode] = aws.StringValue(vn.Spec.AWSName)
 	if nodeInfo, ok := nodeInfoByName[podsNodeName]; ok {
 		if nodeInfo.region != "" {
-			attr[attrK8sPodRegion] = nodeInfo.region
+			attr[AttrK8sPodRegion] = nodeInfo.region
 		}
 		if nodeInfo.availabilityZone != "" {
-			attr[attrK8sPodAZ] = nodeInfo.availabilityZone
+			attr[AttrK8sPodAZ] = nodeInfo.availabilityZone
 		}
 	}
 	return attr
