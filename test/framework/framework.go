@@ -90,7 +90,7 @@ func New(options Options) *Framework {
 		NSManager:      namespace.NewManager(k8sClient),
 		DPManager:      deployment.NewManager(k8sClient),
 		MeshManager:    mesh.NewManager(k8sClient, cloud.AppMesh()),
-		VNManager:      virtualnode.NewManager(k8sClient, cloud.AppMesh()),
+		VNManager:      virtualnode.NewManager(k8sClient, cloud.AppMesh(), cloud.CloudMap()),
 		VSManager:      virtualservice.NewManager(k8sClient, cloud.AppMesh()),
 		VRManager:      virtualrouter.NewManager(k8sClient, cloud.AppMesh()),
 		VGManager:      virtualgateway.NewManager(k8sClient, cloud.AppMesh()),
