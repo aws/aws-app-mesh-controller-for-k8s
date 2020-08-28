@@ -40,6 +40,10 @@ const (
 	expectedBackendResponse = "backend"
 )
 
+//FrontEnd -> Will have TLS Validation enabled in both the test cases
+//BackEnd  -> TLS support will be toggled between the test cases to verify that the communication is possible only
+//            when the TLS handshake works between FrontEnd and BackEnd envoys
+
 type TLSStack struct {
 	// service discovery type
 	ServiceDiscoveryType manifest.ServiceDiscoveryType
