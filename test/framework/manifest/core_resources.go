@@ -1,10 +1,17 @@
 package manifest
 
 import (
+	"go.uber.org/zap"
+
+	//	"encoding/pem"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"os"
+	"bufio"
+
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 )
 
 type ManifestBuilder struct {
@@ -16,7 +23,7 @@ type ManifestBuilder struct {
 }
 
 func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, appImage string, containerPort int32,
-	env []corev1.EnvVar) *appsv1.Deployment {
+	env []corev1.EnvVar, annotations map[string]string) *appsv1.Deployment {
 	labels := b.buildNodeSelectors(instanceName)
 	dpName := b.buildNodeName(instanceName)
 	dp := &appsv1.Deployment{
@@ -30,6 +37,7 @@ func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, a
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels,
+					Annotations: annotations,
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
@@ -95,7 +103,51 @@ func (b *ManifestBuilder) BuildServiceWithoutSelector(instanceName string, conta
 	return svc
 }
 
+func (b *ManifestBuilder) BuildK8SSecretsFromPemFile(pemFileBasePath string, tlsFiles []string,
+	secretName string, f *framework.Framework) *corev1.Secret {
+	certMap := make(map[string][]byte, len(tlsFiles))
+	for _, tlsFile := range tlsFiles {
+		pemFilePath := pemFileBasePath + tlsFile
+		privateKeyFile, err := os.Open(pemFilePath)
+		if err != nil {
+			f.Logger.Error("PEM File Open error: ", zap.Error(err))
+			return nil
+		}
+
+		pemFileInfo, _ := privateKeyFile.Stat()
+		pemFileSize := pemFileInfo.Size()
+		pemBytes := make([]byte, pemFileSize)
+
+		buffer := bufio.NewReader(privateKeyFile)
+		_, err = buffer.Read(pemBytes)
+
+		certMap[tlsFile] = pemBytes
+	}
+
+
+	secret := &corev1.Secret{
+		TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: secretName,
+			Namespace: "tls-e2e",
+		},
+		Immutable:  nil,
+		Data:       certMap,
+		StringData: nil,
+		Type:       corev1.SecretTypeOpaque,
+	}
+
+	return secret
+}
+
 func (b *ManifestBuilder) buildNodeSelectors(instanceName string) map[string]string {
+	return map[string]string{
+		"app.kubernetes.io/name":     "timeout-app",
+		"app.kubernetes.io/instance": instanceName,
+	}
+}
+
+func (b *ManifestBuilder) buildDeploymentAnnotations(instanceName string) map[string]string {
 	return map[string]string{
 		"app.kubernetes.io/name":     "timeout-app",
 		"app.kubernetes.io/instance": instanceName,

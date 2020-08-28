@@ -3,6 +3,9 @@ package virtualnode
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/servicediscovery"
+	appsv1 "k8s.io/api/apps/v1"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
@@ -16,8 +19,10 @@ import (
 )
 
 type VirtualNodeTest struct {
-	Namespace    *corev1.Namespace
-	VirtualNodes map[string]*appmesh.VirtualNode
+	Namespace         *corev1.Namespace
+	VirtualNodes      map[string]*appmesh.VirtualNode
+	Deployments       map[string]*appsv1.Deployment
+	CloudMapNameSpace string
 }
 
 func (m *VirtualNodeTest) Create(ctx context.Context, f *framework.Framework, vn *appmesh.VirtualNode) error {
@@ -49,6 +54,37 @@ func (m *VirtualNodeTest) Update(ctx context.Context, f *framework.Framework, ne
 
 func (m *VirtualNodeTest) Cleanup(ctx context.Context, f *framework.Framework) {
 	var deletionErrors []error
+
+	for _, dp := range m.Deployments {
+		if dp == nil {
+			continue
+		}
+		By(fmt.Sprintf("delete Deployment %s", dp.Name), func() {
+			if err := f.K8sClient.Delete(ctx, dp,
+				client.PropagationPolicy(metav1.DeletePropagationForeground), client.GracePeriodSeconds(0)); err != nil {
+				if apierrs.IsNotFound(err) {
+					f.Logger.Info("Deployment already deleted",
+						zap.String("deployment", dp.Name))
+					return
+				}
+				f.Logger.Error("failed to delete deployment",
+					zap.String("deployment", dp.Name),
+					zap.Error(err))
+				deletionErrors = append(deletionErrors, err)
+				return
+			}
+
+			By(fmt.Sprintf("Wait for deployment to be deleted: %s", dp.Name), func() {
+				if err := f.DPManager.WaitUntilDeploymentDeleted(ctx, dp); err != nil {
+					f.Logger.Error("failed while waiting for deployment deletion",
+						zap.String("virtual node", dp.Name),
+						zap.Error(err))
+					deletionErrors = append(deletionErrors, err)
+				}
+			})
+			delete(m.Deployments, dp.Name)
+		})
+	}
 
 	for _, vn := range m.VirtualNodes {
 		By(fmt.Sprintf("Delete virtual node %s", vn.Name), func() {
@@ -102,6 +138,31 @@ func (m *VirtualNodeTest) Cleanup(ctx context.Context, f *framework.Framework) {
 					deletionErrors = append(deletionErrors, err)
 				}
 			})
+		})
+	}
+
+	if m.CloudMapNameSpace != "" {
+		//Delete CloudMap Namespace
+		By(fmt.Sprintf("delete cloudMap namespace %s", m.CloudMapNameSpace), func() {
+			var cmNamespaceID string
+			f.CloudMapClient.ListNamespacesPagesWithContext(ctx, &servicediscovery.ListNamespacesInput{}, func(output *servicediscovery.ListNamespacesOutput, b bool) bool {
+				for _, ns := range output.Namespaces {
+					if aws.StringValue(ns.Name) == m.CloudMapNameSpace {
+						cmNamespaceID = aws.StringValue(ns.Id)
+						return true
+					}
+				}
+				return false
+			})
+			if _, err := f.CloudMapClient.DeleteNamespaceWithContext(ctx, &servicediscovery.DeleteNamespaceInput{
+				Id: aws.String(cmNamespaceID),
+			}); err != nil {
+				f.Logger.Error("failed to delete cloudMap namespace",
+					zap.String("namespaceID", cmNamespaceID),
+					zap.Error(err),
+				)
+			}
+			m.CloudMapNameSpace = ""
 		})
 	}
 

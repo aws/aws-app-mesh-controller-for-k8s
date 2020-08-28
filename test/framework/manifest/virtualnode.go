@@ -23,7 +23,8 @@ type VNBuilder struct {
 	CloudMapNamespace string
 }
 
-func (b *VNBuilder) BuildVirtualNode(instanceName string, backendVirtualServices []types.NamespacedName, listeners []appmesh.Listener) *appmesh.VirtualNode {
+func (b *VNBuilder) BuildVirtualNode(instanceName string, backendVirtualServices []types.NamespacedName,
+	listeners []appmesh.Listener, backendDefaults *appmesh.BackendDefaults) *appmesh.VirtualNode {
 	labels := b.buildSelectors(instanceName)
 	vnName := b.buildName(instanceName)
 
@@ -59,6 +60,7 @@ func (b *VNBuilder) BuildVirtualNode(instanceName string, backendVirtualServices
 			Listeners:        listeners,
 			ServiceDiscovery: sd,
 			Backends:         backends,
+			BackendDefaults:  backendDefaults,
 		},
 	}
 	return vn
@@ -91,9 +93,19 @@ func (b *VNBuilder) BuildListenerWithTimeout(protocol appmesh.PortProtocol, port
 	}
 }
 
+func (b *VNBuilder) BuildListenerWithTLS(protocol appmesh.PortProtocol, port appmesh.PortNumber, listenerTLS *appmesh.ListenerTLS) appmesh.Listener {
+	return appmesh.Listener{
+		PortMapping: appmesh.PortMapping{
+			Port:     port,
+			Protocol: protocol,
+		},
+		TLS: listenerTLS,
+	}
+}
+
 func (b *VNBuilder) buildDNSServiceDiscovery(instanceName string) *appmesh.ServiceDiscovery {
 	nodeServiceName := b.buildName(instanceName)
-	nodeServiceDNS := fmt.Sprintf("%s.%s.svc.cluster.local.", nodeServiceName, b.Namespace)
+	nodeServiceDNS := fmt.Sprintf("%s.%s.svc.cluster.local", nodeServiceName, b.Namespace)
 	return &appmesh.ServiceDiscovery{
 		DNS: &appmesh.DNSServiceDiscovery{
 			Hostname: nodeServiceDNS,

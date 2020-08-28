@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -138,7 +137,7 @@ var _ = Describe("VirtualService", func() {
 			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
 			listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
 			backends := []types.NamespacedName{}
-			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners)
+			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
 
 			By("Creating a virtual node resource in k8s", func() {
 				err := vnTest.Create(ctx, f, vn)
@@ -294,7 +293,7 @@ var _ = Describe("VirtualService", func() {
 			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
 			listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
 			backends := []types.NamespacedName{}
-			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners)
+			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
 
 			By("Creating a virtual node resource in k8s", func() {
 				err := vnTest.Create(ctx, f, vn)
@@ -446,7 +445,7 @@ var _ = Describe("VirtualService", func() {
 			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
 			listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
 			backends := []types.NamespacedName{}
-			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners)
+			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
 
 			By("Creating a virtual node resource in k8s", func() {
 				err := vnTest.Create(ctx, f, vn)
