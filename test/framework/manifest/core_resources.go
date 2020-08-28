@@ -147,13 +147,6 @@ func (b *ManifestBuilder) buildNodeSelectors(instanceName string) map[string]str
 	}
 }
 
-func (b *ManifestBuilder) buildDeploymentAnnotations(instanceName string) map[string]string {
-	return map[string]string{
-		"app.kubernetes.io/name":     "timeout-app",
-		"app.kubernetes.io/instance": instanceName,
-	}
-}
-
 func (b *ManifestBuilder) buildNodeName(instanceName string) string {
 	return instanceName
 }

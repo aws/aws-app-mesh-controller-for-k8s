@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestTimeoutApp(t *testing.T) {
+func TestTLSApp(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "TLS Suite")
 }

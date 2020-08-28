@@ -30,8 +30,8 @@ import (
 const (
 	//If you're not able to access below images, try to build them based on the app code under "timeout_app"
 	//directory and push it to any accessible ECR repo and update the below values
-	defaultFrontEndImage = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/tls-e2e:feapp-tstimg1"
-	defaultBackEndImage  = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/tls-e2e:beapp-tstimg1"
+	defaultFrontEndImage = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/tls-e2e:feapp-tlsimage"
+	defaultBackEndImage  = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/tls-e2e:beapp-tlsimage"
 
 	tlsTest          = "tls-e2e"
 	AppContainerPort = 8080
@@ -130,7 +130,6 @@ func (s *TLSStack) CleanupPartialTLSStack(ctx context.Context, f *framework.Fram
 	Expect(len(deletionErrors)).To(BeZero())
 }
 
-//Check Timeout behavior with and with timeout configured
 func (s *TLSStack) CheckTLSBehavior(ctx context.Context, f *framework.Framework, tlsEnabled bool) {
 	By(fmt.Sprintf("verify frontend to backend connectivity with TLS enabled"), func() {
 		err := s.checkExpectedRouteBehavior(ctx, f, s.FrontEndDP, "tlsroute", tlsEnabled)
