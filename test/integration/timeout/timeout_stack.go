@@ -27,8 +27,8 @@ import (
 const (
 	//If you're not able to access below images, try to build them based on the app code under "timeout_app"
 	//directory and push it to any accessible ECR repo and update the below values
-	defaultFrontEndImage = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/timeout-e2e:frontend-image"
-	defaultBackEndImage  = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/timeout-e2e:backend-image"
+	defaultFrontEndImage = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/test_app:feapp-img"
+	defaultBackEndImage  = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/test_app:beapp-img"
 
 	timeoutTest      = "timeout-e2e"
 	AppContainerPort = 8080
@@ -234,7 +234,17 @@ func (s *TimeoutStack) createVirtualNodeResourcesForTimeoutStack(ctx context.Con
 		})
 
 		By(fmt.Sprintf("create frontend deployment"), func() {
-			dp := mb.BuildDeployment("frontend", 1, defaultFrontEndImage, AppContainerPort, []corev1.EnvVar{}, annotations)
+			env := []corev1.EnvVar{
+				{
+					Name:  "PORT",
+					Value: fmt.Sprintf("%d", AppContainerPort),
+				},
+				{
+					Name:  "BACKEND_TIMEOUT_HOST",
+					Value: "backend.timeout-e2e.svc.cluster.local",
+				},
+			}
+			dp := mb.BuildDeployment("frontend", 1, defaultFrontEndImage, AppContainerPort, env, annotations)
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.FrontEndDP = dp

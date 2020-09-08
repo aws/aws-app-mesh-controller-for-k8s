@@ -30,8 +30,8 @@ import (
 const (
 	//If you're not able to access below images, try to build them based on the app code under "timeout_app"
 	//directory and push it to any accessible ECR repo and update the below values
-	defaultFrontEndImage = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/tls-e2e:feapp-tlsimage"
-	defaultBackEndImage  = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/tls-e2e:beapp-tlsimage"
+	defaultFrontEndImage = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/test_app:feapp-img"
+	defaultBackEndImage  = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/test_app:beapp-img"
 
 	tlsTest          = "tls-e2e"
 	AppContainerPort = 8080
@@ -40,9 +40,11 @@ const (
 	expectedBackendResponse = "backend"
 )
 
-//FrontEnd -> Will have TLS Validation enabled in both the test cases
+//FrontEnd -> Will have TLS Validation enabled for all the test cases. Validation test case will use a different CA
+//            cert than the CA used to sign backend.
 //BackEnd  -> TLS support will be toggled between the test cases to verify that the communication is possible only
-//            when the TLS handshake works between FrontEnd and BackEnd envoys
+//            when the TLS handshake works between FrontEnd and BackEnd envoys.
+//
 
 type TLSStack struct {
 	// service discovery type
@@ -76,6 +78,34 @@ func (s *TLSStack) DeployTLSStack(ctx context.Context, f *framework.Framework) {
 	s.assignBackendVSToFrontEndVN(ctx, f)
 }
 
+func (s *TLSStack) DeployPartialTLSStack(ctx context.Context, f *framework.Framework) {
+	s.createTLSStackMeshAndNamespace(ctx, f)
+	time.Sleep(30 * time.Second)
+	s.ServiceDiscoveryType = manifest.DNSServiceDiscovery
+	mb := &manifest.ManifestBuilder{
+		Namespace:            s.namespace.Name,
+		ServiceDiscoveryType: s.ServiceDiscoveryType,
+	}
+	s.createSecretsForPartialTLSStack(ctx, f, mb)
+	s.createVirtualNodeResourcesForPartialTLSStack(ctx, f, mb)
+	s.createServicesForTLSStack(ctx, f)
+	s.assignBackendVSToFrontEndVN(ctx, f)
+}
+
+func (s *TLSStack) DeployTLSValidationStack(ctx context.Context, f *framework.Framework) {
+	s.createTLSStackMeshAndNamespace(ctx, f)
+	time.Sleep(30 * time.Second)
+	s.ServiceDiscoveryType = manifest.DNSServiceDiscovery
+	mb := &manifest.ManifestBuilder{
+		Namespace:            s.namespace.Name,
+		ServiceDiscoveryType: s.ServiceDiscoveryType,
+	}
+	s.createSecretsForTLSValidationStack(ctx, f, mb)
+	s.createVirtualNodeResourcesForTLSValidationStack(ctx, f, mb)
+	s.createServicesForTLSStack(ctx, f)
+	s.assignBackendVSToFrontEndVN(ctx, f)
+}
+
 func (s *TLSStack) CleanupTLSStack(ctx context.Context, f *framework.Framework) {
 	var deletionErrors []error
 	if errs := s.revokeVirtualNodeBackendAccessForTLSStack(ctx, f); len(errs) != 0 {
@@ -96,42 +126,8 @@ func (s *TLSStack) CleanupTLSStack(ctx context.Context, f *framework.Framework) 
 	Expect(len(deletionErrors)).To(BeZero())
 }
 
-func (s *TLSStack) DeployPartialTLSStack(ctx context.Context, f *framework.Framework) {
-	s.createTLSStackMeshAndNamespace(ctx, f)
-	time.Sleep(30*time.Second)
-	s.ServiceDiscoveryType = manifest.DNSServiceDiscovery
-	mb := &manifest.ManifestBuilder{
-		Namespace:            s.namespace.Name,
-		ServiceDiscoveryType: s.ServiceDiscoveryType,
-	}
-	s.createSecretsForPartialTLSStack(ctx, f, mb)
-	s.createVirtualNodeResourcesForPartialTLSStack(ctx, f, mb)
-	s.createServicesForTLSStack(ctx, f)
-	s.assignBackendVSToFrontEndVN(ctx, f)
-}
-
-func (s *TLSStack) CleanupPartialTLSStack(ctx context.Context, f *framework.Framework) {
-	var deletionErrors []error
-	if errs := s.revokeVirtualNodeBackendAccessForTLSStack(ctx, f); len(errs) != 0 {
-		deletionErrors = append(deletionErrors, errs...)
-	}
-	if errs := s.deleteResourcesForTLSStackServices(ctx, f); len(errs) != 0 {
-		deletionErrors = append(deletionErrors, errs...)
-	}
-	if errs := s.deleteResourcesForPartialTLSStackNodes(ctx, f); len(errs) != 0 {
-		deletionErrors = append(deletionErrors, errs...)
-	}
-	if errs := s.deleteTLSMeshAndNamespace(ctx, f); len(errs) != 0 {
-		deletionErrors = append(deletionErrors, errs...)
-	}
-	for _, err := range deletionErrors {
-		f.Logger.Error("clean up failed", zap.Error(err))
-	}
-	Expect(len(deletionErrors)).To(BeZero())
-}
-
 func (s *TLSStack) CheckTLSBehavior(ctx context.Context, f *framework.Framework, tlsEnabled bool) {
-	By(fmt.Sprintf("verify frontend to backend connectivity with TLS enabled"), func() {
+	By(fmt.Sprintf("verify frontend to backend connectivity"), func() {
 		err := s.checkExpectedRouteBehavior(ctx, f, s.FrontEndDP, "tlsroute", tlsEnabled)
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -237,7 +233,7 @@ func (s *TLSStack) deleteTLSMeshAndNamespace(ctx context.Context, f *framework.F
 func (s *TLSStack) createSecretsForTLSStack(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
 	By("create secrets to be used by frontend for validation", func() {
 		frontendTLSFiles := []string{"ca_1_cert.pem"}
-		secret := mb.BuildK8SSecretsFromPemFile("tls_app/tls/", frontendTLSFiles,
+		secret := mb.BuildK8SSecretsFromPemFile("tls/", frontendTLSFiles,
 			"ca1-cert-tls", f)
 		err := f.K8sClient.Create(ctx, secret)
 		Expect(err).NotTo(HaveOccurred())
@@ -245,7 +241,7 @@ func (s *TLSStack) createSecretsForTLSStack(ctx context.Context, f *framework.Fr
 
 	By("create secrets to be used by backend", func() {
 		backendTLSFiles := []string{"backend-tls_cert_chain.pem", "backend-tls_key.pem"}
-		secret := mb.BuildK8SSecretsFromPemFile("tls_app/tls/", backendTLSFiles,
+		secret := mb.BuildK8SSecretsFromPemFile("tls/", backendTLSFiles,
 			"backend-tls-tls", f)
 		err := f.K8sClient.Create(ctx, secret)
 		Expect(err).NotTo(HaveOccurred())
@@ -255,9 +251,27 @@ func (s *TLSStack) createSecretsForTLSStack(ctx context.Context, f *framework.Fr
 func (s *TLSStack) createSecretsForPartialTLSStack(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
 	By("create secrets to be used by frontend for validation", func() {
 		frontendTLSFiles := []string{"ca_1_cert.pem"}
-		secret := mb.BuildK8SSecretsFromPemFile("tls_app/tls/", frontendTLSFiles,
+		secret := mb.BuildK8SSecretsFromPemFile("tls/", frontendTLSFiles,
 			"ca1-cert-tls", f)
 		f.Logger.Error("Secret: ", zap.String("Name: ", secret.Name), zap.String("Namespace: ", secret.Namespace))
+		err := f.K8sClient.Create(ctx, secret)
+		Expect(err).NotTo(HaveOccurred())
+	})
+}
+
+func (s *TLSStack) createSecretsForTLSValidationStack(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
+	By("create secrets to be used by frontend for validation", func() {
+		frontendTLSFiles := []string{"ca_2_cert.pem"}
+		secret := mb.BuildK8SSecretsFromPemFile("tls/", frontendTLSFiles,
+			"ca2-cert-tls", f)
+		err := f.K8sClient.Create(ctx, secret)
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	By("create secrets to be used by backend", func() {
+		backendTLSFiles := []string{"backend-tls_cert_chain.pem", "backend-tls_key.pem"}
+		secret := mb.BuildK8SSecretsFromPemFile("tls/", backendTLSFiles,
+			"backend-tls-tls", f)
 		err := f.K8sClient.Create(ctx, secret)
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -295,11 +309,20 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSStack(ctx context.Context, f 
 		})
 
 		By(fmt.Sprintf("create frontend-tls deployment"), func() {
-			//annotations := map[string]string{}
 			annotations := map[string]string {
 				"appmesh.k8s.aws/secretMounts": "ca1-cert-tls:/certs/",
 			}
-			dp := mb.BuildDeployment("frontend-tls", 1, defaultFrontEndImage, AppContainerPort, []corev1.EnvVar{}, annotations)
+			env := []corev1.EnvVar{
+				{
+					Name:  "PORT",
+					Value: fmt.Sprintf("%d", AppContainerPort),
+				},
+				{
+					Name:  "BACKEND_TLS_HOST",
+					Value: "backend-tls.tls-e2e.svc.cluster.local",
+				},
+			}
+			dp := mb.BuildDeployment("frontend-tls", 1, defaultFrontEndImage, AppContainerPort, env, annotations)
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.FrontEndDP = dp
@@ -335,7 +358,6 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSStack(ctx context.Context, f 
 					Value: "backend",
 				},
 			}
-			//annotations := map[string]string{}
 			annotations := map[string]string {
 				"appmesh.k8s.aws/secretMounts": "backend-tls-tls:/certs/",
 			}
@@ -393,92 +415,6 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSStack(ctx context.Context, f 
 	})
 }
 
-func (s *TLSStack) deleteResourcesForTLSStackNodes(ctx context.Context, f *framework.Framework) []error {
-	var deletionErrors []error
-	By("delete all resources for nodes", func() {
-		By(fmt.Sprintf("delete Backend Service"), func() {
-			if err := f.K8sClient.Delete(ctx, s.BackEndSVC); err != nil {
-				f.Logger.Error("failed to delete Service",
-					zap.String("namespace", s.BackEndSVC.Namespace),
-					zap.String("name", s.BackEndSVC.Name),
-					zap.Error(err),
-				)
-				deletionErrors = append(deletionErrors, err)
-			}
-		})
-
-		By(fmt.Sprintf("delete Frontend Deployment"), func() {
-			if err := f.K8sClient.Delete(ctx, s.FrontEndDP,
-				client.PropagationPolicy(metav1.DeletePropagationForeground), client.GracePeriodSeconds(0)); err != nil {
-				f.Logger.Error("failed to delete Deployment",
-					zap.String("namespace", s.FrontEndDP.Namespace),
-					zap.String("name", s.FrontEndDP.Name),
-					zap.Error(err),
-				)
-				deletionErrors = append(deletionErrors, err)
-			}
-		})
-
-		By(fmt.Sprintf("delete Backend Deployment"), func() {
-			if err := f.K8sClient.Delete(ctx, s.BackEndDP,
-				client.PropagationPolicy(metav1.DeletePropagationForeground), client.GracePeriodSeconds(0)); err != nil {
-				f.Logger.Error("failed to delete Deployment",
-					zap.String("namespace", s.BackEndDP.Namespace),
-					zap.String("name", s.BackEndDP.Name),
-					zap.Error(err),
-				)
-				deletionErrors = append(deletionErrors, err)
-			}
-		})
-
-		By(fmt.Sprintf("delete Frontend VirtualNode for node"), func() {
-			if err := f.K8sClient.Delete(ctx, s.FrontEndVN); err != nil {
-				f.Logger.Error("failed to delete VirtualNode",
-					zap.String("namespace", s.FrontEndVN.Namespace),
-					zap.String("name", s.FrontEndVN.Name),
-					zap.Error(err),
-				)
-				deletionErrors = append(deletionErrors, err)
-			}
-		})
-
-		By(fmt.Sprintf("delete Backend VirtualNode"), func() {
-			if err := f.K8sClient.Delete(ctx, s.BackEndVN); err != nil {
-				f.Logger.Error("failed to delete VirtualNode",
-					zap.String("namespace", s.BackEndVN.Namespace),
-					zap.String("name", s.BackEndVN.Name),
-					zap.Error(err),
-				)
-				deletionErrors = append(deletionErrors, err)
-			}
-		})
-
-		By("wait all deployments become deleted", func() {
-			if err := f.DPManager.WaitUntilDeploymentDeleted(ctx, s.FrontEndDP); err != nil {
-				f.Logger.Error("failed while waiting for Frontend deployment to be deleted", zap.Error(err))
-				return
-			}
-
-			if err := f.DPManager.WaitUntilDeploymentDeleted(ctx, s.BackEndDP); err != nil {
-				f.Logger.Error("failed while waiting for Backend deployment to be deleted", zap.Error(err))
-				return
-			}
-		})
-
-		By("wait all VirtualNodes become deleted", func() {
-			if err := f.VNManager.WaitUntilVirtualNodeDeleted(ctx, s.FrontEndVN); err != nil {
-				f.Logger.Error("failed while waiting for Frontend VN to be deleted", zap.Error(err))
-				return
-			}
-			if err := f.VNManager.WaitUntilVirtualNodeDeleted(ctx, s.BackEndVN); err != nil {
-				f.Logger.Error("failed while waiting for Backend VN to be deleted", zap.Error(err))
-				return
-			}
-		})
-	})
-	return deletionErrors
-}
-
 func (s *TLSStack) createVirtualNodeResourcesForPartialTLSStack(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
 	By("create virtualNode resources", func() {
 		vnBuilder := &manifest.VNBuilder{
@@ -511,11 +447,20 @@ func (s *TLSStack) createVirtualNodeResourcesForPartialTLSStack(ctx context.Cont
 		})
 
 		By(fmt.Sprintf("create frontend-tls deployment"), func() {
-			//annotations := map[string]string{}
 			annotations := map[string]string {
 				"appmesh.k8s.aws/secretMounts": "ca1-cert-tls:/certs/",
 			}
-			dp := mb.BuildDeployment("frontend-tls", 1, defaultFrontEndImage, AppContainerPort, []corev1.EnvVar{}, annotations)
+			env := []corev1.EnvVar{
+				{
+					Name:  "PORT",
+					Value: fmt.Sprintf("%d", AppContainerPort),
+				},
+				{
+					Name:  "BACKEND_TLS_HOST",
+					Value: "backend-tls.tls-e2e.svc.cluster.local",
+				},
+			}
+			dp := mb.BuildDeployment("frontend-tls", 1, defaultFrontEndImage, AppContainerPort, env, annotations)
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.FrontEndDP = dp
@@ -597,7 +542,145 @@ func (s *TLSStack) createVirtualNodeResourcesForPartialTLSStack(ctx context.Cont
 	})
 }
 
-func (s *TLSStack) deleteResourcesForPartialTLSStackNodes(ctx context.Context, f *framework.Framework) []error {
+func (s *TLSStack) createVirtualNodeResourcesForTLSValidationStack(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
+	By("create virtualNode resources", func() {
+		vnBuilder := &manifest.VNBuilder{
+			ServiceDiscoveryType: manifest.DNSServiceDiscovery,
+			Namespace:            tlsTest,
+		}
+
+		By(fmt.Sprintf("create frontend virtualNode with TLS enabled"), func() {
+			listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
+			backends := []types.NamespacedName{}
+			tlsEnforce := true
+			tlsBackendDefaults := &appmesh.BackendDefaults{
+				ClientPolicy: &appmesh.ClientPolicy{
+					TLS: &appmesh.ClientPolicyTLS{
+						Enforce:    &tlsEnforce,
+						Ports:      nil,
+						Validation: appmesh.TLSValidationContext{
+							Trust: appmesh.TLSValidationContextTrust{
+								ACM:  nil,
+								File: &appmesh.TLSValidationContextFileTrust{CertificateChain: "/certs/ca_2_cert.pem"},
+							},
+						},
+					},
+				},
+			}
+			vn := vnBuilder.BuildVirtualNode("frontend-tls", backends, listeners, tlsBackendDefaults)
+			err := f.K8sClient.Create(ctx, vn)
+			Expect(err).NotTo(HaveOccurred())
+			s.FrontEndVN = vn
+		})
+
+		By(fmt.Sprintf("create frontend-tls deployment"), func() {
+			annotations := map[string]string {
+				"appmesh.k8s.aws/secretMounts": "ca2-cert-tls:/certs/",
+			}
+			env := []corev1.EnvVar{
+				{
+					Name:  "PORT",
+					Value: fmt.Sprintf("%d", AppContainerPort),
+				},
+				{
+					Name:  "BACKEND_TLS_HOST",
+					Value: "backend-tls.tls-e2e.svc.cluster.local",
+				},
+			}
+			dp := mb.BuildDeployment("frontend-tls", 1, defaultFrontEndImage, AppContainerPort, env, annotations)
+			err := f.K8sClient.Create(ctx, dp)
+			Expect(err).NotTo(HaveOccurred())
+			s.FrontEndDP = dp
+		})
+
+		By(fmt.Sprintf("create backend virtualNode with tls enabled"), func() {
+			backendListenerTLS := &appmesh.ListenerTLS{
+				Certificate: appmesh.ListenerTLSCertificate{
+					File: &appmesh.ListenerTLSFileCertificate{
+						CertificateChain: "/certs/backend-tls_cert_chain.pem",
+						PrivateKey:       "/certs/backend-tls_key.pem",
+					},
+				},
+				Mode:        "STRICT",
+			}
+			listeners := []appmesh.Listener{vnBuilder.BuildListenerWithTLS("http", 8080, backendListenerTLS)}
+			backends := []types.NamespacedName{}
+
+			vn := vnBuilder.BuildVirtualNode("backend-tls", backends, listeners, &appmesh.BackendDefaults{})
+			err := f.K8sClient.Create(ctx, vn)
+			Expect(err).NotTo(HaveOccurred())
+			s.BackEndVN = vn
+		})
+
+		By(fmt.Sprintf("create backend deployment"), func() {
+			env := []corev1.EnvVar{
+				{
+					Name:  "SERVER_PORT",
+					Value: fmt.Sprintf("%d", AppContainerPort),
+				},
+				{
+					Name:  "WHO_AM_I",
+					Value: "backend",
+				},
+			}
+			annotations := map[string]string {
+				"appmesh.k8s.aws/secretMounts": "backend-tls-tls:/certs/",
+			}
+			dp := mb.BuildDeployment("backend-tls", 1, defaultBackEndImage, AppContainerPort, env, annotations)
+			err := f.K8sClient.Create(ctx, dp)
+			Expect(err).NotTo(HaveOccurred())
+			s.BackEndDP = dp
+		})
+
+		By(fmt.Sprintf("create service for backend-tls virtualnode"), func() {
+			svc := mb.BuildServiceWithSelector("backend-tls", AppContainerPort, AppContainerPort)
+			err := f.K8sClient.Create(ctx, svc)
+			Expect(err).NotTo(HaveOccurred())
+			s.BackEndSVC = svc
+		})
+
+		By("wait until all VirtualNodes become active", func() {
+			_, err := f.VNManager.WaitUntilVirtualNodeActive(ctx, s.FrontEndVN)
+			if err != nil {
+				f.Logger.Error("failed to wait all VirtualNode become deleted", zap.Error(err))
+				return
+			}
+			_, err = f.VNManager.WaitUntilVirtualNodeActive(ctx, s.BackEndVN)
+			if err != nil {
+				f.Logger.Error("failed to wait all VirtualNode become deleted", zap.Error(err))
+				return
+			}
+		})
+
+		By("wait all deployments become ready", func() {
+			_, err := f.DPManager.WaitUntilDeploymentReady(ctx, s.FrontEndDP)
+			if err != nil {
+				f.Logger.Error("failed while waiting for Frontend VirtualNode to become active", zap.Error(err))
+				return
+			}
+			_, err = f.DPManager.WaitUntilDeploymentReady(ctx, s.BackEndDP)
+			if err != nil {
+				f.Logger.Error("failed while waiting for Backend VirtualNode to become active", zap.Error(err))
+				return
+			}
+		})
+
+		By("check all VirtualNode in aws", func() {
+			err := f.VNManager.CheckVirtualNodeInAWS(ctx, s.mesh, s.FrontEndVN)
+			if err != nil {
+				f.Logger.Error("failed while validating Frontend VirtualNode aws resource", zap.Error(err))
+				return
+			}
+			err = f.VNManager.CheckVirtualNodeInAWS(ctx, s.mesh, s.BackEndVN)
+			if err != nil {
+				f.Logger.Error("failed while validating Backend VirtualNode aws resource", zap.Error(err))
+				return
+			}
+		})
+	})
+}
+
+func (s *TLSStack) deleteResourcesForTLSStackNodes(ctx context.Context, f *framework.Framework) []error {
 	var deletionErrors []error
 	By("delete all resources for nodes", func() {
 		By(fmt.Sprintf("delete Backend Service"), func() {

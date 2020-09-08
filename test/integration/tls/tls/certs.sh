@@ -43,6 +43,7 @@ generate_cert_bundle() {
 # Generate cert for the CA.
 echo "Generating CA certificates."
 generate_ca ca_1
+generate_ca ca_2
 
 # Generate RSA cert for the backend-tls app
 echo "Generating backend certificate."

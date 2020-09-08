@@ -15,8 +15,24 @@ patch_all()
 
 XRayMiddleware(app, xray_recorder)
 
-@app.route('/tlsroute')
+@app.route('/defaultroute')
 def default():
+    print('----------------')
+    print(request.headers)
+    print('----------------')
+    time.sleep(config.TIMEOUT_VALUE)
+    return config.WHO_AM_I
+
+@app.route('/timeoutroute')
+def timeout():
+    print('----------------')
+    print(request.headers)
+    print('----------------')
+    time.sleep(config.TIMEOUT_VALUE)
+    return config.WHO_AM_I
+
+@app.route('/tlsroute')
+def tlsroute():
     print('----------------')
     print(request.headers)
     print('----------------')

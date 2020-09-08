@@ -3,15 +3,13 @@ package manifest
 import (
 	"go.uber.org/zap"
 
-	//	"encoding/pem"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"os"
-	"bufio"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 )
 
 type ManifestBuilder struct {
@@ -108,22 +106,12 @@ func (b *ManifestBuilder) BuildK8SSecretsFromPemFile(pemFileBasePath string, tls
 	certMap := make(map[string][]byte, len(tlsFiles))
 	for _, tlsFile := range tlsFiles {
 		pemFilePath := pemFileBasePath + tlsFile
-		privateKeyFile, err := os.Open(pemFilePath)
+		pemBytes, err := utils.ReadFileContents(pemFilePath)
 		if err != nil {
-			f.Logger.Error("PEM File Open error: ", zap.Error(err))
-			return nil
+			f.Logger.Error("Error while trying to read the PEM file: ", zap.Error(err))
 		}
-
-		pemFileInfo, _ := privateKeyFile.Stat()
-		pemFileSize := pemFileInfo.Size()
-		pemBytes := make([]byte, pemFileSize)
-
-		buffer := bufio.NewReader(privateKeyFile)
-		_, err = buffer.Read(pemBytes)
-
 		certMap[tlsFile] = pemBytes
 	}
-
 
 	secret := &corev1.Secret{
 		TypeMeta:   metav1.TypeMeta{},
@@ -136,7 +124,6 @@ func (b *ManifestBuilder) BuildK8SSecretsFromPemFile(pemFileBasePath string, tls
 		StringData: nil,
 		Type:       corev1.SecretTypeOpaque,
 	}
-
 	return secret
 }
 

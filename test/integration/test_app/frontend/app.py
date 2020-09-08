@@ -17,13 +17,22 @@ XRayMiddleware(app, xray_recorder)
 @app.route('/defaultroute')
 def default():
     print(request.headers)
-    response = requests.get(f'http://backend.timeout-e2e.svc.cluster.local:8080/defaultroute')
+    backend_url = 'http://' + config.BACKEND_TIMEOUT_HOST + ':' + str(config.PORT) + '/defaultroute'
+    response = requests.get(backend_url)
     return response.text
 
 @app.route('/timeoutroute')
 def timeout():
     print(request.headers)
-    response = requests.get(f'http://backend.timeout-e2e.svc.cluster.local:8080/timeoutroute')
+    backend_url = 'http://' + config.BACKEND_TIMEOUT_HOST + ':' + str(config.PORT) + '/timeoutroute'
+    response = requests.get(backend_url)
+    return response.text
+
+@app.route('/tlsroute')
+def tlsroute():
+    print(request.headers)
+    backend_url = 'http://' + config.BACKEND_TLS_HOST + ':' + str(config.PORT) + '/tlsroute'
+    response = requests.get(backend_url)
     return response.text
 
 if __name__ == '__main__':
