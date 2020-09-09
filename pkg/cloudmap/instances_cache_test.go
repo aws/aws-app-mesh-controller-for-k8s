@@ -82,7 +82,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 					"service-A": {
 						instanceAttrsByID: map[string]instanceAttributes{
 							"192.168.1.1": {
-								attrAWSInstanceIPV4: "192.168.1.1",
+								AttrAWSInstanceIPV4: "192.168.1.1",
 							},
 						},
 						lastUpdatedTimeByID: map[string]time.Time{
@@ -95,7 +95,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 				serviceID:  "service-A",
 				instanceID: "192.168.1.1",
 				attrs: instanceAttributes{
-					attrAWSInstanceIPV4: "192.168.1.1",
+					AttrAWSInstanceIPV4: "192.168.1.1",
 					"k":                 "v",
 				},
 				operation: &servicediscovery.Operation{
@@ -105,7 +105,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 			wantInstanceAttrsByService: map[string]map[string]instanceAttributes{
 				"service-A": {
 					"192.168.1.1": instanceAttributes{
-						attrAWSInstanceIPV4: "192.168.1.1",
+						AttrAWSInstanceIPV4: "192.168.1.1",
 						"k":                 "v",
 					},
 				},
@@ -118,7 +118,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 					"service-A": {
 						instanceAttrsByID: map[string]instanceAttributes{
 							"192.168.1.1": {
-								attrAWSInstanceIPV4: "192.168.1.1",
+								AttrAWSInstanceIPV4: "192.168.1.1",
 							},
 						},
 						lastUpdatedTimeByID: make(map[string]time.Time),
@@ -129,7 +129,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 				serviceID:  "service-A",
 				instanceID: "192.168.1.1",
 				attrs: instanceAttributes{
-					attrAWSInstanceIPV4: "192.168.1.1",
+					AttrAWSInstanceIPV4: "192.168.1.1",
 					"k":                 "v",
 				},
 				operation: &servicediscovery.Operation{
@@ -139,7 +139,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 			wantInstanceAttrsByService: map[string]map[string]instanceAttributes{
 				"service-A": {
 					"192.168.1.1": instanceAttributes{
-						attrAWSInstanceIPV4: "192.168.1.1",
+						AttrAWSInstanceIPV4: "192.168.1.1",
 						"k":                 "v",
 					},
 				},
@@ -152,7 +152,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 					"service-A": {
 						instanceAttrsByID: map[string]instanceAttributes{
 							"192.168.1.1": {
-								attrAWSInstanceIPV4: "192.168.1.1",
+								AttrAWSInstanceIPV4: "192.168.1.1",
 							},
 						},
 						lastUpdatedTimeByID: map[string]time.Time{
@@ -165,7 +165,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 				serviceID:  "service-A",
 				instanceID: "192.168.1.1",
 				attrs: instanceAttributes{
-					attrAWSInstanceIPV4: "192.168.1.1",
+					AttrAWSInstanceIPV4: "192.168.1.1",
 					"k":                 "v",
 				},
 				operation: &servicediscovery.Operation{
@@ -175,7 +175,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 			wantInstanceAttrsByService: map[string]map[string]instanceAttributes{
 				"service-A": {
 					"192.168.1.1": instanceAttributes{
-						attrAWSInstanceIPV4: "192.168.1.1",
+						AttrAWSInstanceIPV4: "192.168.1.1",
 					},
 				},
 			},
@@ -187,7 +187,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 					"service-A": {
 						instanceAttrsByID: map[string]instanceAttributes{
 							"192.168.1.1": {
-								attrAWSInstanceIPV4: "192.168.1.1",
+								AttrAWSInstanceIPV4: "192.168.1.1",
 							},
 						},
 						lastUpdatedTimeByID: map[string]time.Time{
@@ -200,7 +200,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 				serviceID:  "service-A",
 				instanceID: "192.168.1.2",
 				attrs: instanceAttributes{
-					attrAWSInstanceIPV4: "192.168.1.2",
+					AttrAWSInstanceIPV4: "192.168.1.2",
 				},
 				operation: &servicediscovery.Operation{
 					UpdateDate: &oneSecAfterNow,
@@ -209,10 +209,10 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 			wantInstanceAttrsByService: map[string]map[string]instanceAttributes{
 				"service-A": {
 					"192.168.1.1": instanceAttributes{
-						attrAWSInstanceIPV4: "192.168.1.1",
+						AttrAWSInstanceIPV4: "192.168.1.1",
 					},
 					"192.168.1.2": instanceAttributes{
-						attrAWSInstanceIPV4: "192.168.1.2",
+						AttrAWSInstanceIPV4: "192.168.1.2",
 					},
 				},
 			},
@@ -224,7 +224,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 					"service-A": {
 						instanceAttrsByID: map[string]instanceAttributes{
 							"192.168.1.1": {
-								attrAWSInstanceIPV4: "192.168.1.1",
+								AttrAWSInstanceIPV4: "192.168.1.1",
 							},
 						},
 					},
@@ -234,7 +234,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 				serviceID:  "service-B",
 				instanceID: "192.168.1.1",
 				attrs: instanceAttributes{
-					attrAWSInstanceIPV4: "192.168.1.1",
+					AttrAWSInstanceIPV4: "192.168.1.1",
 					"k":                 "v",
 				},
 				operation: nil,
@@ -242,7 +242,7 @@ func Test_defaultInstancesCache_recordSuccessfulRegisterInstanceOperation(t *tes
 			wantInstanceAttrsByService: map[string]map[string]instanceAttributes{
 				"service-A": {
 					"192.168.1.1": instanceAttributes{
-						attrAWSInstanceIPV4: "192.168.1.1",
+						AttrAWSInstanceIPV4: "192.168.1.1",
 					},
 				},
 			},
@@ -292,10 +292,10 @@ func Test_defaultInstancesCache_recordSuccessfulDeregisterInstanceOperation(t *t
 					"service-A": {
 						instanceAttrsByID: map[string]instanceAttributes{
 							"192.168.1.1": {
-								attrAWSInstanceIPV4: "192.168.1.1",
+								AttrAWSInstanceIPV4: "192.168.1.1",
 							},
 							"192.168.1.2": {
-								attrAWSInstanceIPV4: "192.168.1.2",
+								AttrAWSInstanceIPV4: "192.168.1.2",
 							},
 						},
 						lastUpdatedTimeByID: map[string]time.Time{
@@ -315,7 +315,7 @@ func Test_defaultInstancesCache_recordSuccessfulDeregisterInstanceOperation(t *t
 			wantInstanceAttrsByService: map[string]map[string]instanceAttributes{
 				"service-A": {
 					"192.168.1.2": {
-						attrAWSInstanceIPV4: "192.168.1.2",
+						AttrAWSInstanceIPV4: "192.168.1.2",
 					},
 				},
 			},
@@ -327,10 +327,10 @@ func Test_defaultInstancesCache_recordSuccessfulDeregisterInstanceOperation(t *t
 					"service-A": {
 						instanceAttrsByID: map[string]instanceAttributes{
 							"192.168.1.1": {
-								attrAWSInstanceIPV4: "192.168.1.1",
+								AttrAWSInstanceIPV4: "192.168.1.1",
 							},
 							"192.168.1.2": {
-								attrAWSInstanceIPV4: "192.168.1.2",
+								AttrAWSInstanceIPV4: "192.168.1.2",
 							},
 						},
 						lastUpdatedTimeByID: map[string]time.Time{
@@ -350,10 +350,10 @@ func Test_defaultInstancesCache_recordSuccessfulDeregisterInstanceOperation(t *t
 			wantInstanceAttrsByService: map[string]map[string]instanceAttributes{
 				"service-A": {
 					"192.168.1.1": {
-						attrAWSInstanceIPV4: "192.168.1.1",
+						AttrAWSInstanceIPV4: "192.168.1.1",
 					},
 					"192.168.1.2": {
-						attrAWSInstanceIPV4: "192.168.1.2",
+						AttrAWSInstanceIPV4: "192.168.1.2",
 					},
 				},
 			},
@@ -365,10 +365,10 @@ func Test_defaultInstancesCache_recordSuccessfulDeregisterInstanceOperation(t *t
 					"service-A": {
 						instanceAttrsByID: map[string]instanceAttributes{
 							"192.168.1.1": {
-								attrAWSInstanceIPV4: "192.168.1.1",
+								AttrAWSInstanceIPV4: "192.168.1.1",
 							},
 							"192.168.1.2": {
-								attrAWSInstanceIPV4: "192.168.1.2",
+								AttrAWSInstanceIPV4: "192.168.1.2",
 							},
 						},
 						lastUpdatedTimeByID: map[string]time.Time{
@@ -388,10 +388,10 @@ func Test_defaultInstancesCache_recordSuccessfulDeregisterInstanceOperation(t *t
 			wantInstanceAttrsByService: map[string]map[string]instanceAttributes{
 				"service-A": {
 					"192.168.1.1": {
-						attrAWSInstanceIPV4: "192.168.1.1",
+						AttrAWSInstanceIPV4: "192.168.1.1",
 					},
 					"192.168.1.2": {
-						attrAWSInstanceIPV4: "192.168.1.2",
+						AttrAWSInstanceIPV4: "192.168.1.2",
 					},
 				},
 			},

@@ -58,5 +58,5 @@ func (s *virtualNodeServiceSubset) SubsetID() string {
 }
 
 func (s *virtualNodeServiceSubset) Contains(instanceID string, attrs instanceAttributes) bool {
-	return attrs[attrAppMeshMesh] == aws.StringValue(s.ms.Spec.AWSName) && attrs[attrAppMeshVirtualNode] == aws.StringValue(s.vn.Spec.AWSName)
+	return attrs[AttrAppMeshMesh] == aws.StringValue(s.ms.Spec.AWSName) && attrs[AttrAppMeshVirtualNode] == aws.StringValue(s.vn.Spec.AWSName)
 }
