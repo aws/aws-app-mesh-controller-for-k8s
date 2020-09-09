@@ -34,7 +34,7 @@ func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, a
 			Selector: &metav1.LabelSelector{MatchLabels: labels},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels,
+					Labels:      labels,
 					Annotations: annotations,
 				},
 				Spec: corev1.PodSpec{
@@ -114,9 +114,9 @@ func (b *ManifestBuilder) BuildK8SSecretsFromPemFile(pemFileBasePath string, tls
 	}
 
 	secret := &corev1.Secret{
-		TypeMeta:   metav1.TypeMeta{},
+		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: secretName,
+			Name:      secretName,
 			Namespace: "tls-e2e",
 		},
 		Immutable:  nil,

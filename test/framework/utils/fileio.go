@@ -20,5 +20,5 @@ func ReadFileContents(filePath string) ([]byte, error) {
 	buffer := bufio.NewReader(fileContent)
 	_, err = buffer.Read(fileContentInBytes)
 
-    return fileContentInBytes, nil
+	return fileContentInBytes, nil
 }

@@ -234,7 +234,7 @@ var _ = Describe("VirtualNode", func() {
 			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
 			listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
 			backends := []types.NamespacedName{}
-			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners)
+			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
 
 			By("Creating a virtual node resource in k8s", func() {
 				err := vnTest.Create(ctx, f, vn)
@@ -242,7 +242,7 @@ var _ = Describe("VirtualNode", func() {
 			})
 
 			By(fmt.Sprintf("create a deployment for VirtualNode"), func() {
-				dp := mb.BuildDeployment(vnName, 2, defaultAppImage, AppContainerPort, []corev1.EnvVar{})
+				dp := mb.BuildDeployment(vnName, 2, defaultAppImage, AppContainerPort, []corev1.EnvVar{}, map[string]string{})
 				err := f.K8sClient.Create(ctx, dp)
 				Expect(err).NotTo(HaveOccurred())
 				vnTest.Deployments[vnName] = dp

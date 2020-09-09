@@ -36,7 +36,7 @@ const (
 	tlsTest          = "tls-e2e"
 	AppContainerPort = 8080
 
-	tlsConnectionError         = "upstream connect error"
+	tlsConnectionError      = "upstream connect error"
 	expectedBackendResponse = "backend"
 )
 
@@ -293,8 +293,8 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSStack(ctx context.Context, f 
 			tlsBackendDefaults := &appmesh.BackendDefaults{
 				ClientPolicy: &appmesh.ClientPolicy{
 					TLS: &appmesh.ClientPolicyTLS{
-						Enforce:    &tlsEnforce,
-						Ports:      nil,
+						Enforce: &tlsEnforce,
+						Ports:   nil,
 						Validation: appmesh.TLSValidationContext{
 							Trust: appmesh.TLSValidationContextTrust{
 								ACM:  nil,
@@ -311,7 +311,7 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSStack(ctx context.Context, f 
 		})
 
 		By(fmt.Sprintf("create frontend-tls deployment"), func() {
-			annotations := map[string]string {
+			annotations := map[string]string{
 				"appmesh.k8s.aws/secretMounts": "ca1-cert-tls:/certs/",
 			}
 			env := []corev1.EnvVar{
@@ -338,7 +338,7 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSStack(ctx context.Context, f 
 						PrivateKey:       "/certs/backend-tls_key.pem",
 					},
 				},
-				Mode:        "STRICT",
+				Mode: "STRICT",
 			}
 			listeners := []appmesh.Listener{vnBuilder.BuildListenerWithTLS("http", 8080, backendListenerTLS)}
 			backends := []types.NamespacedName{}
@@ -360,7 +360,7 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSStack(ctx context.Context, f 
 					Value: "backend",
 				},
 			}
-			annotations := map[string]string {
+			annotations := map[string]string{
 				"appmesh.k8s.aws/secretMounts": "backend-tls-tls:/certs/",
 			}
 			dp := mb.BuildDeployment("backend-tls", 1, defaultBackEndImage, AppContainerPort, env, annotations)
@@ -431,8 +431,8 @@ func (s *TLSStack) createVirtualNodeResourcesForPartialTLSStack(ctx context.Cont
 			tlsBackendDefaults := &appmesh.BackendDefaults{
 				ClientPolicy: &appmesh.ClientPolicy{
 					TLS: &appmesh.ClientPolicyTLS{
-						Enforce:    &tlsEnforce,
-						Ports:      nil,
+						Enforce: &tlsEnforce,
+						Ports:   nil,
 						Validation: appmesh.TLSValidationContext{
 							Trust: appmesh.TLSValidationContextTrust{
 								ACM:  nil,
@@ -449,7 +449,7 @@ func (s *TLSStack) createVirtualNodeResourcesForPartialTLSStack(ctx context.Cont
 		})
 
 		By(fmt.Sprintf("create frontend-tls deployment"), func() {
-			annotations := map[string]string {
+			annotations := map[string]string{
 				"appmesh.k8s.aws/secretMounts": "ca1-cert-tls:/certs/",
 			}
 			env := []corev1.EnvVar{
@@ -558,8 +558,8 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSValidationStack(ctx context.C
 			tlsBackendDefaults := &appmesh.BackendDefaults{
 				ClientPolicy: &appmesh.ClientPolicy{
 					TLS: &appmesh.ClientPolicyTLS{
-						Enforce:    &tlsEnforce,
-						Ports:      nil,
+						Enforce: &tlsEnforce,
+						Ports:   nil,
 						Validation: appmesh.TLSValidationContext{
 							Trust: appmesh.TLSValidationContextTrust{
 								ACM:  nil,
@@ -576,7 +576,7 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSValidationStack(ctx context.C
 		})
 
 		By(fmt.Sprintf("create frontend-tls deployment"), func() {
-			annotations := map[string]string {
+			annotations := map[string]string{
 				"appmesh.k8s.aws/secretMounts": "ca2-cert-tls:/certs/",
 			}
 			env := []corev1.EnvVar{
@@ -603,7 +603,7 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSValidationStack(ctx context.C
 						PrivateKey:       "/certs/backend-tls_key.pem",
 					},
 				},
-				Mode:        "STRICT",
+				Mode: "STRICT",
 			}
 			listeners := []appmesh.Listener{vnBuilder.BuildListenerWithTLS("http", 8080, backendListenerTLS)}
 			backends := []types.NamespacedName{}
@@ -625,7 +625,7 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSValidationStack(ctx context.C
 					Value: "backend",
 				},
 			}
-			annotations := map[string]string {
+			annotations := map[string]string{
 				"appmesh.k8s.aws/secretMounts": "backend-tls-tls:/certs/",
 			}
 			dp := mb.BuildDeployment("backend-tls", 1, defaultBackEndImage, AppContainerPort, env, annotations)
