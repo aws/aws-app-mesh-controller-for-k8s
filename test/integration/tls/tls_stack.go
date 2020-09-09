@@ -65,9 +65,10 @@ type TLSStack struct {
 	BackEndVR *appmesh.VirtualRouter
 }
 
+//TLS Validation is enabled on the Frontend and Listener TLS is configured on the backend. Frontend looks
+//for certs signed by CA1 and backend certs are signed by CA1 as well.
 func (s *TLSStack) DeployTLSStack(ctx context.Context, f *framework.Framework) {
 	s.createTLSStackMeshAndNamespace(ctx, f)
-	s.ServiceDiscoveryType = manifest.DNSServiceDiscovery
 	mb := &manifest.ManifestBuilder{
 		Namespace:            s.namespace.Name,
 		ServiceDiscoveryType: s.ServiceDiscoveryType,
@@ -78,10 +79,10 @@ func (s *TLSStack) DeployTLSStack(ctx context.Context, f *framework.Framework) {
 	s.assignBackendVSToFrontEndVN(ctx, f)
 }
 
+//Frontend has TLS Validation enabled while TLS is disabled on the backend
 func (s *TLSStack) DeployPartialTLSStack(ctx context.Context, f *framework.Framework) {
 	s.createTLSStackMeshAndNamespace(ctx, f)
 	time.Sleep(30 * time.Second)
-	s.ServiceDiscoveryType = manifest.DNSServiceDiscovery
 	mb := &manifest.ManifestBuilder{
 		Namespace:            s.namespace.Name,
 		ServiceDiscoveryType: s.ServiceDiscoveryType,
@@ -92,10 +93,11 @@ func (s *TLSStack) DeployPartialTLSStack(ctx context.Context, f *framework.Frame
 	s.assignBackendVSToFrontEndVN(ctx, f)
 }
 
+//TLS Validation is enabled on the Frontend and Listener TLS is configured on the backend. Frontend looks
+//for certs signed by CA2 while backend certs are signed by CA1.
 func (s *TLSStack) DeployTLSValidationStack(ctx context.Context, f *framework.Framework) {
 	s.createTLSStackMeshAndNamespace(ctx, f)
 	time.Sleep(30 * time.Second)
-	s.ServiceDiscoveryType = manifest.DNSServiceDiscovery
 	mb := &manifest.ManifestBuilder{
 		Namespace:            s.namespace.Name,
 		ServiceDiscoveryType: s.ServiceDiscoveryType,
@@ -280,7 +282,7 @@ func (s *TLSStack) createSecretsForTLSValidationStack(ctx context.Context, f *fr
 func (s *TLSStack) createVirtualNodeResourcesForTLSStack(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
 	By("create virtualNode resources", func() {
 		vnBuilder := &manifest.VNBuilder{
-			ServiceDiscoveryType: manifest.DNSServiceDiscovery,
+			ServiceDiscoveryType: s.ServiceDiscoveryType,
 			Namespace:            tlsTest,
 		}
 
@@ -418,7 +420,7 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSStack(ctx context.Context, f 
 func (s *TLSStack) createVirtualNodeResourcesForPartialTLSStack(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
 	By("create virtualNode resources", func() {
 		vnBuilder := &manifest.VNBuilder{
-			ServiceDiscoveryType: manifest.DNSServiceDiscovery,
+			ServiceDiscoveryType: s.ServiceDiscoveryType,
 			Namespace:            tlsTest,
 		}
 
@@ -545,7 +547,7 @@ func (s *TLSStack) createVirtualNodeResourcesForPartialTLSStack(ctx context.Cont
 func (s *TLSStack) createVirtualNodeResourcesForTLSValidationStack(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
 	By("create virtualNode resources", func() {
 		vnBuilder := &manifest.VNBuilder{
-			ServiceDiscoveryType: manifest.DNSServiceDiscovery,
+			ServiceDiscoveryType: s.ServiceDiscoveryType,
 			Namespace:            tlsTest,
 		}
 
