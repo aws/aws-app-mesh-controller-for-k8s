@@ -127,7 +127,7 @@ var _ = Describe("VirtualRouter", func() {
 			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
 			listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
 			backends := []types.NamespacedName{}
-			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners)
+			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
 
 			By("Creating a virtual node resource in k8s", func() {
 				err := vnTest.Create(ctx, f, vn)
@@ -244,8 +244,8 @@ var _ = Describe("VirtualRouter", func() {
 
 			backends := []types.NamespacedName{}
 
-			vn1 := vnBuilder.BuildVirtualNode(vnName1, backends, listeners1)
-			vn2 := vnBuilder.BuildVirtualNode(vnName2, backends, listeners2)
+			vn1 := vnBuilder.BuildVirtualNode(vnName1, backends, listeners1, &appmesh.BackendDefaults{})
+			vn2 := vnBuilder.BuildVirtualNode(vnName2, backends, listeners2, &appmesh.BackendDefaults{})
 
 			By("Create virtual node resource in k8s", func() {
 				err := vnTest.Create(ctx, f, vn1)
@@ -370,7 +370,7 @@ var _ = Describe("VirtualRouter", func() {
 			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
 			listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
 			backends := []types.NamespacedName{}
-			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners)
+			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
 
 			By("Creating a virtual node resource in k8s", func() {
 				err := vnTest.Create(ctx, f, vn)

@@ -4,7 +4,8 @@ import multiprocessing
 PORT = int(env.get("PORT", 8080))
 DEBUG_MODE = int(env.get("DEBUG_MODE", 0))
 XRAY_APP_NAME = env.get('XRAY_APP_NAME', 'frontend')
-BACKEND_HOST = env.get('BACKEND_HOST', 'backend.timeout-e2e.svc.cluster.local:8080')
+BACKEND_TIMEOUT_HOST = env.get('BACKEND_TIMEOUT_HOST', 'backend.timeout-e2e.svc.cluster.local')
+BACKEND_TLS_HOST = env.get('BACKEND_TLS_HOST', 'backend-tls.tls-e2e.svc.cluster.local')
 
 # Gunicorn config
 bind = ":" + str(PORT)
