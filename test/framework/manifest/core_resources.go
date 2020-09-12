@@ -20,8 +20,36 @@ type ManifestBuilder struct {
 	CloudMapNamespace string
 }
 
-func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, appImage string, containerPort int32,
-	env []corev1.EnvVar, annotations map[string]string) *appsv1.Deployment {
+type ContainerInfo struct {
+	Name          string
+	AppImage      string
+	ContainerPort int32
+	Env           []corev1.EnvVar
+	Args          []string
+}
+
+func (b *ManifestBuilder) BuildContainerSpec(containersInfo []ContainerInfo) []corev1.Container {
+
+	var containers []corev1.Container
+	for index, _ := range containersInfo {
+		container := corev1.Container{
+			Name:  containersInfo[index].Name,
+			Image: containersInfo[index].AppImage,
+			Ports: []corev1.ContainerPort{
+				{
+					ContainerPort: containersInfo[index].ContainerPort,
+				},
+			},
+			Env:  containersInfo[index].Env,
+			Args: containersInfo[index].Args,
+		}
+		containers = append(containers, container)
+	}
+
+	return containers
+}
+
+func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, containers []corev1.Container, annotations map[string]string) *appsv1.Deployment {
 	labels := b.buildNodeSelectors(instanceName)
 	dpName := b.buildNodeName(instanceName)
 	dp := &appsv1.Deployment{
@@ -38,18 +66,7 @@ func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, a
 					Annotations: annotations,
 				},
 				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: appImage,
-							Ports: []corev1.ContainerPort{
-								{
-									ContainerPort: containerPort,
-								},
-							},
-							Env: env,
-						},
-					},
+					Containers: containers,
 				},
 			},
 		},

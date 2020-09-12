@@ -234,17 +234,25 @@ func (s *TimeoutStack) createVirtualNodeResourcesForTimeoutStack(ctx context.Con
 		})
 
 		By(fmt.Sprintf("create frontend deployment"), func() {
-			env := []corev1.EnvVar{
+			containersInfo := []manifest.ContainerInfo{
 				{
-					Name:  "PORT",
-					Value: fmt.Sprintf("%d", AppContainerPort),
-				},
-				{
-					Name:  "BACKEND_TIMEOUT_HOST",
-					Value: "backend.timeout-e2e.svc.cluster.local",
+					Name:          "app",
+					AppImage:      defaultFrontEndImage,
+					ContainerPort: AppContainerPort,
+					Env: []corev1.EnvVar{
+						{
+							Name:  "PORT",
+							Value: fmt.Sprintf("%d", AppContainerPort),
+						},
+						{
+							Name:  "BACKEND_TIMEOUT_HOST",
+							Value: "backend.timeout-e2e.svc.cluster.local",
+						},
+					},
 				},
 			}
-			dp := mb.BuildDeployment("frontend", 1, defaultFrontEndImage, AppContainerPort, env, annotations)
+			containers := mb.BuildContainerSpec(containersInfo)
+			dp := mb.BuildDeployment("frontend", 1, containers, annotations)
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.FrontEndDP = dp
@@ -260,21 +268,29 @@ func (s *TimeoutStack) createVirtualNodeResourcesForTimeoutStack(ctx context.Con
 		})
 
 		By(fmt.Sprintf("create backend deployment"), func() {
-			env := []corev1.EnvVar{
+			containersInfo := []manifest.ContainerInfo{
 				{
-					Name:  "SERVER_PORT",
-					Value: fmt.Sprintf("%d", AppContainerPort),
-				},
-				{
-					Name:  "WHO_AM_I",
-					Value: "backend",
-				},
-				{
-					Name:  "TIMEOUT_VALUE",
-					Value: fmt.Sprintf("%d", s.TimeoutValue),
+					Name:          "app",
+					AppImage:      defaultBackEndImage,
+					ContainerPort: AppContainerPort,
+					Env: []corev1.EnvVar{
+						{
+							Name:  "SERVER_PORT",
+							Value: fmt.Sprintf("%d", AppContainerPort),
+						},
+						{
+							Name:  "WHO_AM_I",
+							Value: "backend",
+						},
+						{
+							Name:  "TIMEOUT_VALUE",
+							Value: fmt.Sprintf("%d", s.TimeoutValue),
+						},
+					},
 				},
 			}
-			dp := mb.BuildDeployment("backend", 1, defaultBackEndImage, AppContainerPort, env, annotations)
+			containers := mb.BuildContainerSpec(containersInfo)
+			dp := mb.BuildDeployment("backend", 1, containers, annotations)
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.BackEndDP = dp

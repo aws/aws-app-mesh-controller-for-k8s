@@ -8,14 +8,16 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"net/http"
 	"net/url"
+	"os"
+	"os/exec"
 	"sync"
 	"time"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/fishapp/shared"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
@@ -37,6 +39,20 @@ const (
 	connectivityCheckRate                  = time.Second / 100
 	connectivityCheckProxyPort             = 8899
 	connectivityCheckUniformDistributionSL = 0.001 // Significance level that traffic to targets are uniform distributed.
+	AppContainerPort                       = 9080
+	HttpProxyContainerPort                 = 8899
+	defaultAppImage                        = "970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest"
+	defaultHTTPProxyImage                  = "abhinavsingh/proxy.py:latest"
+	caCertScript                           = "certs/ca_certs.sh"
+	nodeCertScript                         = "certs/node_certs.sh"
+	genericNodeCertCfgFile                 = "certs/node_cert.cfg"
+	certsBasePath                          = "certs/"
+	certsCfgFileSuffix                     = "_cert.cfg"
+	certChainSuffix                        = "_cert_chain.pem"
+	certKeySuffix                          = "_key.pem"
+	caCertFile                             = "ca_cert.pem"
+	envoyCACertPath                        = "/certs/ca_cert.pem"
+	certCleanupScript                      = "certs/cleanup.sh"
 )
 
 // A dynamic generated stack designed to test app mesh integration :D
@@ -77,7 +93,10 @@ const (
 // then we validate each virtual node can access each virtual service at every path, and calculates the target distribution
 type DynamicStack struct {
 	// service discovery type
-	ServiceDiscoveryType shared.ServiceDiscoveryType
+	ServiceDiscoveryType manifest.ServiceDiscoveryType
+
+	// tls
+	IsTLSEnabled bool
 
 	// number of virtual service
 	VirtualServicesCount int
@@ -117,15 +136,23 @@ type DynamicStack struct {
 // expects the stack can be deployed to namespace successfully
 func (s *DynamicStack) Deploy(ctx context.Context, f *framework.Framework) {
 	s.createMeshAndNamespace(ctx, f)
-	if s.ServiceDiscoveryType == shared.CloudMapServiceDiscovery {
+	if s.ServiceDiscoveryType == manifest.CloudMapServiceDiscovery {
 		s.createCloudMapNamespace(ctx, f)
 	}
-	mb := &shared.ManifestBuilder{
+	mb := &manifest.ManifestBuilder{
 		Namespace:            s.namespace.Name,
 		ServiceDiscoveryType: s.ServiceDiscoveryType,
 		CloudMapNamespace:    s.cloudMapNamespace,
 	}
-	s.createResourcesForNodes(ctx, f, mb)
+	if s.IsTLSEnabled {
+		err := s.createCertificateAuthority(ctx, f)
+		if err != nil {
+			return
+		}
+		s.createResourcesForNodesWithTLS(ctx, f, mb)
+	} else {
+		s.createResourcesForNodes(ctx, f, mb)
+	}
 	s.createResourcesForServices(ctx, f, mb)
 	s.grantVirtualNodesBackendAccess(ctx, f)
 }
@@ -142,7 +169,7 @@ func (s *DynamicStack) Cleanup(ctx context.Context, f *framework.Framework) {
 	if errs := s.deleteResourcesForNodes(ctx, f); len(errs) != 0 {
 		deletionErrors = append(deletionErrors, errs...)
 	}
-	if s.ServiceDiscoveryType == shared.CloudMapServiceDiscovery {
+	if s.ServiceDiscoveryType == manifest.CloudMapServiceDiscovery {
 		if errs := s.deleteCloudMapNamespace(ctx, f); len(errs) != 0 {
 			deletionErrors = append(deletionErrors, errs...)
 		}
@@ -150,6 +177,12 @@ func (s *DynamicStack) Cleanup(ctx context.Context, f *framework.Framework) {
 	if errs := s.deleteMeshAndNamespace(ctx, f); len(errs) != 0 {
 		deletionErrors = append(deletionErrors, errs...)
 	}
+	if s.IsTLSEnabled {
+		if err := s.deleteCerts(); err != nil {
+			f.Logger.Error("Certs clean up failed", zap.Error(err))
+		}
+	}
+
 	for _, err := range deletionErrors {
 		f.Logger.Error("clean up failed", zap.Error(err))
 	}
@@ -214,9 +247,20 @@ func (s *DynamicStack) createMeshAndNamespace(ctx context.Context, f *framework.
 	})
 
 	By("allocates a namespace", func() {
-		namespace, err := f.NSManager.AllocateNamespace(ctx, "appmesh")
-		Expect(err).NotTo(HaveOccurred())
-		s.namespace = namespace
+		if s.IsTLSEnabled {
+			namespace := &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "tls-e2e",
+				},
+			}
+			err := f.K8sClient.Create(ctx, namespace)
+			Expect(err).NotTo(HaveOccurred())
+			s.namespace = namespace
+		} else {
+			namespace, err := f.NSManager.AllocateNamespace(ctx, "appmesh")
+			Expect(err).NotTo(HaveOccurred())
+			s.namespace = namespace
+		}
 	})
 
 	By("label namespace with appMesh inject", func() {
@@ -394,30 +438,302 @@ func (s *DynamicStack) deleteCloudMapNamespace(ctx context.Context, f *framework
 	return deletionErrors
 }
 
-func (s *DynamicStack) createResourcesForNodes(ctx context.Context, f *framework.Framework, mb *shared.ManifestBuilder) {
+func (s *DynamicStack) createCertificateAuthority(ctx context.Context, f *framework.Framework) error {
+	_, err := exec.Command("/bin/sh", caCertScript).Output()
+	if err != nil {
+		return fmt.Errorf("error: %s", err)
+	}
+	return nil
+}
+
+func (s *DynamicStack) createTLSCertsForNodes(nodeName string) error {
+	nodeCertCfgFile := certsBasePath + nodeName + certsCfgFileSuffix
+	replaceExpr := "s/node/" + nodeName + "/g"
+	cmd := exec.Command("sed", "-e", replaceExpr, genericNodeCertCfgFile)
+	certFile, err := os.OpenFile(nodeCertCfgFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		return fmt.Errorf("error opening file: %s", err)
+	}
+	defer certFile.Close()
+	cmd.Stdout = certFile
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error: %s", err)
+	}
+
+	_, err = exec.Command("/bin/sh", nodeCertScript, nodeName).Output()
+	if err != nil {
+		return fmt.Errorf("error: %s", err)
+	}
+	return nil
+}
+
+func (s *DynamicStack) deleteCerts() error {
+	fmt.Printf("Delete Certs")
+	_, err := exec.Command("/bin/sh", certCleanupScript).Output()
+	if err != nil {
+		return fmt.Errorf("error %s", err)
+	}
+	return nil
+}
+
+func (s *DynamicStack) createSecretsForNodeResource(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder,
+	nodeName string, nodeSecretName string) error {
+	nodeCertChain := nodeName + certChainSuffix
+	nodeKey := nodeName + certKeySuffix
+	frontendTLSFiles := []string{caCertFile, nodeCertChain, nodeKey}
+	secret := mb.BuildK8SSecretsFromPemFile(certsBasePath, frontendTLSFiles, nodeSecretName, f)
+	err := f.K8sClient.Create(ctx, secret)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *DynamicStack) createResourcesForNodes(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
 	By("create all resources for nodes", func() {
 		s.createdNodeVNs = make([]*appmesh.VirtualNode, s.VirtualNodesCount)
 		s.createdNodeDPs = make([]*appsv1.Deployment, s.VirtualNodesCount)
 		s.createdNodeSVCs = make([]*corev1.Service, s.VirtualNodesCount)
 
+		vnBuilder := &manifest.VNBuilder{
+			ServiceDiscoveryType: s.ServiceDiscoveryType,
+			Namespace:            s.namespace.Name,
+		}
+
 		for i := 0; i != s.VirtualNodesCount; i++ {
 			instanceName := fmt.Sprintf("node-%d", i)
+
 			By(fmt.Sprintf("create VirtualNode for node #%d", i), func() {
-				vn := mb.BuildNodeVirtualNode(instanceName, nil)
+				listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 9080)}
+				backends := []types.NamespacedName{}
+				vn := vnBuilder.BuildVirtualNode(instanceName, backends, listeners, &appmesh.BackendDefaults{})
 				err := f.K8sClient.Create(ctx, vn)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdNodeVNs[i] = vn
 			})
 
 			By(fmt.Sprintf("create Deployment for node #%d", i), func() {
-				dp := mb.BuildNodeDeployment(instanceName, s.ReplicasPerVirtualNode)
+				containersInfo := []manifest.ContainerInfo{
+					{
+						Name:          "app",
+						AppImage:      defaultAppImage,
+						ContainerPort: AppContainerPort,
+						Env: []corev1.EnvVar{
+							{
+								Name:  "SERVER_PORT",
+								Value: fmt.Sprintf("%d", AppContainerPort),
+							},
+							{
+								Name:  "COLOR",
+								Value: instanceName,
+							},
+						},
+					},
+					{
+						Name:          "http-proxy",
+						AppImage:      defaultHTTPProxyImage,
+						ContainerPort: HttpProxyContainerPort,
+						Args: []string{
+							"--hostname=0.0.0.0",
+							fmt.Sprintf("--port=%d", HttpProxyContainerPort),
+						},
+					},
+				}
+				containers := mb.BuildContainerSpec(containersInfo)
+				dp := mb.BuildDeployment(instanceName, s.ReplicasPerVirtualNode, containers, map[string]string{})
 				err := f.K8sClient.Create(ctx, dp)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdNodeDPs[i] = dp
 			})
 
 			By(fmt.Sprintf("create Service for node #%d", i), func() {
-				svc := mb.BuildNodeService(instanceName)
+				svc := mb.BuildServiceWithSelector(instanceName, AppContainerPort, AppContainerPort)
+				err := f.K8sClient.Create(ctx, svc)
+				Expect(err).NotTo(HaveOccurred())
+				s.createdNodeSVCs[i] = svc
+			})
+		}
+
+		By("wait all VirtualNodes become active", func() {
+			var waitErrors []error
+			waitErrorsMutex := &sync.Mutex{}
+			var wg sync.WaitGroup
+			for i := 0; i != s.VirtualNodesCount; i++ {
+				wg.Add(1)
+				go func(nodeIndex int) {
+					defer wg.Done()
+					vn := s.createdNodeVNs[nodeIndex]
+					vn, err := f.VNManager.WaitUntilVirtualNodeActive(ctx, vn)
+					if err != nil {
+						waitErrorsMutex.Lock()
+						waitErrors = append(waitErrors, errors.Wrapf(err, "VirtualNode: %v", k8s.NamespacedName(vn).String()))
+						waitErrorsMutex.Unlock()
+						return
+					}
+					s.createdNodeVNs[nodeIndex] = vn
+				}(i)
+			}
+			wg.Wait()
+			for _, waitErr := range waitErrors {
+				f.Logger.Error("failed to wait all VirtualNodes become active", zap.Error(waitErr))
+			}
+			Expect(len(waitErrors)).To(BeZero())
+		})
+
+		By("wait all deployments become ready", func() {
+			var waitErrors []error
+			waitErrorsMutex := &sync.Mutex{}
+			var wg sync.WaitGroup
+			for i := 0; i != s.VirtualNodesCount; i++ {
+				wg.Add(1)
+				go func(nodeIndex int) {
+					defer wg.Done()
+					dp := s.createdNodeDPs[nodeIndex]
+					dp, err := f.DPManager.WaitUntilDeploymentReady(ctx, dp)
+					if err != nil {
+						waitErrorsMutex.Lock()
+						waitErrors = append(waitErrors, errors.Wrapf(err, "Deployment: %v", k8s.NamespacedName(dp).String()))
+						waitErrorsMutex.Unlock()
+						return
+					}
+					s.createdNodeDPs[nodeIndex] = dp
+				}(i)
+			}
+			wg.Wait()
+			for _, waitErr := range waitErrors {
+				f.Logger.Error("failed to wait all Deployments become active", zap.Error(waitErr))
+			}
+			Expect(len(waitErrors)).To(BeZero())
+		})
+
+		By("check all VirtualNode in aws", func() {
+			var checkErrors []error
+			checkErrorsMutex := &sync.Mutex{}
+			var wg sync.WaitGroup
+			for i := 0; i != s.VirtualNodesCount; i++ {
+				wg.Add(1)
+				go func(nodeIndex int) {
+					defer wg.Done()
+					vn := s.createdNodeVNs[nodeIndex]
+					err := f.VNManager.CheckVirtualNodeInAWS(ctx, s.mesh, vn)
+					if err != nil {
+						checkErrorsMutex.Lock()
+						checkErrors = append(checkErrors, errors.Wrapf(err, "VirtualNode: %v", k8s.NamespacedName(vn).String()))
+						checkErrorsMutex.Unlock()
+						return
+					}
+				}(i)
+			}
+			wg.Wait()
+			for _, checkErr := range checkErrors {
+				f.Logger.Error("failed to check all VirtualNodes in aws", zap.Error(checkErr))
+			}
+			Expect(len(checkErrors)).To(BeZero())
+		})
+	})
+}
+
+func (s *DynamicStack) createResourcesForNodesWithTLS(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
+	By("create all resources for nodes", func() {
+		s.createdNodeVNs = make([]*appmesh.VirtualNode, s.VirtualNodesCount)
+		s.createdNodeDPs = make([]*appsv1.Deployment, s.VirtualNodesCount)
+		s.createdNodeSVCs = make([]*corev1.Service, s.VirtualNodesCount)
+
+		vnBuilder := &manifest.VNBuilder{
+			ServiceDiscoveryType: s.ServiceDiscoveryType,
+			Namespace:            s.namespace.Name,
+		}
+
+		for i := 0; i != s.VirtualNodesCount; i++ {
+			instanceName := fmt.Sprintf("node-%d", i)
+			By(fmt.Sprintf("create certs for node #%d", i), func() {
+				err := s.createTLSCertsForNodes(instanceName)
+				Expect(err).NotTo(HaveOccurred())
+			})
+			By(fmt.Sprintf("create certs for node #%d", i), func() {
+				nodeSecretName := fmt.Sprintf("node-%d-tls", i)
+				err := s.createSecretsForNodeResource(ctx, f, mb, instanceName, nodeSecretName)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By(fmt.Sprintf("create VirtualNode for node #%d", i), func() {
+				tlsEnforce := true
+				nodeBackendDefaults := &appmesh.BackendDefaults{
+					ClientPolicy: &appmesh.ClientPolicy{
+						TLS: &appmesh.ClientPolicyTLS{
+							Enforce: &tlsEnforce,
+							Ports:   nil,
+							Validation: appmesh.TLSValidationContext{
+								Trust: appmesh.TLSValidationContextTrust{
+									ACM:  nil,
+									File: &appmesh.TLSValidationContextFileTrust{CertificateChain: envoyCACertPath},
+								},
+							},
+						},
+					},
+				}
+
+				nodeCertificateChain := "/certs/" + instanceName + certChainSuffix
+				nodePrivateKey := "/certs/" + instanceName + certKeySuffix
+
+				nodeListenerTLS := &appmesh.ListenerTLS{
+					Certificate: appmesh.ListenerTLSCertificate{
+						File: &appmesh.ListenerTLSFileCertificate{
+							CertificateChain: nodeCertificateChain,
+							PrivateKey:       nodePrivateKey,
+						},
+					},
+					Mode: "STRICT",
+				}
+				listeners := []appmesh.Listener{vnBuilder.BuildListenerWithTLS("http", AppContainerPort, nodeListenerTLS)}
+				vn := vnBuilder.BuildVirtualNode(instanceName, nil, listeners, nodeBackendDefaults)
+				err := f.K8sClient.Create(ctx, vn)
+				Expect(err).NotTo(HaveOccurred())
+				s.createdNodeVNs[i] = vn
+			})
+
+			By(fmt.Sprintf("create Deployment for node #%d", i), func() {
+				nodeSecretName := fmt.Sprintf("node-%d-tls", i)
+				certsPath := nodeSecretName + ":/certs/"
+				annotations := map[string]string{
+					"appmesh.k8s.aws/secretMounts": certsPath,
+				}
+				containersInfo := []manifest.ContainerInfo{
+					{
+						Name:          "app",
+						AppImage:      defaultAppImage,
+						ContainerPort: AppContainerPort,
+						Env: []corev1.EnvVar{
+							{
+								Name:  "SERVER_PORT",
+								Value: fmt.Sprintf("%d", AppContainerPort),
+							},
+							{
+								Name:  "COLOR",
+								Value: instanceName,
+							},
+						},
+					},
+					{
+						Name:          "http-proxy",
+						AppImage:      defaultHTTPProxyImage,
+						ContainerPort: HttpProxyContainerPort,
+						Args: []string{
+							"--hostname=0.0.0.0",
+							fmt.Sprintf("--port=%d", HttpProxyContainerPort),
+						},
+					},
+				}
+				containers := mb.BuildContainerSpec(containersInfo)
+				dp := mb.BuildDeployment(instanceName, s.ReplicasPerVirtualNode, containers, annotations)
+				err := f.K8sClient.Create(ctx, dp)
+				Expect(err).NotTo(HaveOccurred())
+				s.createdNodeDPs[i] = dp
+			})
+
+			By(fmt.Sprintf("create Service for node #%d", i), func() {
+				svc := mb.BuildServiceWithSelector(instanceName, AppContainerPort, AppContainerPort)
 				err := f.K8sClient.Create(ctx, svc)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdNodeSVCs[i] = svc
@@ -610,46 +926,61 @@ func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework
 	return deletionErrors
 }
 
-func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framework.Framework, mb *shared.ManifestBuilder) {
+func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
 	By("create all resources for services", func() {
 		s.createdServiceVSs = make([]*appmesh.VirtualService, s.VirtualServicesCount)
 		s.createdServiceVRs = make([]*appmesh.VirtualRouter, s.VirtualServicesCount)
 		s.createdServiceSVCs = make([]*corev1.Service, s.VirtualServicesCount)
 
+		vrBuilder := &manifest.VRBuilder{
+			Namespace: s.namespace.Name,
+		}
+		vsBuilder := &manifest.VSBuilder{
+			Namespace: s.namespace.Name,
+		}
+
 		nextVirtualNodeIndex := 0
 		for i := 0; i != s.VirtualServicesCount; i++ {
 			instanceName := fmt.Sprintf("service-%d", i)
 			By(fmt.Sprintf("create VirtualRouter for service #%d", i), func() {
-				var routeCfgs []shared.RouteToWeightedVirtualNodes
+				//var routes []appmesh.Route
+				var routeCfgs []manifest.RouteToWeightedVirtualNodes
 				for routeIndex := 0; routeIndex != s.RoutesCountPerVirtualRouter; routeIndex++ {
-					var weightedTargets []shared.WeightedVirtualNode
+					var weightedTargets []manifest.WeightedVirtualNode
+					//var weightedTargets []shared.WeightedVirtualNode
 					for targetIndex := 0; targetIndex != s.TargetsCountPerRoute; targetIndex++ {
-						weightedTargets = append(weightedTargets, shared.WeightedVirtualNode{
+						weightedTargets = append(weightedTargets, manifest.WeightedVirtualNode{
 							VirtualNode: k8s.NamespacedName(s.createdNodeVNs[nextVirtualNodeIndex]),
 							Weight:      1,
 						})
 						nextVirtualNodeIndex = (nextVirtualNodeIndex + 1) % s.VirtualNodesCount
 					}
-					routeCfgs = append(routeCfgs, shared.RouteToWeightedVirtualNodes{
+					routeCfgs = append(routeCfgs, manifest.RouteToWeightedVirtualNodes{
 						Path:            fmt.Sprintf("/path-%d", routeIndex),
 						WeightedTargets: weightedTargets,
 					})
 				}
-				vr := mb.BuildServiceVirtualRouter(instanceName, routeCfgs)
+
+				routes := vrBuilder.BuildRoutes(routeCfgs)
+				vrBuilder.Listeners = []appmesh.VirtualRouterListener{vrBuilder.BuildVirtualRouterListener("http", AppContainerPort)}
+
+				vr := vrBuilder.BuildVirtualRouter(instanceName, routes)
 				err := f.K8sClient.Create(ctx, vr)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdServiceVRs[i] = vr
 			})
 
 			By(fmt.Sprintf("create VirtualService for service #%d", i), func() {
-				vs := mb.BuildServiceVirtualService(instanceName)
+				vs := vsBuilder.BuildVirtualServiceWithRouterBackend(instanceName, instanceName)
+				//vs := mb.BuildServiceVirtualService(instanceName)
 				err := f.K8sClient.Create(ctx, vs)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdServiceVSs[i] = vs
 			})
 
 			By(fmt.Sprintf("create Service for service #%d", i), func() {
-				svc := mb.BuildServiceService(instanceName)
+				svc := mb.BuildServiceWithSelector(instanceName, AppContainerPort, AppContainerPort)
+				//svc := mb.BuildServiceService(instanceName)
 				err := f.K8sClient.Create(ctx, svc)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdServiceSVCs[i] = svc
@@ -1040,14 +1371,14 @@ func (s *DynamicStack) obtainPodToVirtualServiceConnectivityEntries(ctx context.
 			path := route.HTTPRoute.Match.Prefix
 			checkEntries = append(checkEntries, connectivityCheckEntry{
 				dstVirtualService: k8s.NamespacedName(vs),
-				dstURL:            fmt.Sprintf("http://%s:%d%s", aws.StringValue(vs.Spec.AWSName), shared.AppContainerPort, path),
+				dstURL:            fmt.Sprintf("http://%s:%d%s", aws.StringValue(vs.Spec.AWSName), AppContainerPort, path),
 			})
 		}
 	}
 
 	pfErrChan := make(chan error)
 	pfReadyChan := make(chan struct{})
-	portForwarder, err := k8s.NewPortForwarder(ctx, f.RestCfg, pod, []string{fmt.Sprintf("%d:%d", connectivityCheckProxyPort, shared.HttpProxyContainerPort)}, pfReadyChan)
+	portForwarder, err := k8s.NewPortForwarder(ctx, f.RestCfg, pod, []string{fmt.Sprintf("%d:%d", connectivityCheckProxyPort, HttpProxyContainerPort)}, pfReadyChan)
 	if err != nil {
 		return nil, err
 	}

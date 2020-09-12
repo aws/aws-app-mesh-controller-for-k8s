@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/fishapp"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/fishapp/shared"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	. "github.com/onsi/ginkgo"
 	"time"
 )
@@ -38,6 +38,7 @@ var _ = Describe("test dynamically generated symmetrical mesh", func() {
 
 		BeforeEach(func() {
 			stackPrototype = fishapp.DynamicStack{
+				IsTLSEnabled:                true,
 				VirtualServicesCount:        5,
 				VirtualNodesCount:           5,
 				RoutesCountPerVirtualRouter: 2,
@@ -55,8 +56,8 @@ var _ = Describe("test dynamically generated symmetrical mesh", func() {
 			}
 		})
 
-		for _, sdType := range []shared.ServiceDiscoveryType{shared.DNSServiceDiscovery, shared.CloudMapServiceDiscovery} {
-			func(sdType shared.ServiceDiscoveryType) {
+		for _, sdType := range []manifest.ServiceDiscoveryType{manifest.DNSServiceDiscovery, manifest.CloudMapServiceDiscovery} {
+			func(sdType manifest.ServiceDiscoveryType) {
 				It(fmt.Sprintf("should behaves correctly with service discovery type %v", sdType), func() {
 					stackPrototype.ServiceDiscoveryType = sdType
 					stackDefault := stackPrototype

@@ -6,7 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	"sync"
 	"time"
 
@@ -242,7 +241,16 @@ var _ = Describe("VirtualNode", func() {
 			})
 
 			By(fmt.Sprintf("create a deployment for VirtualNode"), func() {
-				dp := mb.BuildDeployment(vnName, 2, defaultAppImage, AppContainerPort, []corev1.EnvVar{}, map[string]string{})
+				containersInfo := []manifest.ContainerInfo{
+					{
+						Name:          "app",
+						AppImage:      defaultAppImage,
+						ContainerPort: AppContainerPort,
+					},
+				}
+				containers := mb.BuildContainerSpec(containersInfo)
+				dp := mb.BuildDeployment(vnName, 2, containers, map[string]string{})
+				//dp := mb.BuildDeployment(vnName, 2, defaultAppImage, AppContainerPort, []corev1.EnvVar{}, map[string]string{})
 				err := f.K8sClient.Create(ctx, dp)
 				Expect(err).NotTo(HaveOccurred())
 				vnTest.Deployments[vnName] = dp
