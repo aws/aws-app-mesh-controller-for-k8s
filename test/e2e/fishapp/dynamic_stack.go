@@ -943,11 +943,9 @@ func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framew
 		for i := 0; i != s.VirtualServicesCount; i++ {
 			instanceName := fmt.Sprintf("service-%d", i)
 			By(fmt.Sprintf("create VirtualRouter for service #%d", i), func() {
-				//var routes []appmesh.Route
 				var routeCfgs []manifest.RouteToWeightedVirtualNodes
 				for routeIndex := 0; routeIndex != s.RoutesCountPerVirtualRouter; routeIndex++ {
 					var weightedTargets []manifest.WeightedVirtualNode
-					//var weightedTargets []shared.WeightedVirtualNode
 					for targetIndex := 0; targetIndex != s.TargetsCountPerRoute; targetIndex++ {
 						weightedTargets = append(weightedTargets, manifest.WeightedVirtualNode{
 							VirtualNode: k8s.NamespacedName(s.createdNodeVNs[nextVirtualNodeIndex]),
@@ -972,7 +970,6 @@ func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framew
 
 			By(fmt.Sprintf("create VirtualService for service #%d", i), func() {
 				vs := vsBuilder.BuildVirtualServiceWithRouterBackend(instanceName, instanceName)
-				//vs := mb.BuildServiceVirtualService(instanceName)
 				err := f.K8sClient.Create(ctx, vs)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdServiceVSs[i] = vs
@@ -980,7 +977,6 @@ func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framew
 
 			By(fmt.Sprintf("create Service for service #%d", i), func() {
 				svc := mb.BuildServiceWithSelector(instanceName, AppContainerPort, AppContainerPort)
-				//svc := mb.BuildServiceService(instanceName)
 				err := f.K8sClient.Create(ctx, svc)
 				Expect(err).NotTo(HaveOccurred())
 				s.createdServiceSVCs[i] = svc

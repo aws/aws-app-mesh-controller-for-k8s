@@ -32,7 +32,7 @@ generate_cert_bundle() {
   cat $DIR/$1_cert.pem $DIR/$2_cert.pem > $DIR/$1_$2_bundle.pem
 }
 
-# Generate RSA cert for the backend-tls app
+# Generate RSA certs for the Virtual Node passed in via $1
 echo "Generating backend certificate."
 generate_rsa_key $1 ca
 generate_x509_cert $1 ca
