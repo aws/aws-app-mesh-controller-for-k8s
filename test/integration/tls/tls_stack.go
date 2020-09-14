@@ -314,17 +314,25 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSStack(ctx context.Context, f 
 			annotations := map[string]string{
 				"appmesh.k8s.aws/secretMounts": "ca1-cert-tls:/certs/",
 			}
-			env := []corev1.EnvVar{
+			containersInfo := []manifest.ContainerInfo{
 				{
-					Name:  "PORT",
-					Value: fmt.Sprintf("%d", AppContainerPort),
-				},
-				{
-					Name:  "BACKEND_TLS_HOST",
-					Value: "backend-tls.tls-e2e.svc.cluster.local",
+					Name:          "app",
+					AppImage:      defaultFrontEndImage,
+					ContainerPort: AppContainerPort,
+					Env: []corev1.EnvVar{
+						{
+							Name:  "PORT",
+							Value: fmt.Sprintf("%d", AppContainerPort),
+						},
+						{
+							Name:  "BACKEND_TLS_HOST",
+							Value: "backend-tls.tls-e2e.svc.cluster.local",
+						},
+					},
 				},
 			}
-			dp := mb.BuildDeployment("frontend-tls", 1, defaultFrontEndImage, AppContainerPort, env, annotations)
+			containers := mb.BuildContainerSpec(containersInfo)
+			dp := mb.BuildDeployment("frontend-tls", 1, containers, annotations)
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.FrontEndDP = dp
@@ -350,20 +358,28 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSStack(ctx context.Context, f 
 		})
 
 		By(fmt.Sprintf("create backend deployment"), func() {
-			env := []corev1.EnvVar{
-				{
-					Name:  "SERVER_PORT",
-					Value: fmt.Sprintf("%d", AppContainerPort),
-				},
-				{
-					Name:  "WHO_AM_I",
-					Value: "backend",
-				},
-			}
 			annotations := map[string]string{
 				"appmesh.k8s.aws/secretMounts": "backend-tls-tls:/certs/",
 			}
-			dp := mb.BuildDeployment("backend-tls", 1, defaultBackEndImage, AppContainerPort, env, annotations)
+			containersInfo := []manifest.ContainerInfo{
+				{
+					Name:          "app",
+					AppImage:      defaultBackEndImage,
+					ContainerPort: AppContainerPort,
+					Env: []corev1.EnvVar{
+						{
+							Name:  "SERVER_PORT",
+							Value: fmt.Sprintf("%d", AppContainerPort),
+						},
+						{
+							Name:  "WHO_AM_I",
+							Value: "backend",
+						},
+					},
+				},
+			}
+			containers := mb.BuildContainerSpec(containersInfo)
+			dp := mb.BuildDeployment("backend-tls", 1, containers, annotations)
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.BackEndDP = dp
@@ -452,17 +468,25 @@ func (s *TLSStack) createVirtualNodeResourcesForPartialTLSStack(ctx context.Cont
 			annotations := map[string]string{
 				"appmesh.k8s.aws/secretMounts": "ca1-cert-tls:/certs/",
 			}
-			env := []corev1.EnvVar{
+			containersInfo := []manifest.ContainerInfo{
 				{
-					Name:  "PORT",
-					Value: fmt.Sprintf("%d", AppContainerPort),
-				},
-				{
-					Name:  "BACKEND_TLS_HOST",
-					Value: "backend-tls.tls-e2e.svc.cluster.local",
+					Name:          "app",
+					AppImage:      defaultFrontEndImage,
+					ContainerPort: AppContainerPort,
+					Env: []corev1.EnvVar{
+						{
+							Name:  "PORT",
+							Value: fmt.Sprintf("%d", AppContainerPort),
+						},
+						{
+							Name:  "BACKEND_TLS_HOST",
+							Value: "backend-tls.tls-e2e.svc.cluster.local",
+						},
+					},
 				},
 			}
-			dp := mb.BuildDeployment("frontend-tls", 1, defaultFrontEndImage, AppContainerPort, env, annotations)
+			containers := mb.BuildContainerSpec(containersInfo)
+			dp := mb.BuildDeployment("frontend-tls", 1, containers, annotations)
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.FrontEndDP = dp
@@ -479,18 +503,25 @@ func (s *TLSStack) createVirtualNodeResourcesForPartialTLSStack(ctx context.Cont
 		})
 
 		By(fmt.Sprintf("create backend deployment"), func() {
-			env := []corev1.EnvVar{
+			containersInfo := []manifest.ContainerInfo{
 				{
-					Name:  "SERVER_PORT",
-					Value: fmt.Sprintf("%d", AppContainerPort),
-				},
-				{
-					Name:  "WHO_AM_I",
-					Value: "backend",
+					Name:          "app",
+					AppImage:      defaultBackEndImage,
+					ContainerPort: AppContainerPort,
+					Env: []corev1.EnvVar{
+						{
+							Name:  "SERVER_PORT",
+							Value: fmt.Sprintf("%d", AppContainerPort),
+						},
+						{
+							Name:  "WHO_AM_I",
+							Value: "backend",
+						},
+					},
 				},
 			}
-
-			dp := mb.BuildDeployment("backend-tls", 1, defaultBackEndImage, AppContainerPort, env, map[string]string{})
+			containers := mb.BuildContainerSpec(containersInfo)
+			dp := mb.BuildDeployment("backend-tls", 1, containers, map[string]string{})
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.BackEndDP = dp
@@ -579,17 +610,25 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSValidationStack(ctx context.C
 			annotations := map[string]string{
 				"appmesh.k8s.aws/secretMounts": "ca2-cert-tls:/certs/",
 			}
-			env := []corev1.EnvVar{
+			containersInfo := []manifest.ContainerInfo{
 				{
-					Name:  "PORT",
-					Value: fmt.Sprintf("%d", AppContainerPort),
-				},
-				{
-					Name:  "BACKEND_TLS_HOST",
-					Value: "backend-tls.tls-e2e.svc.cluster.local",
+					Name:          "app",
+					AppImage:      defaultFrontEndImage,
+					ContainerPort: AppContainerPort,
+					Env: []corev1.EnvVar{
+						{
+							Name:  "PORT",
+							Value: fmt.Sprintf("%d", AppContainerPort),
+						},
+						{
+							Name:  "BACKEND_TLS_HOST",
+							Value: "backend-tls.tls-e2e.svc.cluster.local",
+						},
+					},
 				},
 			}
-			dp := mb.BuildDeployment("frontend-tls", 1, defaultFrontEndImage, AppContainerPort, env, annotations)
+			containers := mb.BuildContainerSpec(containersInfo)
+			dp := mb.BuildDeployment("frontend-tls", 1, containers, annotations)
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.FrontEndDP = dp
@@ -615,20 +654,28 @@ func (s *TLSStack) createVirtualNodeResourcesForTLSValidationStack(ctx context.C
 		})
 
 		By(fmt.Sprintf("create backend deployment"), func() {
-			env := []corev1.EnvVar{
-				{
-					Name:  "SERVER_PORT",
-					Value: fmt.Sprintf("%d", AppContainerPort),
-				},
-				{
-					Name:  "WHO_AM_I",
-					Value: "backend",
-				},
-			}
 			annotations := map[string]string{
 				"appmesh.k8s.aws/secretMounts": "backend-tls-tls:/certs/",
 			}
-			dp := mb.BuildDeployment("backend-tls", 1, defaultBackEndImage, AppContainerPort, env, annotations)
+			containersInfo := []manifest.ContainerInfo{
+				{
+					Name:          "app",
+					AppImage:      defaultBackEndImage,
+					ContainerPort: AppContainerPort,
+					Env: []corev1.EnvVar{
+						{
+							Name:  "SERVER_PORT",
+							Value: fmt.Sprintf("%d", AppContainerPort),
+						},
+						{
+							Name:  "WHO_AM_I",
+							Value: "backend",
+						},
+					},
+				},
+			}
+			containers := mb.BuildContainerSpec(containersInfo)
+			dp := mb.BuildDeployment("backend-tls", 1, containers, annotations)
 			err := f.K8sClient.Create(ctx, dp)
 			Expect(err).NotTo(HaveOccurred())
 			s.BackEndDP = dp
