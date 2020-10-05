@@ -1,0 +1,32 @@
+name: Unit Test
+
+on:
+  pull_request_target:
+    branches: [ master ]
+
+jobs:
+
+  build_x86_64:
+    name: Unit Test
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.14
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.14
+      id: go
+
+    - name: Setup kubebuilder
+      run: |
+        arch=$(go env GOARCH)
+        os=$(go env GOOS)
+        curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/
+        sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
+        export PATH=$PATH:/usr/local/kubebuilder/bin
+
+    - name: Checkout code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Run unit tests
+      run: make test

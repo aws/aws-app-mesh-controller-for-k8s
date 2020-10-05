@@ -1,5 +1,5 @@
-[![CircleCI](https://circleci.com/gh/aws/aws-app-mesh-controller-for-k8s/tree/master.svg?style=svg)](https://circleci.com/gh/aws/aws-app-mesh-controller-for-k8s/tree/master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/aws/aws-app-mesh-controller-for-k8s)](https://goreportcard.com/report/github.com/aws/aws-app-mesh-controller-for-k8s) 
+![Build](https://github.com/aws/aws-app-mesh-controller-for-k8s/workflows/Build/badge.svg?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/aws/aws-app-mesh-controller-for-k8s)](https://goreportcard.com/report/github.com/aws/aws-app-mesh-controller-for-k8s)
 
 <p>
     <img src="assets/images/aws_appmesh_icon.svg" alt="App Mesh Logo" width="200" />
