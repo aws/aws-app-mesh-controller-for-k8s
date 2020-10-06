@@ -133,6 +133,23 @@ func Convert_CRD_HealthCheckPolicy_To_SDK_HealthCheckPolicy(crdObj *appmesh.Heal
 	return nil
 }
 
+func Convert_CRD_OutlierDetection_To_SDK_OutlierDetection(crdObj *appmesh.OutlierDetection, sdkObj *appmeshsdk.OutlierDetection, scope conversion.Scope) error {
+
+	sdkObj.Interval = &appmeshsdk.Duration{}
+	if err := Convert_CRD_Duration_To_SDK_Duration(&crdObj.Interval, sdkObj.Interval, scope); err != nil {
+		return err
+	}
+
+	sdkObj.BaseEjectionDuration = &appmeshsdk.Duration{}
+	if err := Convert_CRD_Duration_To_SDK_Duration(&crdObj.BaseEjectionDuration, sdkObj.BaseEjectionDuration, scope); err != nil {
+		return err
+	}
+
+	sdkObj.MaxEjectionPercent = aws.Int64(crdObj.MaxEjectionPercent)
+	sdkObj.MaxServerErrors = aws.Int64(crdObj.MaxServerErrors)
+	return nil
+}
+
 func Convert_CRD_ListenerTLSACMCertificate_To_SDK_ListenerTLSACMCertificate(crdObj *appmesh.ListenerTLSACMCertificate, sdkObj *appmeshsdk.ListenerTlsAcmCertificate, scope conversion.Scope) error {
 	sdkObj.CertificateArn = aws.String(crdObj.CertificateARN)
 	return nil
@@ -281,6 +298,16 @@ func Convert_CRD_Listener_To_SDK_Listener(crdObj *appmesh.Listener, sdkObj *appm
 	} else {
 		sdkObj.HealthCheck = nil
 	}
+
+	if crdObj.OutlierDetection != nil {
+		sdkObj.OutlierDetection = &appmeshsdk.OutlierDetection{}
+		if err := Convert_CRD_OutlierDetection_To_SDK_OutlierDetection(crdObj.OutlierDetection, sdkObj.OutlierDetection, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.OutlierDetection = nil
+	}
+
 	if crdObj.TLS != nil {
 		sdkObj.Tls = &appmeshsdk.ListenerTls{}
 		if err := Convert_CRD_ListenerTLS_To_SDK_ListenerTLS(crdObj.TLS, sdkObj.Tls, scope); err != nil {

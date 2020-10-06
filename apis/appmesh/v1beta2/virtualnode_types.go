@@ -128,6 +128,25 @@ type HealthCheckPolicy struct {
 	UnhealthyThreshold int64 `json:"unhealthyThreshold"`
 }
 
+// OutlierDetection defines the health check policy that temporarily ejects an endpoint/host of a VirtualNode
+// from the load balancing set when it meets failure threshold
+type OutlierDetection struct {
+	// The threshold for the number of server errors returned by a given host during an outlier detection interval.
+	// If the server error count meets/exceeds this threshold the host is ejected.
+	// A server error is defined as any HTTP 5xx response (or the equivalent for gRPC and TCP connections)
+	// +kubebuilder:validation:Minimum=1
+	MaxServerErrors int64 `json:"maxServerErrors"`
+	// The time interval between ejection analysis sweeps. This can result in both new ejections as well as hosts being returned to service
+	Interval Duration `json:"interval"`
+	// The base time that a host is ejected for. The real time is equal to the base time multiplied by the number of times the host has been ejected
+	BaseEjectionDuration Duration `json:"baseEjectionDuration"`
+	// The threshold for the max percentage of outlier hosts that can be ejected from the load balancing set.
+	// maxEjectionPercent=100 means outlier detection can potentially eject all of the hosts from the upstream service if they are all considered outliers, leaving the load balancing set with zero hosts
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=100
+	MaxEjectionPercent int64 `json:"maxEjectionPercent"`
+}
+
 // ListenerTLSACMCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsAcmCertificate.html
 type ListenerTLSACMCertificate struct {
 	// The Amazon Resource Name (ARN) for the certificate.
@@ -196,6 +215,9 @@ type Listener struct {
 	// The health check information for the listener.
 	// +optional
 	HealthCheck *HealthCheckPolicy `json:"healthCheck,omitempty"`
+	// The outlier detection for the listener
+	// +optional
+	OutlierDetection *OutlierDetection `json:"outlierDetection,omitempty"`
 	// A reference to an object that represents the Transport Layer Security (TLS) properties for a listener.
 	// +optional
 	TLS *ListenerTLS `json:"tls,omitempty"`

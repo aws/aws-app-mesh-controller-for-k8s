@@ -823,6 +823,63 @@ func TestConvert_CRD_HealthCheckPolicy_To_SDK_HealthCheckPolicy(t *testing.T) {
 	}
 }
 
+func TestConvert_CRD_OutlierDetection_To_SDK_OutlierDetection(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.OutlierDetection
+		sdkObj *appmeshsdk.OutlierDetection
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.OutlierDetection
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.OutlierDetection{
+					MaxServerErrors:    20,
+					MaxEjectionPercent: 70,
+					Interval: appmesh.Duration{
+						Unit:  "ms",
+						Value: int64(2000),
+					},
+					BaseEjectionDuration: appmesh.Duration{
+						Unit:  "s",
+						Value: int64(10),
+					},
+				},
+				sdkObj: &appmeshsdk.OutlierDetection{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.OutlierDetection{
+				MaxServerErrors:    aws.Int64(20),
+				MaxEjectionPercent: aws.Int64(70),
+				Interval: &appmeshsdk.Duration{
+					Unit:  aws.String("ms"),
+					Value: aws.Int64(2000),
+				},
+				BaseEjectionDuration: &appmeshsdk.Duration{
+					Unit:  aws.String("s"),
+					Value: aws.Int64(10),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_OutlierDetection_To_SDK_OutlierDetection(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
 func TestConvert_CRD_ListenerTLSACMCertificate_To_SDK_ListenerTLSACMCertificate(t *testing.T) {
 	type args struct {
 		crdObj *appmesh.ListenerTLSACMCertificate
@@ -1340,6 +1397,18 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 						TimeoutMillis:      30,
 						UnhealthyThreshold: 2,
 					},
+					OutlierDetection: &appmesh.OutlierDetection{
+						MaxServerErrors:    20,
+						MaxEjectionPercent: 70,
+						Interval: appmesh.Duration{
+							Unit:  "ms",
+							Value: int64(2000),
+						},
+						BaseEjectionDuration: appmesh.Duration{
+							Unit:  "s",
+							Value: int64(10),
+						},
+					},
 					TLS: &appmesh.ListenerTLS{
 						Certificate: appmesh.ListenerTLSCertificate{
 							ACM: &appmesh.ListenerTLSACMCertificate{
@@ -1378,6 +1447,18 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 					TimeoutMillis:      aws.Int64(30),
 					UnhealthyThreshold: aws.Int64(2),
 				},
+				OutlierDetection: &appmeshsdk.OutlierDetection{
+					MaxServerErrors:    aws.Int64(20),
+					MaxEjectionPercent: aws.Int64(70),
+					Interval: &appmeshsdk.Duration{
+						Unit:  aws.String("ms"),
+						Value: aws.Int64(2000),
+					},
+					BaseEjectionDuration: &appmeshsdk.Duration{
+						Unit:  aws.String("s"),
+						Value: aws.Int64(10),
+					},
+				},
 				Tls: &appmeshsdk.ListenerTls{
 					Certificate: &appmeshsdk.ListenerTlsCertificate{
 						Acm: &appmeshsdk.ListenerTlsAcmCertificate{
@@ -1409,6 +1490,18 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 						Protocol: protocolHTTP,
 					},
 					HealthCheck: nil,
+					OutlierDetection: &appmesh.OutlierDetection{
+						MaxServerErrors:    20,
+						MaxEjectionPercent: 70,
+						Interval: appmesh.Duration{
+							Unit:  "ms",
+							Value: int64(2000),
+						},
+						BaseEjectionDuration: appmesh.Duration{
+							Unit:  "s",
+							Value: int64(10),
+						},
+					},
 					TLS: &appmesh.ListenerTLS{
 						Certificate: appmesh.ListenerTLSCertificate{
 							ACM: &appmesh.ListenerTLSACMCertificate{
@@ -1427,6 +1520,18 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 					Protocol: aws.String("http"),
 				},
 				HealthCheck: nil,
+				OutlierDetection: &appmeshsdk.OutlierDetection{
+					MaxServerErrors:    aws.Int64(20),
+					MaxEjectionPercent: aws.Int64(70),
+					Interval: &appmeshsdk.Duration{
+						Unit:  aws.String("ms"),
+						Value: aws.Int64(2000),
+					},
+					BaseEjectionDuration: &appmeshsdk.Duration{
+						Unit:  aws.String("s"),
+						Value: aws.Int64(10),
+					},
+				},
 				Tls: &appmeshsdk.ListenerTls{
 					Certificate: &appmeshsdk.ListenerTlsCertificate{
 						Acm: &appmeshsdk.ListenerTlsAcmCertificate{
@@ -1477,15 +1582,16 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 			},
 		},
 		{
-			name: "normal case + nil HealthCheck and nil TLS",
+			name: "normal case + nil HealthCheck + nil TLS + nil outlier detection",
 			args: args{
 				crdObj: &appmesh.Listener{
 					PortMapping: appmesh.PortMapping{
 						Port:     port80,
 						Protocol: protocolHTTP,
 					},
-					HealthCheck: nil,
-					TLS:         nil,
+					HealthCheck:      nil,
+					TLS:              nil,
+					OutlierDetection: nil,
 				},
 				sdkObj: &appmeshsdk.Listener{},
 				scope:  nil,
@@ -1495,8 +1601,9 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 					Port:     aws.Int64(80),
 					Protocol: aws.String("http"),
 				},
-				HealthCheck: nil,
-				Tls:         nil,
+				HealthCheck:      nil,
+				Tls:              nil,
+				OutlierDetection: nil,
 			},
 		},
 	}
