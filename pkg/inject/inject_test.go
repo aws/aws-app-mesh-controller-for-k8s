@@ -21,7 +21,7 @@ func getConfig(fp func(Config) Config) Config {
 		IgnoredIPs:                  "169.254.169.254",
 		LogLevel:                    "debug",
 		Preview:                     false,
-		SidecarImage:                "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.15.0.0-prod",
+		SidecarImage:                "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.15.1.0-prod",
 		InitImage:                   "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v3-prod",
 		SidecarMemoryRequests:       "32Mi",
 		SidecarCpuRequests:          "10m",
