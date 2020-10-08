@@ -466,7 +466,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
-									Name:  "ENVOY_STATS_CONFIG_FILE",
+									Name:  "ENVOY_TRACING_CFG_FILE",
 									Value: "/tmp/envoy/envoyconf.yaml",
 								},
 								{
@@ -571,7 +571,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
-									Name:  "ENVOY_STATS_CONFIG_FILE",
+									Name:  "ENVOY_TRACING_CFG_FILE",
 									Value: "/tmp/envoy/envoyconf.yaml",
 								},
 								{
