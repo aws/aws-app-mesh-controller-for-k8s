@@ -31,6 +31,9 @@ func (v *virtualNodeValidator) Prototype(req admission.Request) (runtime.Object,
 
 func (v *virtualNodeValidator) ValidateCreate(ctx context.Context, obj runtime.Object) error {
 	vn := obj.(*appmesh.VirtualNode)
+	if err := v.checkForRequiredFields(vn); err != nil {
+		return err
+	}
 	if err := v.checkVirtualNodeBackendsForDuplicates(vn); err != nil {
 		return err
 	}
@@ -40,6 +43,9 @@ func (v *virtualNodeValidator) ValidateCreate(ctx context.Context, obj runtime.O
 func (v *virtualNodeValidator) ValidateUpdate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error {
 	vn := obj.(*appmesh.VirtualNode)
 	oldVN := oldObj.(*appmesh.VirtualNode)
+	if err := v.checkForRequiredFields(vn); err != nil {
+		return err
+	}
 	if err := v.enforceFieldsImmutability(vn, oldVN); err != nil {
 		return err
 	}
@@ -62,7 +68,8 @@ func (v *virtualNodeValidator) enforceFieldsImmutability(vn *appmesh.VirtualNode
 	if !reflect.DeepEqual(vn.Spec.MeshRef, oldVN.Spec.MeshRef) {
 		changedImmutableFields = append(changedImmutableFields, "spec.meshRef")
 	}
-	if oldVN.Spec.ServiceDiscovery.AWSCloudMap != nil && !reflect.DeepEqual(vn.Spec.ServiceDiscovery.AWSCloudMap, oldVN.Spec.ServiceDiscovery.AWSCloudMap) {
+	if oldVN.Spec.ServiceDiscovery != nil && oldVN.Spec.ServiceDiscovery.AWSCloudMap != nil &&
+		!reflect.DeepEqual(vn.Spec.ServiceDiscovery.AWSCloudMap, oldVN.Spec.ServiceDiscovery.AWSCloudMap) {
 		changedImmutableFields = append(changedImmutableFields, "spec.serviceDiscovery.awsCloudMap")
 	}
 	if len(changedImmutableFields) != 0 {
@@ -91,6 +98,14 @@ func (v *virtualNodeValidator) checkVirtualNodeBackendsForDuplicates(vn *appmesh
 				backendMap[*backend.VirtualService.VirtualServiceARN] = true
 			}
 		}
+	}
+	return nil
+}
+
+func (v *virtualNodeValidator) checkForRequiredFields(vn *appmesh.VirtualNode) error {
+	//ServiceDiscovery is mandatory if a listener is specified
+	if vn.Spec.Listeners != nil && vn.Spec.ServiceDiscovery == nil {
+		return errors.Errorf("ServiceDiscovery missing for %s-%s. ServiceDiscovery must be specified when a listener is specified.", "VirtualNode", vn.Name)
 	}
 	return nil
 }
