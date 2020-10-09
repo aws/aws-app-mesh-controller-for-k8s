@@ -113,13 +113,14 @@ tracing:
    "@type": type.googleapis.com/envoy.config.trace.v2.ZipkinConfig
    collector_cluster: jaeger
    collector_endpoint: "/api/v1/spans"
+   collector_endpoint_version: HTTP_JSON
    shared_span_context: false
 static_resources:
   clusters:
   - name: jaeger
     connect_timeout: 1s
-    type: strict_dns
-    lb_policy: round_robin
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
     load_assignment:
       cluster_name: jaeger
       endpoints:

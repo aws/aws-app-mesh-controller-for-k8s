@@ -51,7 +51,7 @@ const envoyContainerTemplate = `
       "value": "{{ .LogLevel }}"
     }{{ if or .EnableJaegerTracing .EnableDatadogTracing }},
     {
-      "name": "ENVOY_STATS_CONFIG_FILE",
+      "name": "ENVOY_TRACING_CFG_FILE",
       "value": "/tmp/envoy/envoyconf.yaml"
     }{{ end }},
     {

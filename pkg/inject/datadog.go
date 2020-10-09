@@ -17,8 +17,8 @@ static_resources:
   clusters:
   - name: datadog_agent
     connect_timeout: 1s
-    type: strict_dns
-    lb_policy: round_robin
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
     load_assignment:
       cluster_name: datadog_agent
       endpoints:
