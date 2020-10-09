@@ -332,7 +332,8 @@ type VirtualNodeSpec struct {
 	// +kubebuilder:validation:MaxItems=1
 	// +optional
 	Listeners []Listener `json:"listeners,omitempty"`
-	// The service discovery information for the virtual node.
+	// The service discovery information for the virtual node. Optional if there is no
+	// inbound traffic(no listeners). Mandatory if a listener is specified.
 	// +optional
 	ServiceDiscovery *ServiceDiscovery `json:"serviceDiscovery,omitempty"`
 	// The backends that the virtual node is expected to send outbound traffic to.
