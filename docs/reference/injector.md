@@ -16,9 +16,9 @@ App Mesh uses namespace and/or pod annotations to determine if pods in a namespa
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: default-disabled
+  name: default-enabled
   labels:
-    mesh: default-disabled
+    mesh: default-enabled
     appmesh.k8s.aws/sidecarInjectorWebhook: enabled
 ---
 apiVersion: apps/v1
@@ -64,7 +64,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: default-behavior // sidecar will be not injected as namespace has sidecar injection disabled
-  namespace: default-enabled
+  namespace: default-disabled
 spec:
   template:
     spec:
@@ -93,11 +93,11 @@ spec:
 
 AWS App Mesh supports virtual gateway resource to allow resources that are outside of your mesh to communicate to resources that are inside of your mesh. The virtual gateway represents an Envoy proxy running in the Kubernetes cluster. Unlike a virtual node, which represents Envoy running with an application, a virtual gateway represents Envoy deployed by itself. App Mesh Kubernetes controller supports injecting Envoy and virtual gateway configuration.
 
-App Mesh Kubernetes controller uses podSelector to designate Virtual Gateway membership. If you create an pod with labels matching the pod selector labels in a virtual gateway spec, the controller will inject the Envoy configuration to the pod/envoy container and override the default container image by default.
+App Mesh Kubernetes controller uses podSelector to designate Virtual Gateway membership. If you create a pod with labels matching the pod selector labels in a virtual gateway spec, the controller will inject the Envoy configuration to the pod/envoy container and override the default container image by default.
 
 Also, since a pod may contain multiple containers, the controller relies on the container name `envoy` to determine, which container to mutate for virtual gateway configuration.
 
-To use the controller to inject virtual gateway configuration, add podSelector to your virtual gateway and set the container name to `envoy`:
+To use the controller to inject virtual gateway configuration, add podSelector to your virtual gateway, add namespaceSelector label where you need to create the virtual gateway and set the container name to `envoy`:
 
 ```
 apiVersion: appmesh.k8s.aws/v1beta2
