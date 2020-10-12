@@ -176,11 +176,61 @@ func Convert_CRD_VirtualGatewayPortMapping_To_SDK_VirtualGatewayPortMapping(crdO
 	return nil
 }
 
+func Convert_CRD_VirtualGatewayHTTPConnectionPool_To_SDK_VirtualGatewayHttpConnectionPool(crdObj *appmesh.HTTPConnectionPool, sdkObj *appmeshsdk.VirtualGatewayHttpConnectionPool, scope conversion.Scope) error {
+	sdkObj.MaxConnections = aws.Int64(crdObj.MaxConnections)
+	sdkObj.MaxPendingRequests = aws.Int64(crdObj.MaxPendingRequests)
+	return nil
+}
+
+func Convert_CRD_VirtualGatewayHTTP2ConnectionPool_To_SDK_VirtualGatewayHttp2ConnectionPool(crdObj *appmesh.HTTP2ConnectionPool, sdkObj *appmeshsdk.VirtualGatewayHttp2ConnectionPool, scope conversion.Scope) error {
+	sdkObj.MaxRequests = aws.Int64(crdObj.MaxRequests)
+	return nil
+}
+
+func Convert_CRD_VirtualGatewayGRPCConnectionPool_To_SDK_VirtualGatewayGrpcConnectionPool(crdObj *appmesh.GRPCConnectionPool, sdkObj *appmeshsdk.VirtualGatewayGrpcConnectionPool, scope conversion.Scope) error {
+	sdkObj.MaxRequests = aws.Int64(crdObj.MaxRequests)
+	return nil
+}
+
+func Convert_CRD_VirtualGatewayConnectionPool_To_SDK_VirtualGatewayConnectionPool(crdObj *appmesh.VirtualGatewayConnectionPool, sdkObj *appmeshsdk.VirtualGatewayConnectionPool, scope conversion.Scope) error {
+
+	if crdObj.HTTP != nil {
+		sdkObj.Http = &appmeshsdk.VirtualGatewayHttpConnectionPool{}
+		if err := Convert_CRD_VirtualGatewayHTTPConnectionPool_To_SDK_VirtualGatewayHttpConnectionPool(crdObj.HTTP, sdkObj.Http, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Http = nil
+	}
+
+	if crdObj.HTTP2 != nil {
+		sdkObj.Http2 = &appmeshsdk.VirtualGatewayHttp2ConnectionPool{}
+		if err := Convert_CRD_VirtualGatewayHTTP2ConnectionPool_To_SDK_VirtualGatewayHttp2ConnectionPool(crdObj.HTTP2, sdkObj.Http2, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Http2 = nil
+	}
+
+	if crdObj.GRPC != nil {
+		sdkObj.Grpc = &appmeshsdk.VirtualGatewayGrpcConnectionPool{}
+		if err := Convert_CRD_VirtualGatewayGRPCConnectionPool_To_SDK_VirtualGatewayGrpcConnectionPool(crdObj.GRPC, sdkObj.Grpc, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Grpc = nil
+	}
+
+	return nil
+
+}
+
 func Convert_CRD_VirtualGatewayListener_To_SDK_VirtualGatewayListener(crdObj *appmesh.VirtualGatewayListener, sdkObj *appmeshsdk.VirtualGatewayListener, scope conversion.Scope) error {
 	sdkObj.PortMapping = &appmeshsdk.VirtualGatewayPortMapping{}
 	if err := Convert_CRD_VirtualGatewayPortMapping_To_SDK_VirtualGatewayPortMapping(&crdObj.PortMapping, sdkObj.PortMapping, scope); err != nil {
 		return err
 	}
+
 	if crdObj.HealthCheck != nil {
 		sdkObj.HealthCheck = &appmeshsdk.VirtualGatewayHealthCheckPolicy{}
 		if err := Convert_CRD_VirtualGatewayHealthCheckPolicy_To_SDK_VirtualGatewayHealthCheckPolicy(crdObj.HealthCheck, sdkObj.HealthCheck, scope); err != nil {
@@ -189,6 +239,16 @@ func Convert_CRD_VirtualGatewayListener_To_SDK_VirtualGatewayListener(crdObj *ap
 	} else {
 		sdkObj.HealthCheck = nil
 	}
+
+	if crdObj.ConnectionPool != nil {
+		sdkObj.ConnectionPool = &appmeshsdk.VirtualGatewayConnectionPool{}
+		if err := Convert_CRD_VirtualGatewayConnectionPool_To_SDK_VirtualGatewayConnectionPool(crdObj.ConnectionPool, sdkObj.ConnectionPool, scope); err != nil {
+			return err
+		}
+	} else {
+		crdObj.ConnectionPool = nil
+	}
+
 	if crdObj.TLS != nil {
 		sdkObj.Tls = &appmeshsdk.VirtualGatewayListenerTls{}
 		if err := Convert_CRD_VirtualGatewayListenerTLS_To_SDK_VirtualGatewayListenerTLS(crdObj.TLS, sdkObj.Tls, scope); err != nil {

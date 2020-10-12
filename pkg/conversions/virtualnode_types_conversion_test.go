@@ -1366,6 +1366,260 @@ func TestConvert_CRD_ListenerTimeout_To_SDK_ListenerTimeout(t *testing.T) {
 	}
 }
 
+func TestConvert_CRD_VirtualNodeTCPConnectionPool_To_SDK_VirtualNodeTcpConnectionPool(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.TCPConnectionPool
+		sdkObj *appmeshsdk.VirtualNodeTcpConnectionPool
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.VirtualNodeTcpConnectionPool
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.TCPConnectionPool{
+					MaxConnections: 50,
+				},
+				sdkObj: &appmeshsdk.VirtualNodeTcpConnectionPool{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualNodeTcpConnectionPool{
+				MaxConnections: aws.Int64(50),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_VirtualNodeTCPConnectionPool_To_SDK_VirtualNodeTcpConnectionPool(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
+func TestConvert_CRD_VirtualNodeHTTPConnectionPool_To_SDK_VirtualNodeHttpConnectionPool(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.HTTPConnectionPool
+		sdkObj *appmeshsdk.VirtualNodeHttpConnectionPool
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.VirtualNodeHttpConnectionPool
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.HTTPConnectionPool{
+					MaxConnections:     50,
+					MaxPendingRequests: 20,
+				},
+				sdkObj: &appmeshsdk.VirtualNodeHttpConnectionPool{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualNodeHttpConnectionPool{
+				MaxConnections:     aws.Int64(50),
+				MaxPendingRequests: aws.Int64(20),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_VirtualNodeHTTPConnectionPool_To_SDK_VirtualNodeHttpConnectionPool(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
+func TestConvert_CRD_VirtualNodeHTTP2ConnectionPool_To_SDK_VirtualNodeHttp2ConnectionPool(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.HTTP2ConnectionPool
+		sdkObj *appmeshsdk.VirtualNodeHttp2ConnectionPool
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.VirtualNodeHttp2ConnectionPool
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.HTTP2ConnectionPool{
+					MaxRequests: 200,
+				},
+				sdkObj: &appmeshsdk.VirtualNodeHttp2ConnectionPool{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualNodeHttp2ConnectionPool{
+				MaxRequests: aws.Int64(200),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_VirtualNodeHTTP2ConnectionPool_To_SDK_VirtualNodeHttp2ConnectionPool(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
+func TestConvert_CRD_VirtualNodeGRPCConnectionPool_To_SDK_VirtualNodeGrpcConnectionPool(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.GRPCConnectionPool
+		sdkObj *appmeshsdk.VirtualNodeGrpcConnectionPool
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.VirtualNodeGrpcConnectionPool
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.GRPCConnectionPool{
+					MaxRequests: 200,
+				},
+				sdkObj: &appmeshsdk.VirtualNodeGrpcConnectionPool{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualNodeGrpcConnectionPool{
+				MaxRequests: aws.Int64(200),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_VirtualNodeGRPCConnectionPool_To_SDK_VirtualNodeGrpcConnectionPool(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
+func TestConvert_CRD_VirtualNodeConnectionPool_To_SDK_VirtualNodeConnectionPool(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.VirtualNodeConnectionPool
+		sdkObj *appmeshsdk.VirtualNodeConnectionPool
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.VirtualNodeConnectionPool
+		wantErr    error
+	}{
+		{
+			name: "tcp connection pool case",
+			args: args{
+				crdObj: &appmesh.VirtualNodeConnectionPool{
+					TCP: &appmesh.TCPConnectionPool{
+						MaxConnections: 50,
+					},
+				},
+				sdkObj: &appmeshsdk.VirtualNodeConnectionPool{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualNodeConnectionPool{
+				Tcp: &appmeshsdk.VirtualNodeTcpConnectionPool{
+					MaxConnections: aws.Int64(50),
+				},
+			},
+		},
+		{
+			name: "http connection pool case",
+			args: args{
+				crdObj: &appmesh.VirtualNodeConnectionPool{
+					HTTP: &appmesh.HTTPConnectionPool{
+						MaxConnections:     50,
+						MaxPendingRequests: 40,
+					},
+				},
+				sdkObj: &appmeshsdk.VirtualNodeConnectionPool{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualNodeConnectionPool{
+				Http: &appmeshsdk.VirtualNodeHttpConnectionPool{
+					MaxConnections:     aws.Int64(50),
+					MaxPendingRequests: aws.Int64(40),
+				},
+			},
+		},
+		{
+			name: "http2 connection pool case",
+			args: args{
+				crdObj: &appmesh.VirtualNodeConnectionPool{
+					HTTP2: &appmesh.HTTP2ConnectionPool{
+						MaxRequests: 50,
+					},
+				},
+				sdkObj: &appmeshsdk.VirtualNodeConnectionPool{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualNodeConnectionPool{
+				Http2: &appmeshsdk.VirtualNodeHttp2ConnectionPool{
+					MaxRequests: aws.Int64(50),
+				},
+			},
+		},
+		{
+			name: "grpc connection pool case",
+			args: args{
+				crdObj: &appmesh.VirtualNodeConnectionPool{
+					GRPC: &appmesh.GRPCConnectionPool{
+						MaxRequests: 50,
+					},
+				},
+				sdkObj: &appmeshsdk.VirtualNodeConnectionPool{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualNodeConnectionPool{
+				Grpc: &appmeshsdk.VirtualNodeGrpcConnectionPool{
+					MaxRequests: aws.Int64(50),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_VirtualNodeConnectionPool_To_SDK_VirtualNodeConnectionPool(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
 func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 	port80 := appmesh.PortNumber(80)
 	protocolHTTP := appmesh.PortProtocolHTTP
@@ -1407,6 +1661,12 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 						BaseEjectionDuration: appmesh.Duration{
 							Unit:  "s",
 							Value: int64(10),
+						},
+					},
+					ConnectionPool: &appmesh.VirtualNodeConnectionPool{
+						HTTP: &appmesh.HTTPConnectionPool{
+							MaxConnections:     50,
+							MaxPendingRequests: 40,
 						},
 					},
 					TLS: &appmesh.ListenerTLS{
@@ -1459,6 +1719,12 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 						Value: aws.Int64(10),
 					},
 				},
+				ConnectionPool: &appmeshsdk.VirtualNodeConnectionPool{
+					Http: &appmeshsdk.VirtualNodeHttpConnectionPool{
+						MaxConnections:     aws.Int64(50),
+						MaxPendingRequests: aws.Int64(40),
+					},
+				},
 				Tls: &appmeshsdk.ListenerTls{
 					Certificate: &appmeshsdk.ListenerTlsCertificate{
 						Acm: &appmeshsdk.ListenerTlsAcmCertificate{
@@ -1502,6 +1768,11 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 							Value: int64(10),
 						},
 					},
+					ConnectionPool: &appmesh.VirtualNodeConnectionPool{
+						HTTP2: &appmesh.HTTP2ConnectionPool{
+							MaxRequests: 50,
+						},
+					},
 					TLS: &appmesh.ListenerTLS{
 						Certificate: appmesh.ListenerTLSCertificate{
 							ACM: &appmesh.ListenerTLSACMCertificate{
@@ -1532,6 +1803,11 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 						Value: aws.Int64(10),
 					},
 				},
+				ConnectionPool: &appmeshsdk.VirtualNodeConnectionPool{
+					Http2: &appmeshsdk.VirtualNodeHttp2ConnectionPool{
+						MaxRequests: aws.Int64(50),
+					},
+				},
 				Tls: &appmeshsdk.ListenerTls{
 					Certificate: &appmeshsdk.ListenerTlsCertificate{
 						Acm: &appmeshsdk.ListenerTlsAcmCertificate{
@@ -1559,6 +1835,12 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 						TimeoutMillis:      30,
 						UnhealthyThreshold: 2,
 					},
+					ConnectionPool: &appmesh.VirtualNodeConnectionPool{
+						HTTP: &appmesh.HTTPConnectionPool{
+							MaxConnections:     50,
+							MaxPendingRequests: 40,
+						},
+					},
 					TLS: nil,
 				},
 				sdkObj: &appmeshsdk.Listener{},
@@ -1568,6 +1850,12 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 				PortMapping: &appmeshsdk.PortMapping{
 					Port:     aws.Int64(80),
 					Protocol: aws.String("http"),
+				},
+				ConnectionPool: &appmeshsdk.VirtualNodeConnectionPool{
+					Http: &appmeshsdk.VirtualNodeHttpConnectionPool{
+						MaxConnections:     aws.Int64(50),
+						MaxPendingRequests: aws.Int64(40),
+					},
 				},
 				HealthCheck: &appmeshsdk.HealthCheckPolicy{
 					HealthyThreshold:   aws.Int64(3),
@@ -1582,7 +1870,7 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 			},
 		},
 		{
-			name: "normal case + nil HealthCheck + nil TLS + nil outlier detection",
+			name: "normal case + nil HealthCheck + nil TLS + nil outlier detection + nil connection pool",
 			args: args{
 				crdObj: &appmesh.Listener{
 					PortMapping: appmesh.PortMapping{
@@ -1592,6 +1880,7 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 					HealthCheck:      nil,
 					TLS:              nil,
 					OutlierDetection: nil,
+					ConnectionPool:   nil,
 				},
 				sdkObj: &appmeshsdk.Listener{},
 				scope:  nil,
@@ -1604,6 +1893,7 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 				HealthCheck:      nil,
 				Tls:              nil,
 				OutlierDetection: nil,
+				ConnectionPool:   nil,
 			},
 		},
 	}

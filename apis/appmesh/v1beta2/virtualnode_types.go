@@ -208,6 +208,25 @@ type ListenerTimeout struct {
 	GRPC *GRPCTimeout `json:"grpc,omitempty"`
 }
 
+// VirtualNodeConnectionPool refers to the connection pools settings for Virtual Node.
+// Connection pool limits the number of connections that an Envoy can concurrently establish with
+// all the hosts in the upstream cluster. Currently connection pool is supported only at the listener
+// level and it is intended protect your local application from being overwhelmed with connections.
+type VirtualNodeConnectionPool struct {
+	// Specifies tcp connection pool settings for the virtual node listener
+	// +optional
+	TCP *TCPConnectionPool `json:"tcp,omitempty"`
+	// Specifies http connection pool settings for the virtual node listener
+	// +optional
+	HTTP *HTTPConnectionPool `json:"http,omitempty"`
+	// Specifies http2 connection pool settings for the virtual node listener
+	// +optional
+	HTTP2 *HTTP2ConnectionPool `json:"http2,omitempty"`
+	// Specifies grpc connection pool settings for the virtual node listener
+	// +optional
+	GRPC *GRPCConnectionPool `json:"grpc,omitempty"`
+}
+
 // Listener refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_Listener.html
 type Listener struct {
 	// The port mapping information for the listener.
@@ -218,6 +237,9 @@ type Listener struct {
 	// The outlier detection for the listener
 	// +optional
 	OutlierDetection *OutlierDetection `json:"outlierDetection,omitempty"`
+	// The connection pool settings for the listener
+	// +optional
+	ConnectionPool *VirtualNodeConnectionPool `json:"connectionPool,omitempty"`
 	// A reference to an object that represents the Transport Layer Security (TLS) properties for a listener.
 	// +optional
 	TLS *ListenerTLS `json:"tls,omitempty"`

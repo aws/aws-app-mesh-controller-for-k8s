@@ -92,6 +92,22 @@ type VirtualGatewayHealthCheckPolicy struct {
 	UnhealthyThreshold int64 `json:"unhealthyThreshold"`
 }
 
+// VirtualGatewayConnectionPool refers to the connection pools settings for Virtual Gateway.
+// Connection pool limits the number of connections that an Envoy can concurrently establish with
+// all the hosts in the upstream cluster. Currently connection pool is supported only at the listener
+// level and it is intended protect your local application from being overwhelmed with connections.
+type VirtualGatewayConnectionPool struct {
+	// Specifies http connection pool settings for the virtual node listener
+	// +optional
+	HTTP *HTTPConnectionPool `json:"http,omitempty"`
+	// Specifies http2 connection pool settings for the virtual node listener
+	// +optional
+	HTTP2 *HTTP2ConnectionPool `json:"http2,omitempty"`
+	// Specifies grpc connection pool settings for the virtual node listener
+	// +optional
+	GRPC *GRPCConnectionPool `json:"grpc,omitempty"`
+}
+
 // VirtualGatewayListenerTLSACMCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
 type VirtualGatewayListenerTLSACMCertificate struct {
 	// The Amazon Resource Name (ARN) for the certificate.
@@ -166,6 +182,9 @@ type VirtualGatewayListener struct {
 	// The health check information for the listener.
 	// +optional
 	HealthCheck *VirtualGatewayHealthCheckPolicy `json:"healthCheck,omitempty"`
+	// The connection pool settings for the listener
+	// +optional
+	ConnectionPool *VirtualGatewayConnectionPool `json:"connectionPool,omitempty"`
 	// A reference to an object that represents the Transport Layer Security (TLS) properties for a listener.
 	// +optional
 	TLS *VirtualGatewayListenerTLS `json:"tls,omitempty"`
