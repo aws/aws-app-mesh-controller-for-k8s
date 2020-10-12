@@ -677,6 +677,8 @@ spec:
               type: object
             serviceDiscovery:
               description: The service discovery information for the virtual node.
+                Optional if there is no inbound traffic(no listeners). Mandatory if
+                a listener is specified.
               properties:
                 awsCloudMap:
                   description: Specifies any AWS Cloud Map information for the virtual

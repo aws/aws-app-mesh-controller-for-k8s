@@ -206,6 +206,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            "9901",
+					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -228,6 +230,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_LOG_LEVEL",
 									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_LOG_FILE",
+									Value: "/tmp/envoy_admin_access.log",
 								},
 								{
 									Name:  "AWS_REGION",
@@ -269,6 +279,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            "9901",
+					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 3,
 					readinessProbePeriod:       5,
@@ -294,6 +306,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_LOG_LEVEL",
 									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_LOG_FILE",
+									Value: "/tmp/envoy_admin_access.log",
 								},
 								{
 									Name:  "AWS_REGION",
@@ -335,6 +355,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            "9901",
+					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -365,6 +387,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_LOG_LEVEL",
 									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_LOG_FILE",
+									Value: "/tmp/envoy_admin_access.log",
 								},
 								{
 									Name:  "AWS_REGION",
@@ -406,6 +436,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            "9901",
+					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
 					sidecarImage:               "envoy:v3",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -442,6 +474,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_LOG_FILE",
+									Value: "/tmp/envoy_admin_access.log",
+								},
+								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
@@ -473,6 +513,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            "9901",
+					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
 					sidecarImage:               "envoy:v3",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -509,6 +551,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_LOG_FILE",
+									Value: "/tmp/envoy_admin_access.log",
+								},
+								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
@@ -540,6 +590,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            "9901",
+					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -576,6 +628,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_LOG_FILE",
+									Value: "/tmp/envoy_admin_access.log",
+								},
+								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
@@ -607,6 +667,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            "9901",
+					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
 					sidecarImage:               "envoy:v2",
 					enableXrayTracing:          true,
 					readinessProbeInitialDelay: 1,
@@ -630,6 +692,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_LOG_LEVEL",
 									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_LOG_FILE",
+									Value: "/tmp/envoy_admin_access.log",
 								},
 								{
 									Name:  "AWS_REGION",
@@ -675,6 +745,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            "9901",
+					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -697,6 +769,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_LOG_LEVEL",
 									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_LOG_FILE",
+									Value: "/tmp/envoy_admin_access.log",
 								},
 								{
 									Name:  "AWS_REGION",

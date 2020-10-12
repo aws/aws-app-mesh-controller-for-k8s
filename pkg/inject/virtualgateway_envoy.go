@@ -15,6 +15,8 @@ const envoyVirtualGatewayEnvMap = `
   "APPMESH_VIRTUAL_NODE_NAME": "mesh/{{ .MeshName }}/virtualGateway/{{ .VirtualGatewayName }}",
   "APPMESH_PREVIEW": "{{ .Preview }}",
   "ENVOY_LOG_LEVEL": "{{ .LogLevel }}",
+  "ENVOY_ADMIN_ACCESS_PORT": "{{ .AdminAccessPort }}",
+  "ENVOY_ADMIN_ACCESS_LOG_FILE": "{{ .AdminAccessLogFile }}",
   "AWS_REGION": "{{ .AWSRegion }}"{{ if .EnableXrayTracing }},
   "ENABLE_ENVOY_XRAY_TRACING": "1"{{ end }}
 }
@@ -26,6 +28,8 @@ type VirtualGatewayEnvoyVariables struct {
 	VirtualGatewayName string
 	Preview            string
 	LogLevel           string
+	AdminAccessPort    string
+	AdminAccessLogFile string
 	EnableXrayTracing  bool
 }
 
@@ -34,6 +38,8 @@ type virtualGatwayEnvoyConfig struct {
 	awsRegion                  string
 	preview                    bool
 	logLevel                   string
+	adminAccessPort            string
+	adminAccessLogFile         string
 	sidecarImage               string
 	readinessProbeInitialDelay int32
 	readinessProbePeriod       int32
@@ -99,7 +105,8 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 
 	// customer can bring their own envoy image/spec for virtual gateway so we will only set readiness probe if not already set
 	if pod.Spec.Containers[envoyIdx].ReadinessProbe == nil {
-		pod.Spec.Containers[envoyIdx].ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay, m.mutatorConfig.readinessProbePeriod)
+		pod.Spec.Containers[envoyIdx].ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay,
+			m.mutatorConfig.readinessProbePeriod, m.mutatorConfig.adminAccessPort)
 	}
 	return nil
 }
@@ -115,6 +122,8 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 		VirtualGatewayName: virtualGatewayName,
 		Preview:            preview,
 		LogLevel:           m.mutatorConfig.logLevel,
+		AdminAccessPort:    m.mutatorConfig.adminAccessPort,
+		AdminAccessLogFile: m.mutatorConfig.adminAccessLogFile,
 		EnableXrayTracing:  m.mutatorConfig.enableXrayTracing,
 	}
 }
