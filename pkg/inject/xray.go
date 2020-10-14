@@ -2,7 +2,6 @@ package inject
 
 import (
 	"encoding/json"
-
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -16,7 +15,7 @@ const xrayDaemonContainerTemplate = `
   },
   "ports": [
     {
-      "containerPort": 2000,
+      "containerPort": {{ .XrayDaemonPort }},
       "name": "xray",
       "protocol": "UDP"
     }
@@ -31,8 +30,9 @@ const xrayDaemonContainerTemplate = `
 `
 
 type XrayTemplateVariables struct {
-	AWSRegion string
-	XRayImage string
+	AWSRegion      string
+	XRayImage      string
+	XrayDaemonPort int32
 }
 
 type xrayMutatorConfig struct {
@@ -42,6 +42,7 @@ type xrayMutatorConfig struct {
 	sidecarCPULimits      string
 	sidecarMemoryLimits   string
 	xRayImage             string
+	xRayDaemonPort        int32
 }
 
 func newXrayMutator(mutatorConfig xrayMutatorConfig, enabled bool) *xrayMutator {
@@ -90,8 +91,9 @@ func (m *xrayMutator) mutate(pod *corev1.Pod) error {
 
 func (m *xrayMutator) buildTemplateVariables(pod *corev1.Pod) XrayTemplateVariables {
 	return XrayTemplateVariables{
-		AWSRegion: m.mutatorConfig.awsRegion,
-		XRayImage: m.mutatorConfig.xRayImage,
+		AWSRegion:      m.mutatorConfig.awsRegion,
+		XRayImage:      m.mutatorConfig.xRayImage,
+		XrayDaemonPort: m.mutatorConfig.xRayDaemonPort,
 	}
 }
 

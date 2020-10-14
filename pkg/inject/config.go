@@ -59,7 +59,7 @@ type Config struct {
 	PreStopDelay               string
 	ReadinessProbeInitialDelay int32
 	ReadinessProbePeriod       int32
-	EnvoyAdminAcessPort        string
+	EnvoyAdminAcessPort        int32
 	EnvoyAdminAccessLogFile    string
 
 	// Init container settings
@@ -72,13 +72,13 @@ type Config struct {
 	JaegerPort           string
 	EnableDatadogTracing bool
 	DatadogAddress       string
-	DatadogPort          string
+	DatadogPort          int32
 	EnableXrayTracing    bool
-	XrayDaemonPort       string
+	XrayDaemonPort       int32
 	EnableStatsTags      bool
 	EnableStatsD         bool
 	StatsDAddress        string
-	StatsDPort           string
+	StatsDPort           int32
 	XRayImage            string
 }
 
@@ -110,7 +110,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"Enable preview channel")
 	fs.StringVar(&cfg.LogLevel, flagLogLevel, "info",
 		"AWS App Mesh envoy log level")
-	fs.StringVar(&cfg.EnvoyAdminAcessPort, flagEnvoyAdminAccessPort, "9901",
+	fs.Int32Var(&cfg.EnvoyAdminAcessPort, flagEnvoyAdminAccessPort, 9901,
 		"AWS App Mesh envoy admin access port")
 	fs.StringVar(&cfg.EnvoyAdminAccessLogFile, flagEnvoyAdminAccessLogFile, "/tmp/envoy_admin_access.log",
 		"AWS App Mesh envoy access log path")
@@ -134,11 +134,11 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"Enable Envoy Datadog tracing")
 	fs.StringVar(&cfg.DatadogAddress, flagDatadogAddress, "datadog.appmesh-system",
 		"Datadog Agent address")
-	fs.StringVar(&cfg.DatadogPort, flagDatadogPort, "8126",
+	fs.Int32Var(&cfg.DatadogPort, flagDatadogPort, 8126,
 		"Datadog Agent tracing port")
 	fs.BoolVar(&cfg.EnableXrayTracing, flagEnableXrayTracing, false,
 		"Enable Envoy X-Ray tracing integration and injects xray-daemon as sidecar")
-	fs.StringVar(&cfg.XrayDaemonPort, flagXrayDaemonPort, "2000",
+	fs.Int32Var(&cfg.XrayDaemonPort, flagXrayDaemonPort, 2000,
 		"Datadog Agent tracing port")
 	fs.StringVar(&cfg.XRayImage, flagXRayImage, "amazon/aws-xray-daemon",
 		"X-Ray daemon container image")
@@ -148,7 +148,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"If enabled, Envoy will send DogStatsD metrics to 127.0.0.1:8125")
 	fs.StringVar(&cfg.StatsDAddress, flagStatsDAddress, "127.0.0.1",
 		"Datadog Agent address")
-	fs.StringVar(&cfg.StatsDPort, flagStatsDPort, "8125",
+	fs.Int32Var(&cfg.StatsDPort, flagStatsDPort, 8125,
 		"Datadog Agent tracing port")
 }
 

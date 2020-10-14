@@ -66,6 +66,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 		sidecarCPULimits:      cpuLimits.String(),
 		sidecarMemoryLimits:   memoryLimits.String(),
 		xRayImage:             "amazon/aws-xray-daemon",
+		xRayDaemonPort:        2000,
 	}
 	type fields struct {
 		enabled       bool
@@ -211,6 +212,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
 					xRayImage:             "amazon/aws-xray-daemon",
+					xRayDaemonPort:        2000,
 				},
 			},
 			args: args{
@@ -267,6 +269,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 					sidecarMemoryRequests: memoryRequests.String(),
 					sidecarMemoryLimits:   memoryLimits.String(),
 					xRayImage:             "amazon/aws-xray-daemon",
+					xRayDaemonPort:        2000,
 				},
 			},
 			args: args{
@@ -326,6 +329,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 					sidecarMemoryRequests: memoryRequests.String(),
 					sidecarCPULimits:      cpuLimits.String(),
 					xRayImage:             "amazon/aws-xray-daemon",
+					xRayDaemonPort:        2000,
 				},
 			},
 			args: args{

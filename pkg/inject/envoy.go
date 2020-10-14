@@ -120,20 +120,20 @@ type EnvoyTemplateVariables struct {
 	VirtualNodeName              string
 	Preview                      string
 	LogLevel                     string
-	AdminAccessPort              int
+	AdminAccessPort              int32
 	AdminAccessLogFile           string
 	PreStopDelay                 string
 	SidecarImage                 string
 	EnvoyTracingConfigVolumeName string
 	EnableXrayTracing            bool
-	XrayDaemonPort               string
+	XrayDaemonPort               int32
 	EnableJaegerTracing          bool
 	EnableDatadogTracing         bool
-	DatadogTracerPort            string
+	DatadogTracerPort            int32
 	DatadogTracerAddress         string
 	EnableStatsTags              bool
 	EnableStatsD                 bool
-	StatsDPort                   string
+	StatsDPort                   int32
 	StatsDAddress                string
 }
 
@@ -142,7 +142,7 @@ type envoyMutatorConfig struct {
 	awsRegion                  string
 	preview                    bool
 	logLevel                   string
-	adminAccessPort            string
+	adminAccessPort            int32
 	adminAccessLogFile         string
 	preStopDelay               string
 	readinessProbeInitialDelay int32
@@ -153,14 +153,14 @@ type envoyMutatorConfig struct {
 	sidecarCPULimits           string
 	sidecarMemoryLimits        string
 	enableXrayTracing          bool
-	xrayDaemonPort             string
+	xrayDaemonPort             int32
 	enableJaegerTracing        bool
 	enableDatadogTracing       bool
-	datadogTracerPort          string
+	datadogTracerPort          int32
 	datadogTracerAddress       string
 	enableStatsTags            bool
 	enableStatsD               bool
-	statsDPort                 string
+	statsDPort                 int32
 	statsDAddress              string
 }
 
@@ -208,7 +208,7 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 
 	// add readiness probe
 	container.ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay,
-		m.mutatorConfig.readinessProbePeriod, m.mutatorConfig.adminAccessPort)
+		m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 
 	m.mutateSecretMounts(pod, &container, secretMounts)
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
@@ -220,14 +220,13 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 	virtualNodeName := aws.StringValue(m.vn.Spec.AWSName)
 	preview := m.getPreview(pod)
 
-	envoyAdminAccessPort, _ := strconv.Atoi(m.mutatorConfig.adminAccessPort)
 	return EnvoyTemplateVariables{
 		AWSRegion:                    m.mutatorConfig.awsRegion,
 		MeshName:                     meshName,
 		VirtualNodeName:              virtualNodeName,
 		Preview:                      preview,
 		LogLevel:                     m.mutatorConfig.logLevel,
-		AdminAccessPort:              envoyAdminAccessPort,
+		AdminAccessPort:              m.mutatorConfig.adminAccessPort,
 		AdminAccessLogFile:           m.mutatorConfig.adminAccessLogFile,
 		PreStopDelay:                 m.mutatorConfig.preStopDelay,
 		SidecarImage:                 m.mutatorConfig.sidecarImage,

@@ -6,6 +6,7 @@ import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	corev1 "k8s.io/api/core/v1"
+	"strconv"
 	"strings"
 )
 
@@ -28,10 +29,10 @@ type VirtualGatewayEnvoyVariables struct {
 	VirtualGatewayName string
 	Preview            string
 	LogLevel           string
-	AdminAccessPort    string
+	AdminAccessPort    int32
 	AdminAccessLogFile string
 	EnableXrayTracing  bool
-	XrayDaemonPort     string
+	XrayDaemonPort     int32
 }
 
 type virtualGatwayEnvoyConfig struct {
@@ -39,13 +40,13 @@ type virtualGatwayEnvoyConfig struct {
 	awsRegion                  string
 	preview                    bool
 	logLevel                   string
-	adminAccessPort            string
+	adminAccessPort            int32
 	adminAccessLogFile         string
 	sidecarImage               string
 	readinessProbeInitialDelay int32
 	readinessProbePeriod       int32
 	enableXrayTracing          bool
-	xrayDaemonPort             string
+	xrayDaemonPort             int32
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -108,7 +109,7 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 	// customer can bring their own envoy image/spec for virtual gateway so we will only set readiness probe if not already set
 	if pod.Spec.Containers[envoyIdx].ReadinessProbe == nil {
 		pod.Spec.Containers[envoyIdx].ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay,
-			m.mutatorConfig.readinessProbePeriod, m.mutatorConfig.adminAccessPort)
+			m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 	}
 	return nil
 }

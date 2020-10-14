@@ -190,7 +190,7 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 			conf: getConfig(func(cnf Config) Config {
 				cnf.EnableDatadogTracing = true
 				cnf.DatadogAddress = "addr"
-				cnf.DatadogPort = "1234"
+				cnf.DatadogPort = 1234
 				return cnf
 			}),
 			args: args{
