@@ -18,7 +18,7 @@ const envoyVirtualGatewayEnvMap = `
   "ENVOY_ADMIN_ACCESS_PORT": "{{ .AdminAccessPort }}",
   "ENVOY_ADMIN_ACCESS_LOG_FILE": "{{ .AdminAccessLogFile }}",
   "AWS_REGION": "{{ .AWSRegion }}"{{ if .EnableXrayTracing }},
-  "ENABLE_ENVOY_XRAY_TRACING": "1"{{ end }}
+  "ENABLE_ENVOY_XRAY_TRACING": "1","XRAY_DAEMON_PORT": "{{ .XrayDaemonPort }}"{{ end }}
 }
 `
 
@@ -31,6 +31,7 @@ type VirtualGatewayEnvoyVariables struct {
 	AdminAccessPort    string
 	AdminAccessLogFile string
 	EnableXrayTracing  bool
+	XrayDaemonPort     string
 }
 
 type virtualGatwayEnvoyConfig struct {
@@ -44,6 +45,7 @@ type virtualGatwayEnvoyConfig struct {
 	readinessProbeInitialDelay int32
 	readinessProbePeriod       int32
 	enableXrayTracing          bool
+	xrayDaemonPort             string
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -125,6 +127,7 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 		AdminAccessPort:    m.mutatorConfig.adminAccessPort,
 		AdminAccessLogFile: m.mutatorConfig.adminAccessLogFile,
 		EnableXrayTracing:  m.mutatorConfig.enableXrayTracing,
+		XrayDaemonPort:     m.mutatorConfig.xrayDaemonPort,
 	}
 }
 

@@ -199,7 +199,7 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 				pod: getPod(nil),
 			},
 			want: expected{
-				init:       2,
+				init:       1,
 				containers: 2,
 				xray:       false,
 				proxyinit:  true,

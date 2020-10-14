@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"strconv"
 	"strings"
 )
 
@@ -21,7 +22,7 @@ const envoyContainerTemplate = `
   },
   "ports": [
     {
-      "containerPort": 9901,
+      "containerPort": {{.AdminAccessPort}},
       "name": "stats",
       "protocol": "TCP"
     }
@@ -57,7 +58,7 @@ const envoyContainerTemplate = `
     {
       "name": "ENVOY_ADMIN_ACCESS_LOG_FILE",
       "value": "{{ .AdminAccessLogFile }}"
-    }{{ end }}{{ if or .EnableJaegerTracing .EnableDatadogTracing }},
+    }{{ end }}{{ if or .EnableJaegerTracing }},
     {
       "name": "ENVOY_TRACING_CFG_FILE",
       "value": "/tmp/envoy/envoyconf.yaml"
@@ -69,7 +70,7 @@ const envoyContainerTemplate = `
     {
       "name": "ENABLE_ENVOY_XRAY_TRACING",
       "value": "1"
-    }{{ end }}{{ if .EnableXrayTracing }},
+    },
     {
       "name": "XRAY_DAEMON_PORT",
       "value": "{{ .XrayDaemonPort }}"
@@ -77,11 +78,11 @@ const envoyContainerTemplate = `
     {
       "name": "ENABLE_ENVOY_DATADOG_TRACING",
       "value": "1"
-    }{{ end }}{{ if .EnableDatadogTracing}},
+    },
     {
       "name": "DATADOG_TRACER_PORT",
       "value": "{{ .DatadogTracerPort }}"
-    }{{ end }}{{ if .EnableDatadogTracing}},
+    },
     {
       "name": "DATADOG_TRACER_ADDRESS",
       "value": "{{ .DatadogTracerAddress }}"
@@ -102,7 +103,7 @@ const envoyContainerTemplate = `
       "name": "STATSD_ADDRESS",
       "value": "{{ .StatsDAddress }}"
     }{{ end }}
-  ]{{ if or .EnableJaegerTracing .EnableDatadogTracing }},
+  ]{{ if or .EnableJaegerTracing }},
   "volumeMounts": [
     {
       "mountPath": "/tmp/envoy",
@@ -119,7 +120,7 @@ type EnvoyTemplateVariables struct {
 	VirtualNodeName              string
 	Preview                      string
 	LogLevel                     string
-	AdminAccessPort              string
+	AdminAccessPort              int
 	AdminAccessLogFile           string
 	PreStopDelay                 string
 	SidecarImage                 string
@@ -219,13 +220,14 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 	virtualNodeName := aws.StringValue(m.vn.Spec.AWSName)
 	preview := m.getPreview(pod)
 
+	envoyAdminAccessPort, _ := strconv.Atoi(m.mutatorConfig.adminAccessPort)
 	return EnvoyTemplateVariables{
 		AWSRegion:                    m.mutatorConfig.awsRegion,
 		MeshName:                     meshName,
 		VirtualNodeName:              virtualNodeName,
 		Preview:                      preview,
 		LogLevel:                     m.mutatorConfig.logLevel,
-		AdminAccessPort:              m.mutatorConfig.adminAccessPort,
+		AdminAccessPort:              envoyAdminAccessPort,
 		AdminAccessLogFile:           m.mutatorConfig.adminAccessLogFile,
 		PreStopDelay:                 m.mutatorConfig.preStopDelay,
 		SidecarImage:                 m.mutatorConfig.sidecarImage,

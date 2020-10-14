@@ -143,10 +143,6 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				sidecarMemoryLimits:   m.config.SidecarMemoryLimits,
 				xRayImage:             m.config.XRayImage,
 			}, m.config.EnableXrayTracing),
-			newDatadogMutator(datadogMutatorConfig{
-				datadogAddress: m.config.DatadogAddress,
-				datadogPort:    m.config.DatadogPort,
-			}, m.config.EnableDatadogTracing),
 			newJaegerMutator(jaegerMutatorConfig{
 				jaegerAddress: m.config.JaegerAddress,
 				jaegerPort:    m.config.JaegerPort,
@@ -167,6 +163,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 			readinessProbeInitialDelay: m.config.ReadinessProbeInitialDelay,
 			readinessProbePeriod:       m.config.ReadinessProbePeriod,
 			enableXrayTracing:          m.config.EnableXrayTracing,
+			xrayDaemonPort:             m.config.XrayDaemonPort,
 		}, ms, vg),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,

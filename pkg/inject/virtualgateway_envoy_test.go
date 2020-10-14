@@ -671,6 +671,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
 					sidecarImage:               "envoy:v2",
 					enableXrayTracing:          true,
+					xrayDaemonPort:             "2000",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 				},
@@ -716,6 +717,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENABLE_ENVOY_XRAY_TRACING",
 									Value: "1",
+								},
+								{
+									Name:  "XRAY_DAEMON_PORT",
+									Value: "2000",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{

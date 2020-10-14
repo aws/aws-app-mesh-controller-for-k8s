@@ -574,7 +574,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
-
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
 									}},
@@ -603,10 +602,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "9901",
 								},
 								{
-									Name:  "ENVOY_TRACING_CFG_FILE",
-									Value: "/tmp/envoy/envoyconf.yaml",
-								},
-								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
@@ -621,12 +616,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "DATADOG_TRACER_ADDRESS",
 									Value: "127.0.0.1",
-								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "envoy-tracing-config",
-									MountPath: "/tmp/envoy",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
