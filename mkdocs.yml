@@ -16,6 +16,7 @@ nav:
   - Reference:
       - APISpec: reference/api_spec.md
       - APIDesign: reference/api_design.md
+      - SidecarInjection: reference/injector.md
 plugins:
   - search
 theme:
