@@ -5,7 +5,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func envoyReadinessProbe(initialDelaySeconds int32, periodSeconds int32) *corev1.Probe {
+func envoyReadinessProbe(initialDelaySeconds int32, periodSeconds int32, adminAccessPort string) *corev1.Probe {
+	envoyReadinessCommand := "curl -s http://localhost:" + adminAccessPort + "/server_info | grep state | grep -q LIVE"
 	return &corev1.Probe{
 		Handler: corev1.Handler{
 
@@ -24,7 +25,7 @@ func envoyReadinessProbe(initialDelaySeconds int32, periodSeconds int32) *corev1
 			// PRE_INITIALIZING: Server has not yet completed cluster manager initialization
 			// INITIALIZING: Server is running the cluster manager initialization callbacks
 			Exec: &corev1.ExecAction{Command: []string{
-				"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+				"sh", "-c", envoyReadinessCommand,
 			}},
 		},
 
