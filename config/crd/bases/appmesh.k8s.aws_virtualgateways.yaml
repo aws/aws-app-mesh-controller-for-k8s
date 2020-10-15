@@ -135,7 +135,7 @@ spec:
                     properties:
                       grpc:
                         description: Specifies grpc connection pool settings for the
-                          virtual node listener
+                          virtual gateway listener
                         properties:
                           maxRequests:
                             description: Represents the maximum number of inflight
@@ -149,7 +149,7 @@ spec:
                         type: object
                       http:
                         description: Specifies http connection pool settings for the
-                          virtual node listener
+                          virtual gateway listener
                         properties:
                           maxConnections:
                             description: Represents the maximum number of outbound
@@ -171,7 +171,7 @@ spec:
                         type: object
                       http2:
                         description: Specifies http2 connection pool settings for
-                          the virtual node listener
+                          the virtual gateway listener
                         properties:
                           maxRequests:
                             description: Represents the maximum number of inflight

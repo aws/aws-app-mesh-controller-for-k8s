@@ -97,13 +97,13 @@ type VirtualGatewayHealthCheckPolicy struct {
 // all the hosts in the upstream cluster. Currently connection pool is supported only at the listener
 // level and it is intended protect your local application from being overwhelmed with connections.
 type VirtualGatewayConnectionPool struct {
-	// Specifies http connection pool settings for the virtual node listener
+	// Specifies http connection pool settings for the virtual gateway listener
 	// +optional
 	HTTP *HTTPConnectionPool `json:"http,omitempty"`
-	// Specifies http2 connection pool settings for the virtual node listener
+	// Specifies http2 connection pool settings for the virtual gateway listener
 	// +optional
 	HTTP2 *HTTP2ConnectionPool `json:"http2,omitempty"`
-	// Specifies grpc connection pool settings for the virtual node listener
+	// Specifies grpc connection pool settings for the virtual gateway listener
 	// +optional
 	GRPC *GRPCConnectionPool `json:"grpc,omitempty"`
 }
