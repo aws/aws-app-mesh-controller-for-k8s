@@ -245,6 +245,69 @@ func Convert_CRD_ListenerTimeoutGrpc_To_SDK_ListenerTimeoutGrpc(crdObj *appmesh.
 	return nil
 }
 
+func Convert_CRD_VirtualNodeTCPConnectionPool_To_SDK_VirtualNodeTcpConnectionPool(crdObj *appmesh.TCPConnectionPool, sdkObj *appmeshsdk.VirtualNodeTcpConnectionPool, scope conversion.Scope) error {
+	sdkObj.MaxConnections = aws.Int64(crdObj.MaxConnections)
+	return nil
+}
+
+func Convert_CRD_VirtualNodeHTTPConnectionPool_To_SDK_VirtualNodeHttpConnectionPool(crdObj *appmesh.HTTPConnectionPool, sdkObj *appmeshsdk.VirtualNodeHttpConnectionPool, scope conversion.Scope) error {
+	sdkObj.MaxConnections = aws.Int64(crdObj.MaxConnections)
+	sdkObj.MaxPendingRequests = aws.Int64(crdObj.MaxPendingRequests)
+	return nil
+}
+
+func Convert_CRD_VirtualNodeHTTP2ConnectionPool_To_SDK_VirtualNodeHttp2ConnectionPool(crdObj *appmesh.HTTP2ConnectionPool, sdkObj *appmeshsdk.VirtualNodeHttp2ConnectionPool, scope conversion.Scope) error {
+	sdkObj.MaxRequests = aws.Int64(crdObj.MaxRequests)
+	return nil
+}
+
+func Convert_CRD_VirtualNodeGRPCConnectionPool_To_SDK_VirtualNodeGrpcConnectionPool(crdObj *appmesh.GRPCConnectionPool, sdkObj *appmeshsdk.VirtualNodeGrpcConnectionPool, scope conversion.Scope) error {
+	sdkObj.MaxRequests = aws.Int64(crdObj.MaxRequests)
+	return nil
+}
+
+func Convert_CRD_VirtualNodeConnectionPool_To_SDK_VirtualNodeConnectionPool(crdObj *appmesh.VirtualNodeConnectionPool, sdkObj *appmeshsdk.VirtualNodeConnectionPool, scope conversion.Scope) error {
+
+	if crdObj.TCP != nil {
+		sdkObj.Tcp = &appmeshsdk.VirtualNodeTcpConnectionPool{}
+		if err := Convert_CRD_VirtualNodeTCPConnectionPool_To_SDK_VirtualNodeTcpConnectionPool(crdObj.TCP, sdkObj.Tcp, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Tcp = nil
+	}
+
+	if crdObj.HTTP != nil {
+		sdkObj.Http = &appmeshsdk.VirtualNodeHttpConnectionPool{}
+		if err := Convert_CRD_VirtualNodeHTTPConnectionPool_To_SDK_VirtualNodeHttpConnectionPool(crdObj.HTTP, sdkObj.Http, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Http = nil
+	}
+
+	if crdObj.HTTP2 != nil {
+		sdkObj.Http2 = &appmeshsdk.VirtualNodeHttp2ConnectionPool{}
+		if err := Convert_CRD_VirtualNodeHTTP2ConnectionPool_To_SDK_VirtualNodeHttp2ConnectionPool(crdObj.HTTP2, sdkObj.Http2, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Http2 = nil
+	}
+
+	if crdObj.GRPC != nil {
+		sdkObj.Grpc = &appmeshsdk.VirtualNodeGrpcConnectionPool{}
+		if err := Convert_CRD_VirtualNodeGRPCConnectionPool_To_SDK_VirtualNodeGrpcConnectionPool(crdObj.GRPC, sdkObj.Grpc, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Grpc = nil
+	}
+
+	return nil
+
+}
+
 func Convert_CRD_ListenerTimeout_To_SDK_ListenerTimeout(crdObj *appmesh.ListenerTimeout, sdkObj *appmeshsdk.ListenerTimeout, scope conversion.Scope) error {
 	if crdObj.TCP != nil {
 		sdkObj.Tcp = &appmeshsdk.TcpTimeout{}
@@ -306,6 +369,15 @@ func Convert_CRD_Listener_To_SDK_Listener(crdObj *appmesh.Listener, sdkObj *appm
 		}
 	} else {
 		sdkObj.OutlierDetection = nil
+	}
+
+	if crdObj.ConnectionPool != nil {
+		sdkObj.ConnectionPool = &appmeshsdk.VirtualNodeConnectionPool{}
+		if err := Convert_CRD_VirtualNodeConnectionPool_To_SDK_VirtualNodeConnectionPool(crdObj.ConnectionPool, sdkObj.ConnectionPool, scope); err != nil {
+			return err
+		}
+	} else {
+		crdObj.ConnectionPool = nil
 	}
 
 	if crdObj.TLS != nil {

@@ -130,6 +130,60 @@ spec:
               items:
                 description: VirtualGatewayListener refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
                 properties:
+                  connectionPool:
+                    description: The connection pool settings for the listener
+                    properties:
+                      grpc:
+                        description: Specifies grpc connection pool settings for the
+                          virtual gateway listener
+                        properties:
+                          maxRequests:
+                            description: Represents the maximum number of inflight
+                              requests that an envoy can concurrently support across
+                              all the hosts in the upstream cluster
+                            format: int64
+                            minimum: 1
+                            type: integer
+                        required:
+                        - maxRequests
+                        type: object
+                      http:
+                        description: Specifies http connection pool settings for the
+                          virtual gateway listener
+                        properties:
+                          maxConnections:
+                            description: Represents the maximum number of outbound
+                              TCP connections the envoy can establish concurrently
+                              with all the hosts in the upstream cluster.
+                            format: int64
+                            minimum: 1
+                            type: integer
+                          maxPendingRequests:
+                            description: Represents the number of overflowing requests
+                              after max_connections that an envoy will queue to an
+                              upstream cluster.
+                            format: int64
+                            minimum: 1
+                            type: integer
+                        required:
+                        - maxConnections
+                        - maxPendingRequests
+                        type: object
+                      http2:
+                        description: Specifies http2 connection pool settings for
+                          the virtual gateway listener
+                        properties:
+                          maxRequests:
+                            description: Represents the maximum number of inflight
+                              requests that an envoy can concurrently support across
+                              all the hosts in the upstream cluster
+                            format: int64
+                            minimum: 1
+                            type: integer
+                        required:
+                        - maxRequests
+                        type: object
+                    type: object
                   healthCheck:
                     description: The health check information for the listener.
                     properties:
