@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"strconv"
 	"strings"
 )
 
@@ -21,7 +22,7 @@ const envoyContainerTemplate = `
   },
   "ports": [
     {
-      "containerPort": 9901,
+      "containerPort": {{.AdminAccessPort}},
       "name": "stats",
       "protocol": "TCP"
     }
@@ -49,7 +50,15 @@ const envoyContainerTemplate = `
     {
       "name": "ENVOY_LOG_LEVEL",
       "value": "{{ .LogLevel }}"
-    }{{ if or .EnableJaegerTracing .EnableDatadogTracing }},
+    }{{ if .AdminAccessPort }},
+    {
+      "name": "ENVOY_ADMIN_ACCESS_PORT",
+      "value": "{{ .AdminAccessPort }}"
+    }{{ end }}{{ if .AdminAccessLogFile }},
+    {
+      "name": "ENVOY_ADMIN_ACCESS_LOG_FILE",
+      "value": "{{ .AdminAccessLogFile }}"
+    }{{ end }}{{ if or .EnableJaegerTracing }},
     {
       "name": "ENVOY_TRACING_CFG_FILE",
       "value": "/tmp/envoy/envoyconf.yaml"
@@ -61,6 +70,22 @@ const envoyContainerTemplate = `
     {
       "name": "ENABLE_ENVOY_XRAY_TRACING",
       "value": "1"
+    },
+    {
+      "name": "XRAY_DAEMON_PORT",
+      "value": "{{ .XrayDaemonPort }}"
+    }{{ end }}{{ if .EnableDatadogTracing }},
+    {
+      "name": "ENABLE_ENVOY_DATADOG_TRACING",
+      "value": "1"
+    },
+    {
+      "name": "DATADOG_TRACER_PORT",
+      "value": "{{ .DatadogTracerPort }}"
+    },
+    {
+      "name": "DATADOG_TRACER_ADDRESS",
+      "value": "{{ .DatadogTracerAddress }}"
     }{{ end }}{{ if .EnableStatsTags }},
     {
       "name": "ENABLE_ENVOY_STATS_TAGS",
@@ -69,8 +94,16 @@ const envoyContainerTemplate = `
     {
       "name": "ENABLE_ENVOY_DOG_STATSD",
       "value": "1"
+    }{{ end }}{{ if .EnableStatsD}},
+    {
+      "name": "STATSD_PORT",
+      "value": "{{ .StatsDPort }}"
+    }{{ end }}{{ if .EnableStatsD}},
+    {
+      "name": "STATSD_ADDRESS",
+      "value": "{{ .StatsDAddress }}"
     }{{ end }}
-  ]{{ if or .EnableJaegerTracing .EnableDatadogTracing }},
+  ]{{ if or .EnableJaegerTracing }},
   "volumeMounts": [
     {
       "mountPath": "/tmp/envoy",
@@ -87,14 +120,21 @@ type EnvoyTemplateVariables struct {
 	VirtualNodeName              string
 	Preview                      string
 	LogLevel                     string
+	AdminAccessPort              int32
+	AdminAccessLogFile           string
 	PreStopDelay                 string
 	SidecarImage                 string
 	EnvoyTracingConfigVolumeName string
 	EnableXrayTracing            bool
+	XrayDaemonPort               int32
 	EnableJaegerTracing          bool
 	EnableDatadogTracing         bool
+	DatadogTracerPort            int32
+	DatadogTracerAddress         string
 	EnableStatsTags              bool
 	EnableStatsD                 bool
+	StatsDPort                   int32
+	StatsDAddress                string
 }
 
 type envoyMutatorConfig struct {
@@ -102,6 +142,8 @@ type envoyMutatorConfig struct {
 	awsRegion                  string
 	preview                    bool
 	logLevel                   string
+	adminAccessPort            int32
+	adminAccessLogFile         string
 	preStopDelay               string
 	readinessProbeInitialDelay int32
 	readinessProbePeriod       int32
@@ -111,10 +153,15 @@ type envoyMutatorConfig struct {
 	sidecarCPULimits           string
 	sidecarMemoryLimits        string
 	enableXrayTracing          bool
+	xrayDaemonPort             int32
 	enableJaegerTracing        bool
 	enableDatadogTracing       bool
+	datadogTracerPort          int32
+	datadogTracerAddress       string
 	enableStatsTags            bool
 	enableStatsD               bool
+	statsDPort                 int32
+	statsDAddress              string
 }
 
 func newEnvoyMutator(mutatorConfig envoyMutatorConfig, ms *appmesh.Mesh, vn *appmesh.VirtualNode) *envoyMutator {
@@ -160,7 +207,8 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 	}
 
 	// add readiness probe
-	container.ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay, m.mutatorConfig.readinessProbePeriod)
+	container.ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay,
+		m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 
 	m.mutateSecretMounts(pod, &container, secretMounts)
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
@@ -178,14 +226,21 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		VirtualNodeName:              virtualNodeName,
 		Preview:                      preview,
 		LogLevel:                     m.mutatorConfig.logLevel,
+		AdminAccessPort:              m.mutatorConfig.adminAccessPort,
+		AdminAccessLogFile:           m.mutatorConfig.adminAccessLogFile,
 		PreStopDelay:                 m.mutatorConfig.preStopDelay,
 		SidecarImage:                 m.mutatorConfig.sidecarImage,
 		EnvoyTracingConfigVolumeName: envoyTracingConfigVolumeName,
 		EnableXrayTracing:            m.mutatorConfig.enableXrayTracing,
+		XrayDaemonPort:               m.mutatorConfig.xrayDaemonPort,
 		EnableJaegerTracing:          m.mutatorConfig.enableJaegerTracing,
 		EnableDatadogTracing:         m.mutatorConfig.enableDatadogTracing,
+		DatadogTracerPort:            m.mutatorConfig.datadogTracerPort,
+		DatadogTracerAddress:         m.mutatorConfig.datadogTracerAddress,
 		EnableStatsTags:              m.mutatorConfig.enableStatsTags,
 		EnableStatsD:                 m.mutatorConfig.enableStatsD,
+		StatsDPort:                   m.mutatorConfig.statsDPort,
+		StatsDAddress:                m.mutatorConfig.statsDAddress,
 	}
 }
 

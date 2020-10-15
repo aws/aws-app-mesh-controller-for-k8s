@@ -20,6 +20,8 @@ const (
 	flagPreStopDelay               = "prestop-delay"
 	flagReadinessProbeInitialDelay = "readiness-probe-initial-delay"
 	flagReadinessProbePeriod       = "readiness-probe-period"
+	flagEnvoyAdminAccessPort       = "envoy-admin-access-port"
+	flagEnvoyAdminAccessLogFile    = "envoy-admin-access-log-file"
 
 	flagInitImage  = "init-image"
 	flagIgnoredIPs = "ignored-ips"
@@ -31,8 +33,11 @@ const (
 	flagDatadogAddress       = "datadog-address"
 	flagDatadogPort          = "datadog-port"
 	flagEnableXrayTracing    = "enable-xray-tracing"
+	flagXrayDaemonPort       = "xray-daemon-port"
 	flagEnableStatsTags      = "enable-stats-tags"
 	flagEnableStatsD         = "enable-statsd"
+	flagStatsDAddress        = "statsd-address"
+	flagStatsDPort           = "statsd-port"
 	flagXRayImage            = "xray-image"
 )
 
@@ -54,6 +59,8 @@ type Config struct {
 	PreStopDelay               string
 	ReadinessProbeInitialDelay int32
 	ReadinessProbePeriod       int32
+	EnvoyAdminAcessPort        int32
+	EnvoyAdminAccessLogFile    string
 
 	// Init container settings
 	InitImage  string
@@ -65,10 +72,13 @@ type Config struct {
 	JaegerPort           string
 	EnableDatadogTracing bool
 	DatadogAddress       string
-	DatadogPort          string
+	DatadogPort          int32
 	EnableXrayTracing    bool
+	XrayDaemonPort       int32
 	EnableStatsTags      bool
 	EnableStatsD         bool
+	StatsDAddress        string
+	StatsDPort           int32
 	XRayImage            string
 }
 
@@ -100,6 +110,10 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"Enable preview channel")
 	fs.StringVar(&cfg.LogLevel, flagLogLevel, "info",
 		"AWS App Mesh envoy log level")
+	fs.Int32Var(&cfg.EnvoyAdminAcessPort, flagEnvoyAdminAccessPort, 9901,
+		"AWS App Mesh envoy admin access port")
+	fs.StringVar(&cfg.EnvoyAdminAccessLogFile, flagEnvoyAdminAccessLogFile, "/tmp/envoy_admin_access.log",
+		"AWS App Mesh envoy access log path")
 	fs.StringVar(&cfg.PreStopDelay, flagPreStopDelay, "20",
 		"AWS App Mesh envoy preStop hook sleep duration")
 	fs.Int32Var(&cfg.ReadinessProbeInitialDelay, flagReadinessProbeInitialDelay, 1,
@@ -120,16 +134,22 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"Enable Envoy Datadog tracing")
 	fs.StringVar(&cfg.DatadogAddress, flagDatadogAddress, "datadog.appmesh-system",
 		"Datadog Agent address")
-	fs.StringVar(&cfg.DatadogPort, flagDatadogPort, "8126",
+	fs.Int32Var(&cfg.DatadogPort, flagDatadogPort, 8126,
 		"Datadog Agent tracing port")
 	fs.BoolVar(&cfg.EnableXrayTracing, flagEnableXrayTracing, false,
 		"Enable Envoy X-Ray tracing integration and injects xray-daemon as sidecar")
+	fs.Int32Var(&cfg.XrayDaemonPort, flagXrayDaemonPort, 2000,
+		"Datadog Agent tracing port")
 	fs.StringVar(&cfg.XRayImage, flagXRayImage, "amazon/aws-xray-daemon",
 		"X-Ray daemon container image")
 	fs.BoolVar(&cfg.EnableStatsTags, flagEnableStatsTags, false,
 		"Enable Envoy to tag stats")
 	fs.BoolVar(&cfg.EnableStatsD, flagEnableStatsD, false,
 		"If enabled, Envoy will send DogStatsD metrics to 127.0.0.1:8125")
+	fs.StringVar(&cfg.StatsDAddress, flagStatsDAddress, "127.0.0.1",
+		"Datadog Agent address")
+	fs.Int32Var(&cfg.StatsDPort, flagStatsDPort, 8125,
+		"Datadog Agent tracing port")
 }
 
 func (cfg *Config) BindEnv() error {

@@ -102,6 +102,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            9901,
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -174,6 +175,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
@@ -202,6 +207,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    true,
 					logLevel:                   "debug",
+					adminAccessPort:            9901,
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 10,
 					readinessProbePeriod:       2,
@@ -272,6 +278,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
@@ -296,6 +306,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            9901,
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 3,
 					readinessProbePeriod:       5,
@@ -303,6 +314,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableXrayTracing:          true,
+					xrayDaemonPort:             2000,
 				},
 			},
 			args: args{
@@ -367,12 +379,20 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
 								{
 									Name:  "ENABLE_ENVOY_XRAY_TRACING",
 									Value: "1",
+								},
+								{
+									Name:  "XRAY_DAEMON_PORT",
+									Value: "2000",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
@@ -395,6 +415,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            9901,
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -466,6 +487,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
 									Name:  "ENVOY_TRACING_CFG_FILE",
 									Value: "/tmp/envoy/envoyconf.yaml",
 								},
@@ -500,6 +525,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            9901,
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -507,6 +533,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableDatadogTracing:       true,
+					datadogTracerPort:          8126,
+					datadogTracerAddress:       "127.0.0.1",
 				},
 			},
 			args: args{
@@ -546,7 +574,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
-
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
 									}},
@@ -571,18 +598,24 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
-									Name:  "ENVOY_TRACING_CFG_FILE",
-									Value: "/tmp/envoy/envoyconf.yaml",
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
 								},
 								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:      "envoy-tracing-config",
-									MountPath: "/tmp/envoy",
+									Name:  "ENABLE_ENVOY_DATADOG_TRACING",
+									Value: "1",
+								},
+								{
+									Name:  "DATADOG_TRACER_PORT",
+									Value: "8126",
+								},
+								{
+									Name:  "DATADOG_TRACER_ADDRESS",
+									Value: "127.0.0.1",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
@@ -605,6 +638,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            9901,
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -676,6 +710,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
@@ -704,6 +742,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            9901,
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -711,6 +750,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableStatsD:               true,
+					statsDAddress:              "127.0.0.1",
+					statsDPort:                 8125,
 				},
 			},
 			args: args{
@@ -775,12 +816,24 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
 								{
 									Name:  "ENABLE_ENVOY_DOG_STATSD",
 									Value: "1",
+								},
+								{
+									Name:  "STATSD_PORT",
+									Value: "8125",
+								},
+								{
+									Name:  "STATSD_ADDRESS",
+									Value: "127.0.0.1",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
@@ -803,6 +856,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            9901,
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -892,6 +946,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
@@ -946,6 +1004,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            9901,
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -954,6 +1013,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarMemoryRequests:      memoryRequests.String(),
 					sidecarMemoryLimits:        memoryLimits.String(),
 					enableStatsD:               true,
+					statsDPort:                 8125,
+					statsDAddress:              "127.0.0.1",
 				},
 			},
 			args: args{
@@ -1018,12 +1079,24 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
 								{
 									Name:  "ENABLE_ENVOY_DOG_STATSD",
 									Value: "1",
+								},
+								{
+									Name:  "STATSD_PORT",
+									Value: "8125",
+								},
+								{
+									Name:  "STATSD_ADDRESS",
+									Value: "127.0.0.1",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
@@ -1049,6 +1122,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            9901,
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -1057,6 +1131,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarMemoryRequests:      memoryRequests.String(),
 					sidecarCPULimits:           cpuLimits.String(),
 					enableStatsD:               true,
+					statsDPort:                 8125,
+					statsDAddress:              "127.0.0.1",
 				},
 			},
 			args: args{
@@ -1121,12 +1197,24 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
 								{
 									Name:  "ENABLE_ENVOY_DOG_STATSD",
 									Value: "1",
+								},
+								{
+									Name:  "STATSD_PORT",
+									Value: "8125",
+								},
+								{
+									Name:  "STATSD_ADDRESS",
+									Value: "127.0.0.1",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
@@ -1152,6 +1240,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            9901,
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
@@ -1161,6 +1250,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarCPULimits:           cpuLimits.String(),
 					sidecarMemoryLimits:        memoryLimits.String(),
 					enableStatsD:               true,
+					statsDAddress:              "127.0.0.1",
+					statsDPort:                 8125,
 				},
 			},
 			args: args{
@@ -1231,12 +1322,24 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "debug",
 								},
 								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
 								{
 									Name:  "ENABLE_ENVOY_DOG_STATSD",
 									Value: "1",
+								},
+								{
+									Name:  "STATSD_PORT",
+									Value: "8125",
+								},
+								{
+									Name:  "STATSD_ADDRESS",
+									Value: "127.0.0.1",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
@@ -1263,6 +1366,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					awsRegion:                  "us-west-2",
 					preview:                    false,
 					logLevel:                   "debug",
+					adminAccessPort:            9901,
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
