@@ -59,7 +59,7 @@ var _ = Describe("VirtualNode", func() {
 		}
 	})
 
-	Context("Virtual Node create scenarios", func() {
+	Context("Virtual Node scenarios", func() {
 		var meshTest mesh.MeshTest
 		var vnTest virtualnode.VirtualNodeTest
 
@@ -366,6 +366,368 @@ var _ = Describe("VirtualNode", func() {
 					Expect(apierrs.IsNotFound(err)).To(Equal(true))
 				})
 
+			})
+
+		})
+
+		It("Virtual node outlier detection scenarios", func() {
+
+			meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
+			mesh := &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: meshName,
+				},
+				Spec: appmesh.MeshSpec{
+					NamespaceSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"mesh": meshName,
+						},
+					},
+				},
+			}
+
+			By("creating a mesh resource in k8s", func() {
+				err := meshTest.Create(ctx, f, mesh)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validating the resources in AWS", func() {
+				err := meshTest.CheckInAWS(ctx, f, mesh)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Create a namespace and add labels", func() {
+				namespace, err := f.NSManager.AllocateNamespace(ctx, "appmeshtest")
+				Expect(err).NotTo(HaveOccurred())
+				vnBuilder.Namespace = namespace.Name
+				vnTest.Namespace = namespace
+
+				oldNS := namespace.DeepCopy()
+				namespace.Labels = algorithm.MergeStringMap(map[string]string{
+					"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
+					"mesh":                                   meshName,
+				}, namespace.Labels)
+
+				err = f.K8sClient.Patch(ctx, namespace, client.MergeFrom(oldNS))
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			maxServerErrors := int64(100)
+			maxEjectionPercent := int64(50)
+			interval := appmesh.Duration{Unit: appmesh.DurationUnitS, Value: 15}
+			baseEjectionDuration := appmesh.Duration{Unit: appmesh.DurationUnitS, Value: 10}
+			vnOutlierDetectionListener := vnBuilder.BuildListenerWithOutlierDetection("http", 8080, maxServerErrors,
+				interval, baseEjectionDuration, maxEjectionPercent)
+			listeners := []appmesh.Listener{vnOutlierDetectionListener}
+			backends := []types.NamespacedName{}
+			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+
+			By("Creating a virtual node outlier detection normal", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validate the virtual node in AWS", func() {
+				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Validate update of outlier detection thresholds", func() {
+				maxServerErrors = int64(90)
+				maxEjectionPercent = int64(90)
+				interval = appmesh.Duration{Unit: appmesh.DurationUnitS, Value: 30}
+				baseEjectionDuration = appmesh.Duration{Unit: appmesh.DurationUnitS, Value: 20}
+				vnOutlierDetectionListener = vnBuilder.BuildListenerWithOutlierDetection("http", 8080, maxServerErrors,
+					interval, baseEjectionDuration, maxEjectionPercent)
+				listeners = []appmesh.Listener{vnOutlierDetectionListener}
+
+				oldVN := vnTest.VirtualNodes[vn.Name].DeepCopy()
+
+				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
+
+				_, err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Validate update disable outlier detection", func() {
+				listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
+
+				oldVN := vnTest.VirtualNodes[vn.Name].DeepCopy()
+
+				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
+
+				_, err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Validate update enable outlier detection", func() {
+				maxServerErrors = int64(90)
+				maxEjectionPercent = int64(90)
+				interval = appmesh.Duration{Unit: appmesh.DurationUnitS, Value: 30}
+				baseEjectionDuration = appmesh.Duration{Unit: appmesh.DurationUnitS, Value: 20}
+				vnOutlierDetectionListener = vnBuilder.BuildListenerWithOutlierDetection("http", 8080, maxServerErrors,
+					interval, baseEjectionDuration, maxEjectionPercent)
+				listeners = []appmesh.Listener{vnOutlierDetectionListener}
+
+				oldVN := vnTest.VirtualNodes[vn.Name].DeepCopy()
+
+				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
+
+				_, err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			vnName = fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			vnOutlierDetectionListener = vnBuilder.BuildListenerWithOutlierDetection("http", 8080, -5,
+				interval, baseEjectionDuration, maxEjectionPercent)
+			listeners = []appmesh.Listener{vnOutlierDetectionListener}
+			vn = vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+
+			By("Virtual node outlier detection with maxServerErrors -5", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).To(HaveOccurred())
+			})
+
+			vnName = fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			vnOutlierDetectionListener = vnBuilder.BuildListenerWithOutlierDetection("http", 8080, maxServerErrors,
+				interval, baseEjectionDuration, -1)
+			listeners = []appmesh.Listener{vnOutlierDetectionListener}
+			vn = vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+
+			By("Virtual node outlier detection with maxEjectionPercent -1", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).To(HaveOccurred())
+			})
+
+			vnName = fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			vnOutlierDetectionListener = vnBuilder.BuildListenerWithOutlierDetection("http", 8080, maxServerErrors,
+				interval, baseEjectionDuration, 105)
+			listeners = []appmesh.Listener{vnOutlierDetectionListener}
+			vn = vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+
+			By("Virtual node outlier detection with maxEjectionPercent 105", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).To(HaveOccurred())
+			})
+
+		})
+		It("Virtual node connection pool scenarios", func() {
+
+			meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
+			mesh := &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: meshName,
+				},
+				Spec: appmesh.MeshSpec{
+					NamespaceSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"mesh": meshName,
+						},
+					},
+				},
+			}
+
+			By("creating a mesh resource in k8s", func() {
+				err := meshTest.Create(ctx, f, mesh)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validating the resources in AWS", func() {
+				err := meshTest.CheckInAWS(ctx, f, mesh)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Create a namespace and add labels", func() {
+				namespace, err := f.NSManager.AllocateNamespace(ctx, "appmeshtest")
+				Expect(err).NotTo(HaveOccurred())
+				vnBuilder.Namespace = namespace.Name
+				vnTest.Namespace = namespace
+
+				oldNS := namespace.DeepCopy()
+				namespace.Labels = algorithm.MergeStringMap(map[string]string{
+					"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
+					"mesh":                                   meshName,
+				}, namespace.Labels)
+
+				err = f.K8sClient.Patch(ctx, namespace, client.MergeFrom(oldNS))
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			httpConnectionPool := &appmesh.HTTPConnectionPool{
+				MaxConnections:     60,
+				MaxPendingRequests: 100,
+			}
+			vnConnectionPoolListener := vnBuilder.BuildListenerWithConnectionPools("http", 8080, nil, httpConnectionPool, nil, nil)
+			listeners := []appmesh.Listener{vnConnectionPoolListener}
+			backends := []types.NamespacedName{}
+			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+
+			By("Creating a virtual node with HTTP connection pool", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validate the virtual node in AWS", func() {
+				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Validate update of HTTP connection pool thresholds", func() {
+				httpConnectionPool = &appmesh.HTTPConnectionPool{
+					MaxConnections:     200,
+					MaxPendingRequests: 300,
+				}
+				vnConnectionPoolListener = vnBuilder.BuildListenerWithConnectionPools("http", 8080, nil, httpConnectionPool, nil, nil)
+				listeners = []appmesh.Listener{vnConnectionPoolListener}
+
+				oldVN := vnTest.VirtualNodes[vn.Name].DeepCopy()
+
+				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
+
+				_, err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Validate update disable connection pool", func() {
+				listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
+
+				oldVN := vnTest.VirtualNodes[vn.Name].DeepCopy()
+
+				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
+
+				_, err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Validate update enable connection pool", func() {
+				httpConnectionPool = &appmesh.HTTPConnectionPool{
+					MaxConnections:     200,
+					MaxPendingRequests: 300,
+				}
+				vnConnectionPoolListener = vnBuilder.BuildListenerWithConnectionPools("http", 8080, nil, httpConnectionPool, nil, nil)
+				listeners = []appmesh.Listener{vnConnectionPoolListener}
+
+				oldVN := vnTest.VirtualNodes[vn.Name].DeepCopy()
+
+				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
+
+				_, err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			httpConnectionPool = &appmesh.HTTPConnectionPool{
+				MaxConnections:     60,
+				MaxPendingRequests: 100,
+			}
+			tcpConnectionPool := &appmesh.TCPConnectionPool{
+				MaxConnections: 70,
+			}
+			http2ConnectionPool := &appmesh.HTTP2ConnectionPool{
+				MaxRequests: 50,
+			}
+			grpcConnectionPool := &appmesh.GRPCConnectionPool{
+				MaxRequests: 30,
+			}
+
+			vnName = fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			vnConnectionPoolListener = vnBuilder.BuildListenerWithConnectionPools("grpc", 8080, nil, nil, nil, grpcConnectionPool)
+			listeners = []appmesh.Listener{vnConnectionPoolListener}
+			vn = vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+
+			By("Creating a virtual node with GRPC connection pool", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validate the virtual node in AWS", func() {
+				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			vnName = fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			vnConnectionPoolListener = vnBuilder.BuildListenerWithConnectionPools("http2", 8080, nil, nil, http2ConnectionPool, nil)
+			listeners = []appmesh.Listener{vnConnectionPoolListener}
+			vn = vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+
+			By("Creating a virtual node with HTTP2 connection pool", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validate the virtual node in AWS", func() {
+				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			vnName = fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			vnConnectionPoolListener = vnBuilder.BuildListenerWithConnectionPools("http", 8080, tcpConnectionPool, httpConnectionPool, http2ConnectionPool, grpcConnectionPool)
+			listeners = []appmesh.Listener{vnConnectionPoolListener}
+			vn = vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+
+			By("Creating a virtual node with HTTP, TCP, HTTP2 and GRPC connection pool", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).To(HaveOccurred())
+			})
+
+			vnName = fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			httpConnectionPool = &appmesh.HTTPConnectionPool{
+				MaxConnections:     -30,
+				MaxPendingRequests: 100,
+			}
+			vnConnectionPoolListener = vnBuilder.BuildListenerWithConnectionPools("http", 8080, nil, httpConnectionPool, nil, nil)
+			listeners = []appmesh.Listener{vnConnectionPoolListener}
+			backends = []types.NamespacedName{}
+			vn = vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+
+			By("Virtual node with HTTP connection pool MaxConnections -30", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).To(HaveOccurred())
+			})
+
+			vnName = fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			grpcConnectionPool = &appmesh.GRPCConnectionPool{
+				MaxRequests: -40,
+			}
+			vnConnectionPoolListener = vnBuilder.BuildListenerWithConnectionPools("http", 8080, nil, nil, nil, grpcConnectionPool)
+			listeners = []appmesh.Listener{vnConnectionPoolListener}
+			backends = []types.NamespacedName{}
+			vn = vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+
+			By("Virtual node with GRPC connection pool MaxRequests -30", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).To(HaveOccurred())
 			})
 
 		})

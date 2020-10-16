@@ -361,5 +361,168 @@ var _ = Describe("VirtualGateway", func() {
 			})
 
 		})
+
+		It("Virtual Gateway Connection Pool Scenarios", func() {
+
+			meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
+			mesh := &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: meshName,
+				},
+				Spec: appmesh.MeshSpec{
+					NamespaceSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"mesh": meshName,
+						},
+					},
+				},
+			}
+
+			By("creating a mesh resource in k8s", func() {
+				err := meshTest.Create(ctx, f, mesh)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validating the resources in AWS", func() {
+				err := meshTest.CheckInAWS(ctx, f, mesh)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Create a namespace and add labels", func() {
+				namespace, err := f.NSManager.AllocateNamespace(ctx, "appmeshtest")
+				Expect(err).NotTo(HaveOccurred())
+				vgBuilder.Namespace = namespace.Name
+				vgTest.Namespace = namespace
+
+				oldNS := namespace.DeepCopy()
+				namespace.Labels = algorithm.MergeStringMap(map[string]string{
+					"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
+					"mesh":                                   meshName,
+				}, namespace.Labels)
+
+				err = f.K8sClient.Patch(ctx, namespace, client.MergeFrom(oldNS))
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			vgName := fmt.Sprintf("vg-%s", utils.RandomDNS1123Label(8))
+			httpConnectionPool := &appmesh.HTTPConnectionPool{
+				MaxConnections:     60,
+				MaxPendingRequests: 100,
+			}
+			vgConnectionPoolListener := vgBuilder.BuildListenerWithConnectionPools("http", 8080, httpConnectionPool, nil, nil)
+			listeners := []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
+			nsSelector := map[string]string{"gateway": "ingress-gw"}
+			vg := vgBuilder.BuildVirtualGateway(vgName, listeners, nsSelector)
+
+			By("Creating a virtual gateway with HTTP connectiol pool", func() {
+				err := vgTest.Create(ctx, f, vg)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Validate the virtual gateway in AWS", func() {
+				err := vgTest.CheckInAWS(ctx, f, mesh, vg)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Validate update of HTTP connection pool thresholds", func() {
+				oldVG := vgTest.VirtualGateways[vg.Name].DeepCopy()
+				httpConnectionPool := &appmesh.HTTPConnectionPool{
+					MaxConnections:     200,
+					MaxPendingRequests: 50,
+				}
+				vgConnectionPoolListener := vgBuilder.BuildListenerWithConnectionPools("http", 8080, httpConnectionPool, nil, nil)
+				listeners := []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
+
+				vgTest.VirtualGateways[vg.Name].Spec.Listeners = listeners
+				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Validate update disable connection pool", func() {
+				oldVG := vgTest.VirtualGateways[vg.Name].DeepCopy()
+				listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080, "/")}
+
+				vgTest.VirtualGateways[vg.Name].Spec.Listeners = listeners
+				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Validate update enable connection pool", func() {
+				oldVG := vgTest.VirtualGateways[vg.Name].DeepCopy()
+				httpConnectionPool := &appmesh.HTTPConnectionPool{
+					MaxConnections:     150,
+					MaxPendingRequests: 70,
+				}
+				vgConnectionPoolListener := vgBuilder.BuildListenerWithConnectionPools("http", 8080, httpConnectionPool, nil, nil)
+				listeners := []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
+
+				vgTest.VirtualGateways[vg.Name].Spec.Listeners = listeners
+				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			http2ConnectionPool := &appmesh.HTTP2ConnectionPool{
+				MaxRequests: 50,
+			}
+			grpcConnectionPool := &appmesh.GRPCConnectionPool{
+				MaxRequests: 30,
+			}
+
+			vgName = fmt.Sprintf("vg-%s", utils.RandomDNS1123Label(8))
+			vgConnectionPoolListener = vgBuilder.BuildListenerWithConnectionPools("http2", 8080, nil, http2ConnectionPool, nil)
+			listeners = []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
+			vg = vgBuilder.BuildVirtualGateway(vgName, listeners, nsSelector)
+
+			By("Creating a virtual gateway with HTTP2 connection pool", func() {
+				err := vgTest.Create(ctx, f, vg)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Validate the virtual gateway in AWS", func() {
+				err := vgTest.CheckInAWS(ctx, f, mesh, vg)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			vgName = fmt.Sprintf("vg-%s", utils.RandomDNS1123Label(8))
+			vgConnectionPoolListener = vgBuilder.BuildListenerWithConnectionPools("grpc", 8080, nil, nil, grpcConnectionPool)
+			listeners = []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
+			vg = vgBuilder.BuildVirtualGateway(vgName, listeners, nsSelector)
+
+			By("Creating a virtual gateway with GRPC connection pool", func() {
+				err := vgTest.Create(ctx, f, vg)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Validate the virtual gateway in AWS", func() {
+				err := vgTest.CheckInAWS(ctx, f, mesh, vg)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			vgName = fmt.Sprintf("vg-%s", utils.RandomDNS1123Label(8))
+			vgConnectionPoolListener = vgBuilder.BuildListenerWithConnectionPools("grpc", 8080, httpConnectionPool, http2ConnectionPool, grpcConnectionPool)
+			listeners = []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
+			vg = vgBuilder.BuildVirtualGateway(vgName, listeners, nsSelector)
+
+			By("Creating a virtual gateway with HTTP, HTTP2, GRPC connection pool", func() {
+				err := vgTest.Create(ctx, f, vg)
+				Expect(err).To(HaveOccurred())
+			})
+		})
 	})
 })
