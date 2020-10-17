@@ -105,6 +105,10 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 		}
 	}
 
+	if err := m.updateCRDVirtualNode(ctx, vn, svcSummary); err != nil {
+		return err
+	}
+
 	if vn.Spec.PodSelector != nil {
 		readyPods, notReadyPods, _, err := m.virtualNodeEndpointResolver.Resolve(ctx, vn)
 		if err != nil {
@@ -131,6 +135,9 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vn *appmesh.Virtua
 	cloudMapConfig := vn.Spec.ServiceDiscovery.AWSCloudMap
 	nsSummary, err := m.findCloudMapNamespace(ctx, cloudMapConfig.NamespaceName)
 	if err != nil {
+		if vn.Status.CloudMapServiceARN == nil {
+			return nil
+		}
 		return err
 	}
 	if nsSummary == nil {
@@ -376,6 +383,7 @@ func (m *defaultResourceManager) addCloudMapServiceToServiceSummaryCache(nsSumma
 	cacheKey := m.buildCloudMapServiceSummaryCacheKey(nsSummary, awssdk.StringValue(service.Name))
 	svcSummary := &serviceSummary{
 		serviceID:               awssdk.StringValue(service.Id),
+		serviceARN:              service.Arn,
 		healthCheckCustomConfig: service.HealthCheckCustomConfig,
 	}
 	m.serviceSummaryCache.Add(cacheKey, svcSummary, defaultServiceCacheTTL)
@@ -423,4 +431,18 @@ func (m *defaultResourceManager) getClusterNodeInfo(ctx context.Context) map[str
 		nodeInfoByName[node.Name] = nodeAttrs
 	}
 	return nodeInfoByName
+}
+
+func (m *defaultResourceManager) updateCRDVirtualNode(ctx context.Context, vn *appmesh.VirtualNode, svcSummary *serviceSummary) error {
+	oldVN := vn.DeepCopy()
+	needsUpdate := false
+	if awssdk.StringValue(vn.Status.CloudMapServiceARN) != awssdk.StringValue(svcSummary.serviceARN) {
+		vn.Status.CloudMapServiceARN = svcSummary.serviceARN
+		needsUpdate = true
+	}
+
+	if !needsUpdate {
+		return nil
+	}
+	return m.k8sClient.Status().Patch(ctx, vn, client.MergeFrom(oldVN))
 }

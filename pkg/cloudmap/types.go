@@ -11,6 +11,7 @@ import (
 // serviceSummary contains summary of cloudMap service information.
 type serviceSummary struct {
 	serviceID               string
+	serviceARN              *string
 	healthCheckCustomConfig *servicediscovery.HealthCheckCustomConfig
 }
 

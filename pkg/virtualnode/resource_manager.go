@@ -98,6 +98,9 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vn *appmesh.Virtua
 	}
 	sdkVN, err := m.findSDKVirtualNode(ctx, ms, vn)
 	if err != nil {
+		if vn.Status.VirtualNodeARN == nil {
+			return nil
+		}
 		return err
 	}
 	if sdkVN == nil {

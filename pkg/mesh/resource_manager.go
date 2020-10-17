@@ -71,6 +71,9 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, ms *appmesh.Mesh
 func (m *defaultResourceManager) Cleanup(ctx context.Context, ms *appmesh.Mesh) error {
 	sdkMS, err := m.findSDKMesh(ctx, ms)
 	if err != nil {
+		if ms.Status.MeshARN == nil {
+			return nil
+		}
 		return err
 	}
 	if sdkMS == nil {

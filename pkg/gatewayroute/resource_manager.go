@@ -110,7 +110,10 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, gr *appmesh.Gatewa
 		return err
 	}
 	sdkGR, err := m.findSDKGatewayRoute(ctx, ms, vg, gr)
-	if sdkGR == nil {
+	if err != nil {
+		if sdkGR == nil || gr.Status.GatewayRouteARN == nil {
+			return nil
+		}
 		return nil
 	}
 

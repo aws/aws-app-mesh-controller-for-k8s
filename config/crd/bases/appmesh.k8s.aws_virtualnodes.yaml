@@ -805,6 +805,10 @@ spec:
         status:
           description: VirtualNodeStatus defines the observed state of VirtualNode
           properties:
+            cloudMapServiceARN:
+              description: CloudMapServiceARN is the AppMesh VirtualNode object's
+                CloudMap Service ARN
+              type: string
             conditions:
               description: The current VirtualNode status.
               items:

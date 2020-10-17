@@ -138,6 +138,7 @@ func (s *DynamicStack) Deploy(ctx context.Context, f *framework.Framework) {
 	s.createMeshAndNamespace(ctx, f)
 	if s.ServiceDiscoveryType == manifest.CloudMapServiceDiscovery {
 		s.createCloudMapNamespace(ctx, f)
+		time.Sleep(1 * time.Minute)
 	}
 	mb := &manifest.ManifestBuilder{
 		Namespace:            s.namespace.Name,
@@ -325,6 +326,9 @@ func (s *DynamicStack) deleteMeshAndNamespace(ctx context.Context, f *framework.
 
 func (s *DynamicStack) createCloudMapNamespace(ctx context.Context, f *framework.Framework) {
 	cmNamespace := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
+	if s.IsTLSEnabled {
+		cmNamespace = "tls-e2e.svc.cluster.local"
+	}
 	By(fmt.Sprintf("create cloudMap namespace %s", cmNamespace), func() {
 		resp, err := f.CloudMapClient.CreatePrivateDnsNamespaceWithContext(ctx, &servicediscovery.CreatePrivateDnsNamespaceInput{
 			Name: aws.String(cmNamespace),
@@ -499,6 +503,7 @@ func (s *DynamicStack) createResourcesForNodes(ctx context.Context, f *framework
 		vnBuilder := &manifest.VNBuilder{
 			ServiceDiscoveryType: s.ServiceDiscoveryType,
 			Namespace:            s.namespace.Name,
+			CloudMapNamespace:    s.cloudMapNamespace,
 		}
 
 		for i := 0; i != s.VirtualNodesCount; i++ {
@@ -643,6 +648,7 @@ func (s *DynamicStack) createResourcesForNodesWithTLS(ctx context.Context, f *fr
 		vnBuilder := &manifest.VNBuilder{
 			ServiceDiscoveryType: s.ServiceDiscoveryType,
 			Namespace:            s.namespace.Name,
+			CloudMapNamespace:    s.cloudMapNamespace,
 		}
 
 		for i := 0; i != s.VirtualNodesCount; i++ {
