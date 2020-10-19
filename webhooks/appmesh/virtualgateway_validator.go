@@ -29,13 +29,23 @@ func (v *virtualGatewayValidator) Prototype(req admission.Request) (runtime.Obje
 }
 
 func (v *virtualGatewayValidator) ValidateCreate(ctx context.Context, obj runtime.Object) error {
+	vg := obj.(*appmesh.VirtualGateway)
+
+	if err := v.checkForConnectionPoolProtocols(vg); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (v *virtualGatewayValidator) ValidateUpdate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error {
-	newVGateway := obj.(*appmesh.VirtualGateway)
+	vg := obj.(*appmesh.VirtualGateway)
 	oldVGateway := oldObj.(*appmesh.VirtualGateway)
-	if err := v.enforceFieldsImmutability(newVGateway, oldVGateway); err != nil {
+
+	if err := v.enforceFieldsImmutability(vg, oldVGateway); err != nil {
+		return err
+	}
+
+	if err := v.checkForConnectionPoolProtocols(vg); err != nil {
 		return err
 	}
 	return nil
@@ -57,6 +67,48 @@ func (v *virtualGatewayValidator) enforceFieldsImmutability(newVGateway *appmesh
 	if len(changedImmutableFields) != 0 {
 		return errors.Errorf("%s update may not change these fields: %s", "VirtualGateway", strings.Join(changedImmutableFields, ","))
 	}
+	return nil
+}
+
+func (v *virtualGatewayValidator) checkForConnectionPoolProtocols(vg *appmesh.VirtualGateway) error {
+	//App Mesh supports one type of connection pool at a time
+	if vg.Spec.Listeners != nil {
+		for _, listener := range vg.Spec.Listeners {
+			err := v.checkListenerMultipleConnectionPools(listener)
+			if err != nil {
+				return err
+			}
+
+		}
+	}
+	return nil
+}
+
+func (v *virtualGatewayValidator) checkListenerMultipleConnectionPools(ln appmesh.VirtualGatewayListener) error {
+
+	//App Mesh supports one type of connection pool at a time
+
+	if ln.ConnectionPool == nil {
+		return nil
+	}
+	poolCount := 0
+
+	if ln.ConnectionPool.HTTP != nil {
+		poolCount += 1
+	}
+
+	if ln.ConnectionPool.HTTP2 != nil {
+		poolCount += 1
+	}
+
+	if ln.ConnectionPool.GRPC != nil {
+		poolCount += 1
+	}
+
+	if poolCount > 1 {
+		return errors.Errorf("Only one type of Virtual Gateway Connection Pool is allowed")
+	}
+
 	return nil
 }
 

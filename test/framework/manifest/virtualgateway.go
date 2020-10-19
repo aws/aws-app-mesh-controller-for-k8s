@@ -46,6 +46,30 @@ func (b *VGBuilder) BuildVGListener(protocol appmesh.VirtualGatewayPortProtocol,
 	}
 }
 
+func (b *VGBuilder) BuildListenerWithConnectionPools(protocol appmesh.VirtualGatewayPortProtocol, port appmesh.PortNumber, http *appmesh.HTTPConnectionPool,
+	http2 *appmesh.HTTP2ConnectionPool, grpc *appmesh.GRPCConnectionPool) appmesh.VirtualGatewayListener {
+
+	vgConnectionPool := &appmesh.VirtualGatewayConnectionPool{}
+
+	if http != nil {
+		vgConnectionPool.HTTP = http
+	}
+	if http2 != nil {
+		vgConnectionPool.HTTP2 = http2
+	}
+	if grpc != nil {
+		vgConnectionPool.GRPC = grpc
+	}
+
+	return appmesh.VirtualGatewayListener{
+		PortMapping: appmesh.VirtualGatewayPortMapping{
+			Port:     port,
+			Protocol: protocol,
+		},
+		ConnectionPool: vgConnectionPool,
+	}
+}
+
 func (b *VGBuilder) BuildHealthCheckPolicy(path string, protocol appmesh.VirtualGatewayPortProtocol, port appmesh.PortNumber) *appmesh.VirtualGatewayHealthCheckPolicy {
 	return &appmesh.VirtualGatewayHealthCheckPolicy{
 		HealthyThreshold:   3,
