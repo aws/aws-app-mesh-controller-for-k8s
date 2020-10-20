@@ -4,7 +4,7 @@
         {
             "Effect": "Allow",
             "Action": [
-                "appmesh:StreamAggregatedResources"
+                "appmesh-preview:StreamAggregatedResources"
             ],
             "Resource": "*"
         }
