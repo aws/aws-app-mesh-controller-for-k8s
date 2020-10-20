@@ -7,6 +7,14 @@
                 "appmesh-preview:StreamAggregatedResources"
             ],
             "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "acm:ExportCertificate",
+                "acm-pca:GetCertificateAuthorityCertificate"
+            ],
+            "Resource": "*"
         }
     ]
 }
