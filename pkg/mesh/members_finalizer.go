@@ -22,7 +22,7 @@ type MembersFinalizer interface {
 	Finalize(ctx context.Context, ms *appmesh.Mesh) error
 }
 
-// +kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func NewPendingMembersFinalizer(k8sClient client.Client, eventRecorder record.EventRecorder, log logr.Logger) MembersFinalizer {
 	return &pendingMembersFinalizer{

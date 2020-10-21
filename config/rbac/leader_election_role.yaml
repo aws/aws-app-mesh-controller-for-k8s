@@ -9,17 +9,15 @@ rules:
   resources:
   - configmaps
   verbs:
-  - get
   - list
   - watch
   - create
-  - update
-  - patch
-  - delete
 - apiGroups:
   - ""
   resources:
-  - configmaps/status
+  - configmaps
+  resourceNames:
+  - appmesh-controller-leader-election
   verbs:
   - get
   - update
@@ -30,3 +28,4 @@ rules:
   - events
   verbs:
   - create
+  - patch
