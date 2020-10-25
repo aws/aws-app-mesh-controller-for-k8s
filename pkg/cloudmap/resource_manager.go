@@ -32,6 +32,8 @@ const (
 	nodeRegionLabelKey2           = "topology.kubernetes.io/region"
 	nodeAvailabilityZoneLabelKey1 = "failure-domain.beta.kubernetes.io/zone"
 	nodeAvailabilityZoneLabelKey2 = "topology.kubernetes.io/zone"
+
+	cloudMapServiceAnnotation = "cloudMapServiceARN"
 )
 
 type ResourceManager interface {
@@ -135,7 +137,7 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vn *appmesh.Virtua
 	cloudMapConfig := vn.Spec.ServiceDiscovery.AWSCloudMap
 	nsSummary, err := m.findCloudMapNamespace(ctx, cloudMapConfig.NamespaceName)
 	if err != nil {
-		if vn.Status.CloudMapServiceARN == nil {
+		if !m.isCloudMapServiceCreated(ctx, vn) {
 			return nil
 		}
 		return err
@@ -433,16 +435,30 @@ func (m *defaultResourceManager) getClusterNodeInfo(ctx context.Context) map[str
 	return nodeInfoByName
 }
 
+func (m *defaultResourceManager) isCloudMapServiceCreated(ctx context.Context, vn *appmesh.VirtualNode) bool {
+	oldVN := vn.DeepCopy()
+	vnAnnotations := oldVN.Annotations
+
+	for key, _ := range vnAnnotations {
+		if key == cloudMapServiceAnnotation {
+			return true
+		}
+	}
+	return false
+}
+
 func (m *defaultResourceManager) updateCRDVirtualNode(ctx context.Context, vn *appmesh.VirtualNode, svcSummary *serviceSummary) error {
 	oldVN := vn.DeepCopy()
-	needsUpdate := false
-	if awssdk.StringValue(vn.Status.CloudMapServiceARN) != awssdk.StringValue(svcSummary.serviceARN) {
-		vn.Status.CloudMapServiceARN = svcSummary.serviceARN
-		needsUpdate = true
-	}
+	vnAnnotations := oldVN.Annotations
 
-	if !needsUpdate {
-		return nil
+	if vn.Annotations == nil {
+		vn.Annotations = make(map[string]string)
 	}
-	return m.k8sClient.Status().Patch(ctx, vn, client.MergeFrom(oldVN))
+	for key, _ := range vnAnnotations {
+		if key == cloudMapServiceAnnotation {
+			return nil
+		}
+	}
+	vn.Annotations[cloudMapServiceAnnotation] = *svcSummary.serviceARN
+	return m.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN))
 }

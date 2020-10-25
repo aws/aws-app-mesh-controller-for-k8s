@@ -2402,11 +2402,6 @@ func (in *VirtualNodeStatus) DeepCopyInto(out *VirtualNodeStatus) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.CloudMapServiceARN != nil {
-		in, out := &in.CloudMapServiceARN, &out.CloudMapServiceARN
-		*out = new(string)
-		**out = **in
-	}
 	if in.Conditions != nil {
 		in, out := &in.Conditions, &out.Conditions
 		*out = make([]VirtualNodeCondition, len(*in))

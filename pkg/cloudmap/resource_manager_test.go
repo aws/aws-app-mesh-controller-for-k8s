@@ -5,7 +5,6 @@ import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +33,8 @@ func Test_defaultResourceManager_updateCRDVirtualNode(t *testing.T) {
 			args: args{
 				vn: &appmesh.VirtualNode{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "vn-1",
+						Name:        "vn-1",
+						Annotations: map[string]string{},
 					},
 					Status: appmesh.VirtualNodeStatus{},
 				},
@@ -46,9 +46,9 @@ func Test_defaultResourceManager_updateCRDVirtualNode(t *testing.T) {
 			wantVN: &appmesh.VirtualNode{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "vn-1",
-				},
-				Status: appmesh.VirtualNodeStatus{
-					CloudMapServiceARN: aws.String("cloudMapARN"),
+					Annotations: map[string]string{
+						"cloudMapServiceARN": "cloudMapARN",
+					},
 				},
 			},
 		},
@@ -81,6 +81,63 @@ func Test_defaultResourceManager_updateCRDVirtualNode(t *testing.T) {
 				}
 				assert.True(t, cmp.Equal(tt.wantVN, gotVN, opts), "diff", cmp.Diff(tt.wantVN, gotVN, opts))
 			}
+		})
+	}
+}
+
+func Test_defaultResourceManager_isCloudMapServiceCreated(t *testing.T) {
+	type args struct {
+		vn *appmesh.VirtualNode
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "virtualNode has cloudMap service annotation",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "vn-1",
+						Annotations: map[string]string{
+							"cloudMapServiceARN": "cloudMapARN",
+						},
+					},
+					Status: appmesh.VirtualNodeStatus{},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "virtualNode doesn't have cloudMap service annotation",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "vn-1",
+					},
+					Status: appmesh.VirtualNodeStatus{},
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			k8sSchema := runtime.NewScheme()
+			clientgoscheme.AddToScheme(k8sSchema)
+			appmesh.AddToScheme(k8sSchema)
+			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			m := &defaultResourceManager{
+				k8sClient: k8sClient,
+				log:       log.NullLogger{},
+			}
+
+			err := k8sClient.Create(ctx, tt.args.vn.DeepCopy())
+			assert.NoError(t, err)
+			response := m.isCloudMapServiceCreated(ctx, tt.args.vn)
+			assert.True(t, cmp.Equal(tt.want, response), "diff", cmp.Diff(tt.want, response))
 		})
 	}
 }

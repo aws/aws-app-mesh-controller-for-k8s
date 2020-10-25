@@ -382,9 +382,6 @@ type VirtualNodeStatus struct {
 	// VirtualNodeARN is the AppMesh VirtualNode object's Amazon Resource Name
 	// +optional
 	VirtualNodeARN *string `json:"virtualNodeARN,omitempty"`
-	// CloudMapServiceARN is the AppMesh VirtualNode object's CloudMap Service ARN
-	// +optional
-	CloudMapServiceARN *string `json:"cloudMapServiceARN,omitempty"`
 	// The current VirtualNode status.
 	// +optional
 	Conditions []VirtualNodeCondition `json:"conditions,omitempty"`
