@@ -89,6 +89,12 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vg *appmesh.Virtua
 		return err
 	}
 	sdkVG, err := m.findSDKVirtualGateway(ctx, ms, vg)
+	if err != nil {
+		if vg.Status.VirtualGatewayARN == nil {
+			return nil
+		}
+		return err
+	}
 	if sdkVG == nil {
 		return nil
 	}

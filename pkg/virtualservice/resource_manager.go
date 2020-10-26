@@ -104,6 +104,9 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vs *appmesh.Virtua
 	}
 	sdkVS, err := m.findSDKVirtualService(ctx, ms, vs)
 	if err != nil {
+		if vs.Status.VirtualServiceARN == nil {
+			return nil
+		}
 		return err
 	}
 	if sdkVS == nil {

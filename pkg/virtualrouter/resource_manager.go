@@ -105,6 +105,9 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vr *appmesh.Virtua
 	}
 	sdkVR, err := m.findSDKVirtualRouter(ctx, ms, vr)
 	if err != nil {
+		if vr.Status.VirtualRouterARN == nil {
+			return nil
+		}
 		return err
 	}
 	if sdkVR == nil {

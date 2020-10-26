@@ -32,6 +32,8 @@ const (
 	nodeRegionLabelKey2           = "topology.kubernetes.io/region"
 	nodeAvailabilityZoneLabelKey1 = "failure-domain.beta.kubernetes.io/zone"
 	nodeAvailabilityZoneLabelKey2 = "topology.kubernetes.io/zone"
+
+	cloudMapServiceAnnotation = "cloudMapServiceARN"
 )
 
 type ResourceManager interface {
@@ -105,6 +107,10 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 		}
 	}
 
+	if err := m.updateCRDVirtualNode(ctx, vn, svcSummary); err != nil {
+		return err
+	}
+
 	if vn.Spec.PodSelector != nil {
 		readyPods, notReadyPods, _, err := m.virtualNodeEndpointResolver.Resolve(ctx, vn)
 		if err != nil {
@@ -131,6 +137,9 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vn *appmesh.Virtua
 	cloudMapConfig := vn.Spec.ServiceDiscovery.AWSCloudMap
 	nsSummary, err := m.findCloudMapNamespace(ctx, cloudMapConfig.NamespaceName)
 	if err != nil {
+		if !m.isCloudMapServiceCreated(ctx, vn) {
+			return nil
+		}
 		return err
 	}
 	if nsSummary == nil {
@@ -376,6 +385,7 @@ func (m *defaultResourceManager) addCloudMapServiceToServiceSummaryCache(nsSumma
 	cacheKey := m.buildCloudMapServiceSummaryCacheKey(nsSummary, awssdk.StringValue(service.Name))
 	svcSummary := &serviceSummary{
 		serviceID:               awssdk.StringValue(service.Id),
+		serviceARN:              service.Arn,
 		healthCheckCustomConfig: service.HealthCheckCustomConfig,
 	}
 	m.serviceSummaryCache.Add(cacheKey, svcSummary, defaultServiceCacheTTL)
@@ -423,4 +433,32 @@ func (m *defaultResourceManager) getClusterNodeInfo(ctx context.Context) map[str
 		nodeInfoByName[node.Name] = nodeAttrs
 	}
 	return nodeInfoByName
+}
+
+func (m *defaultResourceManager) isCloudMapServiceCreated(ctx context.Context, vn *appmesh.VirtualNode) bool {
+	oldVN := vn.DeepCopy()
+	vnAnnotations := oldVN.Annotations
+
+	for key, _ := range vnAnnotations {
+		if key == cloudMapServiceAnnotation {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *defaultResourceManager) updateCRDVirtualNode(ctx context.Context, vn *appmesh.VirtualNode, svcSummary *serviceSummary) error {
+	oldVN := vn.DeepCopy()
+	vnAnnotations := oldVN.Annotations
+
+	if vn.Annotations == nil {
+		vn.Annotations = make(map[string]string)
+	}
+	for key, _ := range vnAnnotations {
+		if key == cloudMapServiceAnnotation {
+			return nil
+		}
+	}
+	vn.Annotations[cloudMapServiceAnnotation] = *svcSummary.serviceARN
+	return m.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN))
 }
