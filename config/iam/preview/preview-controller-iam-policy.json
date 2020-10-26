@@ -1,0 +1,93 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+		"appmesh-preview:ListVirtualRouters",
+		"appmesh-preview:ListVirtualServices",
+		"appmesh-preview:ListRoutes",
+		"appmesh-preview:ListGatewayRoutes",
+		"appmesh-preview:ListMeshes",
+		"appmesh-preview:ListVirtualNodes",
+		"appmesh-preview:ListVirtualGateways",
+		"appmesh-preview:DescribeMesh",
+		"appmesh-preview:DescribeVirtualRouter",
+		"appmesh-preview:DescribeRoute",
+		"appmesh-preview:DescribeVirtualNode",
+		"appmesh-preview:DescribeVirtualGateway",
+		"appmesh-preview:DescribeGatewayRoute",
+		"appmesh-preview:DescribeVirtualService",
+		"appmesh-preview:CreateMesh",
+		"appmesh-preview:CreateVirtualRouter",
+		"appmesh-preview:CreateVirtualGateway",
+		"appmesh-preview:CreateVirtualService",
+		"appmesh-preview:CreateGatewayRoute",
+		"appmesh-preview:CreateRoute",
+		"appmesh-preview:CreateVirtualNode",
+		"appmesh-preview:UpdateMesh",
+		"appmesh-preview:UpdateRoute",
+		"appmesh-preview:UpdateVirtualGateway",
+		"appmesh-preview:UpdateVirtualRouter",
+		"appmesh-preview:UpdateGatewayRoute",
+		"appmesh-preview:UpdateVirtualService",
+		"appmesh-preview:UpdateVirtualNode",
+		"appmesh-preview:DeleteMesh",
+		"appmesh-preview:DeleteRoute",
+		"appmesh-preview:DeleteVirtualRouter",
+		"appmesh-preview:DeleteGatewayRoute",
+		"appmesh-preview:DeleteVirtualService",
+		"appmesh-preview:DeleteVirtualNode",
+		"appmesh-preview:DeleteVirtualGateway"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateServiceLinkedRole"
+            ],
+            "Resource": "arn:aws:iam::*:role/aws-service-role/appmesh-preview.amazonaws.com/AWSServiceRoleForAppMesh",
+            "Condition": {
+                "StringLike": {
+                    "iam:AWSServiceName": [
+                        "appmesh-preview.amazonaws.com"
+                    ]
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "acm:ListCertificates",
+                "acm:DescribeCertificate",
+                "acm-pca:DescribeCertificateAuthority",
+                "acm-pca:ListCertificateAuthorities"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+		"servicediscovery:CreateService",
+		"servicediscovery:DeleteService",
+		"servicediscovery:GetService",
+		"servicediscovery:GetInstance",
+		"servicediscovery:RegisterInstance",
+		"servicediscovery:DeregisterInstance",
+		"servicediscovery:ListInstances",
+		"servicediscovery:ListNamespaces",
+		"servicediscovery:ListServices",
+		"servicediscovery:GetInstancesHealthStatus",
+		"servicediscovery:UpdateInstanceCustomHealthStatus",
+		"servicediscovery:GetOperation",
+		"route53:GetHealthCheck",
+		"route53:CreateHealthCheck",
+		"route53:UpdateHealthCheck",
+		"route53:ChangeResourceRecordSets",
+		"route53:DeleteHealthCheck"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

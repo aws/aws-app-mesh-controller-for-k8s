@@ -160,3 +160,162 @@ func Test_virtualGatewayValidator_enforceFieldsImmutability(t *testing.T) {
 		})
 	}
 }
+
+func Test_virtualGatewayValidator_checkForConnectionPoolProtocols(t *testing.T) {
+	type args struct {
+		vg *appmesh.VirtualGateway
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "Virtual gateway listener with one connection pool type",
+			args: args{
+				vg: &appmesh.VirtualGateway{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "app-ns",
+						Name:      "my-vg",
+					},
+					Spec: appmesh.VirtualGatewaySpec{
+						AWSName: aws.String("my-vg_app-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						Listeners: []appmesh.VirtualGatewayListener{
+							{
+								PortMapping: appmesh.VirtualGatewayPortMapping{
+									Port:     8080,
+									Protocol: "http",
+								},
+								ConnectionPool: &appmesh.VirtualGatewayConnectionPool{
+									HTTP: &appmesh.HTTPConnectionPool{
+										MaxConnections:     100,
+										MaxPendingRequests: 30,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Virtual gateway listener with HTTP and HTTP2 connection pool",
+			args: args{
+				vg: &appmesh.VirtualGateway{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "app-ns",
+						Name:      "my-vg",
+					},
+					Spec: appmesh.VirtualGatewaySpec{
+						AWSName: aws.String("my-vg_app-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						Listeners: []appmesh.VirtualGatewayListener{
+							{
+								PortMapping: appmesh.VirtualGatewayPortMapping{
+									Port:     8080,
+									Protocol: "http",
+								},
+								ConnectionPool: &appmesh.VirtualGatewayConnectionPool{
+									HTTP: &appmesh.HTTPConnectionPool{
+										MaxConnections:     100,
+										MaxPendingRequests: 30,
+									},
+									HTTP2: &appmesh.HTTP2ConnectionPool{
+										MaxRequests: 30,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("Only one type of Virtual Gateway Connection Pool is allowed"),
+		},
+		{
+			name: "Virtual gateway listener with HTTP, GRPC and HTTP2 connection pool",
+			args: args{
+				vg: &appmesh.VirtualGateway{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "app-ns",
+						Name:      "my-vg",
+					},
+					Spec: appmesh.VirtualGatewaySpec{
+						AWSName: aws.String("my-vg_app-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						Listeners: []appmesh.VirtualGatewayListener{
+							{
+								PortMapping: appmesh.VirtualGatewayPortMapping{
+									Port:     8080,
+									Protocol: "http",
+								},
+								ConnectionPool: &appmesh.VirtualGatewayConnectionPool{
+									HTTP: &appmesh.HTTPConnectionPool{
+										MaxConnections:     100,
+										MaxPendingRequests: 30,
+									},
+									HTTP2: &appmesh.HTTP2ConnectionPool{
+										MaxRequests: 30,
+									},
+									GRPC: &appmesh.GRPCConnectionPool{
+										MaxRequests: 30,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("Only one type of Virtual Gateway Connection Pool is allowed"),
+		},
+		{
+			name: "Virtual gateway listener with no connection pools",
+			args: args{
+				vg: &appmesh.VirtualGateway{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "app-ns",
+						Name:      "my-vg",
+					},
+					Spec: appmesh.VirtualGatewaySpec{
+						AWSName: aws.String("my-vg_app-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						Listeners: []appmesh.VirtualGatewayListener{
+							{
+								PortMapping: appmesh.VirtualGatewayPortMapping{
+									Port:     8080,
+									Protocol: "http",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := &virtualGatewayValidator{}
+			err := v.checkForConnectionPoolProtocols(tt.args.vg)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+
+}
