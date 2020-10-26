@@ -621,3 +621,272 @@ func Test_virtualNodeValidator_checkRequiredFields(t *testing.T) {
 		})
 	}
 }
+
+func Test_virtualNodeValidator_checkForConnectionPoolProtocols(t *testing.T) {
+	testPrimaryNamespace := "awesome-ns"
+	type args struct {
+		vn *appmesh.VirtualNode
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "Virtual node listener with one connection pool type",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						Listeners: []appmesh.Listener{
+							{
+								PortMapping: appmesh.PortMapping{
+									Port:     8080,
+									Protocol: "http",
+								},
+								ConnectionPool: &appmesh.VirtualNodeConnectionPool{
+									HTTP: &appmesh.HTTPConnectionPool{
+										MaxConnections:     100,
+										MaxPendingRequests: 30,
+									},
+								},
+							},
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
+						Backends: []appmesh.Backend{
+							{VirtualService: appmesh.VirtualServiceBackend{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
+									Name:      "testVS",
+									Namespace: &testPrimaryNamespace,
+								},
+							}},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Virtual node listener with HTTP and TCP connection pools",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						Listeners: []appmesh.Listener{
+							{
+								PortMapping: appmesh.PortMapping{
+									Port:     8080,
+									Protocol: "http",
+								},
+								ConnectionPool: &appmesh.VirtualNodeConnectionPool{
+									HTTP: &appmesh.HTTPConnectionPool{
+										MaxConnections:     100,
+										MaxPendingRequests: 30,
+									},
+									TCP: &appmesh.TCPConnectionPool{
+										MaxConnections: 100,
+									},
+								},
+							},
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
+						Backends: []appmesh.Backend{
+							{VirtualService: appmesh.VirtualServiceBackend{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
+									Name:      "testVS",
+									Namespace: &testPrimaryNamespace,
+								},
+							}},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("Only one type of Virtual Node Connection Pool is allowed"),
+		},
+		{
+			name: "Virtual node listener with HTTP and HTTP2 connection pools",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						Listeners: []appmesh.Listener{
+							{
+								PortMapping: appmesh.PortMapping{
+									Port:     8080,
+									Protocol: "http",
+								},
+								ConnectionPool: &appmesh.VirtualNodeConnectionPool{
+									HTTP: &appmesh.HTTPConnectionPool{
+										MaxConnections:     100,
+										MaxPendingRequests: 30,
+									},
+									HTTP2: &appmesh.HTTP2ConnectionPool{
+										MaxRequests: 100,
+									},
+								},
+							},
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
+						Backends: []appmesh.Backend{
+							{VirtualService: appmesh.VirtualServiceBackend{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
+									Name:      "testVS",
+									Namespace: &testPrimaryNamespace,
+								},
+							}},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("Only one type of Virtual Node Connection Pool is allowed"),
+		},
+		{
+			name: "Virtual node listener with HTTP, HTTP2, TCP, GRPC connection pools",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						Listeners: []appmesh.Listener{
+							{
+								PortMapping: appmesh.PortMapping{
+									Port:     8080,
+									Protocol: "http",
+								},
+								ConnectionPool: &appmesh.VirtualNodeConnectionPool{
+									HTTP: &appmesh.HTTPConnectionPool{
+										MaxConnections:     100,
+										MaxPendingRequests: 30,
+									},
+									HTTP2: &appmesh.HTTP2ConnectionPool{
+										MaxRequests: 100,
+									},
+									TCP: &appmesh.TCPConnectionPool{
+										MaxConnections: 100,
+									},
+									GRPC: &appmesh.GRPCConnectionPool{
+										MaxRequests: 100,
+									},
+								},
+							},
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
+						Backends: []appmesh.Backend{
+							{VirtualService: appmesh.VirtualServiceBackend{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
+									Name:      "testVS",
+									Namespace: &testPrimaryNamespace,
+								},
+							}},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("Only one type of Virtual Node Connection Pool is allowed"),
+		},
+		{
+			name: "Virtual node listener with no connection pools",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						MeshRef: &appmesh.MeshReference{
+							Name: "my-mesh",
+							UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+						},
+						Listeners: []appmesh.Listener{
+							{
+								PortMapping: appmesh.PortMapping{
+									Port:     8080,
+									Protocol: "http",
+								},
+							},
+						},
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+							},
+						},
+						Backends: []appmesh.Backend{
+							{VirtualService: appmesh.VirtualServiceBackend{
+								VirtualServiceRef: &appmesh.VirtualServiceReference{
+									Name:      "testVS",
+									Namespace: &testPrimaryNamespace,
+								},
+							}},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := &virtualNodeValidator{}
+			err := v.checkForConnectionPoolProtocols(tt.args.vn)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

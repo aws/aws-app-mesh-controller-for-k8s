@@ -37,6 +37,9 @@ func (v *virtualNodeValidator) ValidateCreate(ctx context.Context, obj runtime.O
 	if err := v.checkVirtualNodeBackendsForDuplicates(vn); err != nil {
 		return err
 	}
+	if err := v.checkForConnectionPoolProtocols(vn); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -50,6 +53,9 @@ func (v *virtualNodeValidator) ValidateUpdate(ctx context.Context, obj runtime.O
 		return err
 	}
 	if err := v.checkVirtualNodeBackendsForDuplicates(vn); err != nil {
+		return err
+	}
+	if err := v.checkForConnectionPoolProtocols(vn); err != nil {
 		return err
 	}
 	return nil
@@ -107,6 +113,52 @@ func (v *virtualNodeValidator) checkForRequiredFields(vn *appmesh.VirtualNode) e
 	if vn.Spec.Listeners != nil && vn.Spec.ServiceDiscovery == nil {
 		return errors.Errorf("ServiceDiscovery missing for %s-%s. ServiceDiscovery must be specified when a listener is specified.", "VirtualNode", vn.Name)
 	}
+	return nil
+}
+
+func (v *virtualNodeValidator) checkForConnectionPoolProtocols(vn *appmesh.VirtualNode) error {
+	//App Mesh supports one type of connection pool at a time
+	if vn.Spec.Listeners != nil {
+		for _, listener := range vn.Spec.Listeners {
+			err := v.checkListenerMultipleConnectionPools(listener)
+			if err != nil {
+				return err
+			}
+
+		}
+	}
+	return nil
+}
+
+func (v *virtualNodeValidator) checkListenerMultipleConnectionPools(ln appmesh.Listener) error {
+
+	//App Mesh supports one type of connection pool at a time
+
+	if ln.ConnectionPool == nil {
+		return nil
+	}
+	poolCount := 0
+
+	if ln.ConnectionPool.TCP != nil {
+		poolCount += 1
+	}
+
+	if ln.ConnectionPool.HTTP != nil {
+		poolCount += 1
+	}
+
+	if ln.ConnectionPool.HTTP2 != nil {
+		poolCount += 1
+	}
+
+	if ln.ConnectionPool.GRPC != nil {
+		poolCount += 1
+	}
+
+	if poolCount > 1 {
+		return errors.Errorf("Only one type of Virtual Node Connection Pool is allowed")
+	}
+
 	return nil
 }
 

@@ -75,6 +75,49 @@ func (b *VNBuilder) BuildListener(protocol appmesh.PortProtocol, port appmesh.Po
 	}
 }
 
+func (b *VNBuilder) BuildListenerWithOutlierDetection(protocol appmesh.PortProtocol, port appmesh.PortNumber, maxServerErrors int64,
+	interval appmesh.Duration, baseEjectionDuration appmesh.Duration, maxEjectionPercent int64) appmesh.Listener {
+	return appmesh.Listener{
+		PortMapping: appmesh.PortMapping{
+			Port:     port,
+			Protocol: protocol,
+		},
+		OutlierDetection: &appmesh.OutlierDetection{
+			MaxServerErrors:      maxServerErrors,
+			Interval:             interval,
+			BaseEjectionDuration: baseEjectionDuration,
+			MaxEjectionPercent:   maxEjectionPercent,
+		},
+	}
+}
+
+func (b *VNBuilder) BuildListenerWithConnectionPools(protocol appmesh.PortProtocol, port appmesh.PortNumber, tcp *appmesh.TCPConnectionPool,
+	http *appmesh.HTTPConnectionPool, http2 *appmesh.HTTP2ConnectionPool, grpc *appmesh.GRPCConnectionPool) appmesh.Listener {
+
+	vnConnectionPool := &appmesh.VirtualNodeConnectionPool{}
+
+	if tcp != nil {
+		vnConnectionPool.TCP = tcp
+	}
+	if http != nil {
+		vnConnectionPool.HTTP = http
+	}
+	if http2 != nil {
+		vnConnectionPool.HTTP2 = http2
+	}
+	if grpc != nil {
+		vnConnectionPool.GRPC = grpc
+	}
+
+	return appmesh.Listener{
+		PortMapping: appmesh.PortMapping{
+			Port:     port,
+			Protocol: protocol,
+		},
+		ConnectionPool: vnConnectionPool,
+	}
+}
+
 func (b *VNBuilder) BuildListenerWithTimeout(protocol appmesh.PortProtocol, port appmesh.PortNumber, timeout int64, unit appmesh.DurationUnit) appmesh.Listener {
 	return appmesh.Listener{
 		PortMapping: appmesh.PortMapping{
