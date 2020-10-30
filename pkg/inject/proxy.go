@@ -81,7 +81,8 @@ func (m *proxyMutator) getAppPorts(pod *corev1.Pod) string {
 		ports = append(ports, fmt.Sprintf("%d", listener.PortMapping.Port))
 	}
 	if len(ports) == 0 {
-		ports = []string{"0"}
+		// return empty string when there are no listener ports
+		return ""
 	}
 	return strings.Join(ports, ",")
 }

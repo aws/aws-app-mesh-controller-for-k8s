@@ -31,6 +31,9 @@ func Test_proxyMutator_mutate(t *testing.T) {
 			},
 		},
 	}
+	vnWithoutListener := &appmesh.VirtualNode{
+		Spec: appmesh.VirtualNodeSpec{},
+	}
 	mutatorConfig := proxyMutatorConfig{
 		initProxyMutatorConfig: initProxyMutatorConfig{
 			containerImage: "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v3-prod",
@@ -117,6 +120,69 @@ func Test_proxyMutator_mutate(t *testing.T) {
 			},
 		},
 		{
+			name: "mutate using init container with no listener",
+			fields: fields{
+				mutatorConfig: mutatorConfig,
+				vn:            vnWithoutListener,
+			},
+			args: args{
+				pod: &corev1.Pod{},
+			},
+			wantPod: &corev1.Pod{
+				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Name:  "proxyinit",
+							Image: "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v3-prod",
+							SecurityContext: &corev1.SecurityContext{
+								Capabilities: &corev1.Capabilities{
+									Add: []corev1.Capability{
+										"NET_ADMIN",
+									},
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_START_ENABLED",
+									Value: "1",
+								},
+								{
+									Name:  "APPMESH_IGNORE_UID",
+									Value: "1337",
+								},
+								{
+									Name:  "APPMESH_ENVOY_INGRESS_PORT",
+									Value: "15000",
+								},
+								{
+									Name:  "APPMESH_ENVOY_EGRESS_PORT",
+									Value: "15001",
+								},
+								{
+									Name:  "APPMESH_APP_PORTS",
+									Value: "",
+								},
+								{
+									Name:  "APPMESH_EGRESS_IGNORED_IP",
+									Value: "192.168.0.1",
+								},
+								{
+									Name:  "APPMESH_EGRESS_IGNORED_PORTS",
+									Value: "22",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "mutate using appMesh CNI",
 			fields: fields{
 				mutatorConfig: mutatorConfig,
@@ -136,6 +202,36 @@ func Test_proxyMutator_mutate(t *testing.T) {
 					Annotations: map[string]string{
 						"appmesh.k8s.aws/appmeshCNI":             "enabled",
 						"appmesh.k8s.aws/ports":                  "80,443",
+						"appmesh.k8s.aws/egressIgnoredIPs":       "192.168.0.1",
+						"appmesh.k8s.aws/egressIgnoredPorts":     "22",
+						"appmesh.k8s.aws/proxyEgressPort":        "15001",
+						"appmesh.k8s.aws/proxyIngressPort":       "15000",
+						"appmesh.k8s.aws/ignoredUID":             "1337",
+						"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
+					},
+				},
+			},
+		},
+		{
+			name: "mutate using appMesh CNI with no listeners",
+			fields: fields{
+				mutatorConfig: mutatorConfig,
+				vn:            vnWithoutListener,
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/appmeshCNI": "enabled",
+						},
+					},
+				},
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"appmesh.k8s.aws/appmeshCNI":             "enabled",
+						"appmesh.k8s.aws/ports":                  "",
 						"appmesh.k8s.aws/egressIgnoredIPs":       "192.168.0.1",
 						"appmesh.k8s.aws/egressIgnoredPorts":     "22",
 						"appmesh.k8s.aws/proxyEgressPort":        "15001",
@@ -257,7 +353,7 @@ func Test_proxyMutator_getAppPorts(t *testing.T) {
 					},
 				},
 			},
-			want: "0",
+			want: "",
 		},
 	}
 	for _, tt := range tests {
