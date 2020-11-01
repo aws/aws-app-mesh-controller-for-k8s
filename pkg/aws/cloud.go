@@ -6,8 +6,11 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
+	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
+	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -23,6 +26,9 @@ type Cloud interface {
 
 	// Region for the kubernetes cluster
 	Region() string
+
+	//Validates connection to AWS resources
+	Validate() (error, error)
 }
 
 // NewCloud constructs new Cloud implementation.
@@ -90,4 +96,30 @@ func (c *defaultCloud) AccountID() string {
 
 func (c *defaultCloud) Region() string {
 	return c.cfg.Region
+}
+
+func (c *defaultCloud) Validate() (appMeshAccessError, cloudMapAccessError error) {
+	var responseLimit int64
+	responseLimit = 1
+	_, err := c.appMesh.ListMeshes(&appmeshsdk.ListMeshesInput{
+		Limit:     &responseLimit,
+		NextToken: nil,
+	})
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "AccessDeniedException" {
+			appMeshAccessError = err
+		}
+	}
+
+	_, err = c.cloudMap.ListNamespaces(&servicediscovery.ListNamespacesInput{
+		Filters:    nil,
+		MaxResults: &responseLimit,
+		NextToken:  nil,
+	})
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == "AccessDeniedException" {
+			cloudMapAccessError = err
+		}
+	}
+	return
 }

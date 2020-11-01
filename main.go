@@ -69,6 +69,7 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var enableCustomHealthCheck bool
+	var enableAWSAccessValidation bool
 	var logLevel string
 	awsCloudConfig := aws.CloudConfig{ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig()}
 	injectConfig := inject.Config{}
@@ -80,6 +81,8 @@ func main() {
 		"Enable leader election for controller. "+
 			"Enabling this will ensure there is only one active controller.")
 	fs.BoolVar(&enableCustomHealthCheck, "enable-custom-health-check", false,
+		"Enable custom healthCheck when using cloudMap serviceDiscovery")
+	fs.BoolVar(&enableAWSAccessValidation, "enable-aws-access-validation", true,
 		"Enable custom healthCheck when using cloudMap serviceDiscovery")
 	fs.StringVar(&logLevel, "log-level", "info", "Set the controller log level - info(default), debug")
 	awsCloudConfig.BindFlags(fs)
@@ -122,6 +125,17 @@ func main() {
 	if err != nil {
 		setupLog.Error(err, "unable to initialize AWS cloud")
 		os.Exit(1)
+	}
+
+	if enableAWSAccessValidation {
+		appMeshAccessError, cloudMapAccessError := cloud.Validate()
+		if cloudMapAccessError != nil {
+			setupLog.Error(err, "CloudMap access failed. Required permissions missing. Refer: https://github.com/aws/aws-app-mesh-controller-for-k8s/blob/master/config/iam/")
+		}
+		if appMeshAccessError != nil {
+			setupLog.Error(err, "App Mesh access failed. Required permissions missing. Refer: https://github.com/aws/aws-app-mesh-controller-for-k8s/blob/master/config/iam/")
+			os.Exit(1)
+		}
 	}
 
 	stopChan := ctrl.SetupSignalHandler()
