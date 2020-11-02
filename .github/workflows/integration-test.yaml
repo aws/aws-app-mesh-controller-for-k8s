@@ -11,7 +11,7 @@ jobs:
     steps:
     - name: clean work dir from previous runs
       run: |
-      rm -rf *
+        rm -rf *
     - name: setup go 1.14
       uses: actions/setup-go@v2
       with:
