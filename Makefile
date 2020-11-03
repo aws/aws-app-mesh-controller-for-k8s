@@ -67,6 +67,16 @@ docker-build: check-env test
 docker-push: check-env
 	docker push $(IMAGE)
 
+integration-test: ## Run the integration using kind clusters
+	@./scripts/test-with-kind.sh
+
+delete-all-kind-clusters:	## Delete all local kind clusters
+	@kind get clusters | \
+	while read name ; do \
+	kind delete cluster --name $$name; \
+	done
+	@rm -rf build/tmp-test*
+
 setup-appmesh-sdk-override:
 	@if [ "$(APPMESH_SDK_OVERRIDE)" = "y" ] ; then \
 	    ./appmesh_models_override/setup.sh ; \
