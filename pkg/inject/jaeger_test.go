@@ -108,11 +108,11 @@ func Test_jaegerMutator_mutate(t *testing.T) {
 								`cat <<EOF >> /tmp/envoy/envoyconf.yaml
 tracing:
  http:
-  name: envoy.zipkin
+  name: envoy.tracers.zipkin
   typed_config:
    "@type": type.googleapis.com/envoy.config.trace.v2.ZipkinConfig
    collector_cluster: jaeger
-   collector_endpoint: "/api/v1/spans"
+   collector_endpoint: "/api/v2/spans"
    collector_endpoint_version: HTTP_JSON
    shared_span_context: false
 static_resources:
