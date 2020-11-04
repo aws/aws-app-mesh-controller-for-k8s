@@ -23,10 +23,10 @@ ecr_login() {
     local __err_msg="Failed ECR login. Please make sure you have IAM permissions to access ECR."
     if [ $AWS_CLI_VERSION -gt 1 ]; then
         ( aws ecr get-login-password --region $__aws_region | \
-		docker login --username AWS --password-stdin $__ecr_url ) ||
-		( echo "\n$__err_msg" && exit 1 )
+                docker login --username AWS --password-stdin $__ecr_url ) ||
+                ( echo "\n$__err_msg" && exit 1 )
     else
-	    $( aws ecr get-login --no-include-email ) || ( echo "\n$__err_msg" && exit 1 ) 
+        $( aws ecr get-login --no-include-email ) || ( echo "\n$__err_msg" && exit 1 )
     fi
     echo "ok."
 }

@@ -18,11 +18,13 @@ IMAGE=${ECR_URL}/${IMAGE_NAME}
 
 
 CLUSTER_NAME_BASE="test"
+CLUSTER_NAME=""
 K8S_VERSION="1.17"
 TMP_DIR=""
 
 source "$SCRIPTS_DIR/lib/aws.sh"
 source "$SCRIPTS_DIR/lib/common.sh"
+source "$SCRIPTS_DIR/lib/k8s.sh"
 
 check_is_installed curl
 check_is_installed docker
@@ -56,8 +58,26 @@ function build_and_publish_controller {
        echo "ok."
 }
 
-function run_integration_tests {
-       echo "Not implemented"
+function install_controller {
+       echo -n "installing appmesh controller ... "
+       local __controller_name="appmesh-controller"
+       local __ns="appmesh-system"
+       AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make deploy
+       check_deployment_rollout $__controller_name $__ns
+       echo -n "check the pods in appmesh-system namespace ... "
+       kubectl get pod -n $__ns
+       echo "ok."
+
+}
+
+function run_integration_test {
+       local __type=$1
+       local __vpc_id=$( vpc_id )
+       echo -n "running integration test type $__type ... "
+       ginkgo -v -r test/integration/$__type -- --cluster-kubeconfig=${KUBECONFIG} \
+               --cluster-name=${CLUSTER_NAME} --aws-region=${AWS_REGION} \
+               --aws-vpc-id=$__vpc_id
+       echo "ok."
 }
 
 function clean_up {
@@ -89,5 +109,19 @@ install_crds
 # Install cert-manager
 $SCRIPTS_DIR/install-cert-manager.sh
 
+# Install the controller
+install_controller
+
 # Show the installed CRDs
 kubectl get crds
+
+#FIXME sometimes the test controller "deployment" is ready but internally process is not ready
+# leading to tests failing. Added this hack to workaround. Will be replaced with a better
+# check later
+sleep 15
+
+# Run integration tests
+run_integration_test mesh
+run_integration_test virtualservice
+run_integration_test virtualrouter
+run_integration_test gatewayroute

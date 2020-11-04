@@ -39,8 +39,8 @@ is_installed() {
 # vpc id is needed for setting up AWS CloudMap namespaces
 vpc_id() {
     local __md_url="http://169.254.169.254/latest/meta-data/network/interfaces"
-    local __macid=$( curl $__md_url/macs/ || exit 1 )
-    local __vpcid=$( curl $__md_url/macs/${macid}/vpc-id || exit 1 )
+    local __macid=$( curl ${__md_url}/macs/ || exit 1 )
+    local __vpcid=$( curl ${__md_url}/macs/${__macid}vpc-id || exit 1 )
     echo "$__vpcid"
 
 }
