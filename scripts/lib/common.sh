@@ -35,6 +35,16 @@ is_installed() {
     fi
 }
 
+# vpc_id fetches the vpc id of the GitHub Actions runner/EC2 instance.
+# vpc id is needed for setting up AWS CloudMap namespaces
+vpc_id() {
+    local __md_url="http://169.254.169.254/latest/meta-data/network/interfaces"
+    local __macid=$( curl $__md_url/macs/ || exit 1 )
+    local __vpcid=$( curl $__md_url/macs/${macid}/vpc-id || exit 1 )
+    echo "$__vpcid"
+
+}
+
 DEFAULT_DEBUG_PREFIX="DEBUG: "
 
 # debug_msg prints out a supplied message if the DEBUG environs variable is
