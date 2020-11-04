@@ -3,10 +3,10 @@ package utils
 import "time"
 
 const (
-	PollIntervalShort  = 2 * time.Second
-	PollIntervalMedium = 10 * time.Second
-	PollRetries        = 5
+	PollIntervalShort  = 5 * time.Second
+	PollIntervalMedium = 15 * time.Second
+	PollRetries        = 10
 
-	AWSPollIntervalShort  = 1 * time.Second
-	AWSPollIntervalMedium = 5 * time.Second
+	AWSPollIntervalShort  = 5 * time.Second
+	AWSPollIntervalMedium = 15 * time.Second
 )
