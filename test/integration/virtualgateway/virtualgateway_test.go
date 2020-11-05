@@ -408,7 +408,7 @@ var _ = Describe("VirtualGateway", func() {
 			vgName := fmt.Sprintf("vg-%s", utils.RandomDNS1123Label(8))
 			httpConnectionPool := &appmesh.HTTPConnectionPool{
 				MaxConnections:     60,
-				MaxPendingRequests: 100,
+				MaxPendingRequests: aws.Int64(100),
 			}
 			vgConnectionPoolListener := vgBuilder.BuildListenerWithConnectionPools("http", 8080, httpConnectionPool, nil, nil)
 			listeners := []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
@@ -430,7 +430,7 @@ var _ = Describe("VirtualGateway", func() {
 				oldVG := vgTest.VirtualGateways[vg.Name].DeepCopy()
 				httpConnectionPool := &appmesh.HTTPConnectionPool{
 					MaxConnections:     200,
-					MaxPendingRequests: 50,
+					MaxPendingRequests: aws.Int64(50),
 				}
 				vgConnectionPoolListener := vgBuilder.BuildListenerWithConnectionPools("http", 8080, httpConnectionPool, nil, nil)
 				listeners := []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
@@ -461,7 +461,7 @@ var _ = Describe("VirtualGateway", func() {
 				oldVG := vgTest.VirtualGateways[vg.Name].DeepCopy()
 				httpConnectionPool := &appmesh.HTTPConnectionPool{
 					MaxConnections:     150,
-					MaxPendingRequests: 70,
+					MaxPendingRequests: aws.Int64(70),
 				}
 				vgConnectionPoolListener := vgBuilder.BuildListenerWithConnectionPools("http", 8080, httpConnectionPool, nil, nil)
 				listeners := []appmesh.VirtualGatewayListener{vgConnectionPoolListener}

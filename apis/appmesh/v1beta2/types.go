@@ -129,7 +129,8 @@ type HTTPConnectionPool struct {
 	// Represents the number of overflowing requests after max_connections
 	// that an envoy will queue to an upstream cluster.
 	// +kubebuilder:validation:Minimum=1
-	MaxPendingRequests int64 `json:"maxPendingRequests"`
+	// +optional
+	MaxPendingRequests *int64 `json:"maxPendingRequests,omitempty"`
 }
 
 type HTTP2ConnectionPool struct {

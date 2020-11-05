@@ -572,7 +572,7 @@ var _ = Describe("VirtualNode", func() {
 			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
 			httpConnectionPool := &appmesh.HTTPConnectionPool{
 				MaxConnections:     60,
-				MaxPendingRequests: 100,
+				MaxPendingRequests: aws.Int64(100),
 			}
 			vnConnectionPoolListener := vnBuilder.BuildListenerWithConnectionPools("http", 8080, nil, httpConnectionPool, nil, nil)
 			listeners := []appmesh.Listener{vnConnectionPoolListener}
@@ -593,7 +593,7 @@ var _ = Describe("VirtualNode", func() {
 			By("Validate update of HTTP connection pool thresholds", func() {
 				httpConnectionPool = &appmesh.HTTPConnectionPool{
 					MaxConnections:     200,
-					MaxPendingRequests: 300,
+					MaxPendingRequests: aws.Int64(300),
 				}
 				vnConnectionPoolListener = vnBuilder.BuildListenerWithConnectionPools("http", 8080, nil, httpConnectionPool, nil, nil)
 				listeners = []appmesh.Listener{vnConnectionPoolListener}
@@ -628,7 +628,7 @@ var _ = Describe("VirtualNode", func() {
 			By("Validate update enable connection pool", func() {
 				httpConnectionPool = &appmesh.HTTPConnectionPool{
 					MaxConnections:     200,
-					MaxPendingRequests: 300,
+					MaxPendingRequests: aws.Int64(300),
 				}
 				vnConnectionPoolListener = vnBuilder.BuildListenerWithConnectionPools("http", 8080, nil, httpConnectionPool, nil, nil)
 				listeners = []appmesh.Listener{vnConnectionPoolListener}
@@ -647,7 +647,7 @@ var _ = Describe("VirtualNode", func() {
 
 			httpConnectionPool = &appmesh.HTTPConnectionPool{
 				MaxConnections:     60,
-				MaxPendingRequests: 100,
+				MaxPendingRequests: aws.Int64(100),
 			}
 			tcpConnectionPool := &appmesh.TCPConnectionPool{
 				MaxConnections: 70,
@@ -704,7 +704,7 @@ var _ = Describe("VirtualNode", func() {
 			vnName = fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
 			httpConnectionPool = &appmesh.HTTPConnectionPool{
 				MaxConnections:     -30,
-				MaxPendingRequests: 100,
+				MaxPendingRequests: aws.Int64(100),
 			}
 			vnConnectionPoolListener = vnBuilder.BuildListenerWithConnectionPools("http", 8080, nil, httpConnectionPool, nil, nil)
 			listeners = []appmesh.Listener{vnConnectionPoolListener}

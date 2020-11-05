@@ -122,6 +122,8 @@ sleep 15
 
 # Run integration tests
 run_integration_test mesh
+run_integration_test virtualnode
 run_integration_test virtualservice
 run_integration_test virtualrouter
+run_integration_test virtualgateway
 run_integration_test gatewayroute

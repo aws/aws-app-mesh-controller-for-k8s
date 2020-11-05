@@ -274,7 +274,6 @@ spec:
                             type: integer
                         required:
                         - maxConnections
-                        - maxPendingRequests
                         type: object
                       http2:
                         description: Specifies http2 connection pool settings for

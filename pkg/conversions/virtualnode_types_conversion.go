@@ -252,7 +252,7 @@ func Convert_CRD_VirtualNodeTCPConnectionPool_To_SDK_VirtualNodeTcpConnectionPoo
 
 func Convert_CRD_VirtualNodeHTTPConnectionPool_To_SDK_VirtualNodeHttpConnectionPool(crdObj *appmesh.HTTPConnectionPool, sdkObj *appmeshsdk.VirtualNodeHttpConnectionPool, scope conversion.Scope) error {
 	sdkObj.MaxConnections = aws.Int64(crdObj.MaxConnections)
-	sdkObj.MaxPendingRequests = aws.Int64(crdObj.MaxPendingRequests)
+	sdkObj.MaxPendingRequests = crdObj.MaxPendingRequests
 	return nil
 }
 

@@ -970,7 +970,7 @@ func TestConvert_CRD_VirtualGatewayHTTPConnectionPool_To_SDK_VirtualGatewayHttpC
 			args: args{
 				crdObj: &appmesh.HTTPConnectionPool{
 					MaxConnections:     50,
-					MaxPendingRequests: 20,
+					MaxPendingRequests: aws.Int64(20),
 				},
 				sdkObj: &appmeshsdk.VirtualGatewayHttpConnectionPool{},
 				scope:  nil,
@@ -1090,7 +1090,7 @@ func TestConvert_CRD_VirtualGatewayConnectionPool_To_SDK_VirtualGatewayConnectio
 				crdObj: &appmesh.VirtualGatewayConnectionPool{
 					HTTP: &appmesh.HTTPConnectionPool{
 						MaxConnections:     50,
-						MaxPendingRequests: 40,
+						MaxPendingRequests: aws.Int64(40),
 					},
 				},
 				sdkObj: &appmeshsdk.VirtualGatewayConnectionPool{},
@@ -1185,7 +1185,7 @@ func TestConvert_CRD_VirtualGatewayListener_To_SDK_VirtualGatewayListener(t *tes
 					ConnectionPool: &appmesh.VirtualGatewayConnectionPool{
 						HTTP: &appmesh.HTTPConnectionPool{
 							MaxConnections:     50,
-							MaxPendingRequests: 40,
+							MaxPendingRequests: aws.Int64(40),
 						},
 					},
 					TLS: &appmesh.VirtualGatewayListenerTLS{
@@ -1242,7 +1242,7 @@ func TestConvert_CRD_VirtualGatewayListener_To_SDK_VirtualGatewayListener(t *tes
 					ConnectionPool: &appmesh.VirtualGatewayConnectionPool{
 						HTTP: &appmesh.HTTPConnectionPool{
 							MaxConnections:     50,
-							MaxPendingRequests: 40,
+							MaxPendingRequests: aws.Int64(40),
 						},
 					},
 					TLS: &appmesh.VirtualGatewayListenerTLS{
@@ -1299,7 +1299,7 @@ func TestConvert_CRD_VirtualGatewayListener_To_SDK_VirtualGatewayListener(t *tes
 					ConnectionPool: &appmesh.VirtualGatewayConnectionPool{
 						HTTP: &appmesh.HTTPConnectionPool{
 							MaxConnections:     50,
-							MaxPendingRequests: 40,
+							MaxPendingRequests: aws.Int64(40),
 						},
 					},
 					TLS: nil,

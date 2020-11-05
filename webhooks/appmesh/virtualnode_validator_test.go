@@ -655,7 +655,7 @@ func Test_virtualNodeValidator_checkForConnectionPoolProtocols(t *testing.T) {
 								ConnectionPool: &appmesh.VirtualNodeConnectionPool{
 									HTTP: &appmesh.HTTPConnectionPool{
 										MaxConnections:     100,
-										MaxPendingRequests: 30,
+										MaxPendingRequests: aws.Int64(30),
 									},
 								},
 							},
@@ -702,7 +702,7 @@ func Test_virtualNodeValidator_checkForConnectionPoolProtocols(t *testing.T) {
 								ConnectionPool: &appmesh.VirtualNodeConnectionPool{
 									HTTP: &appmesh.HTTPConnectionPool{
 										MaxConnections:     100,
-										MaxPendingRequests: 30,
+										MaxPendingRequests: aws.Int64(30),
 									},
 									TCP: &appmesh.TCPConnectionPool{
 										MaxConnections: 100,
@@ -752,7 +752,7 @@ func Test_virtualNodeValidator_checkForConnectionPoolProtocols(t *testing.T) {
 								ConnectionPool: &appmesh.VirtualNodeConnectionPool{
 									HTTP: &appmesh.HTTPConnectionPool{
 										MaxConnections:     100,
-										MaxPendingRequests: 30,
+										MaxPendingRequests: aws.Int64(30),
 									},
 									HTTP2: &appmesh.HTTP2ConnectionPool{
 										MaxRequests: 100,
@@ -802,7 +802,7 @@ func Test_virtualNodeValidator_checkForConnectionPoolProtocols(t *testing.T) {
 								ConnectionPool: &appmesh.VirtualNodeConnectionPool{
 									HTTP: &appmesh.HTTPConnectionPool{
 										MaxConnections:     100,
-										MaxPendingRequests: 30,
+										MaxPendingRequests: aws.Int64(30),
 									},
 									HTTP2: &appmesh.HTTP2ConnectionPool{
 										MaxRequests: 100,

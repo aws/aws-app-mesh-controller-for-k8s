@@ -193,7 +193,7 @@ func Test_virtualGatewayValidator_checkForConnectionPoolProtocols(t *testing.T) 
 								ConnectionPool: &appmesh.VirtualGatewayConnectionPool{
 									HTTP: &appmesh.HTTPConnectionPool{
 										MaxConnections:     100,
-										MaxPendingRequests: 30,
+										MaxPendingRequests: aws.Int64(30),
 									},
 								},
 							},
@@ -226,7 +226,7 @@ func Test_virtualGatewayValidator_checkForConnectionPoolProtocols(t *testing.T) 
 								ConnectionPool: &appmesh.VirtualGatewayConnectionPool{
 									HTTP: &appmesh.HTTPConnectionPool{
 										MaxConnections:     100,
-										MaxPendingRequests: 30,
+										MaxPendingRequests: aws.Int64(30),
 									},
 									HTTP2: &appmesh.HTTP2ConnectionPool{
 										MaxRequests: 30,
@@ -262,7 +262,7 @@ func Test_virtualGatewayValidator_checkForConnectionPoolProtocols(t *testing.T) 
 								ConnectionPool: &appmesh.VirtualGatewayConnectionPool{
 									HTTP: &appmesh.HTTPConnectionPool{
 										MaxConnections:     100,
-										MaxPendingRequests: 30,
+										MaxPendingRequests: aws.Int64(30),
 									},
 									HTTP2: &appmesh.HTTP2ConnectionPool{
 										MaxRequests: 30,
