@@ -124,9 +124,8 @@ var _ = Describe("Mesh", func() {
 				meshTest.Meshes[mesh.Name].Spec.EgressFilter = &appmesh.EgressFilter{
 					Type: appmesh.EgressFilterTypeAllowAll}
 
-				ms, err := meshTest.Update(ctx, f, meshTest.Meshes[mesh.Name], oldMesh)
+				err := meshTest.Update(ctx, f, meshTest.Meshes[mesh.Name], oldMesh)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(ms.Spec.EgressFilter.Type).To(Equal(appmesh.EgressFilterTypeAllowAll))
 
 				err = meshTest.CheckInAWS(ctx, f, meshTest.Meshes[mesh.Name])
 				Expect(err).NotTo(HaveOccurred())
@@ -137,9 +136,8 @@ var _ = Describe("Mesh", func() {
 				meshTest.Meshes[mesh.Name].Spec.EgressFilter = &appmesh.EgressFilter{
 					Type: appmesh.EgressFilterTypeDropAll}
 
-				ms, err := meshTest.Update(ctx, f, meshTest.Meshes[mesh.Name], oldMesh)
+				err := meshTest.Update(ctx, f, meshTest.Meshes[mesh.Name], oldMesh)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(ms.Spec.EgressFilter.Type).To(Equal(appmesh.EgressFilterTypeDropAll))
 
 				err = meshTest.CheckInAWS(ctx, f, meshTest.Meshes[mesh.Name])
 				Expect(err).NotTo(HaveOccurred())
@@ -149,7 +147,7 @@ var _ = Describe("Mesh", func() {
 				oldMesh := meshTest.Meshes[mesh.Name].DeepCopy()
 				meshTest.Meshes[mesh.Name].Spec.AWSName = aws.String("testMesh")
 
-				_, err := meshTest.Update(ctx, f, meshTest.Meshes[mesh.Name], oldMesh)
+				err := meshTest.Update(ctx, f, meshTest.Meshes[mesh.Name], oldMesh)
 				Expect(err).To(HaveOccurred())
 			})
 
@@ -158,7 +156,7 @@ var _ = Describe("Mesh", func() {
 				meshTest.Meshes[mesh.Name].Spec.EgressFilter = &appmesh.EgressFilter{
 					Type: "DENY"}
 
-				_, err := meshTest.Update(ctx, f, meshTest.Meshes[mesh.Name], oldMesh)
+				err := meshTest.Update(ctx, f, meshTest.Meshes[mesh.Name], oldMesh)
 				Expect(err).To(HaveOccurred())
 			})
 		})

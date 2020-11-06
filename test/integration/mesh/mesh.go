@@ -67,18 +67,17 @@ func (m *MeshTest) WaitForDeletionTimestamp(ctx context.Context, f *framework.Fr
 	return false
 }
 
-func (m *MeshTest) Update(ctx context.Context, f *framework.Framework, newMesh *appmesh.Mesh, mesh *appmesh.Mesh) (*appmesh.Mesh, error) {
+func (m *MeshTest) Update(ctx context.Context, f *framework.Framework, newMesh *appmesh.Mesh, mesh *appmesh.Mesh) error {
 	err := f.K8sClient.Patch(ctx, newMesh, client.MergeFrom(mesh))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	updatedMesh, err := f.MeshManager.WaitUntilMeshActive(ctx, newMesh)
+	_, err = f.MeshManager.WaitUntilMeshActive(ctx, newMesh)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	m.Meshes[mesh.Name] = updatedMesh
-	return updatedMesh, nil
+	return nil
 }
 
 func (m *MeshTest) Cleanup(ctx context.Context, f *framework.Framework) {

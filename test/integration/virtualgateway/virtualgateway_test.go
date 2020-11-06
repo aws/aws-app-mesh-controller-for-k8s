@@ -225,10 +225,10 @@ var _ = Describe("VirtualGateway", func() {
 				}
 
 				vgTest.VirtualGateways[vg.Name].Spec.Logging = newLog
-				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				err = vgTest.CheckInAWS(ctx, f, mesh, vgTest.VirtualGateways[vg.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})
@@ -238,10 +238,10 @@ var _ = Describe("VirtualGateway", func() {
 				listeners = []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http2", 443, "/")}
 
 				vgTest.VirtualGateways[vg.Name].Spec.Listeners = listeners
-				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				err = vgTest.CheckInAWS(ctx, f, mesh, vgTest.VirtualGateways[vg.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})
@@ -250,7 +250,7 @@ var _ = Describe("VirtualGateway", func() {
 				oldVG := vgTest.VirtualGateways[vg.Name].DeepCopy()
 				vgTest.VirtualGateways[vg.Name].Spec.AWSName = aws.String("newVirtualGatewayAWSName")
 
-				_, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
 				Expect(err).To(HaveOccurred())
 			})
 
@@ -408,7 +408,7 @@ var _ = Describe("VirtualGateway", func() {
 			vgName := fmt.Sprintf("vg-%s", utils.RandomDNS1123Label(8))
 			httpConnectionPool := &appmesh.HTTPConnectionPool{
 				MaxConnections:     60,
-				MaxPendingRequests: 100,
+				MaxPendingRequests: aws.Int64(100),
 			}
 			vgConnectionPoolListener := vgBuilder.BuildListenerWithConnectionPools("http", 8080, httpConnectionPool, nil, nil)
 			listeners := []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
@@ -430,16 +430,16 @@ var _ = Describe("VirtualGateway", func() {
 				oldVG := vgTest.VirtualGateways[vg.Name].DeepCopy()
 				httpConnectionPool := &appmesh.HTTPConnectionPool{
 					MaxConnections:     200,
-					MaxPendingRequests: 50,
+					MaxPendingRequests: aws.Int64(50),
 				}
 				vgConnectionPoolListener := vgBuilder.BuildListenerWithConnectionPools("http", 8080, httpConnectionPool, nil, nil)
 				listeners := []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
 
 				vgTest.VirtualGateways[vg.Name].Spec.Listeners = listeners
-				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				err = vgTest.CheckInAWS(ctx, f, mesh, vgTest.VirtualGateways[vg.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})
@@ -449,10 +449,10 @@ var _ = Describe("VirtualGateway", func() {
 				listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080, "/")}
 
 				vgTest.VirtualGateways[vg.Name].Spec.Listeners = listeners
-				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				err = vgTest.CheckInAWS(ctx, f, mesh, vgTest.VirtualGateways[vg.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})
@@ -461,16 +461,16 @@ var _ = Describe("VirtualGateway", func() {
 				oldVG := vgTest.VirtualGateways[vg.Name].DeepCopy()
 				httpConnectionPool := &appmesh.HTTPConnectionPool{
 					MaxConnections:     150,
-					MaxPendingRequests: 70,
+					MaxPendingRequests: aws.Int64(70),
 				}
 				vgConnectionPoolListener := vgBuilder.BuildListenerWithConnectionPools("http", 8080, httpConnectionPool, nil, nil)
 				listeners := []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
 
 				vgTest.VirtualGateways[vg.Name].Spec.Listeners = listeners
-				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				err = vgTest.CheckInAWS(ctx, f, mesh, vgTest.VirtualGateways[vg.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})

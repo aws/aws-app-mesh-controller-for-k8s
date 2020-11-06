@@ -295,10 +295,10 @@ var _ = Describe("GatewayRoute", func() {
 				newHTTPRoute := grBuilder.BuildHTTPRoute("newprefix", vsName, grTest.Namespace.Name)
 
 				grTest.GatewayRoutes[gr.Name].Spec.HTTPRoute = newHTTPRoute
-				updatedGR, err := grTest.Update(ctx, f, grTest.GatewayRoutes[gr.Name], oldGR)
+				err := grTest.Update(ctx, f, grTest.GatewayRoutes[gr.Name], oldGR)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = grTest.CheckInAWS(ctx, f, mesh, vg, updatedGR)
+				err = grTest.CheckInAWS(ctx, f, mesh, vg, grTest.GatewayRoutes[gr.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})
@@ -309,10 +309,10 @@ var _ = Describe("GatewayRoute", func() {
 
 				grTest.GatewayRoutes[gr.Name].Spec.HTTPRoute = nil
 				grTest.GatewayRoutes[gr.Name].Spec.GRPCRoute = GRPCRoute
-				updatedGR, err := grTest.Update(ctx, f, grTest.GatewayRoutes[gr.Name], oldGR)
+				err := grTest.Update(ctx, f, grTest.GatewayRoutes[gr.Name], oldGR)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = grTest.CheckInAWS(ctx, f, mesh, vg, updatedGR)
+				err = grTest.CheckInAWS(ctx, f, mesh, vg, grTest.GatewayRoutes[gr.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})
@@ -324,10 +324,10 @@ var _ = Describe("GatewayRoute", func() {
 				grTest.GatewayRoutes[gr.Name].Spec.HTTPRoute = nil
 				grTest.GatewayRoutes[gr.Name].Spec.GRPCRoute = nil
 				grTest.GatewayRoutes[gr.Name].Spec.HTTP2Route = HTTP2Route
-				updatedGR, err := grTest.Update(ctx, f, grTest.GatewayRoutes[gr.Name], oldGR)
+				err := grTest.Update(ctx, f, grTest.GatewayRoutes[gr.Name], oldGR)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = grTest.CheckInAWS(ctx, f, mesh, vg, updatedGR)
+				err = grTest.CheckInAWS(ctx, f, mesh, vg, grTest.GatewayRoutes[gr.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})
@@ -336,7 +336,7 @@ var _ = Describe("GatewayRoute", func() {
 				oldGR := grTest.GatewayRoutes[gr.Name].DeepCopy()
 				grTest.GatewayRoutes[gr.Name].Spec.AWSName = aws.String("newGatewayRouteAWSName")
 
-				_, err := grTest.Update(ctx, f, grTest.GatewayRoutes[gr.Name], oldGR)
+				err := grTest.Update(ctx, f, grTest.GatewayRoutes[gr.Name], oldGR)
 				Expect(err).To(HaveOccurred())
 			})
 

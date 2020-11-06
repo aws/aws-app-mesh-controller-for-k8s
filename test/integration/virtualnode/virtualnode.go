@@ -38,18 +38,17 @@ func (m *VirtualNodeTest) Create(ctx context.Context, f *framework.Framework, vn
 	return nil
 }
 
-func (m *VirtualNodeTest) Update(ctx context.Context, f *framework.Framework, newVN *appmesh.VirtualNode, vn *appmesh.VirtualNode) (*appmesh.VirtualNode, error) {
+func (m *VirtualNodeTest) Update(ctx context.Context, f *framework.Framework, newVN *appmesh.VirtualNode, vn *appmesh.VirtualNode) error {
 	err := f.K8sClient.Patch(ctx, newVN, client.MergeFrom(vn))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	updatedVN, err := f.VNManager.WaitUntilVirtualNodeActive(ctx, newVN)
+	_, err = f.VNManager.WaitUntilVirtualNodeActive(ctx, newVN)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	m.VirtualNodes[vn.Name] = updatedVN
-	return updatedVN, nil
+	return nil
 }
 
 func (m *VirtualNodeTest) Cleanup(ctx context.Context, f *framework.Framework) {

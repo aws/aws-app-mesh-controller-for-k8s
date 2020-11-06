@@ -178,7 +178,7 @@ func Convert_CRD_VirtualGatewayPortMapping_To_SDK_VirtualGatewayPortMapping(crdO
 
 func Convert_CRD_VirtualGatewayHTTPConnectionPool_To_SDK_VirtualGatewayHttpConnectionPool(crdObj *appmesh.HTTPConnectionPool, sdkObj *appmeshsdk.VirtualGatewayHttpConnectionPool, scope conversion.Scope) error {
 	sdkObj.MaxConnections = aws.Int64(crdObj.MaxConnections)
-	sdkObj.MaxPendingRequests = aws.Int64(crdObj.MaxPendingRequests)
+	sdkObj.MaxPendingRequests = crdObj.MaxPendingRequests
 	return nil
 }
 

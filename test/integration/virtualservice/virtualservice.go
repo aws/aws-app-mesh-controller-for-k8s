@@ -35,18 +35,17 @@ func (m *VirtualServiceTest) Create(ctx context.Context, f *framework.Framework,
 	return nil
 }
 
-func (m *VirtualServiceTest) Update(ctx context.Context, f *framework.Framework, newVS *appmesh.VirtualService, vs *appmesh.VirtualService) (*appmesh.VirtualService, error) {
+func (m *VirtualServiceTest) Update(ctx context.Context, f *framework.Framework, newVS *appmesh.VirtualService, vs *appmesh.VirtualService) error {
 	err := f.K8sClient.Patch(ctx, newVS, client.MergeFrom(vs))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	updatedVS, err := f.VSManager.WaitUntilVirtualServiceActive(ctx, newVS)
+	_, err = f.VSManager.WaitUntilVirtualServiceActive(ctx, newVS)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	m.VirtualServices[vs.Name] = updatedVS
-	return updatedVS, nil
+	return nil
 }
 
 func (m *VirtualServiceTest) Cleanup(ctx context.Context, f *framework.Framework) {

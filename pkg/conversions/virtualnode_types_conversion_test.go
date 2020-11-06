@@ -1422,7 +1422,7 @@ func TestConvert_CRD_VirtualNodeHTTPConnectionPool_To_SDK_VirtualNodeHttpConnect
 			args: args{
 				crdObj: &appmesh.HTTPConnectionPool{
 					MaxConnections:     50,
-					MaxPendingRequests: 20,
+					MaxPendingRequests: aws.Int64(20),
 				},
 				sdkObj: &appmeshsdk.VirtualNodeHttpConnectionPool{},
 				scope:  nil,
@@ -1430,6 +1430,33 @@ func TestConvert_CRD_VirtualNodeHTTPConnectionPool_To_SDK_VirtualNodeHttpConnect
 			wantSDKObj: &appmeshsdk.VirtualNodeHttpConnectionPool{
 				MaxConnections:     aws.Int64(50),
 				MaxPendingRequests: aws.Int64(20),
+			},
+		},
+		{
+			name: "base with nil MaxPendingRequests",
+			args: args{
+				crdObj: &appmesh.HTTPConnectionPool{
+					MaxConnections:     50,
+					MaxPendingRequests: nil,
+				},
+				sdkObj: &appmeshsdk.VirtualNodeHttpConnectionPool{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualNodeHttpConnectionPool{
+				MaxConnections: aws.Int64(50),
+			},
+		},
+		{
+			name: "base with missing MaxPendingRequests",
+			args: args{
+				crdObj: &appmesh.HTTPConnectionPool{
+					MaxConnections: 50,
+				},
+				sdkObj: &appmeshsdk.VirtualNodeHttpConnectionPool{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualNodeHttpConnectionPool{
+				MaxConnections: aws.Int64(50),
 			},
 		},
 	}
@@ -1559,7 +1586,7 @@ func TestConvert_CRD_VirtualNodeConnectionPool_To_SDK_VirtualNodeConnectionPool(
 				crdObj: &appmesh.VirtualNodeConnectionPool{
 					HTTP: &appmesh.HTTPConnectionPool{
 						MaxConnections:     50,
-						MaxPendingRequests: 40,
+						MaxPendingRequests: aws.Int64(40),
 					},
 				},
 				sdkObj: &appmeshsdk.VirtualNodeConnectionPool{},
@@ -1666,7 +1693,7 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 					ConnectionPool: &appmesh.VirtualNodeConnectionPool{
 						HTTP: &appmesh.HTTPConnectionPool{
 							MaxConnections:     50,
-							MaxPendingRequests: 40,
+							MaxPendingRequests: aws.Int64(40),
 						},
 					},
 					TLS: &appmesh.ListenerTLS{
@@ -1838,7 +1865,7 @@ func TestConvert_CRD_Listener_To_SDK_Listener(t *testing.T) {
 					ConnectionPool: &appmesh.VirtualNodeConnectionPool{
 						HTTP: &appmesh.HTTPConnectionPool{
 							MaxConnections:     50,
-							MaxPendingRequests: 40,
+							MaxPendingRequests: aws.Int64(40),
 						},
 					},
 					TLS: nil,

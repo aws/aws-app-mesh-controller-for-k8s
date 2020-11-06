@@ -35,18 +35,17 @@ func (m *VirtualGatewayTest) Create(ctx context.Context, f *framework.Framework,
 	return nil
 }
 
-func (m *VirtualGatewayTest) Update(ctx context.Context, f *framework.Framework, newVG *appmesh.VirtualGateway, vg *appmesh.VirtualGateway) (*appmesh.VirtualGateway, error) {
+func (m *VirtualGatewayTest) Update(ctx context.Context, f *framework.Framework, newVG *appmesh.VirtualGateway, vg *appmesh.VirtualGateway) error {
 	err := f.K8sClient.Patch(ctx, newVG, client.MergeFrom(vg))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	updatedVG, err := f.VGManager.WaitUntilVirtualGatewayActive(ctx, newVG)
+	_, err = f.VGManager.WaitUntilVirtualGatewayActive(ctx, newVG)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	m.VirtualGateways[vg.Name] = updatedVG
-	return updatedVG, nil
+	return nil
 }
 
 func (m *VirtualGatewayTest) Cleanup(ctx context.Context, f *framework.Framework) {
