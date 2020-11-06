@@ -35,18 +35,17 @@ func (m *GatewayRouteTest) Create(ctx context.Context, f *framework.Framework, g
 	return nil
 }
 
-func (m *GatewayRouteTest) Update(ctx context.Context, f *framework.Framework, newGR *appmesh.GatewayRoute, gr *appmesh.GatewayRoute) (*appmesh.GatewayRoute, error) {
+func (m *GatewayRouteTest) Update(ctx context.Context, f *framework.Framework, newGR *appmesh.GatewayRoute, gr *appmesh.GatewayRoute) error {
 	err := f.K8sClient.Patch(ctx, newGR, client.MergeFrom(gr))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	updatedGR, err := f.GRManager.WaitUntilGatewayRouteActive(ctx, newGR)
+	_, err = f.GRManager.WaitUntilGatewayRouteActive(ctx, newGR)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	m.GatewayRoutes[gr.Name] = updatedGR
-	return updatedGR, nil
+	return nil
 }
 
 func (m *GatewayRouteTest) Cleanup(ctx context.Context, f *framework.Framework) {

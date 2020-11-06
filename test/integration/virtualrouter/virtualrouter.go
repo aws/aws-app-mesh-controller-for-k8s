@@ -33,18 +33,17 @@ func (m *VirtualRouterTest) Create(ctx context.Context, f *framework.Framework, 
 	return nil
 }
 
-func (m *VirtualRouterTest) Update(ctx context.Context, f *framework.Framework, newVR *appmesh.VirtualRouter, vr *appmesh.VirtualRouter) (*appmesh.VirtualRouter, error) {
+func (m *VirtualRouterTest) Update(ctx context.Context, f *framework.Framework, newVR *appmesh.VirtualRouter, vr *appmesh.VirtualRouter) error {
 	err := f.K8sClient.Patch(ctx, newVR, client.MergeFrom(vr))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	updatedVR, err := f.VRManager.WaitUntilVirtualRouterActive(ctx, newVR)
+	_, err = f.VRManager.WaitUntilVirtualRouterActive(ctx, newVR)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	m.VirtualRouters[vr.Name] = updatedVR
-	return updatedVR, nil
+	return nil
 }
 
 func (m *VirtualRouterTest) Cleanup(ctx context.Context, f *framework.Framework) {

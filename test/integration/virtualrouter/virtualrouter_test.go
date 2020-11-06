@@ -313,7 +313,7 @@ var _ = Describe("VirtualRouter", func() {
 				routes := vrBuilder.BuildRoutes(routeCfgs)
 				vrTest.VirtualRouters[vr.Name].Spec.Routes = routes
 
-				_, err := vrTest.Update(ctx, f, vrTest.VirtualRouters[vr.Name], oldVR)
+				err := vrTest.Update(ctx, f, vrTest.VirtualRouters[vr.Name], oldVR)
 				Expect(err).NotTo(HaveOccurred())
 
 				err = vrTest.CheckInAWS(ctx, f, mesh, vrTest.VirtualRouters[vr.Name])

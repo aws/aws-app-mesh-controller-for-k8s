@@ -353,7 +353,7 @@ var _ = Describe("VirtualService", func() {
 				oldVS := vsTest.VirtualServices[vs.Name].DeepCopy()
 				vsTest.VirtualServices[vs.Name].Spec.AWSName = aws.String("newVirtualServiceAWSName")
 
-				_, err := vsTest.Update(ctx, f, vsTest.VirtualServices[vs.Name], oldVS)
+				err := vsTest.Update(ctx, f, vsTest.VirtualServices[vs.Name], oldVS)
 				Expect(err).To(HaveOccurred())
 			})
 
@@ -369,7 +369,7 @@ var _ = Describe("VirtualService", func() {
 					VirtualRouter: nil,
 				}
 
-				_, err := vsTest.Update(ctx, f, vsTest.VirtualServices[vs.Name], oldVS)
+				err := vsTest.Update(ctx, f, vsTest.VirtualServices[vs.Name], oldVS)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -383,7 +383,7 @@ var _ = Describe("VirtualService", func() {
 				oldVS := vsTest.VirtualServices[vs.Name].DeepCopy()
 				vsTest.VirtualServices[vs.Name].Spec.Provider = nil
 
-				_, err := vsTest.Update(ctx, f, vsTest.VirtualServices[vs.Name], oldVS)
+				err := vsTest.Update(ctx, f, vsTest.VirtualServices[vs.Name], oldVS)
 				Expect(err).NotTo(HaveOccurred())
 			})
 

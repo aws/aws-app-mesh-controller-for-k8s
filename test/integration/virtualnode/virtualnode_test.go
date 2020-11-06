@@ -448,7 +448,7 @@ var _ = Describe("VirtualNode", func() {
 
 				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
 
-				_, err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
 				Expect(err).NotTo(HaveOccurred())
 
 				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
@@ -463,7 +463,7 @@ var _ = Describe("VirtualNode", func() {
 
 				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
 
-				_, err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
 				Expect(err).NotTo(HaveOccurred())
 
 				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
@@ -484,7 +484,7 @@ var _ = Describe("VirtualNode", func() {
 
 				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
 
-				_, err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
 				Expect(err).NotTo(HaveOccurred())
 
 				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
@@ -602,7 +602,7 @@ var _ = Describe("VirtualNode", func() {
 
 				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
 
-				_, err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
 				Expect(err).NotTo(HaveOccurred())
 
 				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
@@ -617,7 +617,7 @@ var _ = Describe("VirtualNode", func() {
 
 				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
 
-				_, err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
 				Expect(err).NotTo(HaveOccurred())
 
 				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
@@ -637,7 +637,7 @@ var _ = Describe("VirtualNode", func() {
 
 				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
 
-				_, err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
 				Expect(err).NotTo(HaveOccurred())
 
 				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])

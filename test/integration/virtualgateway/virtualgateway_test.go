@@ -225,10 +225,10 @@ var _ = Describe("VirtualGateway", func() {
 				}
 
 				vgTest.VirtualGateways[vg.Name].Spec.Logging = newLog
-				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				err = vgTest.CheckInAWS(ctx, f, mesh, vgTest.VirtualGateways[vg.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})
@@ -238,10 +238,10 @@ var _ = Describe("VirtualGateway", func() {
 				listeners = []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http2", 443, "/")}
 
 				vgTest.VirtualGateways[vg.Name].Spec.Listeners = listeners
-				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				err = vgTest.CheckInAWS(ctx, f, mesh, vgTest.VirtualGateways[vg.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})
@@ -250,7 +250,7 @@ var _ = Describe("VirtualGateway", func() {
 				oldVG := vgTest.VirtualGateways[vg.Name].DeepCopy()
 				vgTest.VirtualGateways[vg.Name].Spec.AWSName = aws.String("newVirtualGatewayAWSName")
 
-				_, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
 				Expect(err).To(HaveOccurred())
 			})
 
@@ -436,10 +436,10 @@ var _ = Describe("VirtualGateway", func() {
 				listeners := []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
 
 				vgTest.VirtualGateways[vg.Name].Spec.Listeners = listeners
-				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				err = vgTest.CheckInAWS(ctx, f, mesh, vgTest.VirtualGateways[vg.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})
@@ -449,10 +449,10 @@ var _ = Describe("VirtualGateway", func() {
 				listeners := []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080, "/")}
 
 				vgTest.VirtualGateways[vg.Name].Spec.Listeners = listeners
-				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				err = vgTest.CheckInAWS(ctx, f, mesh, vgTest.VirtualGateways[vg.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})
@@ -467,10 +467,10 @@ var _ = Describe("VirtualGateway", func() {
 				listeners := []appmesh.VirtualGatewayListener{vgConnectionPoolListener}
 
 				vgTest.VirtualGateways[vg.Name].Spec.Listeners = listeners
-				updatedVG, err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
+				err := vgTest.Update(ctx, f, vgTest.VirtualGateways[vg.Name], oldVG)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = vgTest.CheckInAWS(ctx, f, mesh, updatedVG)
+				err = vgTest.CheckInAWS(ctx, f, mesh, vgTest.VirtualGateways[vg.Name])
 				Expect(err).NotTo(HaveOccurred())
 
 			})
