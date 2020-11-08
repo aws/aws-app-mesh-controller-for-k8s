@@ -1,4 +1,9 @@
-![Build](https://github.com/aws/aws-app-mesh-controller-for-k8s/workflows/Build/badge.svg?branch=master)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/aws/aws-app-mesh-controller-for-k8s/issues)
+![GitHub issues](https://img.shields.io/github/issues-raw/aws/aws-app-mesh-controller-for-k8s?style=flat)
+![GitHub](https://img.shields.io/github/license/aws/aws-app-mesh-controller-for-k8s?style=flat)
+
+
+![Build](https://github.com/aws/aws-app-mesh-controller-for-k8s/workflows/build/badge.svg?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aws/aws-app-mesh-controller-for-k8s)](https://goreportcard.com/report/github.com/aws/aws-app-mesh-controller-for-k8s)
 
 <p>
