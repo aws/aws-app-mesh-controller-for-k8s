@@ -1,5 +1,38 @@
 # CHANGELOG
 
+## v1.2.0
+
+### Summary
+This release includes support for outlier detection, circuit breakers using connection pools, support for additional Envoy config parameters, new Envoy version v1.15.0.0-prod, GitHub Actions integration for automated tests and bug fixes.
+
+### Changes
+* Update API docs with outlier detection and connection pools ([#384](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/384)  @fawadkhaliq)
+* Make maxPendingRequests optional and disable preview aws-sdk-go ([#383](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/383) @fawadkhaliq)
+* Add outlier detection and connection pool walkthrough links to tutorials ([#382](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/382) @fawadkhaliq)
+* Add integration tests to gh actions kind setup ([#381](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/381) @fawadkhaliq)
+* Build and publish the controller image in the CI ([#380](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/380) @fawadkhaliq)
+* Add kinD support to run integration tests ([#378](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/378) @fawadkhaliq)
+* Fix jaeger tracing collector endpoint and tracer type ([#379](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/379) @fawadkhaliq)
+* Add gh actions workflow to use self-hosted runners ([#376](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/376) @fawadkhaliq)
+* Add issue and feature request templates ([#375](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/375) @fawadkhaliq)
+* Leave app ports empty for virtual nodes without listeners ([#373](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/373) @fawadkhaliq)
+* Handle resource delete scenarios ([#367](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/367) @achevuru)
+* Adjusted RBAC permissions for the controller ([#369](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/369) @fawadkhaliq)
+* Add IAM policies for the controller and envoy ([#368](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/368) @fawadkhaliq)
+* Add integration tests for outlier detection and connection pools ([#366](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/366) @fawadkhaliq)
+* Add CRDs for connection pools in virtual node and virtual gateway ([#363](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/363) @fawadkhaliq)
+* Envoy configurability in AppMesh Controller ([#365](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/365) @achevuru)
+* Added docs about sidecar installation ([#364](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/364) @fawadkhaliq)
+* Update Envoy image version to v1.15.1.0-prod ([#358](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/358) @landesherr)
+* Fix VirtualNode's ServiceDiscovery Validation Logic ([#362](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/362) @achevuru)
+* Fix for Jaeger tracing with Envoy v1.15.0 ([#359](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/359) @achevuru)
+* Add CRDs for virtual node listener outlier detection ([#356](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/356) @fawadkhaliq)
+* Disable CircleCI and add unit test workflow for GitHub Actions ([#355](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/355) @fawadkhaliq)
+* Enable GitHub Actions with a build workflow ([#354](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/354) @fawadkhaliq)
+* TLS support in e2e test suite ([#345](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/345) @achevuru)
+* TLS Integration tests ([#344](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/344) @achevuru)
+* CloudMap Integration tests ([#343](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/343) @achevuru)
+
 ## v1.1.1
 
 ### Summary
