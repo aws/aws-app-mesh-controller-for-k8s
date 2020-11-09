@@ -3,7 +3,7 @@
 ## v1.2.0
 
 ### Summary
-This release includes support for outlier detection, circuit breakers using connection pools, support for additional Envoy config parameters, new Envoy version v1.15.0.0-prod, GitHub Actions integration for automated tests and bug fixes.
+This release includes support for outlier detection, circuit breakers using connection pools, support for additional Envoy config parameters, new Envoy version v1.15.1.0-prod, GitHub Actions integration for automated tests and bug fixes.
 
 ### Changes
 * Update API docs with outlier detection and connection pools ([#384](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/384)  @fawadkhaliq)
