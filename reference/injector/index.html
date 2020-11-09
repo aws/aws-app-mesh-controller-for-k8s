@@ -15,7 +15,7 @@
     
     
       
-        <title>Walkthroughs - AWS App Mesh Controller</title>
+        <title>SidecarInjection - AWS App Mesh Controller</title>
       
     
     
@@ -56,7 +56,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#app-mesh-eks-walkthroughs" class="md-skip">
+        <a href="#sidecar-installation" class="md-skip">
           Skip to content
         </a>
       
@@ -84,7 +84,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              Walkthroughs
+              SidecarInjection
             
           </span>
         </div>
@@ -180,7 +180,7 @@
   
     <li class="md-tabs__item">
       
-        <a href="./" class="md-tabs__link md-tabs__link--active">
+        <a href="../../tutorials/walkthroughs/" class="md-tabs__link">
           Tutorials
         </a>
       
@@ -193,7 +193,7 @@
   
     <li class="md-tabs__item">
       
-        <a href="../../reference/api_spec/" class="md-tabs__link">
+        <a href="../api_spec/" class="md-tabs__link md-tabs__link--active">
           Reference
         </a>
       
@@ -345,12 +345,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
     
     <label class="md-nav__link" for="nav-3">
       Tutorials
@@ -372,20 +370,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-    <a href="./" title="Walkthroughs" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../../tutorials/walkthroughs/" title="Walkthroughs" class="md-nav__link">
       Walkthroughs
     </a>
-    
   </li>
 
         
@@ -398,10 +387,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
     <label class="md-nav__link" for="nav-4">
       Reference
@@ -425,7 +416,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../reference/api_spec/" title="APISpec" class="md-nav__link">
+    <a href="../api_spec/" title="APISpec" class="md-nav__link">
       APISpec
     </a>
   </li>
@@ -437,7 +428,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../reference/api_design/" title="APIDesign" class="md-nav__link">
+    <a href="../api_design/" title="APIDesign" class="md-nav__link">
       APIDesign
     </a>
   </li>
@@ -447,11 +438,73 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../../reference/injector/" title="SidecarInjection" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        SidecarInjection
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3,9H17V7H3V9M3,13H17V11H3V13M3,17H17V15H3V17M19,17H21V15H19V17M19,7V9H21V7H19M19,13H21V11H19V13Z" /></svg>
+        </span>
+      </label>
+    
+    <a href="./" title="SidecarInjection" class="md-nav__link md-nav__link--active">
       SidecarInjection
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#envoy-injection-for-virtual-nodes" class="md-nav__link">
+    Envoy injection for virtual nodes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#envoy-injection-for-virtual-gateways" class="md-nav__link">
+    Envoy injection for virtual gateways
+  </a>
+  
+    <nav class="md-nav" aria-label="Envoy injection for virtual gateways">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#skip-overriding-envoy-image" class="md-nav__link">
+    Skip overriding Envoy image
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -477,6 +530,43 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#envoy-injection-for-virtual-nodes" class="md-nav__link">
+    Envoy injection for virtual nodes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#envoy-injection-for-virtual-gateways" class="md-nav__link">
+    Envoy injection for virtual gateways
+  </a>
+  
+    <nav class="md-nav" aria-label="Envoy injection for virtual gateways">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#skip-overriding-envoy-image" class="md-nav__link">
+    Skip overriding Envoy image
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -487,7 +577,7 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/tutorials/walkthroughs.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/reference/injector.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" /></svg>
                   </a>
                 
@@ -495,20 +585,157 @@
                   
                 
                 
-                <h1 id="app-mesh-eks-walkthroughs">App Mesh EKS Walkthroughs<a class="headerlink" href="#app-mesh-eks-walkthroughs" title="Permanent link">&para;</a></h1>
-<ul>
-<li><a href="https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-alb">howto-k8s-alb</a>: This example shows how to use ALB Ingress Controller with targets registered as virtual-nodes under App Mesh.</li>
-<li><a href="https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-cloudmap">howto-k8s-cloudmap</a>: This example shows how Kubernetes deployments can use AWS CloudMap for service-discovery when using App Mesh.</li>
-<li><a href="https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-fargate">howto-k8s-fargate</a>: This example shows how to use AppMesh with EKS on Fargate.</li>
-<li><a href="https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-grpc">howto-k8s-grpc</a>:This example shows how to manage gRPC routes in App Mesh using Kubernetes deployments.</li>
-<li><a href="https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-http-headers">howto-k8s-http-headers</a>: This example shows how http routes can use headers for matching incoming requests.</li>
-<li><a href="https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-http2">howto-k8s-http2</a>: This example shows how to manage HTTP/2 routes in App Mesh using Kubernetes deployments</li>
-<li><a href="https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-retry-policy">howto-k8s-retry-policy</a>: This example shows how retry-policies can be used to for Kubernetes applications within the context of App Mesh.</li>
-<li><a href="https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-ingress-gateway">howto-k8s-ingress-gateway</a>: This example shows how to use App Mesh Virtual Gateways for ingress connectivity towards Kubernetes applications.</li>
-<li><a href="https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-tls-file-based">howto-k8s-tls-file-based</a>: This example shows how to enable TLS encryption between applications in App Mesh using X.509 certificates and mount secrets on Envoy using the injector</li>
-<li><a href="https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-outlier-detection">howto-k8s-outlier-detection</a> This example shows how to use outlier detection capabilities in AWS App Mesh with EKS</li>
-<li><a href="https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-connection-pools">howto-k8s-connection-pools</a> This example shows how to use circuit breaking/connection pool configuration capabilities in AWS App Mesh with EKS</li>
-</ul>
+                <h1 id="sidecar-installation">Sidecar installation<a class="headerlink" href="#sidecar-installation" title="Permanent link">&para;</a></h1>
+<p>In order to use AWS App Mesh in Kubernetes, pods in the mesh must be running the AWS App Mesh sidecar proxy (Envoy).</p>
+<p>The following sections describe methods for injecting sidecar/Envoy into a pod for Virtual Nodes and Virtual Gateways</p>
+<h2 id="envoy-injection-for-virtual-nodes">Envoy injection for virtual nodes<a class="headerlink" href="#envoy-injection-for-virtual-nodes" title="Permanent link">&para;</a></h2>
+<p>Sidecars can be automatically added to Kubernetes pods using a <a href="https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/">mutating webhook admission controller</a> as part of the App Mesh Kubernetes controller.</p>
+<p>App Mesh uses namespace and/or pod annotations to determine if pods in a namespace will be marked for sidecar injection. There are two ways to achieve this:</p>
+<p><code>appmesh.k8s.aws/sidecarInjectorWebhook: enabled</code>: The sidecar injector will inject the sidecar into pods by default. Add the <code>appmesh.k8s.aws/sidecarInjectorWebhook</code> annotation with value <code>disabled</code> to the pod template spec to override the default and disable injection. For example:</p>
+<div class="highlight"><pre><span></span><code>apiVersion: v1
+kind: Namespace
+metadata:
+  name: default-enabled
+  labels:
+    mesh: default-enabled
+    appmesh.k8s.aws/sidecarInjectorWebhook: enabled
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: default-behavior // sidecar will be injected as namespace has sidecar injection enabled
+  namespace: default-enabled
+spec:
+  template:
+    spec:
+      containers:
+      - name: default-behavior
+        image: tutum/curl
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: override-default-enabled
+  namespace: default-enabled
+spec:
+  template:
+    metadata:
+      annotations:
+        appmesh.k8s.aws/sidecarInjectorWebhook: disabled // this will override the default and disable inject sidecar
+    spec:
+      containers:
+      - name: override-default-enabled
+        image: tutum/curl
+</code></pre></div>
+
+<p><code>appmesh.k8s.aws/sidecarInjectorWebhook: disabled</code>: The sidecar injector will not inject the sidecar into pods by default. Add the <code>appmesh.k8s.aws/sidecarInjectorWebhook</code> annotation with value <code>enabled</code> to the pod template spec to override the default and enable injection.</p>
+<div class="highlight"><pre><span></span><code>apiVersion: v1
+kind: Namespace
+metadata:
+  name: default-disabled
+  labels:
+    mesh: default-disabled
+    appmesh.k8s.aws/sidecarInjectorWebhook: disabled
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: default-behavior // sidecar will be not injected as namespace has sidecar injection disabled
+  namespace: default-disabled
+spec:
+  template:
+    spec:
+      containers:
+      - name: default-behavior
+        image: tutum/curl
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: override-default-disabled
+  namespace: default-disabled
+spec:
+  template:
+    metadata:
+      annotations:
+        appmesh.k8s.aws/sidecarInjectorWebhook: enabled // this will override the default and inject sidecar
+    spec:
+      containers:
+      - name: override-default-disabled
+        image: tutum/curl
+</code></pre></div>
+
+<h2 id="envoy-injection-for-virtual-gateways">Envoy injection for virtual gateways<a class="headerlink" href="#envoy-injection-for-virtual-gateways" title="Permanent link">&para;</a></h2>
+<p>AWS App Mesh supports virtual gateway resource to allow resources that are outside of your mesh to communicate to resources that are inside of your mesh. The virtual gateway represents an Envoy proxy running in the Kubernetes cluster. Unlike a virtual node, which represents Envoy running with an application, a virtual gateway represents Envoy deployed by itself. App Mesh Kubernetes controller supports injecting Envoy and virtual gateway configuration.</p>
+<p>App Mesh Kubernetes controller uses podSelector to designate Virtual Gateway membership. If you create a pod with labels matching the pod selector labels in a virtual gateway spec, the controller will inject the Envoy configuration to the pod/envoy container and override the default container image by default.</p>
+<p>Also, since a pod may contain multiple containers, the controller relies on the container name <code>envoy</code> to determine, which container to mutate for virtual gateway configuration.</p>
+<p>To use the controller to inject virtual gateway configuration, add podSelector to your virtual gateway, add namespaceSelector label where you need to create the virtual gateway and set the container name to <code>envoy</code>:</p>
+<div class="highlight"><pre><span></span><code>apiVersion: appmesh.k8s.aws/v1beta2
+kind: VirtualGateway
+metadata:
+  name: ingress-gw
+  namespace: ns
+spec:
+  namespaceSelector:
+    matchLabels:
+      gateway: ingress-gw
+  podSelector:
+    matchLabels:
+      app: ingress-gw
+  listeners:
+    - portMapping:
+        port: 8088
+        protocol: http
+</code></pre></div>
+
+<p>Add the labels in your virtual gateway pod spec:</p>
+<div class="highlight"><pre><span></span><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingress-gw
+  namespace: ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ingress-gw
+  template:
+    metadata:
+      labels:
+        app: ingress-gw
+    spec:
+      containers:
+        - name: envoy
+          image: &lt;envoy-image&gt;
+          ports:
+            - containerPort: 8088
+</code></pre></div>
+
+<h3 id="skip-overriding-envoy-image">Skip overriding Envoy image<a class="headerlink" href="#skip-overriding-envoy-image" title="Permanent link">&para;</a></h3>
+<p>If you wish to skip the Envoy image override, you can add the annotation <code>appmesh.k8s.aws/virtualGatewaySkipImageOverride</code> to your pod spec. This will make sure only virtual gateway configuration is added and Envoy image url override is skipped, allowing you to use custom image version.</p>
+<div class="highlight"><pre><span></span><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingress-gw
+  namespace: ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ingress-gw
+  template:
+    metadata:
+      annotations:
+        appmesh.k8s.aws/virtualGatewaySkipImageOverride: enabled
+      labels:
+        app: ingress-gw
+    spec:
+      containers:
+        - name: envoy
+          image: &lt;envoy-image&gt;
+          ports:
+            - containerPort: 8088
+</code></pre></div>
                 
               
               
@@ -527,7 +754,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../../guide/development/" title="Development" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../api_design/" title="APIDesign" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" /></svg>
             </div>
@@ -536,25 +763,11 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Development
+                APIDesign
               </div>
             </div>
           </a>
         
-        
-          <a href="../../reference/api_spec/" title="APISpec" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                APISpec
-              </div>
-            </div>
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" /></svg>
-            </div>
-          </a>
         
       </nav>
     </div>
