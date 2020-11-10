@@ -18,7 +18,8 @@ const envoyVirtualGatewayEnvMap = `
   "ENVOY_LOG_LEVEL": "{{ .LogLevel }}",
   "ENVOY_ADMIN_ACCESS_PORT": "{{ .AdminAccessPort }}",
   "ENVOY_ADMIN_ACCESS_LOG_FILE": "{{ .AdminAccessLogFile }}",
-  "AWS_REGION": "{{ .AWSRegion }}"{{ if .EnableXrayTracing }},
+  "AWS_REGION": "{{ .AWSRegion }}"{{ if .EnableSDS }},
+  "APPMESH_SDS_UNIX_SOCKET": "/tmp/agent.sock"{{ end }}{{ if .EnableXrayTracing }},
   "ENABLE_ENVOY_XRAY_TRACING": "1","XRAY_DAEMON_PORT": "{{ .XrayDaemonPort }}"{{ end }}
 }
 `
@@ -28,6 +29,7 @@ type VirtualGatewayEnvoyVariables struct {
 	MeshName           string
 	VirtualGatewayName string
 	Preview            string
+	EnableSDS          bool
 	LogLevel           string
 	AdminAccessPort    int32
 	AdminAccessLogFile string
@@ -39,6 +41,7 @@ type virtualGatwayEnvoyConfig struct {
 	accountID                  string
 	awsRegion                  string
 	preview                    bool
+	enableSDS                  bool
 	logLevel                   string
 	adminAccessPort            int32
 	adminAccessLogFile         string
@@ -124,6 +127,7 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 		MeshName:           meshName,
 		VirtualGatewayName: virtualGatewayName,
 		Preview:            preview,
+		EnableSDS:          m.mutatorConfig.enableSDS,
 		LogLevel:           m.mutatorConfig.logLevel,
 		AdminAccessPort:    m.mutatorConfig.adminAccessPort,
 		AdminAccessLogFile: m.mutatorConfig.adminAccessLogFile,

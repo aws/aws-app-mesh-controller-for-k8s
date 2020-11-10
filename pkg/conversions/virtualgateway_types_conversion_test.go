@@ -147,6 +147,23 @@ func TestConvert_CRD_VirtualGatewayTLSValidationContextTrust_To_SDK_VirtualGatew
 				},
 			},
 		},
+		{
+			name: "sds validation context",
+			args: args{
+				crdObj: &appmesh.VirtualGatewayTLSValidationContextTrust{
+					SDS: &appmesh.VirtualGatewayTLSValidationContextSDSTrust{
+						SecretName: "sds://certAuthority",
+					},
+				},
+				sdkObj: &appmeshsdk.VirtualGatewayTlsValidationContextTrust{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualGatewayTlsValidationContextTrust{
+				Sds: &appmeshsdk.VirtualGatewayTlsValidationContextSdsTrust{
+					SecretName: aws.String("sds://certAuthority"),
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -221,7 +238,7 @@ func TestConvert_CRD_VirtualGatewayClientPolicyTLS_To_SDK_VirtualGatewayClientPo
 		wantErr    error
 	}{
 		{
-			name: "normal case",
+			name: "normal tls case",
 			args: args{
 				crdObj: &appmesh.VirtualGatewayClientPolicyTLS{
 					Enforce: aws.Bool(true),
@@ -245,6 +262,86 @@ func TestConvert_CRD_VirtualGatewayClientPolicyTLS_To_SDK_VirtualGatewayClientPo
 						Acm: &appmeshsdk.VirtualGatewayTlsValidationContextAcmTrust{
 							CertificateAuthorityArns: []*string{aws.String("arn-1"), aws.String("arn-2")},
 						},
+					},
+				},
+			},
+		},
+		{
+			name: "file based mtls",
+			args: args{
+				crdObj: &appmesh.VirtualGatewayClientPolicyTLS{
+					Enforce: aws.Bool(true),
+					Ports:   []appmesh.PortNumber{80, 443},
+					Validation: appmesh.VirtualGatewayTLSValidationContext{
+						Trust: appmesh.VirtualGatewayTLSValidationContextTrust{
+							File: &appmesh.VirtualGatewayTLSValidationContextFileTrust{
+								CertificateChain: "certficateAuthority",
+							},
+						},
+					},
+					Certificate: &appmesh.VirtualGatewayClientTLSCertificate{
+						File: &appmesh.VirtualGatewayListenerTLSFileCertificate{
+							CertificateChain: "certChain",
+							PrivateKey:       "secret",
+						},
+					},
+				},
+				sdkObj: &appmeshsdk.VirtualGatewayClientPolicyTls{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualGatewayClientPolicyTls{
+				Enforce: aws.Bool(true),
+				Ports:   []*int64{aws.Int64(80), aws.Int64(443)},
+				Validation: &appmeshsdk.VirtualGatewayTlsValidationContext{
+					Trust: &appmeshsdk.VirtualGatewayTlsValidationContextTrust{
+						File: &appmeshsdk.VirtualGatewayTlsValidationContextFileTrust{
+							CertificateChain: aws.String("certficateAuthority"),
+						},
+					},
+				},
+				Certificate: &appmeshsdk.VirtualGatewayClientTlsCertificate{
+					File: &appmeshsdk.VirtualGatewayListenerTlsFileCertificate{
+						CertificateChain: aws.String("certChain"),
+						PrivateKey:       aws.String("secret"),
+					},
+				},
+			},
+		},
+		{
+			name: "sds based mtls",
+			args: args{
+				crdObj: &appmesh.VirtualGatewayClientPolicyTLS{
+					Enforce: aws.Bool(true),
+					Ports:   []appmesh.PortNumber{80, 443},
+					Validation: appmesh.VirtualGatewayTLSValidationContext{
+						Trust: appmesh.VirtualGatewayTLSValidationContextTrust{
+							SDS: &appmesh.VirtualGatewayTLSValidationContextSDSTrust{
+								SecretName: "sds://certAuthority",
+							},
+						},
+					},
+					Certificate: &appmesh.VirtualGatewayClientTLSCertificate{
+						SDS: &appmesh.VirtualGatewayListenerTLSSDSCertificate{
+							SecretName: "sds://certChain",
+						},
+					},
+				},
+				sdkObj: &appmeshsdk.VirtualGatewayClientPolicyTls{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualGatewayClientPolicyTls{
+				Enforce: aws.Bool(true),
+				Ports:   []*int64{aws.Int64(80), aws.Int64(443)},
+				Validation: &appmeshsdk.VirtualGatewayTlsValidationContext{
+					Trust: &appmeshsdk.VirtualGatewayTlsValidationContextTrust{
+						Sds: &appmeshsdk.VirtualGatewayTlsValidationContextSdsTrust{
+							SecretName: aws.String("sds://certAuthority"),
+						},
+					},
+				},
+				Certificate: &appmeshsdk.VirtualGatewayClientTlsCertificate{
+					Sds: &appmeshsdk.VirtualGatewayListenerTlsSdsCertificate{
+						SecretName: aws.String("sds://certChain"),
 					},
 				},
 			},
@@ -392,7 +489,7 @@ func TestConvert_CRD_VirtualGatewayClientPolicy_To_SDK_VirtualGatewayClientPolic
 		wantErr    error
 	}{
 		{
-			name: "non nil TLS",
+			name: "non nil TLS + File based cert",
 			args: args{
 				crdObj: &appmesh.VirtualGatewayClientPolicy{
 					TLS: &appmesh.VirtualGatewayClientPolicyTLS{
@@ -403,6 +500,12 @@ func TestConvert_CRD_VirtualGatewayClientPolicy_To_SDK_VirtualGatewayClientPolic
 								ACM: &appmesh.VirtualGatewayTLSValidationContextACMTrust{
 									CertificateAuthorityARNs: []string{"arn-1", "arn-2"},
 								},
+							},
+						},
+						Certificate: &appmesh.VirtualGatewayClientTLSCertificate{
+							File: &appmesh.VirtualGatewayListenerTLSFileCertificate{
+								CertificateChain: "certChain",
+								PrivateKey:       "secret",
 							},
 						},
 					},
@@ -419,6 +522,55 @@ func TestConvert_CRD_VirtualGatewayClientPolicy_To_SDK_VirtualGatewayClientPolic
 							Acm: &appmeshsdk.VirtualGatewayTlsValidationContextAcmTrust{
 								CertificateAuthorityArns: []*string{aws.String("arn-1"), aws.String("arn-2")},
 							},
+						},
+					},
+					Certificate: &appmeshsdk.VirtualGatewayClientTlsCertificate{
+						File: &appmeshsdk.VirtualGatewayListenerTlsFileCertificate{
+							CertificateChain: aws.String("certChain"),
+							PrivateKey:       aws.String("secret"),
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "non nil TLS + sds based cert",
+			args: args{
+				crdObj: &appmesh.VirtualGatewayClientPolicy{
+					TLS: &appmesh.VirtualGatewayClientPolicyTLS{
+						Enforce: aws.Bool(true),
+						Ports:   []appmesh.PortNumber{80, 443},
+						Validation: appmesh.VirtualGatewayTLSValidationContext{
+							Trust: appmesh.VirtualGatewayTLSValidationContextTrust{
+								ACM: &appmesh.VirtualGatewayTLSValidationContextACMTrust{
+									CertificateAuthorityARNs: []string{"arn-1", "arn-2"},
+								},
+							},
+						},
+						Certificate: &appmesh.VirtualGatewayClientTLSCertificate{
+							SDS: &appmesh.VirtualGatewayListenerTLSSDSCertificate{
+								SecretName: "certChain",
+							},
+						},
+					},
+				},
+				sdkObj: &appmeshsdk.VirtualGatewayClientPolicy{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.VirtualGatewayClientPolicy{
+				Tls: &appmeshsdk.VirtualGatewayClientPolicyTls{
+					Enforce: aws.Bool(true),
+					Ports:   []*int64{aws.Int64(80), aws.Int64(443)},
+					Validation: &appmeshsdk.VirtualGatewayTlsValidationContext{
+						Trust: &appmeshsdk.VirtualGatewayTlsValidationContextTrust{
+							Acm: &appmeshsdk.VirtualGatewayTlsValidationContextAcmTrust{
+								CertificateAuthorityArns: []*string{aws.String("arn-1"), aws.String("arn-2")},
+							},
+						},
+					},
+					Certificate: &appmeshsdk.VirtualGatewayClientTlsCertificate{
+						Sds: &appmeshsdk.VirtualGatewayListenerTlsSdsCertificate{
+							SecretName: aws.String("certChain"),
 						},
 					},
 				},

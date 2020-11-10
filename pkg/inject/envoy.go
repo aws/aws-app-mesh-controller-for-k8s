@@ -50,7 +50,11 @@ const envoyContainerTemplate = `
     {
       "name": "ENVOY_LOG_LEVEL",
       "value": "{{ .LogLevel }}"
-    }{{ if .AdminAccessPort }},
+    }{{ if .EnableSDS }},
+    {
+      "name": "APPMESH_SDS_SOCKET_PATH",
+      "value": "/run/spire/sockets/agent.sock"
+    }{{ end }}{{ if .AdminAccessPort }},
     {
       "name": "ENVOY_ADMIN_ACCESS_PORT",
       "value": "{{ .AdminAccessPort }}"
@@ -119,6 +123,7 @@ type EnvoyTemplateVariables struct {
 	MeshName                     string
 	VirtualNodeName              string
 	Preview                      string
+	EnableSDS                    bool
 	LogLevel                     string
 	AdminAccessPort              int32
 	AdminAccessLogFile           string
@@ -141,6 +146,7 @@ type envoyMutatorConfig struct {
 	accountID                  string
 	awsRegion                  string
 	preview                    bool
+	enableSDS                  bool
 	logLevel                   string
 	adminAccessPort            int32
 	adminAccessLogFile         string
@@ -211,6 +217,9 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 
 	m.mutateSecretMounts(pod, &container, secretMounts)
+	if m.mutatorConfig.enableSDS {
+		m.mutateSDSMounts(pod, &container)
+	}
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
 	return nil
 }
@@ -225,6 +234,7 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		MeshName:                     meshName,
 		VirtualNodeName:              virtualNodeName,
 		Preview:                      preview,
+		EnableSDS:                    m.mutatorConfig.enableSDS,
 		LogLevel:                     m.mutatorConfig.logLevel,
 		AdminAccessPort:              m.mutatorConfig.adminAccessPort,
 		AdminAccessLogFile:           m.mutatorConfig.adminAccessLogFile,
@@ -281,6 +291,27 @@ func (m *envoyMutator) mutateSecretMounts(pod *corev1.Pod, envoyContainer *corev
 		envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
 		pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
 	}
+}
+
+func (m *envoyMutator) mutateSDSMounts(pod *corev1.Pod, envoyContainer *corev1.Container) {
+	SDSVolumeType := corev1.HostPathSocket
+	volume := corev1.Volume{
+		Name: "sds-socket-volume",
+		VolumeSource: corev1.VolumeSource{
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: "/run/spire/sockets/agent.sock",
+				Type: &SDSVolumeType,
+			},
+		},
+	}
+
+	volumeMount := corev1.VolumeMount{
+		Name:      "sds-socket-volume",
+		MountPath: "/run/spire/sockets/agent.sock",
+	}
+
+	envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
+	pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
 }
 
 func (m *envoyMutator) getSecretMounts(pod *corev1.Pod) (map[string]string, error) {

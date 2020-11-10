@@ -102,6 +102,45 @@ func TestConvert_CRD_TLSValidationContextFileTrust_To_SDK_TLSValidationContextFi
 	}
 }
 
+func TestConvert_CRD_TLSValidationContextSDSTrust_To_SDK_TLSValidationContextSDSTrust(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.TLSValidationContextSDSTrust
+		sdkObj *appmeshsdk.TlsValidationContextSdsTrust
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.TlsValidationContextSdsTrust
+		wantErr    error
+	}{
+		{
+			name: "normal case",
+			args: args{
+				crdObj: &appmesh.TLSValidationContextSDSTrust{
+					SecretName: "sds://certAuthority",
+				},
+				sdkObj: &appmeshsdk.TlsValidationContextSdsTrust{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.TlsValidationContextSdsTrust{
+				SecretName: aws.String("sds://certAuthority"),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_TLSValidationContextSDSTrust_To_SDK_TLSValidationContextSDSTrust(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
 func TestConvert_CRD_TLSValidationContextTrust_To_SDK_TLSValidationContextTrust(t *testing.T) {
 	type args struct {
 		crdObj *appmesh.TLSValidationContextTrust
@@ -145,6 +184,23 @@ func TestConvert_CRD_TLSValidationContextTrust_To_SDK_TLSValidationContextTrust(
 			wantSDKObj: &appmeshsdk.TlsValidationContextTrust{
 				File: &appmeshsdk.TlsValidationContextFileTrust{
 					CertificateChain: aws.String("dummy"),
+				},
+			},
+		},
+		{
+			name: "sds validation context",
+			args: args{
+				crdObj: &appmesh.TLSValidationContextTrust{
+					SDS: &appmesh.TLSValidationContextSDSTrust{
+						SecretName: "sds://certAuthority",
+					},
+				},
+				sdkObj: &appmeshsdk.TlsValidationContextTrust{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.TlsValidationContextTrust{
+				Sds: &appmeshsdk.TlsValidationContextSdsTrust{
+					SecretName: aws.String("sds://certAuthority"),
 				},
 			},
 		},
@@ -199,6 +255,68 @@ func TestConvert_CRD_TLSValidationContext_To_SDK_TLSValidationContext(t *testing
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := Convert_CRD_TLSValidationContext_To_SDK_TLSValidationContext(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
+func TestConvert_CRD_ClientTLSCertificate_To_SDK_ClientTLSCertificate(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.ClientTLSCertificate
+		sdkObj *appmeshsdk.ClientTlsCertificate
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.ClientTlsCertificate
+		wantErr    error
+	}{
+		{
+			name: "file based certs",
+			args: args{
+				crdObj: &appmesh.ClientTLSCertificate{
+					File: &appmesh.ListenerTLSFileCertificate{
+						CertificateChain: "cert-chain",
+						PrivateKey:       "secret",
+					},
+				},
+				sdkObj: &appmeshsdk.ClientTlsCertificate{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.ClientTlsCertificate{
+				File: &appmeshsdk.ListenerTlsFileCertificate{
+					CertificateChain: aws.String("cert-chain"),
+					PrivateKey:       aws.String("secret"),
+				},
+			},
+		},
+		{
+			name: "sds based certs",
+			args: args{
+				crdObj: &appmesh.ClientTLSCertificate{
+					SDS: &appmesh.ListenerTLSSDSCertificate{
+						SecretName: "sds://clientCert",
+					},
+				},
+				sdkObj: &appmeshsdk.ClientTlsCertificate{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.ClientTlsCertificate{
+				Sds: &appmeshsdk.ListenerTlsSdsCertificate{
+					SecretName: aws.String("sds://clientCert"),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_ClientTLSCertificate_To_SDK_ClientTLSCertificate(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
@@ -1008,10 +1126,95 @@ func TestConvert_CRD_ListenerTLSCertificate_To_SDK_ListenerTLSCertificate(t *tes
 				},
 			},
 		},
+		{
+			name: "sds certificate",
+			args: args{
+				crdObj: &appmesh.ListenerTLSCertificate{
+					SDS: &appmesh.ListenerTLSSDSCertificate{
+						SecretName: "sds://cert",
+					},
+				},
+				sdkObj: &appmeshsdk.ListenerTlsCertificate{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.ListenerTlsCertificate{
+				Sds: &appmeshsdk.ListenerTlsSdsCertificate{
+					SecretName: aws.String("sds://cert"),
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := Convert_CRD_ListenerTLSCertificate_To_SDK_ListenerTLSCertificate(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
+func TestConvert_CRD_ListenerTLSValidationContext_To_SDK_ListenerTLSValidationContext(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.ListenerTLSValidationContext
+		sdkObj *appmeshsdk.ListenerTlsValidationContext
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.ListenerTlsValidationContext
+		wantErr    error
+	}{
+		{
+			name: "file based",
+			args: args{
+				crdObj: &appmesh.ListenerTLSValidationContext{
+					Trust: appmesh.ListenerTLSValidationContextTrust{
+						File: &appmesh.TLSValidationContextFileTrust{
+							CertificateChain: "certAuthority",
+						},
+					},
+				},
+				sdkObj: &appmeshsdk.ListenerTlsValidationContext{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.ListenerTlsValidationContext{
+				Trust: &appmeshsdk.ListenerTlsValidationContextTrust{
+					File: &appmeshsdk.TlsValidationContextFileTrust{
+						CertificateChain: aws.String("certAuthority"),
+					},
+				},
+			},
+		},
+		{
+			name: "sds based",
+			args: args{
+				crdObj: &appmesh.ListenerTLSValidationContext{
+					Trust: appmesh.ListenerTLSValidationContextTrust{
+						SDS: &appmesh.TLSValidationContextSDSTrust{
+							SecretName: "sds://certAuthority",
+						},
+					},
+				},
+				sdkObj: &appmeshsdk.ListenerTlsValidationContext{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.ListenerTlsValidationContext{
+				Trust: &appmeshsdk.ListenerTlsValidationContextTrust{
+					Sds: &appmeshsdk.TlsValidationContextSdsTrust{
+						SecretName: aws.String("sds://certAuthority"),
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_ListenerTLSValidationContext_To_SDK_ListenerTLSValidationContext(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
