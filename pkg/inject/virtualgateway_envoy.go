@@ -19,7 +19,7 @@ const envoyVirtualGatewayEnvMap = `
   "ENVOY_ADMIN_ACCESS_PORT": "{{ .AdminAccessPort }}",
   "ENVOY_ADMIN_ACCESS_LOG_FILE": "{{ .AdminAccessLogFile }}",
   "AWS_REGION": "{{ .AWSRegion }}"{{ if .EnableSDS }},
-  "APPMESH_SDS_UNIX_SOCKET": "/tmp/agent.sock"{{ end }}{{ if .EnableXrayTracing }},
+  "APPMESH_SDS_SOCKET_PATH": "/run/spire/sockets/agent.sock"{{ end }}{{ if .EnableXrayTracing }},
   "ENABLE_ENVOY_XRAY_TRACING": "1","XRAY_DAEMON_PORT": "{{ .XrayDaemonPort }}"{{ end }}
 }
 `
@@ -114,6 +114,10 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 		pod.Spec.Containers[envoyIdx].ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay,
 			m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 	}
+
+	if m.mutatorConfig.enableSDS {
+		m.mutateSDSMounts(pod, &pod.Spec.Containers[envoyIdx])
+	}
 	return nil
 }
 
@@ -177,5 +181,25 @@ func (m *virtualGatewayEnvoyConfig) virtualGatewayImageOverride(pod *corev1.Pod)
 	default:
 		return true
 	}
+}
 
+func (m *virtualGatewayEnvoyConfig) mutateSDSMounts(pod *corev1.Pod, envoyContainer *corev1.Container) {
+	SDSVolumeType := corev1.HostPathSocket
+	volume := corev1.Volume{
+		Name: "sds-socket-volume",
+		VolumeSource: corev1.VolumeSource{
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: "/run/spire/sockets/agent.sock",
+				Type: &SDSVolumeType,
+			},
+		},
+	}
+
+	volumeMount := corev1.VolumeMount{
+		Name:      "sds-socket-volume",
+		MountPath: "/run/spire/sockets/agent.sock",
+	}
+
+	envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
+	pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
 }
