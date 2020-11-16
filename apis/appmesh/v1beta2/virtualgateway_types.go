@@ -126,6 +126,23 @@ type VirtualGatewayListenerTLSFileCertificate struct {
 	PrivateKey string `json:"privateKey"`
 }
 
+type VirtualGatewayListenerTLSSDSCertificate struct {
+	// The certificate trust chain for a certificate issued via SDS cluster
+	SecretName string `json:"secretName"`
+}
+
+type VirtualGatewayListenerTLSValidationContextTrust struct {
+	// A reference to an object that represents a TLS validation context trust for an AWS Certicate Manager (ACM) certificate.
+	// +optional
+	ACM *VirtualGatewayTLSValidationContextACMTrust `json:"acm,omitempty"`
+	// An object that represents a TLS validation context trust for a local file.
+	// +optional
+	File *VirtualGatewayTLSValidationContextFileTrust `json:"file,omitempty"`
+	// An object that represents a TLS validation context trust for an SDS system
+	// +optional
+	SDS *VirtualGatewayTLSValidationContextSDSTrust `json:"sds,omitempty"`
+}
+
 // VirtualGatewayListenerTLSCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
 type VirtualGatewayListenerTLSCertificate struct {
 	// A reference to an object that represents an AWS Certificate Manager (ACM) certificate.
@@ -134,6 +151,17 @@ type VirtualGatewayListenerTLSCertificate struct {
 	// A reference to an object that represents a local file certificate.
 	// +optional
 	File *VirtualGatewayListenerTLSFileCertificate `json:"file,omitempty"`
+	// A reference to an object that represents an SDS issued certificate
+	// +optional
+	SDS *VirtualGatewayListenerTLSSDSCertificate `json:"sds,omitempty"`
+}
+
+// VirtualGatewayListenerTLSCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+type VirtualGatewayListenerTLSValidationContext struct {
+	Trust VirtualGatewayListenerTLSValidationContextTrust `json:"trust"`
+	// Possible alternate names to consider
+	// +optional
+	SubjectAlternativeNames *SubjectAlternativeNames `json:"subjectAlternativeNames,omitempty"`
 }
 
 const (
@@ -149,6 +177,9 @@ type VirtualGatewayListenerTLSMode string
 type VirtualGatewayListenerTLS struct {
 	// A reference to an object that represents a listener's TLS certificate.
 	Certificate VirtualGatewayListenerTLSCertificate `json:"certificate"`
+	// A reference to an object that represents Validation context
+	// +optional
+	Validation *VirtualGatewayListenerTLSValidationContext `json:"validation,omitempty"`
 	// ListenerTLS mode
 	Mode VirtualGatewayListenerTLSMode `json:"mode"`
 }
@@ -206,6 +237,12 @@ type VirtualGatewayTLSValidationContextFileTrust struct {
 	CertificateChain string `json:"certificateChain"`
 }
 
+// VirtualGatewayTLSValidationContextSDSTrust refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+type VirtualGatewayTLSValidationContextSDSTrust struct {
+	// The certificate trust chain for a certificate issued via SDS.
+	SecretName string `json:"secretName"`
+}
+
 // VirtualGatewayTLSValidationContextTrust refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
 type VirtualGatewayTLSValidationContextTrust struct {
 	// A reference to an object that represents a TLS validation context trust for an AWS Certicate Manager (ACM) certificate.
@@ -214,12 +251,28 @@ type VirtualGatewayTLSValidationContextTrust struct {
 	// An object that represents a TLS validation context trust for a local file.
 	// +optional
 	File *VirtualGatewayTLSValidationContextFileTrust `json:"file,omitempty"`
+	// An object that represents a TLS validation context trust for a SDS certificate
+	// +optional
+	SDS *VirtualGatewayTLSValidationContextSDSTrust `json:"sds,omitempty"`
 }
 
 // VirtualGatewayTLSValidationContext refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
 type VirtualGatewayTLSValidationContext struct {
 	// A reference to an object that represents a TLS validation context trust
 	Trust VirtualGatewayTLSValidationContextTrust `json:"trust"`
+	// Possible alternative names to consider
+	// +optional
+	SubjectAlternativeNames *SubjectAlternativeNames `json:"subjectAlternativeNames,omitempty"`
+}
+
+// VirtualGatewayTLSValidationContext refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+type VirtualGatewayClientTLSCertificate struct {
+	// An object that represents a TLS cert via a local file
+	// +optional
+	File *VirtualGatewayListenerTLSFileCertificate `json:"file,omitempty"`
+	// An object that represents a TLS cert via SDS entry
+	// +optional
+	SDS *VirtualGatewayListenerTLSSDSCertificate `json:"sds,omitempty"`
 }
 
 // VirtualGatewayClientPolicyTLS refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
@@ -231,6 +284,9 @@ type VirtualGatewayClientPolicyTLS struct {
 	// The range of ports that the policy is enforced for.
 	// +optional
 	Ports []PortNumber `json:"ports,omitempty"`
+	// A reference to an object that represents TLS certificate.
+	//+optional
+	Certificate *VirtualGatewayClientTLSCertificate `json:"certificate,omitempty"`
 	// A reference to an object that represents a TLS validation context.
 	Validation VirtualGatewayTLSValidationContext `json:"validation"`
 }
