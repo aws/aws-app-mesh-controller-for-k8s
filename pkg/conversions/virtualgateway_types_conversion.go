@@ -18,7 +18,9 @@ func Convert_CRD_VirtualGatewayTLSValidationContextFileTrust_To_SDK_VirtualGatew
 }
 
 func Convert_CRD_VirtualGatewayTLSValidationContextSDSTrust_To_SDK_VirtualGatewayTLSValidationContextSDSTrust(crdObj *appmesh.VirtualGatewayTLSValidationContextSDSTrust, sdkObj *appmeshsdk.VirtualGatewayTlsValidationContextSdsTrust, scope conversion.Scope) error {
-	sdkObj.SecretName = aws.String(crdObj.SecretName)
+	if crdObj.SecretName != nil {
+		sdkObj.SecretName = crdObj.SecretName
+	}
 	return nil
 }
 
@@ -168,7 +170,9 @@ func Convert_CRD_VirtualGatewayListenerTLSFileCertificate_To_SDK_VirtualGatewayL
 }
 
 func Convert_CRD_VirtualGatewayListenerTLSSDSCertificate_To_SDK_VirtualGatewayListenerTLSSDSCertificate(crdObj *appmesh.VirtualGatewayListenerTLSSDSCertificate, sdkObj *appmeshsdk.VirtualGatewayListenerTlsSdsCertificate, scope conversion.Scope) error {
-	sdkObj.SecretName = aws.String(crdObj.SecretName)
+	if crdObj.SecretName != nil {
+		sdkObj.SecretName = crdObj.SecretName
+	}
 	return nil
 }
 
@@ -178,7 +182,9 @@ func Convert_CRD_VirtualGatewayListenerTLSValidationContextFileTrust_To_SDK_Virt
 }
 
 func Convert_CRD_VirtualGatewayListenerTLSValidationContextSDSTrust_To_SDK_VirtualGatewayListenerTLSValidationContextSDSTrust(crdObj *appmesh.VirtualGatewayTLSValidationContextSDSTrust, sdkObj *appmeshsdk.VirtualGatewayTlsValidationContextSdsTrust, scope conversion.Scope) error {
-	sdkObj.SecretName = aws.String(crdObj.SecretName)
+	if crdObj.SecretName != nil {
+		sdkObj.SecretName = crdObj.SecretName
+	}
 	return nil
 }
 

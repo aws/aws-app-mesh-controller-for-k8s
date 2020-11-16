@@ -79,12 +79,12 @@ delete-all-kind-clusters:	## Delete all local kind clusters
 
 setup-appmesh-sdk-override:
 	@if [ "$(APPMESH_SDK_OVERRIDE)" = "y" ] ; then \
-	    ./appmesh_models_override/setup.sh ; \
+	    APPMESH_PREVIEW=y ./appmesh_models_override/setup.sh ; \
 	fi
 
 cleanup-appmesh-sdk-override:
 	@if [ "$(APPMESH_SDK_OVERRIDE)" = "y" ] ; then \
-	    APPMESH_PREVIEW=y ./appmesh_models_override/cleanup.sh ; \
+	    ./appmesh_models_override/cleanup.sh ; \
 	fi
 
 # find or download controller-gen

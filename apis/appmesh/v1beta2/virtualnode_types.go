@@ -40,7 +40,7 @@ type TLSValidationContextFileTrust struct {
 // TLSValidationContextSDSTrust refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextFileTrust.html
 type TLSValidationContextSDSTrust struct {
 	// The certificate trust chain for a certificate obtained via SDS
-	SecretName string `json:"secretName"`
+	SecretName *string `json:"secretName"`
 }
 
 // TLSValidationContextTrust refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextTrust.html
@@ -192,7 +192,7 @@ type ListenerTLSFileCertificate struct {
 // ListenerTLSSDSCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsFileCertificate.html
 type ListenerTLSSDSCertificate struct {
 	// The certificate trust chain for a certificate issued via SDS cluster
-	SecretName string `json:"secretName"`
+	SecretName *string `json:"secretName"`
 }
 
 // ListenerTLSCertificate refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsCertificate.html

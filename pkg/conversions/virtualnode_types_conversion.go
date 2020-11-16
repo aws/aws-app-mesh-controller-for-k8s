@@ -18,7 +18,9 @@ func Convert_CRD_TLSValidationContextFileTrust_To_SDK_TLSValidationContextFileTr
 }
 
 func Convert_CRD_TLSValidationContextSDSTrust_To_SDK_TLSValidationContextSDSTrust(crdObj *appmesh.TLSValidationContextSDSTrust, sdkObj *appmeshsdk.TlsValidationContextSdsTrust, scope conversion.Scope) error {
-	sdkObj.SecretName = aws.String(crdObj.SecretName)
+	if crdObj.SecretName != nil {
+		sdkObj.SecretName = crdObj.SecretName
+	}
 	return nil
 }
 
@@ -219,7 +221,9 @@ func Convert_CRD_ListenerTLSFileCertificate_To_SDK_ListenerTLSFileCertificate(cr
 }
 
 func Convert_CRD_ListenerTLSSDSCertificate_To_SDK_ListenerTLSSDSCertificate(crdObj *appmesh.ListenerTLSSDSCertificate, sdkObj *appmeshsdk.ListenerTlsSdsCertificate, scope conversion.Scope) error {
-	sdkObj.SecretName = aws.String(crdObj.SecretName)
+	if crdObj.SecretName != nil {
+		sdkObj.SecretName = crdObj.SecretName
+	}
 	return nil
 }
 
@@ -259,7 +263,9 @@ func Convert_CRD_ListenerTLSValidationContextFileTrust_To_SDK_ListenerTLSValidat
 }
 
 func Convert_CRD_ListenerTLSValidationContextSDSTrust_To_SDK_ListenerTLSValidationContextSDSTrust(crdObj *appmesh.TLSValidationContextSDSTrust, sdkObj *appmeshsdk.TlsValidationContextSdsTrust, scope conversion.Scope) error {
-	sdkObj.SecretName = aws.String(crdObj.SecretName)
+	if crdObj.SecretName != nil {
+		sdkObj.SecretName = crdObj.SecretName
+	}
 	return nil
 }
 

@@ -128,7 +128,7 @@ type VirtualGatewayListenerTLSFileCertificate struct {
 
 type VirtualGatewayListenerTLSSDSCertificate struct {
 	// The certificate trust chain for a certificate issued via SDS cluster
-	SecretName string `json:"secretName"`
+	SecretName *string `json:"secretName"`
 }
 
 type VirtualGatewayListenerTLSValidationContextTrust struct {
@@ -240,7 +240,7 @@ type VirtualGatewayTLSValidationContextFileTrust struct {
 // VirtualGatewayTLSValidationContextSDSTrust refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
 type VirtualGatewayTLSValidationContextSDSTrust struct {
 	// The certificate trust chain for a certificate issued via SDS.
-	SecretName string `json:"secretName"`
+	SecretName *string `json:"secretName"`
 }
 
 // VirtualGatewayTLSValidationContextTrust refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
