@@ -9,6 +9,8 @@ import (
 const (
 	flagEnableIAMForServiceAccounts = "enable-iam-for-service-accounts"
 	flagEnableECRSecret             = "enable-ecr-secret"
+	flagEnableSDS                   = "enable-sds"
+	flagSdsUdsPath                  = "sds-uds-path"
 
 	flagSidecarImage               = "sidecar-image"
 	flagSidecarCpuRequests         = "sidecar-cpu-requests"
@@ -47,6 +49,10 @@ type Config struct {
 	EnableIAMForServiceAccounts bool
 	// If enabled, additional image pull secret(appmesh-ecr-secret) will be injected.
 	EnableECRSecret bool
+	// If enabled, mTLS support via SDS will be enabled.
+	EnableSDS bool
+	// Contains the Unix Domain Socket Path for SDS provider.
+	SdsUdsPath string
 
 	// Sidecar settings
 	SidecarImage               string
@@ -96,6 +102,11 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		`If enabled, a fsGroup: 1337 will be injected in the absence of it within pod securityContext`)
 	fs.BoolVar(&cfg.EnableECRSecret, flagEnableECRSecret, false,
 		"If enabled, 'appmesh-ecr-secret' secret will be injected in the absence of it within pod imagePullSecrets")
+	fs.BoolVar(&cfg.EnableSDS, flagEnableSDS, false,
+		"If enabled, mTLS support via SDS will be enabled")
+	//Set to the SPIRE Agent's default UDS path for now as App Mesh only supports SPIRE as SDS provider for preview.
+	fs.StringVar(&cfg.SdsUdsPath, flagSdsUdsPath, "/run/spire/sockets/agent.sock",
+		"Unix Domain Socket path for SDS provider")
 	fs.StringVar(&cfg.SidecarImage, flagSidecarImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.15.1.0-prod",
 		"Envoy sidecar container image.")
 	fs.StringVar(&cfg.SidecarCpuRequests, flagSidecarCpuRequests, "10m",

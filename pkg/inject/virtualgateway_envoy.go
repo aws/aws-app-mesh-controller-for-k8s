@@ -18,7 +18,8 @@ const envoyVirtualGatewayEnvMap = `
   "ENVOY_LOG_LEVEL": "{{ .LogLevel }}",
   "ENVOY_ADMIN_ACCESS_PORT": "{{ .AdminAccessPort }}",
   "ENVOY_ADMIN_ACCESS_LOG_FILE": "{{ .AdminAccessLogFile }}",
-  "AWS_REGION": "{{ .AWSRegion }}"{{ if .EnableXrayTracing }},
+  "AWS_REGION": "{{ .AWSRegion }}"{{ if .EnableSDS }},
+  "APPMESH_SDS_SOCKET_PATH": "{{ .SdsUdsPath }}"{{ end }}{{ if .EnableXrayTracing }},
   "ENABLE_ENVOY_XRAY_TRACING": "1","XRAY_DAEMON_PORT": "{{ .XrayDaemonPort }}"{{ end }}
 }
 `
@@ -28,6 +29,8 @@ type VirtualGatewayEnvoyVariables struct {
 	MeshName           string
 	VirtualGatewayName string
 	Preview            string
+	EnableSDS          bool
+	SdsUdsPath         string
 	LogLevel           string
 	AdminAccessPort    int32
 	AdminAccessLogFile string
@@ -39,6 +42,8 @@ type virtualGatwayEnvoyConfig struct {
 	accountID                  string
 	awsRegion                  string
 	preview                    bool
+	enableSDS                  bool
+	sdsUdsPath                 string
 	logLevel                   string
 	adminAccessPort            int32
 	adminAccessLogFile         string
@@ -111,6 +116,11 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 		pod.Spec.Containers[envoyIdx].ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay,
 			m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 	}
+
+	//TODO: Check for existing SDS mounts for VirtualGateway before proceeding.
+	if m.mutatorConfig.enableSDS {
+		m.mutateSDSMounts(pod, &pod.Spec.Containers[envoyIdx])
+	}
 	return nil
 }
 
@@ -124,6 +134,8 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 		MeshName:           meshName,
 		VirtualGatewayName: virtualGatewayName,
 		Preview:            preview,
+		EnableSDS:          m.mutatorConfig.enableSDS,
+		SdsUdsPath:         m.mutatorConfig.sdsUdsPath,
 		LogLevel:           m.mutatorConfig.logLevel,
 		AdminAccessPort:    m.mutatorConfig.adminAccessPort,
 		AdminAccessLogFile: m.mutatorConfig.adminAccessLogFile,
@@ -173,5 +185,25 @@ func (m *virtualGatewayEnvoyConfig) virtualGatewayImageOverride(pod *corev1.Pod)
 	default:
 		return true
 	}
+}
 
+func (m *virtualGatewayEnvoyConfig) mutateSDSMounts(pod *corev1.Pod, envoyContainer *corev1.Container) {
+	SDSVolumeType := corev1.HostPathSocket
+	volume := corev1.Volume{
+		Name: "sds-socket-volume",
+		VolumeSource: corev1.VolumeSource{
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: m.mutatorConfig.sdsUdsPath,
+				Type: &SDSVolumeType,
+			},
+		},
+	}
+
+	volumeMount := corev1.VolumeMount{
+		Name:      "sds-socket-volume",
+		MountPath: m.mutatorConfig.sdsUdsPath,
+	}
+
+	envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
+	pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
 }
