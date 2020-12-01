@@ -173,6 +173,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				sidecarCPULimits:      m.config.SidecarCpuLimits,
 				sidecarMemoryLimits:   m.config.SidecarMemoryLimits,
 				xRayImage:             m.config.XRayImage,
+				xRayDaemonPort:        m.config.XrayDaemonPort,
 			}, m.config.EnableXrayTracing),
 		}
 	}

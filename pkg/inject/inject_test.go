@@ -5,6 +5,7 @@ import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -85,6 +86,27 @@ func getVn(ports []int) *appmesh.VirtualNode {
 	return vn
 }
 
+func getVg(ports []int) *appmesh.VirtualGateway {
+	vg := &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "awesome-ns",
+			Name:      "my-vg",
+		},
+		Spec: appmesh.VirtualGatewaySpec{
+			AWSName: aws.String(""),
+			MeshRef: &appmesh.MeshReference{
+				Name: "my-mesh",
+				UID:  "408d3036-7dec-11ea-b156-0e30aabe1ca8",
+			},
+		},
+	}
+	for _, p := range ports {
+		listener := appmesh.VirtualGatewayListener{PortMapping: appmesh.VirtualGatewayPortMapping{Port: appmesh.PortNumber(p)}}
+		vg.Spec.Listeners = append(vg.Spec.Listeners, listener)
+	}
+	return vg
+}
+
 func getMesh() *appmesh.Mesh {
 	return &appmesh.Mesh{
 		ObjectMeta: metav1.ObjectMeta{
@@ -96,7 +118,7 @@ func getMesh() *appmesh.Mesh {
 	}
 }
 
-func Test_InjectEnvoyContainer(t *testing.T) {
+func Test_InjectEnvoyContainerVN(t *testing.T) {
 	type args struct {
 		ms  *appmesh.Mesh
 		vn  *appmesh.VirtualNode
@@ -134,6 +156,8 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 			name: "Inject Envoy container with xray",
 			conf: getConfig(func(cnf Config) Config {
 				cnf.EnableXrayTracing = true
+				cnf.XrayDaemonPort = 2000
+				cnf.XRayImage = "amazon/aws-xray-daemon"
 				return cnf
 			}),
 			args: args{
@@ -250,6 +274,102 @@ func Test_InjectEnvoyContainer(t *testing.T) {
 					}
 				}
 				assert.True(t, found, "Proxyinit container not found")
+			}
+		})
+	}
+}
+
+func Test_InjectEnvoyContainerVG(t *testing.T) {
+	type args struct {
+		ms  *appmesh.Mesh
+		vg  *appmesh.VirtualGateway
+		pod *corev1.Pod
+	}
+	type expected struct {
+		containers int
+		xray       bool
+	}
+	tests := []struct {
+		name    string
+		conf    Config
+		args    args
+		want    expected
+		wantErr error
+	}{
+		{
+			name: "Inject Envoy container with xray",
+			conf: getConfig(func(cnf Config) Config {
+				cnf.EnableXrayTracing = true
+				cnf.XrayDaemonPort = 2000
+				cnf.XRayImage = "amazon/aws-xray-daemon"
+				return cnf
+			}),
+			args: args{
+				ms:  getMesh(),
+				vg:  getVg(nil),
+				pod: getPod(nil),
+			},
+			want: expected{
+				containers: 2,
+				xray:       true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Inject Envoy container with xray - missing xray daemon port",
+			conf: getConfig(func(cnf Config) Config {
+				cnf.EnableXrayTracing = true
+				cnf.XRayImage = "amazon/aws-xray-daemon"
+				return cnf
+			}),
+			args: args{
+				ms:  getMesh(),
+				vg:  getVg(nil),
+				pod: getPod(nil),
+			},
+			want: expected{
+				containers: 1,
+				xray:       true,
+			},
+			wantErr: errors.New("Missing configuration parameters: xRayDaemonPort"),
+		},
+		{
+			name: "Inject Envoy container with xray - missing xray image",
+			conf: getConfig(func(cnf Config) Config {
+				cnf.EnableXrayTracing = true
+				cnf.XrayDaemonPort = 2000
+				return cnf
+			}),
+			args: args{
+				ms:  getMesh(),
+				vg:  getVg(nil),
+				pod: getPod(nil),
+			},
+			want: expected{
+				containers: 1,
+				xray:       true,
+			},
+			wantErr: errors.New("Missing configuration parameters: xRayImage"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			inj := NewSidecarInjector(tt.conf, "000000000000", "us-west-2", nil, nil, nil, nil)
+			pod := tt.args.pod
+			err := inj.injectAppMeshPatches(tt.args.ms, nil, tt.args.vg, pod)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.Equal(t, tt.want.containers, len(pod.Spec.Containers), "Numbers of containers mismatch")
+				if tt.want.xray {
+					found := false
+					for _, v := range pod.Spec.Containers {
+						if v.Name == "xray-daemon" {
+							found = true
+						}
+					}
+					assert.True(t, found, "X-ray container not found")
+				}
 			}
 		})
 	}
