@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -374,6 +375,153 @@ func Test_xrayMutator_mutate(t *testing.T) {
 									"cpu": cpuLimits,
 								},
 							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "missing xray daemon port",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					awsRegion:             "us-west-2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					xRayImage:             "amazon/aws-xray-daemon",
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantErr: errors.New("Missing configuration parameters: xRayDaemonPort"),
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "missing aws region",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					xRayImage:             "amazon/aws-xray-daemon",
+					xRayDaemonPort:        2000,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantErr: errors.New("Missing configuration parameters: AWSRegion"),
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "missing xray image",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					awsRegion:             "us-west-2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					xRayDaemonPort:        2000,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantErr: errors.New("Missing configuration parameters: xRayImage"),
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "missing aws region and xray image",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					xRayDaemonPort:        2000,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantErr: errors.New("Missing configuration parameters: AWSRegion,xRayImage"),
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "missing aws region, xray image and xray daemon port",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantErr: errors.New("Missing configuration parameters: AWSRegion,xRayImage,xRayDaemonPort"),
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
 						},
 					},
 				},
