@@ -228,6 +228,7 @@ func (m *defaultResourceManager) findCloudMapService(ctx context.Context, nsSumm
 	if sdkSVCSummary != nil {
 		svcSummary := &serviceSummary{
 			serviceID:               awssdk.StringValue(sdkSVCSummary.Id),
+			serviceARN:              sdkSVCSummary.Arn,
 			healthCheckCustomConfig: sdkSVCSummary.HealthCheckCustomConfig,
 		}
 		m.serviceSummaryCache.Add(cacheKey, svcSummary, defaultServiceCacheTTL)
@@ -448,6 +449,9 @@ func (m *defaultResourceManager) isCloudMapServiceCreated(ctx context.Context, v
 }
 
 func (m *defaultResourceManager) updateCRDVirtualNode(ctx context.Context, vn *appmesh.VirtualNode, svcSummary *serviceSummary) error {
+	if svcSummary.serviceARN == nil {
+		return nil
+	}
 	oldVN := vn.DeepCopy()
 	vnAnnotations := oldVN.Annotations
 
