@@ -53,6 +53,11 @@ import (
 	// +kubebuilder:scaffold:imports
 )
 
+const (
+	flagHealthProbeBindAddr       = "health-probe-bind-addr"
+	defaultHealthProbeBindAddress = ":61779"
+)
+
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
@@ -71,6 +76,7 @@ func main() {
 	var enableLeaderElection bool
 	var enableCustomHealthCheck bool
 	var logLevel string
+	var healthProbeBindAddress string
 	awsCloudConfig := aws.CloudConfig{ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig()}
 	injectConfig := inject.Config{}
 	cloudMapConfig := cloudmap.Config{}
@@ -83,6 +89,8 @@ func main() {
 	fs.BoolVar(&enableCustomHealthCheck, "enable-custom-health-check", false,
 		"Enable custom healthCheck when using cloudMap serviceDiscovery")
 	fs.StringVar(&logLevel, "log-level", "info", "Set the controller log level - info(default), debug")
+	fs.StringVar(&healthProbeBindAddress, flagHealthProbeBindAddr, defaultHealthProbeBindAddress,
+		"The address the health probes binds to.")
 	awsCloudConfig.BindFlags(fs)
 	injectConfig.BindFlags(fs)
 	cloudMapConfig.BindFlags(fs)
@@ -113,7 +121,7 @@ func main() {
 		Port:                   9443,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "appmesh-controller-leader-election",
-		HealthProbeBindAddress: ":61779", // the liveness endpoint is default to "/healthz"
+		HealthProbeBindAddress: healthProbeBindAddress,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start app mesh controller")
