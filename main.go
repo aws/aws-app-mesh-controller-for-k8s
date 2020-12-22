@@ -30,6 +30,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 
 	zapraw "go.uber.org/zap"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
@@ -106,12 +107,13 @@ func main() {
 	)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		SyncPeriod:         &syncPeriod,
-		MetricsBindAddress: metricsAddr,
-		Port:               9443,
-		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "appmesh-controller-leader-election",
+		Scheme:                 scheme,
+		SyncPeriod:             &syncPeriod,
+		MetricsBindAddress:     metricsAddr,
+		Port:                   9443,
+		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "appmesh-controller-leader-election",
+		HealthProbeBindAddress: ":61779", // the liveness endpoint is default to "/healthz"
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start app mesh controller")
@@ -194,6 +196,14 @@ func main() {
 	appmeshwebhook.NewVirtualRouterMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualRouterValidator().SetupWithManager(mgr)
 	corewebhook.NewPodMutator(sidecarInjector).SetupWithManager(mgr)
+
+	// Add liveness probe
+	err = mgr.AddHealthzCheck("health-ping", healthz.Ping)
+	setupLog.Info("adding health check for controller")
+	if err != nil {
+		setupLog.Error(err, "unable add a health check")
+		os.Exit(1)
+	}
 
 	// +kubebuilder:scaffold:builder
 
