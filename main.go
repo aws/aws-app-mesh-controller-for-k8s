@@ -30,6 +30,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 
 	zapraw "go.uber.org/zap"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
@@ -52,6 +53,11 @@ import (
 	// +kubebuilder:scaffold:imports
 )
 
+const (
+	flagHealthProbeBindAddr       = "health-probe-bind-addr"
+	defaultHealthProbeBindAddress = ":61779"
+)
+
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
@@ -70,6 +76,7 @@ func main() {
 	var enableLeaderElection bool
 	var enableCustomHealthCheck bool
 	var logLevel string
+	var healthProbeBindAddress string
 	awsCloudConfig := aws.CloudConfig{ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig()}
 	injectConfig := inject.Config{}
 	cloudMapConfig := cloudmap.Config{}
@@ -82,6 +89,8 @@ func main() {
 	fs.BoolVar(&enableCustomHealthCheck, "enable-custom-health-check", false,
 		"Enable custom healthCheck when using cloudMap serviceDiscovery")
 	fs.StringVar(&logLevel, "log-level", "info", "Set the controller log level - info(default), debug")
+	fs.StringVar(&healthProbeBindAddress, flagHealthProbeBindAddr, defaultHealthProbeBindAddress,
+		"The address the health probes binds to.")
 	awsCloudConfig.BindFlags(fs)
 	injectConfig.BindFlags(fs)
 	cloudMapConfig.BindFlags(fs)
@@ -106,12 +115,13 @@ func main() {
 	)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		SyncPeriod:         &syncPeriod,
-		MetricsBindAddress: metricsAddr,
-		Port:               9443,
-		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "appmesh-controller-leader-election",
+		Scheme:                 scheme,
+		SyncPeriod:             &syncPeriod,
+		MetricsBindAddress:     metricsAddr,
+		Port:                   9443,
+		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "appmesh-controller-leader-election",
+		HealthProbeBindAddress: healthProbeBindAddress,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start app mesh controller")
@@ -194,6 +204,14 @@ func main() {
 	appmeshwebhook.NewVirtualRouterMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualRouterValidator().SetupWithManager(mgr)
 	corewebhook.NewPodMutator(sidecarInjector).SetupWithManager(mgr)
+
+	// Add liveness probe
+	err = mgr.AddHealthzCheck("health-ping", healthz.Ping)
+	setupLog.Info("adding health check for controller")
+	if err != nil {
+		setupLog.Error(err, "unable add a health check")
+		os.Exit(1)
+	}
 
 	// +kubebuilder:scaffold:builder
 
