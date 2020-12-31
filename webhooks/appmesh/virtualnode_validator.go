@@ -162,7 +162,7 @@ func (v *virtualNodeValidator) checkListenerMultipleConnectionPools(ln appmesh.L
 	return nil
 }
 
-// +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-virtualnode,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualnodes,verbs=create;update,versions=v1beta2,name=vvirtualnode.appmesh.k8s.aws
+// +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-virtualnode,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualnodes,verbs=create;update,versions=v1beta2,name=vvirtualnode.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
 
 func (v *virtualNodeValidator) SetupWithManager(mgr ctrl.Manager) {
 	mgr.GetWebhookServer().Register(apiPathValidateAppMeshVirtualNode, webhook.ValidatingWebhookForValidator(v))
