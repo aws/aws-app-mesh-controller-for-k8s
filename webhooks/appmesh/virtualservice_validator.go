@@ -60,7 +60,7 @@ func (v *virtualServiceValidator) enforceFieldsImmutability(vs *appmesh.VirtualS
 	return nil
 }
 
-// +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-virtualservice,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualservices,verbs=create;update,versions=v1beta2,name=vvirtualservice.appmesh.k8s.aws
+// +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-virtualservice,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualservices,verbs=create;update,versions=v1beta2,name=vvirtualservice.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
 
 func (v *virtualServiceValidator) SetupWithManager(mgr ctrl.Manager) {
 	mgr.GetWebhookServer().Register(apiPathValidateAppMeshVirtualService, webhook.ValidatingWebhookForValidator(v))

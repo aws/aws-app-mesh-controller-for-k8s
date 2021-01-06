@@ -98,7 +98,7 @@ func (m *gatewayRouteMutator) designateVirtualGatewayMembership(ctx context.Cont
 	return virtualGateway, nil
 }
 
-// +kubebuilder:webhook:path=/mutate-appmesh-k8s-aws-v1beta2-gatewayroute,mutating=true,failurePolicy=fail,groups=appmesh.k8s.aws,resources=gatewayroutes,verbs=create;update,versions=v1beta2,name=mgatewayroute.appmesh.k8s.aws
+// +kubebuilder:webhook:path=/mutate-appmesh-k8s-aws-v1beta2-gatewayroute,mutating=true,failurePolicy=fail,groups=appmesh.k8s.aws,resources=gatewayroutes,verbs=create;update,versions=v1beta2,name=mgatewayroute.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
 
 func (m *gatewayRouteMutator) SetupWithManager(mgr ctrl.Manager) {
 	mgr.GetWebhookServer().Register(apiPathMutateAppMeshGatewayRoute, webhook.MutatingWebhookForMutator(m))
