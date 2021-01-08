@@ -219,8 +219,8 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 
 	m.mutateSecretMounts(pod, &container, secretMounts)
-	if m.mutatorConfig.enableSDS {
-		m.mutateSDSMounts(pod, &container)
+	if isSDSEnabled(pod) {
+		mutateSDSMounts(pod, &container, m.mutatorConfig.sdsUdsPath)
 	}
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
 	return nil
@@ -236,7 +236,7 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		MeshName:                     meshName,
 		VirtualNodeName:              virtualNodeName,
 		Preview:                      preview,
-		EnableSDS:                    m.mutatorConfig.enableSDS,
+		EnableSDS:                    isSDSEnabled(pod),
 		SdsUdsPath:                   m.mutatorConfig.sdsUdsPath,
 		LogLevel:                     m.mutatorConfig.logLevel,
 		AdminAccessPort:              m.mutatorConfig.adminAccessPort,
@@ -294,27 +294,6 @@ func (m *envoyMutator) mutateSecretMounts(pod *corev1.Pod, envoyContainer *corev
 		envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
 		pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
 	}
-}
-
-func (m *envoyMutator) mutateSDSMounts(pod *corev1.Pod, envoyContainer *corev1.Container) {
-	SDSVolumeType := corev1.HostPathSocket
-	volume := corev1.Volume{
-		Name: "sds-socket-volume",
-		VolumeSource: corev1.VolumeSource{
-			HostPath: &corev1.HostPathVolumeSource{
-				Path: m.mutatorConfig.sdsUdsPath,
-				Type: &SDSVolumeType,
-			},
-		},
-	}
-
-	volumeMount := corev1.VolumeMount{
-		Name:      "sds-socket-volume",
-		MountPath: m.mutatorConfig.sdsUdsPath,
-	}
-
-	envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
-	pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
 }
 
 func (m *envoyMutator) getSecretMounts(pod *corev1.Pod) (map[string]string, error) {

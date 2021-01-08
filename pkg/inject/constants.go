@@ -39,6 +39,9 @@ const (
 	//AppMeshGatewaySkipImageOverride specifies if Virtual Gateway sidecar image override needs to be skipped for customers
 	//to use their own sidecare image for Virtual Gateway
 	AppMeshGatewaySkipImageOverride = "appmesh.k8s.aws/virtualGatewaySkipImageOverride"
+	//AppMeshSDSAnnotation specifies if the envoy needs to be configured for SDS. Needs to be
+	//set to "true" if SDS is required.
+	AppMeshSDSAnnotation = "appmesh.k8s.aws/enableSDS"
 
 	//Pod Labels
 

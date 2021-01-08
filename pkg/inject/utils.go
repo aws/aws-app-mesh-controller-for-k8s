@@ -80,3 +80,33 @@ func containsEnvoyContainer(pod *corev1.Pod) (bool, int) {
 	}
 	return false, -1
 }
+
+func isSDSEnabled(pod *corev1.Pod) bool {
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshSDSAnnotation]; ok {
+		if v == "true" {
+			return true
+		}
+	}
+	return false
+}
+
+func mutateSDSMounts(pod *corev1.Pod, envoyContainer *corev1.Container, SdsUdsPath string) {
+	SDSVolumeType := corev1.HostPathSocket
+	volume := corev1.Volume{
+		Name: "sds-socket-volume",
+		VolumeSource: corev1.VolumeSource{
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: SdsUdsPath,
+				Type: &SDSVolumeType,
+			},
+		},
+	}
+
+	volumeMount := corev1.VolumeMount{
+		Name:      "sds-socket-volume",
+		MountPath: SdsUdsPath,
+	}
+
+	envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
+	pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
+}
