@@ -188,24 +188,3 @@ func (m *virtualGatewayEnvoyConfig) virtualGatewayImageOverride(pod *corev1.Pod)
 		return true
 	}
 }
-
-func (m *virtualGatewayEnvoyConfig) mutateSDSMounts(pod *corev1.Pod, envoyContainer *corev1.Container) {
-	SDSVolumeType := corev1.HostPathSocket
-	volume := corev1.Volume{
-		Name: "sds-socket-volume",
-		VolumeSource: corev1.VolumeSource{
-			HostPath: &corev1.HostPathVolumeSource{
-				Path: m.mutatorConfig.sdsUdsPath,
-				Type: &SDSVolumeType,
-			},
-		},
-	}
-
-	volumeMount := corev1.VolumeMount{
-		Name:      "sds-socket-volume",
-		MountPath: m.mutatorConfig.sdsUdsPath,
-	}
-
-	envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
-	pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
-}

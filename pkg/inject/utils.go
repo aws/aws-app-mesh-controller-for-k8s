@@ -5,12 +5,15 @@ import (
 	"bytes"
 	"encoding/json"
 	corev1 "k8s.io/api/core/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"text/template"
 )
 
 const (
 	AppMeshSDSSocketVolume = "appmesh-sds-socket-volume"
 )
+
+var envoyUtilsLogger = ctrl.Log.WithName("envoy-utils")
 
 func renderTemplate(name string, t string, meta interface{}) (string, error) {
 	tmpl, err := template.New(name).Parse(t)
@@ -90,6 +93,7 @@ func isSDSDisabled(pod *corev1.Pod) bool {
 		if v == "disabled" {
 			return true
 		}
+		envoyUtilsLogger.Info("Unsupported Value. Annotation only accepts `disabled` in the value field. ", "Value Provided: ", v)
 	}
 	return false
 }
