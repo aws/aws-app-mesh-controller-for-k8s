@@ -8,6 +8,10 @@ import (
 	"text/template"
 )
 
+const (
+	AppMeshSDSSocketVolume = "appmesh-sds-socket-volume"
+)
+
 func renderTemplate(name string, t string, meta interface{}) (string, error) {
 	tmpl, err := template.New(name).Parse(t)
 	if err != nil {
@@ -90,10 +94,22 @@ func isSDSDisabled(pod *corev1.Pod) bool {
 	return false
 }
 
+func isSDSVolumePresent(pod *corev1.Pod, SdsUdsPath string) bool {
+	for _, volume := range pod.Spec.Volumes {
+		if volume.HostPath != nil && volume.HostPath.Path == SdsUdsPath {
+			return true
+		}
+	}
+	return false
+}
+
 func mutateSDSMounts(pod *corev1.Pod, envoyContainer *corev1.Container, SdsUdsPath string) {
 	SDSVolumeType := corev1.HostPathSocket
+	if isSDSVolumePresent(pod, SdsUdsPath) {
+		return
+	}
 	volume := corev1.Volume{
-		Name: "sds-socket-volume",
+		Name: AppMeshSDSSocketVolume,
 		VolumeSource: corev1.VolumeSource{
 			HostPath: &corev1.HostPathVolumeSource{
 				Path: SdsUdsPath,
@@ -103,7 +119,7 @@ func mutateSDSMounts(pod *corev1.Pod, envoyContainer *corev1.Container, SdsUdsPa
 	}
 
 	volumeMount := corev1.VolumeMount{
-		Name:      "sds-socket-volume",
+		Name:      AppMeshSDSSocketVolume,
 		MountPath: SdsUdsPath,
 	}
 

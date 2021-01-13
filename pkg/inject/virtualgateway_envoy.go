@@ -117,7 +117,6 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 			m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 	}
 
-	//TODO: Check for existing SDS mounts for VirtualGateway before proceeding.
 	if m.mutatorConfig.enableSDS && !isSDSDisabled(pod) {
 		mutateSDSMounts(pod, &pod.Spec.Containers[envoyIdx], m.mutatorConfig.sdsUdsPath)
 	}

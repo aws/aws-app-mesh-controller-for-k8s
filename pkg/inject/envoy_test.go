@@ -1111,7 +1111,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:      "sds-socket-volume",
+									Name:      "appmesh-sds-socket-volume",
 									MountPath: "/run/spire/sockets/agent.sock",
 								},
 							},
@@ -1119,7 +1119,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: "sds-socket-volume",
+							Name: "appmesh-sds-socket-volume",
 							VolumeSource: corev1.VolumeSource{
 								HostPath: &corev1.HostPathVolumeSource{
 									Path: "/run/spire/sockets/agent.sock",
