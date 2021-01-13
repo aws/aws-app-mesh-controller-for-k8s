@@ -43,4 +43,12 @@ spec:
           requests:
             cpu: 100m
             memory: 200Mi
+        livenessProbe:
+          failureThreshold: 2
+          httpGet:
+            path: /healthz
+            port: 61779
+            scheme: HTTP
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
       terminationGracePeriodSeconds: 10

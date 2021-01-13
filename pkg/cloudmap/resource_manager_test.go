@@ -52,6 +52,26 @@ func Test_defaultResourceManager_updateCRDVirtualNode(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "virtualNode patch flow with no ARN",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "vn-1",
+						Annotations: map[string]string{},
+					},
+					Status: appmesh.VirtualNodeStatus{},
+				},
+				svcSummary: &serviceSummary{
+					serviceID: "cloudMapService",
+				},
+			},
+			wantVN: &appmesh.VirtualNode{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "vn-1",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

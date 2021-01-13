@@ -2,7 +2,9 @@ package inject
 
 import (
 	"encoding/json"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"strings"
 )
 
 const xrayDaemonContainerName = "xray-daemon"
@@ -64,6 +66,12 @@ func (m *xrayMutator) mutate(pod *corev1.Pod) error {
 	if containsXRAYDaemonContainer(pod) {
 		return nil
 	}
+
+	err := m.checkConfig()
+	if err != nil {
+		return err
+	}
+
 	variables := m.buildTemplateVariables(pod)
 	xrayDaemonSidecar, err := renderTemplate("xray-daemon", xrayDaemonContainerTemplate, variables)
 	if err != nil {
@@ -95,6 +103,27 @@ func (m *xrayMutator) buildTemplateVariables(pod *corev1.Pod) XrayTemplateVariab
 		XRayImage:      m.mutatorConfig.xRayImage,
 		XrayDaemonPort: m.mutatorConfig.xRayDaemonPort,
 	}
+}
+
+func (m *xrayMutator) checkConfig() error {
+	var missingConfig []string
+
+	if m.mutatorConfig.awsRegion == "" {
+		missingConfig = append(missingConfig, "AWSRegion")
+	}
+	if m.mutatorConfig.xRayImage == "" {
+		missingConfig = append(missingConfig, "xRayImage")
+	}
+
+	if m.mutatorConfig.xRayDaemonPort == 0 {
+		missingConfig = append(missingConfig, "xRayDaemonPort")
+	}
+
+	if len(missingConfig) > 0 {
+		return errors.Errorf("Missing configuration parameters: %s", strings.Join(missingConfig, ","))
+	}
+
+	return nil
 }
 
 func containsXRAYDaemonContainer(pod *corev1.Pod) bool {
