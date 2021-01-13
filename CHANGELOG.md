@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## v1.2.1
+
+### Summary
+This release includes the fix for virtual gateway pod mutator to include xray daemon port correctly and handle crash due to duplicate cloud map namespaces and service names.
+
+### Changes
+- Use ubuntu-18.04 instead of latest in github actions workflows ( [#399](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/399) @fawadkhaliq)
+- Handle duplicate cloud map service scenario ( [#398](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/398) @achevuru)
+- Add the missing xray daemon port in virtualgateway pod mutator ( [#396](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/396) @fawadkhaliq)
+- Added howto-k8s-cross-cluster link in live docs ( [#391](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/391) @cgchinmay)
+
 ## v1.2.0
 
 ### Summary

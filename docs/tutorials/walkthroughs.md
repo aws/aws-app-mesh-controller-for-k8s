@@ -9,6 +9,8 @@
 * [howto-k8s-retry-policy](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-retry-policy): This example shows how retry-policies can be used to for Kubernetes applications within the context of App Mesh.
 * [howto-k8s-ingress-gateway](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-ingress-gateway): This example shows how to use App Mesh Virtual Gateways for ingress connectivity towards Kubernetes applications.
 * [howto-k8s-tls-file-based](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-tls-file-based): This example shows how to enable TLS encryption between applications in App Mesh using X.509 certificates and mount secrets on Envoy using the injector
-* [howto-k8s-outlier-detection](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-outlier-detection) This example shows how to use outlier detection capabilities in AWS App Mesh with EKS
-* [howto-k8s-connection-pools](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-connection-pools) This example shows how to use circuit breaking/connection pool configuration capabilities in AWS App Mesh with EKS
+* [howto-k8s-outlier-detection](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-outlier-detection): This example shows how to use outlier detection capabilities in AWS App Mesh with EKS
+* [howto-k8s-connection-pools](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-connection-pools): This example shows how to use circuit breaking/connection pool configuration capabilities in AWS App Mesh with EKS
+* [howto-k8s-cross-cluster](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs/howto-k8s-cross-cluster):
+This example shows how to use App Mesh across kubernetes clusters
 

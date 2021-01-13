@@ -17,10 +17,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
 	v1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+)
+
+const (
+	AppMeshPrefix = "appmesh.k8s.aws"
 )
 
 // PodConverter implements the interface to convert k8s pod object to a stripped down
@@ -122,7 +125,7 @@ func getStrippedInitContainers(initContainers []v1.Container) []v1.Container {
 func getFilteredAnnotations(annotations map[string]string) map[string]string {
 	strippedAnnotations := make(map[string]string)
 	for k, v := range annotations {
-		if strings.HasPrefix(k, inject.AppMeshPrefix) {
+		if strings.HasPrefix(k, AppMeshPrefix) {
 			strippedAnnotations[k] = v
 		}
 	}

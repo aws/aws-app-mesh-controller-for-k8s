@@ -87,7 +87,6 @@ func main() {
 	var logLevel string
 	var listPageLimit int8
 	var healthProbeBindAddress string
-
 	awsCloudConfig := aws.CloudConfig{ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig()}
 	injectConfig := inject.Config{}
 	cloudMapConfig := cloudmap.Config{}

@@ -57,7 +57,6 @@ func (h *enqueueRequestsForPodEvents) Delete(e event.DeleteEvent, queue workqueu
 // external trigger request
 func (h *enqueueRequestsForPodEvents) Generic(e event.GenericEvent, queue workqueue.RateLimitingInterface) {
 	// no-op
-	
 }
 
 func (h *enqueueRequestsForPodEvents) enqueueVirtualNodesForPods(ctx context.Context, queue workqueue.RateLimitingInterface,

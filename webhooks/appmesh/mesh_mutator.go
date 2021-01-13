@@ -45,7 +45,7 @@ func (m *meshMutator) defaultingAWSName(mesh *appmesh.Mesh) error {
 	return nil
 }
 
-// +kubebuilder:webhook:path=/mutate-appmesh-k8s-aws-v1beta2-mesh,mutating=true,failurePolicy=fail,groups=appmesh.k8s.aws,resources=meshes,verbs=create;update,versions=v1beta2,name=mmesh.appmesh.k8s.aws
+// +kubebuilder:webhook:path=/mutate-appmesh-k8s-aws-v1beta2-mesh,mutating=true,failurePolicy=fail,groups=appmesh.k8s.aws,resources=meshes,verbs=create;update,versions=v1beta2,name=mmesh.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
 
 func (m *meshMutator) SetupWithManager(mgr ctrl.Manager) {
 	mgr.GetWebhookServer().Register(apiPathMutateAppMeshMesh, webhook.MutatingWebhookForMutator(m))
