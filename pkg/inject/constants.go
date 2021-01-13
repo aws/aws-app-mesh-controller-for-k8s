@@ -1,44 +1,47 @@
 package inject
 
 const (
+	// AppMeshPrefix for Annotations
+	AppMeshPrefix = "appmesh.k8s.aws"
+
 	//AppMeshCPURequestAnnotation specifies the CPU requests for proxy
-	AppMeshCPURequestAnnotation = "appmesh.k8s.aws/cpuRequest"
+	AppMeshCPURequestAnnotation = AppMeshPrefix + "/cpuRequest"
 	//AppMeshMemoryRequestAnnotation specifies the memory requests for proxy
-	AppMeshMemoryRequestAnnotation = "appmesh.k8s.aws/memoryRequest"
+	AppMeshMemoryRequestAnnotation = AppMeshPrefix + "/memoryRequest"
 
 	//AppMeshCPULimitAnnotation specifies the CPU limits for proxy
-	AppMeshCPULimitAnnotation = "appmesh.k8s.aws/cpuLimit"
+	AppMeshCPULimitAnnotation = AppMeshPrefix + "/cpuLimit"
 	//AppMeshMemoryLimitAnnotation specifies the memory limits for proxy
-	AppMeshMemoryLimitAnnotation = "appmesh.k8s.aws/memoryLimit"
+	AppMeshMemoryLimitAnnotation = AppMeshPrefix + "/memoryLimit"
 
 	// === begin proxy settings annotations ===
 	//AppMeshCNIAnnotation specifies that CNI will be used to configure traffic interception
-	AppMeshCNIAnnotation = "appmesh.k8s.aws/appmeshCNI"
+	AppMeshCNIAnnotation = AppMeshPrefix + "/appmeshCNI"
 	//AppMeshPortsAnnotation specifies the ports that proxy will forward traffic to. By default this is detected using the Pod ports.
-	AppMeshPortsAnnotation = "appmesh.k8s.aws/ports"
+	AppMeshPortsAnnotation = AppMeshPrefix + "/ports"
 	//AppMeshEgressIgnoredPortsAnnotation specifies the IPs that need to be ignored when intercepting traffic
-	AppMeshEgressIgnoredIPsAnnotation = "appmesh.k8s.aws/egressIgnoredIPs"
+	AppMeshEgressIgnoredIPsAnnotation = AppMeshPrefix + "/egressIgnoredIPs"
 	//AppMeshEgressIgnoredPortsAnnotation specifies the ports that need to ignored when intercepting traffic
-	AppMeshEgressIgnoredPortsAnnotation = "appmesh.k8s.aws/egressIgnoredPorts"
+	AppMeshEgressIgnoredPortsAnnotation = AppMeshPrefix + "/egressIgnoredPorts"
 	//AppMeshIgnoredGIDAnnotation specifies the GID used by proxy
-	AppMeshIgnoredGIDAnnotation = "appmesh.k8s.aws/ignoredGID"
+	AppMeshIgnoredGIDAnnotation = AppMeshPrefix + "/ignoredGID"
 	//AppMeshIgnoredUIDAnnotation specifies the UID used by proxy
-	AppMeshIgnoredUIDAnnotation = "appmesh.k8s.aws/ignoredUID"
+	AppMeshIgnoredUIDAnnotation = AppMeshPrefix + "/ignoredUID"
 	//AppMeshProxyEgressPortAnnotation specifies the port used by proxy for egress traffic (traffic originating from app container to external services). This is fixed to AppMeshProxyEgressPort
-	AppMeshProxyEgressPortAnnotation = "appmesh.k8s.aws/proxyEgressPort"
+	AppMeshProxyEgressPortAnnotation = AppMeshPrefix + "/proxyEgressPort"
 	//AppMeshProxyIngressPortAnnotation specifies the port used by proxy for incoming traffic. This is fixed to AppMeshProxyIngressPort
-	AppMeshProxyIngressPortAnnotation = "appmesh.k8s.aws/proxyIngressPort"
+	AppMeshProxyIngressPortAnnotation = AppMeshPrefix + "/proxyIngressPort"
 	// == end proxy settings annotations ===
 
 	//AppMeshPreviewAnnotation specifies that proxy should use App Mesh preview endpoint
-	AppMeshPreviewAnnotation = "appmesh.k8s.aws/preview"
+	AppMeshPreviewAnnotation = AppMeshPrefix + "/preview"
 	//AppMeshSidecarInjectAnnotation specifies proxy should be injected for pod. Other systems can use this annotation on pod to determine if proxy is injected or not
-	AppMeshSidecarInjectAnnotation = "appmesh.k8s.aws/sidecarInjectorWebhook"
+	AppMeshSidecarInjectAnnotation = AppMeshPrefix + "/sidecarInjectorWebhook"
 	//AppMeshSecretMountsAnnotation specifies the list of Secret that need to be mounted to the proxy as a volume
-	AppMeshSecretMountsAnnotation = "appmesh.k8s.aws/secretMounts"
+	AppMeshSecretMountsAnnotation = AppMeshPrefix + "/secretMounts"
 	//AppMeshGatewaySkipImageOverride specifies if Virtual Gateway sidecar image override needs to be skipped for customers
 	//to use their own sidecare image for Virtual Gateway
-	AppMeshGatewaySkipImageOverride = "appmesh.k8s.aws/virtualGatewaySkipImageOverride"
+	AppMeshGatewaySkipImageOverride = AppMeshPrefix + "/virtualGatewaySkipImageOverride"
 
 	//Pod Labels
 

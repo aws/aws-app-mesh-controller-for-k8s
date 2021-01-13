@@ -15,7 +15,9 @@ package conversions
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
 	v1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -77,7 +79,7 @@ func (c *PodConverter) stripDownPod(pod *v1.Pod) *v1.Pod {
 			Namespace: pod.Namespace,
 			UID:       pod.UID,
 			// Annotations and Labels can be stripped down further
-			Annotations: pod.Annotations,
+			Annotations: getFilteredAnnotations(pod.Annotations),
 			Labels:      pod.Labels,
 		},
 		Spec: v1.PodSpec{
@@ -87,8 +89,8 @@ func (c *PodConverter) stripDownPod(pod *v1.Pod) *v1.Pod {
 			ReadinessGates:   pod.Spec.ReadinessGates,
 			ImagePullSecrets: pod.Spec.ImagePullSecrets,
 			Volumes:          pod.Spec.Volumes,
-			InitContainers:   GetStrippedInitContainers(pod.Spec.InitContainers),
-			Containers:       GetStrippedContainers(pod.Spec.Containers),
+			InitContainers:   getStrippedInitContainers(pod.Spec.InitContainers),
+			Containers:       getStrippedContainers(pod.Spec.Containers),
 		},
 		Status: v1.PodStatus{
 			Conditions: pod.Status.Conditions,
@@ -97,8 +99,7 @@ func (c *PodConverter) stripDownPod(pod *v1.Pod) *v1.Pod {
 	}
 }
 
-// GetStrippedContainers returns a slice of stripped version of Containers
-func GetStrippedContainers(containers []v1.Container) []v1.Container {
+func getStrippedContainers(containers []v1.Container) []v1.Container {
 	strippedContainers := make([]v1.Container, len(containers))
 	for i, container := range containers {
 		strippedContainers[i].Name = container.Name
@@ -109,11 +110,21 @@ func GetStrippedContainers(containers []v1.Container) []v1.Container {
 	return strippedContainers
 }
 
-// GetStrippedInitContainers returns a Slice of InitContainer Names
-func GetStrippedInitContainers(initContainers []v1.Container) []v1.Container {
+func getStrippedInitContainers(initContainers []v1.Container) []v1.Container {
 	strippedContainers := make([]v1.Container, len(initContainers))
 	for i, container := range initContainers {
 		strippedContainers[i].Name = container.Name
 	}
 	return strippedContainers
+}
+
+// Filters annotations based on AppMeshPrefix
+func getFilteredAnnotations(annotations map[string]string) map[string]string {
+	strippedAnnotations := make(map[string]string)
+	for k, v := range annotations {
+		if strings.HasPrefix(k, inject.AppMeshPrefix) {
+			strippedAnnotations[k] = v
+		}
+	}
+	return strippedAnnotations
 }
