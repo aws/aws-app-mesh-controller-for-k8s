@@ -18,6 +18,7 @@ func TestConvertObj(t *testing.T) {
 
 	annotations := make(map[string]string)
 	annotations["random"] = "TestValue"
+	annotations[AppMeshPrefix+"/cpuLimit"] = "60"
 
 	labels := make(map[string]string)
 	labels["app"] = "TestApp"
@@ -62,7 +63,8 @@ func TestConvertObj(t *testing.T) {
 	assert.Equal(t, convertedPod.Spec.NodeName, oldPod.Spec.NodeName, "NodeName mismatch")
 	assert.Equal(t, convertedPod.ObjectMeta.Name, oldPod.ObjectMeta.Name, "Pod Name mismatch")
 	assert.Equal(t, convertedPod.ObjectMeta.Namespace, oldPod.ObjectMeta.Namespace, "Pod Namespace mismatch")
-	assert.True(t, reflect.DeepEqual(convertedPod.ObjectMeta.Annotations, oldPod.ObjectMeta.Annotations), "Annotations mismatch")
+	assert.Equal(t, convertedPod.Annotations["random"], "", "Annotations with this prefix should return empty string")
+	assert.Equal(t, convertedPod.Annotations[AppMeshPrefix+"/cpuLimit"], "60", "Annotation mismatch")
 	assert.True(t, reflect.DeepEqual(convertedPod.ObjectMeta.Labels, oldPod.ObjectMeta.Labels), "Labels mismatch")
 	assert.Nil(t, convertedPod.Spec.Containers[0].Command, "Container Command should not be present")
 }
