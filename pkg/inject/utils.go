@@ -5,8 +5,15 @@ import (
 	"bytes"
 	"encoding/json"
 	corev1 "k8s.io/api/core/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"text/template"
 )
+
+const (
+	AppMeshSDSSocketVolume = "appmesh-sds-socket-volume"
+)
+
+var envoyUtilsLogger = ctrl.Log.WithName("envoy-utils")
 
 func renderTemplate(name string, t string, meta interface{}) (string, error) {
 	tmpl, err := template.New(name).Parse(t)
@@ -79,4 +86,47 @@ func containsEnvoyContainer(pod *corev1.Pod) (bool, int) {
 		}
 	}
 	return false, -1
+}
+
+func isSDSDisabled(pod *corev1.Pod) bool {
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshSDSAnnotation]; ok {
+		if v == "disabled" {
+			return true
+		}
+		envoyUtilsLogger.Info("Unsupported Value. Annotation only accepts `disabled` in the value field. ", "Value Provided: ", v)
+	}
+	return false
+}
+
+func isSDSVolumePresent(pod *corev1.Pod, SdsUdsPath string) bool {
+	for _, volume := range pod.Spec.Volumes {
+		if volume.HostPath != nil && volume.HostPath.Path == SdsUdsPath {
+			return true
+		}
+	}
+	return false
+}
+
+func mutateSDSMounts(pod *corev1.Pod, envoyContainer *corev1.Container, SdsUdsPath string) {
+	SDSVolumeType := corev1.HostPathSocket
+	if isSDSVolumePresent(pod, SdsUdsPath) {
+		return
+	}
+	volume := corev1.Volume{
+		Name: AppMeshSDSSocketVolume,
+		VolumeSource: corev1.VolumeSource{
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: SdsUdsPath,
+				Type: &SDSVolumeType,
+			},
+		},
+	}
+
+	volumeMount := corev1.VolumeMount{
+		Name:      AppMeshSDSSocketVolume,
+		MountPath: SdsUdsPath,
+	}
+
+	envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
+	pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
 }
