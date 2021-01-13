@@ -118,8 +118,8 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 	}
 
 	//TODO: Check for existing SDS mounts for VirtualGateway before proceeding.
-	if m.mutatorConfig.enableSDS {
-		m.mutateSDSMounts(pod, &pod.Spec.Containers[envoyIdx])
+	if m.mutatorConfig.enableSDS && !isSDSDisabled(pod) {
+		mutateSDSMounts(pod, &pod.Spec.Containers[envoyIdx], m.mutatorConfig.sdsUdsPath)
 	}
 	return nil
 }
@@ -128,6 +128,9 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 	meshName := m.getAugmentedMeshName()
 	virtualGatewayName := aws.StringValue(m.vg.Spec.AWSName)
 	preview := m.getPreview(pod)
+	if m.mutatorConfig.enableSDS && isSDSDisabled(pod) {
+		m.mutatorConfig.enableSDS = false
+	}
 
 	return VirtualGatewayEnvoyVariables{
 		AWSRegion:          m.mutatorConfig.awsRegion,

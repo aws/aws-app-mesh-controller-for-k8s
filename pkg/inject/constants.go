@@ -39,6 +39,9 @@ const (
 	//AppMeshGatewaySkipImageOverride specifies if Virtual Gateway sidecar image override needs to be skipped for customers
 	//to use their own sidecare image for Virtual Gateway
 	AppMeshGatewaySkipImageOverride = "appmesh.k8s.aws/virtualGatewaySkipImageOverride"
+	//AppMeshSDSAnnotation is used if SDS is enabled at the controller level but needs to be disabled
+	//for a particular VirtualNode.
+	AppMeshSDSAnnotation = "appmesh.k8s.aws/sds"
 
 	//Pod Labels
 
