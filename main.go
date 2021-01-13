@@ -17,25 +17,32 @@ limitations under the License.
 package main
 
 import (
+	"os"
+	"time"
+
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/version"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualrouter"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
 	"github.com/spf13/pflag"
-	"os"
-	"time"
 
+	"github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh/custom"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 
 	zapraw "go.uber.org/zap"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"k8s.io/client-go/tools/cache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -49,6 +56,8 @@ import (
 	appmeshcontroller "github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh"
 	appmeshwebhook "github.com/aws/aws-app-mesh-controller-for-k8s/webhooks/appmesh"
 	corewebhook "github.com/aws/aws-app-mesh-controller-for-k8s/webhooks/core"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -70,6 +79,8 @@ func main() {
 	var enableLeaderElection bool
 	var enableCustomHealthCheck bool
 	var logLevel string
+	var listPageLimit int8
+
 	awsCloudConfig := aws.CloudConfig{ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig()}
 	injectConfig := inject.Config{}
 	cloudMapConfig := cloudmap.Config{}
@@ -82,6 +93,9 @@ func main() {
 	fs.BoolVar(&enableCustomHealthCheck, "enable-custom-health-check", false,
 		"Enable custom healthCheck when using cloudMap serviceDiscovery")
 	fs.StringVar(&logLevel, "log-level", "info", "Set the controller log level - info(default), debug")
+	fs.Int8Var(&listPageLimit, "page-limit", 100,
+		"The page size limiting the number of response for list operation to API Server")
+
 	awsCloudConfig.BindFlags(fs)
 	injectConfig.BindFlags(fs)
 	cloudMapConfig.BindFlags(fs)
@@ -124,6 +138,22 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Channels that will be notified for the create, Update, delete events on pod object
+	podCreateEventChannel := make(chan event.CreateEvent)
+	podUpdateEventChannel := make(chan event.UpdateEvent)
+	podDeleteEventChannel := make(chan event.DeleteEvent)
+
+	// Custom data store, it should not be accessed directly as the cache could be out of sync
+	// on startup. Must be accessed from the pod controller's data store instead
+	dataStore := cache.NewIndexer(k8s.NSKeyIndexer, k8s.NodeNameIndexer())
+
+	kubeConfig := ctrl.GetConfigOrDie()
+	// Set the API Server QPS and Burst
+	kubeConfig.QPS = float32(custom.DefaultAPIServerQPS)
+	kubeConfig.Burst = custom.DefaultAPIServerBurst
+
+	clientSet, err := kubernetes.NewForConfig(kubeConfig)
+
 	stopChan := ctrl.SetupSignalHandler()
 	referencesIndexer := references.NewDefaultObjectReferenceIndexer(mgr.GetCache(), mgr.GetFieldIndexer())
 	finalizerManager := k8s.NewDefaultFinalizerManager(mgr.GetClient(), ctrl.Log)
@@ -143,7 +173,16 @@ func main() {
 	vgReconciler := appmeshcontroller.NewVirtualGatewayReconciler(mgr.GetClient(), finalizerManager, vgMembersFinalizer, vgResManager, ctrl.Log.WithName("controllers").WithName("VirtualGateway"))
 	grReconciler := appmeshcontroller.NewGatewayRouteReconciler(mgr.GetClient(), finalizerManager, grResManager, ctrl.Log.WithName("controllers").WithName("GatewayRoute"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
-	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), finalizerManager, cloudMapResManager, ctrl.Log.WithName("controllers").WithName("CloudMap"))
+
+	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(
+		mgr.GetClient(),
+		finalizerManager,
+		cloudMapResManager,
+		ctrl.Log.WithName("controllers").WithName("CloudMap"),
+		podCreateEventChannel,
+		podUpdateEventChannel,
+		podDeleteEventChannel)
+
 	vsReconciler := appmeshcontroller.NewVirtualServiceReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vsResManager, ctrl.Log.WithName("controllers").WithName("VirtualService"))
 	vrReconciler := appmeshcontroller.NewVirtualRouterReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vrResManager, ctrl.Log.WithName("controllers").WithName("VirtualRouter"))
 	if err = msReconciler.SetupWithManager(mgr); err != nil {
@@ -202,4 +241,36 @@ func main() {
 		setupLog.Error(err, "problem running controller")
 		os.Exit(1)
 	}
+
+	customController := &custom.NewController{
+		ClientSet:    clientSet,
+		PageLimit:    int64(listPageLimit),
+		Namespace:    metav1.NamespaceAll,
+		ResyncPeriod: syncPeriod,
+		Queue:        cache.NewDeltaFIFO(k8s.NSKeyIndexer, dataStore),
+		Converter: &conversions.PodConverter{
+			K8sResource:     "pods",
+			K8sResourceType: &corev1.Pod{},
+		},
+		CreateEventNotificationChan: podCreateEventChannel,
+		UpdateEventNotificationChan: podUpdateEventChannel,
+		DeleteEventNotificationChan: podDeleteEventChannel,
+		Log:                         setupLog.WithName("pod custom controller"),
+	}
+
+	// Only start the controller when the leader election is won
+	mgr.Add(manager.RunnableFunc(func(stop <-chan struct{}) error {
+		setupLog.Info("starting custom controller")
+
+		stopChannel := make(chan struct{})
+		// Start the custom controller
+		customController.StartController(dataStore, stopChannel)
+		// If the manager is stopped, signal the controller to stop as well.
+		<-stop
+		stopChannel <- struct{}{}
+
+		setupLog.Info("stopping the controller")
+
+		return nil
+	}))
 }
