@@ -22,7 +22,6 @@ import (
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/version"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualrouter"
@@ -30,6 +29,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh/custom"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 
 	zapraw "go.uber.org/zap"
@@ -53,12 +53,13 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualgateway"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	appmeshcontroller "github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh"
 	appmeshwebhook "github.com/aws/aws-app-mesh-controller-for-k8s/webhooks/appmesh"
 	corewebhook "github.com/aws/aws-app-mesh-controller-for-k8s/webhooks/core"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -127,7 +128,23 @@ func main() {
 		"BuildDate", version.BuildDate,
 	)
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	// Channels that will be notified for the create, Update, delete events on pod object
+	podCreateEventChannel := make(chan event.CreateEvent)
+	podUpdateEventChannel := make(chan event.UpdateEvent)
+	podDeleteEventChannel := make(chan event.DeleteEvent)
+
+	// Custom data store, it should not be accessed directly as the cache could be out of sync
+	// on startup. Must be accessed from the pod controller's data store instead
+	dataStore := cache.NewIndexer(k8s.NSKeyIndexer, k8s.NamespaceIndexer())
+
+	kubeConfig := ctrl.GetConfigOrDie()
+	// Set the API Server QPS and Burst
+	kubeConfig.QPS = float32(custom.DefaultAPIServerQPS)
+	kubeConfig.Burst = custom.DefaultAPIServerBurst
+
+	clientSet, err := kubernetes.NewForConfig(kubeConfig)
+
+	mgr, err := ctrl.NewManager(kubeConfig, ctrl.Options{
 		Scheme:                 scheme,
 		SyncPeriod:             &syncPeriod,
 		MetricsBindAddress:     metricsAddr,
@@ -136,6 +153,23 @@ func main() {
 		LeaderElectionID:       "appmesh-controller-leader-election",
 		HealthProbeBindAddress: healthProbeBindAddress,
 	})
+
+	podController := &custom.NewController{
+		ClientSet:    clientSet,
+		PageLimit:    int64(listPageLimit),
+		Namespace:    metav1.NamespaceAll,
+		ResyncPeriod: syncPeriod,
+		Queue:        cache.NewDeltaFIFO(k8s.NSKeyIndexer, dataStore),
+		Converter: &conversions.PodConverter{
+			K8sResource:     "pods",
+			K8sResourceType: &corev1.Pod{},
+		},
+		CreateEventNotificationChan: podCreateEventChannel,
+		UpdateEventNotificationChan: podUpdateEventChannel,
+		DeleteEventNotificationChan: podDeleteEventChannel,
+		Log:                         setupLog.WithName("pod custom controller"),
+	}
+
 	if err != nil {
 		setupLog.Error(err, "unable to start app mesh controller")
 		os.Exit(1)
@@ -147,21 +181,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Channels that will be notified for the create, Update, delete events on pod object
-	podCreateEventChannel := make(chan event.CreateEvent)
-	podUpdateEventChannel := make(chan event.UpdateEvent)
-	podDeleteEventChannel := make(chan event.DeleteEvent)
-
-	// Custom data store, it should not be accessed directly as the cache could be out of sync
-	// on startup. Must be accessed from the pod controller's data store instead
-	dataStore := cache.NewIndexer(k8s.NSKeyIndexer, k8s.NodeNameIndexer())
-
-	kubeConfig := ctrl.GetConfigOrDie()
-	// Set the API Server QPS and Burst
-	kubeConfig.QPS = float32(custom.DefaultAPIServerQPS)
-	kubeConfig.Burst = custom.DefaultAPIServerBurst
-
-	clientSet, err := kubernetes.NewForConfig(kubeConfig)
+	K8sWrapper := k8s.NewK8sWrapper(mgr.GetClient(), podController)
 
 	stopChan := ctrl.SetupSignalHandler()
 	referencesIndexer := references.NewDefaultObjectReferenceIndexer(mgr.GetCache(), mgr.GetFieldIndexer())
@@ -169,7 +189,7 @@ func main() {
 	meshMembersFinalizer := mesh.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("mesh-members"), ctrl.Log)
 	vgMembersFinalizer := virtualgateway.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("virtualgateway-members"), ctrl.Log)
 	referencesResolver := references.NewDefaultResolver(mgr.GetClient(), ctrl.Log)
-	virtualNodeEndpointResolver := cloudmap.NewDefaultVirtualNodeEndpointResolver(mgr.GetClient(), ctrl.Log)
+	virtualNodeEndpointResolver := cloudmap.NewDefaultVirtualNodeEndpointResolver(K8sWrapper, ctrl.Log)
 	cloudMapInstancesReconciler := cloudmap.NewDefaultInstancesReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log, stopChan)
 	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
 	vgResManager := virtualgateway.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
@@ -251,37 +271,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	// +kubebuilder:scaffold:builder
-
-	setupLog.Info("starting controller")
-	if err := mgr.Start(stopChan); err != nil {
-		setupLog.Error(err, "problem running controller")
-		os.Exit(1)
-	}
-
-	customController := &custom.NewController{
-		ClientSet:    clientSet,
-		PageLimit:    int64(listPageLimit),
-		Namespace:    metav1.NamespaceAll,
-		ResyncPeriod: syncPeriod,
-		Queue:        cache.NewDeltaFIFO(k8s.NSKeyIndexer, dataStore),
-		Converter: &conversions.PodConverter{
-			K8sResource:     "pods",
-			K8sResourceType: &corev1.Pod{},
-		},
-		CreateEventNotificationChan: podCreateEventChannel,
-		UpdateEventNotificationChan: podUpdateEventChannel,
-		DeleteEventNotificationChan: podDeleteEventChannel,
-		Log:                         setupLog.WithName("pod custom controller"),
-	}
-
 	// Only start the controller when the leader election is won
 	mgr.Add(manager.RunnableFunc(func(stop <-chan struct{}) error {
 		setupLog.Info("starting custom controller")
 
 		stopChannel := make(chan struct{})
 		// Start the custom controller
-		customController.StartController(dataStore, stopChannel)
+		podController.StartController(dataStore, stopChannel)
 		// If the manager is stopped, signal the controller to stop as well.
 		<-stop
 		stopChannel <- struct{}{}
@@ -290,4 +286,12 @@ func main() {
 
 		return nil
 	}))
+
+	// +kubebuilder:scaffold:builder
+
+	setupLog.Info("starting controller")
+	if err := mgr.Start(stopChan); err != nil {
+		setupLog.Error(err, "problem running controller")
+		os.Exit(1)
+	}
 }

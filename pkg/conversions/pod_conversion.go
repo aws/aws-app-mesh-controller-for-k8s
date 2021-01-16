@@ -82,8 +82,9 @@ func (c *PodConverter) stripDownPod(pod *v1.Pod) *v1.Pod {
 			Namespace: pod.Namespace,
 			UID:       pod.UID,
 			// Annotations and Labels can be stripped down further
-			Annotations: getFilteredAnnotations(pod.Annotations),
-			Labels:      pod.Labels,
+			Annotations:       getFilteredAnnotations(pod.Annotations),
+			Labels:            pod.Labels,
+			DeletionTimestamp: pod.DeletionTimestamp,
 		},
 		Spec: v1.PodSpec{
 			NodeName:         pod.Spec.NodeName,

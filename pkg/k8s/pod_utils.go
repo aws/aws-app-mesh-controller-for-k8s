@@ -11,6 +11,7 @@ import (
 const (
 	ConditionAWSCloudMapHealthy = "conditions.appmesh.k8s.aws/aws-cloudmap-healthy"
 	NodeNameSpec                = "nodeName"
+	Namespace                   = "namespace"
 )
 
 // GetPodCondition will get pointer to Pod's existing condition.
@@ -21,6 +22,15 @@ func GetPodCondition(pod *corev1.Pod, conditionType corev1.PodConditionType) *co
 		}
 	}
 	return nil
+}
+
+// NamespaceIndexer returns indexer to index in data store using namespace
+func NamespaceIndexer() cache.Indexers {
+	indexer := map[string]cache.IndexFunc{}
+	indexer[Namespace] = func(obj interface{}) (strings []string, err error) {
+		return []string{obj.(*corev1.Pod).Namespace}, nil
+	}
+	return indexer
 }
 
 // NodeNameIndexer returns indexer to index in the data store using node name

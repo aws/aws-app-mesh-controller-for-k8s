@@ -8,6 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
 )
 
 var _ Source = &CreateChannel{}
@@ -32,6 +33,18 @@ type CreateChannel struct {
 
 	// destLock is to ensure the destination channels are safely added/removed
 	destLock sync.Mutex
+}
+
+var _ inject.Stoppable = &CreateChannel{}
+
+// InjectStopChannel is internal should be called only by the Controller.
+// It is used to inject the stop channel initialized by the ControllerManager.
+func (cs *CreateChannel) InjectStopChannel(stop <-chan struct{}) error {
+	if cs.stop == nil {
+		cs.stop = stop
+	}
+
+	return nil
 }
 
 func (cs *CreateChannel) String() string {
