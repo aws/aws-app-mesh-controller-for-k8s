@@ -99,6 +99,7 @@ func (c *PodConverter) stripDownPod(pod *v1.Pod) *v1.Pod {
 		Status: v1.PodStatus{
 			Conditions: pod.Status.Conditions,
 			Phase:      pod.Status.Phase,
+			PodIP:      pod.Status.PodIP,
 		},
 	}
 }
