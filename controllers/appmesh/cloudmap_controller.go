@@ -25,7 +25,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
@@ -36,9 +35,7 @@ type cloudMapReconciler struct {
 	finalizerManager            k8s.FinalizerManager
 	cloudMapResourceManager     cloudmap.ResourceManager
 	enqueueRequestsForPodEvents handler.EventHandler
-	createEventNotificationChan chan event.CreateEvent
-	updateEventNotificationChan chan event.UpdateEvent
-	deleteEventNotificationChan chan event.DeleteEvent
+	notificationChannel         chan interface{}
 }
 
 // NewCloudMapReconciler that can respond to pod events (Create/Update/Delete) via notification channels
@@ -47,18 +44,14 @@ func NewCloudMapReconciler(
 	finalizerManager k8s.FinalizerManager,
 	cloudMapResourceManager cloudmap.ResourceManager,
 	log logr.Logger,
-	createNotification chan event.CreateEvent,
-	updateNotification chan event.UpdateEvent,
-	deleteNotification chan event.DeleteEvent) *cloudMapReconciler {
+	notificationChannel chan interface{}) *cloudMapReconciler {
 	return &cloudMapReconciler{
 		k8sClient:                   k8sClient,
 		log:                         log,
 		finalizerManager:            finalizerManager,
 		cloudMapResourceManager:     cloudMapResourceManager,
 		enqueueRequestsForPodEvents: cloudmap.NewEnqueueRequestsForPodEvents(k8sClient, log),
-		createEventNotificationChan: createNotification,
-		updateEventNotificationChan: updateNotification,
-		deleteEventNotificationChan: deleteNotification,
+		notificationChannel:         notificationChannel,
 	}
 }
 
@@ -73,12 +66,11 @@ func (r *cloudMapReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 }
 
 func (r *cloudMapReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("cloudMap").
 		For(&appmesh.VirtualNode{}).
-		Watches(&customsource.CreateChannel{Source: r.createEventNotificationChan}, r.enqueueRequestsForPodEvents).
-		Watches(&customsource.DeleteChannel{Source: r.deleteEventNotificationChan}, r.enqueueRequestsForPodEvents).
-		Watches(&customsource.UpdateChannel{Source: r.updateEventNotificationChan}, r.enqueueRequestsForPodEvents).
+		Watches(&customsource.CustomChannel{Source: r.notificationChannel}, r.enqueueRequestsForPodEvents).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
 		Complete(r)
 }

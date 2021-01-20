@@ -33,7 +33,6 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 
 	zapraw "go.uber.org/zap"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
@@ -128,10 +127,8 @@ func main() {
 		"BuildDate", version.BuildDate,
 	)
 
-	// Channels that will be notified for the create, Update, delete events on pod object
-	podCreateEventChannel := make(chan event.CreateEvent)
-	podUpdateEventChannel := make(chan event.UpdateEvent)
-	podDeleteEventChannel := make(chan event.DeleteEvent)
+	// Channel that will be notified for the create, Update, delete events on pod object
+	podEventNotificationChannel := make(chan interface{})
 
 	// Custom data store, it should not be accessed directly as the cache could be out of sync
 	// on startup. Must be accessed from the pod controller's data store instead
@@ -164,10 +161,8 @@ func main() {
 			K8sResource:     "pods",
 			K8sResourceType: &corev1.Pod{},
 		},
-		CreateEventNotificationChan: podCreateEventChannel,
-		UpdateEventNotificationChan: podUpdateEventChannel,
-		DeleteEventNotificationChan: podDeleteEventChannel,
-		Log:                         setupLog.WithName("pod custom controller"),
+		PodEventNotificationChan: podEventNotificationChannel,
+		Log:                      setupLog.WithName("pod custom controller"),
 	}
 
 	if err != nil {
@@ -208,9 +203,7 @@ func main() {
 		finalizerManager,
 		cloudMapResManager,
 		ctrl.Log.WithName("controllers").WithName("CloudMap"),
-		podCreateEventChannel,
-		podUpdateEventChannel,
-		podDeleteEventChannel)
+		podEventNotificationChannel)
 
 	vsReconciler := appmeshcontroller.NewVirtualServiceReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vsResManager, ctrl.Log.WithName("controllers").WithName("VirtualService"))
 	vrReconciler := appmeshcontroller.NewVirtualRouterReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vrResManager, ctrl.Log.WithName("controllers").WithName("VirtualRouter"))

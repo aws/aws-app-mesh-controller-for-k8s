@@ -73,18 +73,9 @@ type NewController struct {
 	RetryOnError bool
 	// Queue is the Delta FIFO queue
 	Queue *cache.DeltaFIFO
-	// CreateEventNotificationChan channel will be notified for all create
-	// events for the k8s resource. If we don't want memory usage spikes we should
-	// process the events as soon as soon as the channel is notified.
-	CreateEventNotificationChan chan event.CreateEvent
-	// UpdateEventNotificationChan channel will be notified for all update
-	// events for the k8s resource. If we don't want memory usage spikes we should
-	// process the events as soon as soon as the channel is notified.
-	UpdateEventNotificationChan chan event.UpdateEvent
-	// DeleteEventNotificationChan channel will be notified for all delete events for the
-	// k8s resource. If we don't want memory usage spikes we should process the events as
-	// soon as soon as the channel is notified.
-	DeleteEventNotificationChan chan event.DeleteEvent
+	// PodEventNotificationChan channel will be notified for all create,delete,update
+	// events for the pod resource.
+	PodEventNotificationChan chan interface{}
 	// Log for custom controller
 	Log logr.Logger
 	// Controller is the K8s Controller
@@ -211,7 +202,7 @@ func (c *NewController) notifyChannelOnCreate(obj interface{}) error {
 	if err != nil {
 		return err
 	}
-	c.CreateEventNotificationChan <- event.CreateEvent{
+	c.PodEventNotificationChan <- event.CreateEvent{
 		Meta:   meta,
 		Object: obj.(runtime.Object),
 	}
@@ -230,7 +221,7 @@ func (c *NewController) notifyChannelOnUpdate(oldObj, newObj interface{}) error 
 		return err
 	}
 
-	c.UpdateEventNotificationChan <- event.UpdateEvent{
+	c.PodEventNotificationChan <- event.UpdateEvent{
 		MetaOld:   metaOld,
 		ObjectOld: oldObj.(runtime.Object),
 		MetaNew:   metaNew,
@@ -245,7 +236,7 @@ func (c *NewController) notifyChannelOnDelete(obj interface{}) error {
 	if err != nil {
 		return err
 	}
-	c.DeleteEventNotificationChan <- event.DeleteEvent{
+	c.PodEventNotificationChan <- event.DeleteEvent{
 		Meta:   meta,
 		Object: obj.(runtime.Object),
 	}
