@@ -3,22 +3,20 @@ package fishapp_test
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/fishapp"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	. "github.com/onsi/ginkgo"
-	"time"
 )
 
 var _ = Describe("test dynamically generated symmetrical mesh", func() {
 	var (
 		ctx context.Context
-		f   *framework.Framework
 	)
 
 	BeforeEach(func() {
 		ctx = context.Background()
-		f = framework.New(framework.GlobalOptions)
 
 		if f.Options.ControllerImage != "" {
 			By("Reset cluster with default controller", func() {
