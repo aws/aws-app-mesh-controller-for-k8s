@@ -96,7 +96,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		`If enabled, a fsGroup: 1337 will be injected in the absence of it within pod securityContext`)
 	fs.BoolVar(&cfg.EnableECRSecret, flagEnableECRSecret, false,
 		"If enabled, 'appmesh-ecr-secret' secret will be injected in the absence of it within pod imagePullSecrets")
-	fs.StringVar(&cfg.SidecarImage, flagSidecarImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.15.1.0-prod",
+	fs.StringVar(&cfg.SidecarImage, flagSidecarImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.16.1.0-prod",
 		"Envoy sidecar container image.")
 	fs.StringVar(&cfg.SidecarCpuRequests, flagSidecarCpuRequests, "10m",
 		"Sidecar CPU resources requests.")
