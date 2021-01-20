@@ -1,7 +1,6 @@
 package conversions
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,9 +37,8 @@ func TestConvertObj(t *testing.T) {
 
 	oldPod := &corev1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
-			Name:      "TestPod",
-			Namespace: "TestNameSpace",
-			// Annotations and Labels can be stripped down further
+			Name:        "TestPod",
+			Namespace:   "TestNameSpace",
 			Annotations: annotations,
 			Labels:      labels,
 		},
@@ -60,13 +58,12 @@ func TestConvertObj(t *testing.T) {
 		t.Error("Conversion Failed")
 	}
 
-	assert.Equal(t, convertedPod.Spec.NodeName, oldPod.Spec.NodeName, "NodeName mismatch")
+	assert.Equal(t, convertedPod.Spec.NodeName, "TestNode", "NodeName must be excluded/empty")
 	assert.Equal(t, convertedPod.ObjectMeta.Name, oldPod.ObjectMeta.Name, "Pod Name mismatch")
 	assert.Equal(t, convertedPod.ObjectMeta.Namespace, oldPod.ObjectMeta.Namespace, "Pod Namespace mismatch")
-	assert.Equal(t, convertedPod.Annotations["random"], "", "Annotations with this prefix should return empty string")
-	assert.Equal(t, convertedPod.Annotations[AppMeshPrefix+"/cpuLimit"], "60", "Annotation mismatch")
-	assert.True(t, reflect.DeepEqual(convertedPod.ObjectMeta.Labels, oldPod.ObjectMeta.Labels), "Labels mismatch")
-	assert.Nil(t, convertedPod.Spec.Containers[0].Command, "Container Command should not be present")
+	assert.Equal(t, len(convertedPod.ObjectMeta.Annotations), 0, "Annotations must be excluded/empty")
+	assert.Equal(t, len(convertedPod.ObjectMeta.Labels), 2, "Labels must be excluded/empty")
+	assert.Equal(t, len(convertedPod.Spec.Containers), 0, "Container should be excluded/empty")
 }
 
 func TestConvertList(t *testing.T) {
