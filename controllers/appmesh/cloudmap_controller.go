@@ -16,15 +16,16 @@ package controllers
 
 import (
 	"context"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/customsource"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
@@ -35,7 +36,10 @@ type cloudMapReconciler struct {
 	finalizerManager            k8s.FinalizerManager
 	cloudMapResourceManager     cloudmap.ResourceManager
 	enqueueRequestsForPodEvents handler.EventHandler
-	notificationChannel         chan interface{}
+	//notificationChannel         chan interface{}
+	podEventCreateChan <-chan event.CreateEvent
+	podEventDeleteChan <-chan event.DeleteEvent
+	podEventUpdateChan <-chan event.UpdateEvent
 }
 
 // NewCloudMapReconciler that can respond to pod events (Create/Update/Delete) via notification channels
@@ -44,14 +48,18 @@ func NewCloudMapReconciler(
 	finalizerManager k8s.FinalizerManager,
 	cloudMapResourceManager cloudmap.ResourceManager,
 	log logr.Logger,
-	notificationChannel chan interface{}) *cloudMapReconciler {
+	podEventCreateChan chan event.CreateEvent,
+	podEventDeleteChan chan event.DeleteEvent,
+	podEventUpdateChan chan event.UpdateEvent) *cloudMapReconciler {
 	return &cloudMapReconciler{
 		k8sClient:                   k8sClient,
 		log:                         log,
 		finalizerManager:            finalizerManager,
 		cloudMapResourceManager:     cloudMapResourceManager,
 		enqueueRequestsForPodEvents: cloudmap.NewEnqueueRequestsForPodEvents(k8sClient, log),
-		notificationChannel:         notificationChannel,
+		podEventCreateChan:          podEventCreateChan,
+		podEventDeleteChan:          podEventDeleteChan,
+		podEventUpdateChan:          podEventUpdateChan,
 	}
 }
 
@@ -70,7 +78,9 @@ func (r *cloudMapReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("cloudMap").
 		For(&appmesh.VirtualNode{}).
-		Watches(&customsource.CustomChannel{Source: r.notificationChannel}, r.enqueueRequestsForPodEvents).
+		Watches(&k8s.NotificationChannel{EventType: k8s.CREATE, Create: r.podEventCreateChan}, r.enqueueRequestsForPodEvents).
+		Watches(&k8s.NotificationChannel{EventType: k8s.DELETE, Delete: r.podEventDeleteChan}, r.enqueueRequestsForPodEvents).
+		Watches(&k8s.NotificationChannel{EventType: k8s.UPDATE, Update: r.podEventUpdateChan}, r.enqueueRequestsForPodEvents).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
 		Complete(r)
 }

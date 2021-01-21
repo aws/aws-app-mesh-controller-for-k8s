@@ -28,11 +28,11 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
 	"github.com/spf13/pflag"
 
-	"github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh/custom"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 
 	zapraw "go.uber.org/zap"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
@@ -65,6 +65,8 @@ import (
 const (
 	flagHealthProbeBindAddr       = "health-probe-bind-addr"
 	defaultHealthProbeBindAddress = ":61779"
+	DefaultAPIServerQPS           = 10
+	DefaultAPIServerBurst         = 15
 )
 
 var (
@@ -127,17 +129,18 @@ func main() {
 		"BuildDate", version.BuildDate,
 	)
 
-	// Channel that will be notified for the create, Update, delete events on pod object
-	podEventNotificationChannel := make(chan interface{})
+	podEventCreateChan := make(chan event.CreateEvent)
+	podEventDeleteChan := make(chan event.DeleteEvent)
+	podEventUpdateChan := make(chan event.UpdateEvent)
 
 	// Custom data store, it should not be accessed directly as the cache could be out of sync
 	// on startup. Must be accessed from the pod controller's data store instead
-	dataStore := cache.NewIndexer(k8s.NSKeyIndexer, k8s.NamespaceIndexer())
+	dataStore := cache.NewIndexer(k8s.PodNSKeyIndexer, k8s.PodNamespaceIndexer())
 
 	kubeConfig := ctrl.GetConfigOrDie()
 	// Set the API Server QPS and Burst
-	kubeConfig.QPS = float32(custom.DefaultAPIServerQPS)
-	kubeConfig.Burst = custom.DefaultAPIServerBurst
+	kubeConfig.QPS = float32(DefaultAPIServerQPS)
+	kubeConfig.Burst = DefaultAPIServerBurst
 
 	clientSet, err := kubernetes.NewForConfig(kubeConfig)
 
@@ -151,18 +154,20 @@ func main() {
 		HealthProbeBindAddress: healthProbeBindAddress,
 	})
 
-	podController := &custom.NewController{
+	podController := &k8s.PodController{
 		ClientSet:    clientSet,
 		PageLimit:    int64(listPageLimit),
 		Namespace:    metav1.NamespaceAll,
 		ResyncPeriod: syncPeriod,
-		Queue:        cache.NewDeltaFIFO(k8s.NSKeyIndexer, dataStore),
+		Queue:        cache.NewDeltaFIFO(k8s.PodNSKeyIndexer, dataStore),
 		Converter: &conversions.PodConverter{
 			K8sResource:     "pods",
 			K8sResourceType: &corev1.Pod{},
 		},
-		PodEventNotificationChan: podEventNotificationChannel,
-		Log:                      setupLog.WithName("pod custom controller"),
+		PodEventCreateChan: podEventCreateChan,
+		PodEventDeleteChan: podEventDeleteChan,
+		PodEventUpdateChan: podEventUpdateChan,
+		Log:                setupLog.WithName("pod custom controller"),
 	}
 
 	if err != nil {
@@ -203,7 +208,9 @@ func main() {
 		finalizerManager,
 		cloudMapResManager,
 		ctrl.Log.WithName("controllers").WithName("CloudMap"),
-		podEventNotificationChannel)
+		podEventCreateChan,
+		podEventDeleteChan,
+		podEventUpdateChan)
 
 	vsReconciler := appmeshcontroller.NewVirtualServiceReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vsResManager, ctrl.Log.WithName("controllers").WithName("VirtualService"))
 	vrReconciler := appmeshcontroller.NewVirtualRouterReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vrResManager, ctrl.Log.WithName("controllers").WithName("VirtualRouter"))

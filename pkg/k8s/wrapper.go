@@ -3,7 +3,6 @@ package k8s
 import (
 	"fmt"
 
-	"github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh/custom"
 	v1 "k8s.io/api/core/v1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/labels"
@@ -19,12 +18,12 @@ type K8sWrapper interface {
 
 // k8sWrapper is the wrapper object with the client
 type k8sWrapper struct {
-	podController *custom.NewController
+	podController *PodController
 	cacheClient   client.Client
 }
 
 // NewK8sWrapper returns a new K8sWrapper
-func NewK8sWrapper(client client.Client, podController *custom.NewController) K8sWrapper {
+func NewK8sWrapper(client client.Client, podController *PodController) K8sWrapper {
 	return &k8sWrapper{
 		cacheClient:   client,
 		podController: podController,
@@ -76,7 +75,7 @@ func (k *k8sWrapper) ListPodsWithMatchingLabels(opts client.ListOptions) (*v1.Po
 	for _, item := range items {
 		pod, ok := item.(*v1.Pod)
 		if !ok {
-			return nil, fmt.Errorf("cache contained %T, which is not an Object", pod)
+			return nil, fmt.Errorf("cache contained %T, which is not a Pod", item)
 		}
 
 		meta, err := apimeta.Accessor(pod)
