@@ -10,28 +10,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// K8sWrapper represents an interface with all the common operations on pod objects
-type K8sWrapper interface {
+// PodsWrapper represents an interface with all the common operations on pod objects
+type PodsWrapper interface {
 	GetPod(namespace string, name string) (*v1.Pod, error)
 	ListPodsWithMatchingLabels(opts client.ListOptions) (*v1.PodList, error)
 }
 
 // k8sWrapper is the wrapper object with the client
-type k8sWrapper struct {
+type podsWrapper struct {
 	podController *PodController
 	cacheClient   client.Client
 }
 
-// NewK8sWrapper returns a new K8sWrapper
-func NewK8sWrapper(client client.Client, podController *PodController) K8sWrapper {
-	return &k8sWrapper{
+// NewPodsWrapper returns a new PodsWrapper
+func NewPodsWrapper(client client.Client, podController *PodController) PodsWrapper {
+	return &podsWrapper{
 		cacheClient:   client,
 		podController: podController,
 	}
 }
 
 // GetPod returns the pod object using NamespacedName
-func (k *k8sWrapper) GetPod(namespace string, name string) (*v1.Pod, error) {
+func (k *podsWrapper) GetPod(namespace string, name string) (*v1.Pod, error) {
 	nsName := types.NamespacedName{
 		Namespace: namespace,
 		Name:      name,
@@ -49,7 +49,7 @@ func (k *k8sWrapper) GetPod(namespace string, name string) (*v1.Pod, error) {
 // ListPods return list of pods within a Namespace having Matching Labels
 // ListOptions.LabelSelector must be specified to return pods with matching labels
 // ListOptions.Namespace will scope result list to a given namespace
-func (k *k8sWrapper) ListPodsWithMatchingLabels(opts client.ListOptions) (*v1.PodList, error) {
+func (k *podsWrapper) ListPodsWithMatchingLabels(opts client.ListOptions) (*v1.PodList, error) {
 	var items []interface{}
 	var err error
 
