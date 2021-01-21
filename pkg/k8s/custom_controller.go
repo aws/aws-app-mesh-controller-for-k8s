@@ -127,8 +127,6 @@ func (c *PodController) StartController(dataStore cache.Indexer, stopChanel chan
 			return nil
 		},
 	}
-
-	//defer close(stopChanel)
 	c.controller = cache.New(config)
 
 	// Run the controller
