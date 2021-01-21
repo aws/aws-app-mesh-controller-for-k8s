@@ -87,7 +87,7 @@ func main() {
 	var enableLeaderElection bool
 	var enableCustomHealthCheck bool
 	var logLevel string
-	var listPageLimit int8
+	var listPageLimit int64
 	var healthProbeBindAddress string
 	awsCloudConfig := aws.CloudConfig{ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig()}
 	injectConfig := inject.Config{}
@@ -101,7 +101,7 @@ func main() {
 	fs.BoolVar(&enableCustomHealthCheck, "enable-custom-health-check", false,
 		"Enable custom healthCheck when using cloudMap serviceDiscovery")
 	fs.StringVar(&logLevel, "log-level", "info", "Set the controller log level - info(default), debug")
-	fs.Int8Var(&listPageLimit, "page-limit", 100,
+	fs.Int64Var(&listPageLimit, "page-limit", 100,
 		"The page size limiting the number of response for list operation to API Server")
 	fs.StringVar(&healthProbeBindAddress, flagHealthProbeBindAddr, defaultHealthProbeBindAddress,
 		"The address the health probes binds to.")
