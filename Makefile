@@ -8,7 +8,7 @@ IMAGE ?= $(REPO):$(VERSION)
 CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1beta1"
 
 # app mesh aws-sdk-go override in case we need to build against a custom version
-APPMESH_SDK_OVERRIDE ?= "n"
+APPMESH_SDK_OVERRIDE ?= "y"
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -79,7 +79,7 @@ delete-all-kind-clusters:	## Delete all local kind clusters
 
 setup-appmesh-sdk-override:
 	@if [ "$(APPMESH_SDK_OVERRIDE)" = "y" ] ; then \
-	    ./appmesh_models_override/setup.sh ; \
+	    APPMESH_PREVIEW=y ./appmesh_models_override/setup.sh ; \
 	fi
 
 cleanup-appmesh-sdk-override:
