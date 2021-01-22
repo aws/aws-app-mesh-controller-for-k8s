@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 )
 
 // Converter for converting k8s object and object list used in watches and list operation
@@ -67,12 +66,8 @@ type PodController struct {
 	RetryOnError bool
 	// Queue is the Delta FIFO queue
 	Queue *cache.DeltaFIFO
-	// PodEventCreateChan channel will be notified for all create events for the pod resource.
-	PodEventCreateChan chan<- event.CreateEvent
-	// PodEventCreateChan channel will be notified for all delete events for the pod resource.
-	PodEventDeleteChan chan<- event.DeleteEvent
-	// PodEventCreateChan channel will be notified for all update events for the pod resource.
-	PodEventUpdateChan chan<- event.UpdateEvent
+	// PodEventNotificationChan channel will be notified for all pod events
+	PodEventNotificationChan chan<- PodEvent
 
 	// Log for custom controller
 	Log logr.Logger
@@ -86,7 +81,7 @@ type PodController struct {
 // StartController starts the custom controller by doing a list and watch on the specified k8s
 // resource. The controller would store the converted k8s object in the provided indexer. The
 // stop channel should be notified to stop the controller
-func (c *PodController) StartController(dataStore cache.Indexer, stopChanel chan struct{}) {
+func (c *PodController) StartController(dataStore cache.Indexer, stopChanel <-chan struct{}) {
 	c.dataStore = dataStore
 
 	config := &cache.Config{
@@ -192,9 +187,10 @@ func (c *PodController) notifyChannelOnCreate(obj interface{}) error {
 	if err != nil {
 		return err
 	}
-	c.PodEventCreateChan <- event.CreateEvent{
-		Meta:   meta,
-		Object: obj.(runtime.Object),
+	c.PodEventNotificationChan <- PodEvent{
+		EventType: CREATE,
+		Meta:      meta,
+		Object:    obj.(runtime.Object),
 	}
 	return nil
 }
@@ -211,7 +207,8 @@ func (c *PodController) notifyChannelOnUpdate(oldObj, newObj interface{}) error 
 		return err
 	}
 
-	c.PodEventUpdateChan <- event.UpdateEvent{
+	c.PodEventNotificationChan <- PodEvent{
+		EventType: UPDATE,
 		MetaOld:   metaOld,
 		ObjectOld: oldObj.(runtime.Object),
 		MetaNew:   metaNew,
@@ -226,9 +223,10 @@ func (c *PodController) notifyChannelOnDelete(obj interface{}) error {
 	if err != nil {
 		return err
 	}
-	c.PodEventDeleteChan <- event.DeleteEvent{
-		Meta:   meta,
-		Object: obj.(runtime.Object),
+	c.PodEventNotificationChan <- PodEvent{
+		EventType: DELETE,
+		Meta:      meta,
+		Object:    obj.(runtime.Object),
 	}
 	return nil
 }

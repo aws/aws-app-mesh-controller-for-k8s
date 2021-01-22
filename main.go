@@ -32,7 +32,6 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 
 	zapraw "go.uber.org/zap"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
@@ -65,8 +64,8 @@ import (
 const (
 	flagHealthProbeBindAddr       = "health-probe-bind-addr"
 	defaultHealthProbeBindAddress = ":61779"
-	DefaultAPIServerQPS           = 10
-	DefaultAPIServerBurst         = 15
+	defaultAPIServerQPS           = 1e6
+	defaultAPIServerBurst         = 1e6
 )
 
 var (
@@ -129,9 +128,7 @@ func main() {
 		"BuildDate", version.BuildDate,
 	)
 
-	podEventCreateChan := make(chan event.CreateEvent)
-	podEventDeleteChan := make(chan event.DeleteEvent)
-	podEventUpdateChan := make(chan event.UpdateEvent)
+	podEventNotificationChan := make(chan k8s.PodEvent)
 
 	// Custom data store, it should not be accessed directly as the cache could be out of sync
 	// on startup. Must be accessed from the pod controller's data store instead
@@ -139,8 +136,8 @@ func main() {
 
 	kubeConfig := ctrl.GetConfigOrDie()
 	// Set the API Server QPS and Burst
-	kubeConfig.QPS = float32(DefaultAPIServerQPS)
-	kubeConfig.Burst = DefaultAPIServerBurst
+	kubeConfig.QPS = float32(defaultAPIServerQPS)
+	kubeConfig.Burst = defaultAPIServerBurst
 
 	clientSet, err := kubernetes.NewForConfig(kubeConfig)
 
@@ -164,10 +161,8 @@ func main() {
 			K8sResource:     "pods",
 			K8sResourceType: &corev1.Pod{},
 		},
-		PodEventCreateChan: podEventCreateChan,
-		PodEventDeleteChan: podEventDeleteChan,
-		PodEventUpdateChan: podEventUpdateChan,
-		Log:                setupLog.WithName("pod custom controller"),
+		PodEventNotificationChan: podEventNotificationChan,
+		Log:                      setupLog.WithName("pod custom controller"),
 	}
 
 	if err != nil {
@@ -208,9 +203,7 @@ func main() {
 		finalizerManager,
 		cloudMapResManager,
 		ctrl.Log.WithName("controllers").WithName("CloudMap"),
-		podEventCreateChan,
-		podEventDeleteChan,
-		podEventUpdateChan)
+		podEventNotificationChan)
 
 	vsReconciler := appmeshcontroller.NewVirtualServiceReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vsResManager, ctrl.Log.WithName("controllers").WithName("VirtualService"))
 	vrReconciler := appmeshcontroller.NewVirtualRouterReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vrResManager, ctrl.Log.WithName("controllers").WithName("VirtualRouter"))
@@ -275,12 +268,10 @@ func main() {
 	mgr.Add(manager.RunnableFunc(func(stop <-chan struct{}) error {
 		setupLog.Info("starting custom controller")
 
-		stopChannel := make(chan struct{})
 		// Start the custom controller
-		podController.StartController(dataStore, stopChannel)
+		podController.StartController(dataStore, stop)
 		// If the manager is stopped, signal the controller to stop as well.
 		<-stop
-		stopChannel <- struct{}{}
 
 		setupLog.Info("stopping the controller")
 

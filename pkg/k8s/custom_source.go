@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -25,6 +27,7 @@ type Source interface {
 
 var _ Source = &NotificationChannel{}
 
+// EventType identifies type of PodEvent (CREATE/UPDATE/DELETE)
 type EventType int
 
 const (
@@ -32,6 +35,29 @@ const (
 	DELETE EventType = 2
 	UPDATE EventType = 3
 )
+
+// PodEvent is a wrapper for Create/Update/Delete Events
+type PodEvent struct {
+	EventType
+
+	// Meta is the ObjectMeta of the Kubernetes Type that was created
+	Meta metav1.Object
+
+	// Object is the object from the event
+	Object runtime.Object
+
+	// MetaOld is the ObjectMeta of the Kubernetes Type that was updated (before the update)
+	MetaOld metav1.Object
+
+	// ObjectOld is the object from the event
+	ObjectOld runtime.Object
+
+	// MetaNew is the ObjectMeta of the Kubernetes Type that was updated (after the update)
+	MetaNew metav1.Object
+
+	// ObjectNew is the object from the event
+	ObjectNew runtime.Object
+}
 
 // NotificationChannel monitors channels of type Create/Update/Delete
 type NotificationChannel struct {
@@ -41,22 +67,10 @@ type NotificationChannel struct {
 	// stop is to end ongoing goroutine, and close the Create channel
 	stop <-chan struct{}
 
-	EventType
+	Source <-chan PodEvent
 
-	Create <-chan event.CreateEvent
-
-	Delete <-chan event.DeleteEvent
-
-	Update <-chan event.UpdateEvent
-
-	// dest is the destination channels of the Create event handlers
-	destCreate []chan event.CreateEvent
-
-	// dest is the destination channels of the Delete event handlers
-	destDelete []chan event.DeleteEvent
-
-	// dest is the destination channels of the Update event handlers
-	destUpdate []chan event.UpdateEvent
+	// dest is the destination channels of the Pod event handlers
+	dest []chan PodEvent
 
 	// DestBufferSize is the specified buffer size of dest channels.
 	// Default to 1024 if not specified.
@@ -87,17 +101,9 @@ func (cs *NotificationChannel) Start(
 	handler handler.EventHandler,
 	queue workqueue.RateLimitingInterface,
 	prct ...predicate.Predicate) error {
-	_ = fmt.Errorf("Event Type: %v", cs.EventType)
-
 	// Source should have been specified by the user.
-	if cs.EventType == CREATE && cs.Create == nil {
-		return fmt.Errorf("must specify either Create, Delete or Update Channel")
-	} else if cs.EventType == DELETE && cs.Delete == nil {
-		return fmt.Errorf("must specify either Create, Delete or Update Channel")
-	} else if cs.EventType == UPDATE && cs.Update == nil {
-		return fmt.Errorf("must specify either Create, Delete or Update Channel")
-	} else if cs.EventType != CREATE && cs.EventType != DELETE && cs.EventType != UPDATE {
-		return fmt.Errorf("Invalid Type: %v", cs.EventType)
+	if cs.Source == nil {
+		return fmt.Errorf("must specify CustomChannle.Source")
 	}
 
 	// stop should have been injected before Start was called
@@ -111,93 +117,48 @@ func (cs *NotificationChannel) Start(
 	}
 
 	cs.once.Do(func() {
-		// Distribute Events to corresponding EventHandler / Queue pairs Watching this source
-		if cs.EventType == CREATE {
-			go cs.syncLoopCreate()
-		} else if cs.EventType == DELETE {
-			go cs.syncLoopDelete()
-		} else if cs.EventType == UPDATE {
-			go cs.syncLoopUpdate()
-		} else {
-			_ = fmt.Errorf("Invalid Event Type %v", cs.EventType)
-			return
-		}
+		// Distribute GenericEvents to all EventHandler / Queue pairs Watching this source
+		go cs.syncLoop()
 	})
 
-	if cs.EventType == CREATE {
-		dstCreate := make(chan event.CreateEvent, cs.DestBufferSize)
-
-		go func() {
-			for evt := range dstCreate {
-				handler.Create(evt, queue)
+	dst := make(chan PodEvent, cs.DestBufferSize)
+	go func() {
+		for evt := range dst {
+			switch evt.EventType {
+			case CREATE:
+				handler.Create(event.CreateEvent{Meta: evt.Meta, Object: evt.Object}, queue)
+			case DELETE:
+				handler.Delete(event.DeleteEvent{Meta: evt.Meta, Object: evt.Object}, queue)
+			case UPDATE:
+				handler.Update(event.UpdateEvent{MetaOld: evt.MetaOld, ObjectOld: evt.ObjectOld, MetaNew: evt.MetaNew, ObjectNew: evt.ObjectNew}, queue)
+			default:
+				_ = fmt.Errorf("Invalid Type %T", evt.EventType)
 			}
-		}()
+		}
+	}()
 
-		cs.destLock.Lock()
-		defer cs.destLock.Unlock()
-		cs.destCreate = append(cs.destCreate, dstCreate)
-	} else if cs.EventType == DELETE {
-		dstDelete := make(chan event.DeleteEvent, cs.DestBufferSize)
+	cs.destLock.Lock()
+	defer cs.destLock.Unlock()
 
-		go func() {
-			for evt := range dstDelete {
-				handler.Delete(evt, queue)
-			}
-		}()
+	cs.dest = append(cs.dest, dst)
 
-		cs.destLock.Lock()
-		defer cs.destLock.Unlock()
-
-		cs.destDelete = append(cs.destDelete, dstDelete)
-	} else if cs.EventType == UPDATE {
-		dstUpdate := make(chan event.UpdateEvent, cs.DestBufferSize)
-
-		go func() {
-			for evt := range dstUpdate {
-				handler.Update(evt, queue)
-			}
-		}()
-
-		cs.destLock.Lock()
-		defer cs.destLock.Unlock()
-
-		cs.destUpdate = append(cs.destUpdate, dstUpdate)
-	}
 	return nil
 }
 
-func (cs *NotificationChannel) doStopCreate() {
+func (cs *NotificationChannel) doStop() {
 	cs.destLock.Lock()
 	defer cs.destLock.Unlock()
 
-	for _, dst := range cs.destCreate {
+	for _, dst := range cs.dest {
 		close(dst)
 	}
 }
 
-func (cs *NotificationChannel) doStopDelete() {
+func (cs *NotificationChannel) distribute(evt PodEvent) {
 	cs.destLock.Lock()
 	defer cs.destLock.Unlock()
 
-	for _, dst := range cs.destDelete {
-		close(dst)
-	}
-}
-
-func (cs *NotificationChannel) doStopUpdate() {
-	cs.destLock.Lock()
-	defer cs.destLock.Unlock()
-
-	for _, dst := range cs.destUpdate {
-		close(dst)
-	}
-}
-
-func (cs *NotificationChannel) distributeCreate(evt event.CreateEvent) {
-	cs.destLock.Lock()
-	defer cs.destLock.Unlock()
-
-	for _, dst := range cs.destCreate {
+	for _, dst := range cs.dest {
 		// We cannot make it under goroutine here, or we'll meet the
 		// race condition of writing message to closed channels.
 		// To avoid blocking, the dest channels are expected to be of
@@ -207,66 +168,14 @@ func (cs *NotificationChannel) distributeCreate(evt event.CreateEvent) {
 	}
 }
 
-func (cs *NotificationChannel) distributeDelete(evt event.DeleteEvent) {
-	cs.destLock.Lock()
-	defer cs.destLock.Unlock()
-
-	for _, dst := range cs.destDelete {
-		// We cannot make it under goroutine here, or we'll meet the
-		// race condition of writing message to closed channels.
-		// To avoid blocking, the dest channels are expected to be of
-		// proper buffer size. If we still see it blocked, then
-		// the controller is thought to be in an abnormal state.
-		dst <- evt
-	}
-}
-
-func (cs *NotificationChannel) distributeUpdate(evt event.UpdateEvent) {
-	cs.destLock.Lock()
-	defer cs.destLock.Unlock()
-
-	for _, dst := range cs.destUpdate {
-		// We cannot make it under goroutine here, or we'll meet the
-		// race condition of writing message to closed channels.
-		// To avoid blocking, the dest channels are expected to be of
-		// proper buffer size. If we still see it blocked, then
-		// the controller is thought to be in an abnormal state.
-		dst <- evt
-	}
-}
-
-func (cs *NotificationChannel) syncLoopCreate() {
+func (cs *NotificationChannel) syncLoop() {
 	for {
 		select {
 		case <-cs.stop:
-			cs.doStopCreate()
+			cs.doStop()
 			return
-		case evt := <-cs.Create:
-			cs.distributeCreate(evt)
-		}
-	}
-}
-
-func (cs *NotificationChannel) syncLoopDelete() {
-	for {
-		select {
-		case <-cs.stop:
-			cs.doStopDelete()
-			return
-		case evt := <-cs.Delete:
-			cs.distributeDelete(evt)
-		}
-	}
-}
-
-func (cs *NotificationChannel) syncLoopUpdate() {
-	for {
-		select {
-		case <-cs.stop:
-			cs.doStopUpdate()
-			return
-		case evt := <-cs.Update:
-			cs.distributeUpdate(evt)
+		case evt := <-cs.Source:
+			cs.distribute(evt)
 		}
 	}
 }
