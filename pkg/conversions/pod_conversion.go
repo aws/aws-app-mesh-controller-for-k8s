@@ -16,6 +16,7 @@ package conversions
 import (
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,10 +30,10 @@ type podConverter struct {
 }
 
 // NewPodConverter returns podConverter object
-func NewPodConverter(k8sResource string, k8sResourceType runtime.Object) *podConverter {
+func NewPodConverter() *podConverter {
 	return &podConverter{
-		K8sResource:     k8sResource,
-		K8sResourceType: k8sResourceType,
+		K8sResource:     "pods",
+		K8sResourceType: &corev1.Pod{},
 	}
 }
 

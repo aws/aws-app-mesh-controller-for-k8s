@@ -50,7 +50,6 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualgateway"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
@@ -146,7 +145,7 @@ func main() {
 		HealthProbeBindAddress: healthProbeBindAddress,
 	})
 
-	converter := conversions.NewPodConverter("pods", &corev1.Pod{})
+	converter := conversions.NewPodConverter()
 
 	podController := k8s.NewPodController(
 		clientSet,
