@@ -1,7 +1,9 @@
 package k8s
 
 import (
-	corev1 "k8s.io/api/core/v1"
+	"fmt"
+
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -14,7 +16,11 @@ const (
 func NamespaceKeyIndexerFunc() cache.Indexers {
 	indexer := map[string]cache.IndexFunc{}
 	indexer[NamespaceIndexKey] = func(obj interface{}) (strings []string, err error) {
-		return []string{obj.(*corev1.Pod).Namespace}, nil
+		meta, err := meta.Accessor(obj)
+		if err != nil {
+			return nil, fmt.Errorf("object has no meta: %v", err)
+		}
+		return []string{meta.GetNamespace()}, nil
 	}
 	return indexer
 }
