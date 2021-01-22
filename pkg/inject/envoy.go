@@ -1,7 +1,6 @@
 package inject
 
 import (
-	"encoding/json"
 	"fmt"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
@@ -14,117 +13,11 @@ import (
 const envoyTracingConfigVolumeName = "envoy-tracing-config"
 const envoyContainerName = "envoy"
 
-const envoyContainerTemplate = `
-{
-  "name": "envoy",
-  "securityContext": {
-    "runAsUser": 1337
-  },
-  "ports": [
-    {
-      "containerPort": {{.AdminAccessPort}},
-      "name": "stats",
-      "protocol": "TCP"
-    }
-  ],
-  "lifecycle": {
-     "preStop": {
-        "exec": {
-           "command": [
-              "sh",
-              "-c",
-              "sleep {{.PreStopDelay}}"
-           ]
-         }
-     }
-  },
-  "env": [
-    {
-      "name": "APPMESH_VIRTUAL_NODE_NAME",
-      "value": "mesh/{{ .MeshName }}/virtualNode/{{ .VirtualNodeName }}"
-    },
-    {
-      "name": "APPMESH_PREVIEW",
-      "value": "{{ .Preview }}"
-    },
-    {
-      "name": "ENVOY_LOG_LEVEL",
-      "value": "{{ .LogLevel }}"
-    }{{ if .EnableSDS }},
-    {
-      "name": "APPMESH_SDS_SOCKET_PATH",
-      "value": "{{ .SdsUdsPath }}"
-    }{{ end }}{{ if .AdminAccessPort }},
-    {
-      "name": "ENVOY_ADMIN_ACCESS_PORT",
-      "value": "{{ .AdminAccessPort }}"
-    }{{ end }}{{ if .AdminAccessLogFile }},
-    {
-      "name": "ENVOY_ADMIN_ACCESS_LOG_FILE",
-      "value": "{{ .AdminAccessLogFile }}"
-    }{{ end }}{{ if or .EnableJaegerTracing }},
-    {
-      "name": "ENVOY_TRACING_CFG_FILE",
-      "value": "/tmp/envoy/envoyconf.yaml"
-    }{{ end }},
-    {
-      "name": "AWS_REGION",
-      "value": "{{ .AWSRegion }}"
-    }{{ if .EnableXrayTracing }},
-    {
-      "name": "ENABLE_ENVOY_XRAY_TRACING",
-      "value": "1"
-    },
-    {
-      "name": "XRAY_DAEMON_PORT",
-      "value": "{{ .XrayDaemonPort }}"
-    }{{ end }}{{ if .EnableDatadogTracing }},
-    {
-      "name": "ENABLE_ENVOY_DATADOG_TRACING",
-      "value": "1"
-    },
-    {
-      "name": "DATADOG_TRACER_PORT",
-      "value": "{{ .DatadogTracerPort }}"
-    },
-    {
-      "name": "DATADOG_TRACER_ADDRESS",
-      "value": "{{ .DatadogTracerAddress }}"
-    }{{ end }}{{ if .EnableStatsTags }},
-    {
-      "name": "ENABLE_ENVOY_STATS_TAGS",
-      "value": "1"
-    }{{ end }}{{ if .EnableStatsD }},
-    {
-      "name": "ENABLE_ENVOY_DOG_STATSD",
-      "value": "1"
-    }{{ end }}{{ if .EnableStatsD}},
-    {
-      "name": "STATSD_PORT",
-      "value": "{{ .StatsDPort }}"
-    }{{ end }}{{ if .EnableStatsD}},
-    {
-      "name": "STATSD_ADDRESS",
-      "value": "{{ .StatsDAddress }}"
-    }{{ end }}
-  ]{{ if or .EnableJaegerTracing }},
-  "volumeMounts": [
-    {
-      "mountPath": "/tmp/envoy",
-      "name": "{{ .EnvoyTracingConfigVolumeName }}"
-    }
-  ]{{ end }},
-  "image": "{{ .SidecarImage }}"
-}
-`
-
 type EnvoyTemplateVariables struct {
 	AWSRegion                    string
 	MeshName                     string
 	VirtualNodeName              string
 	Preview                      string
-	EnableSDS                    bool
-	SdsUdsPath                   string
 	LogLevel                     string
 	AdminAccessPort              int32
 	AdminAccessLogFile           string
@@ -147,8 +40,6 @@ type envoyMutatorConfig struct {
 	accountID                  string
 	awsRegion                  string
 	preview                    bool
-	enableSDS                  bool
-	sdsUdsPath                 string
 	logLevel                   string
 	adminAccessPort            int32
 	adminAccessLogFile         string
@@ -195,15 +86,7 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 	variables := m.buildTemplateVariables(pod)
-	envoySidecar, err := renderTemplate("envoy", envoyContainerTemplate, variables)
-	if err != nil {
-		return err
-	}
-	container := corev1.Container{}
-	err = json.Unmarshal([]byte(envoySidecar), &container)
-	if err != nil {
-		return err
-	}
+	container := buildEnvoySidecar(variables)
 
 	// add resource requests and limits
 	container.Resources, err = sidecarResources(getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
@@ -219,9 +102,6 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 
 	m.mutateSecretMounts(pod, &container, secretMounts)
-	if m.mutatorConfig.enableSDS && !isSDSDisabled(pod) {
-		mutateSDSMounts(pod, &container, m.mutatorConfig.sdsUdsPath)
-	}
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
 	return nil
 }
@@ -230,17 +110,12 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 	meshName := m.getAugmentedMeshName()
 	virtualNodeName := aws.StringValue(m.vn.Spec.AWSName)
 	preview := m.getPreview(pod)
-	if m.mutatorConfig.enableSDS && isSDSDisabled(pod) {
-		m.mutatorConfig.enableSDS = false
-	}
 
 	return EnvoyTemplateVariables{
 		AWSRegion:                    m.mutatorConfig.awsRegion,
 		MeshName:                     meshName,
 		VirtualNodeName:              virtualNodeName,
 		Preview:                      preview,
-		EnableSDS:                    m.mutatorConfig.enableSDS,
-		SdsUdsPath:                   m.mutatorConfig.sdsUdsPath,
 		LogLevel:                     m.mutatorConfig.logLevel,
 		AdminAccessPort:              m.mutatorConfig.adminAccessPort,
 		AdminAccessLogFile:           m.mutatorConfig.adminAccessLogFile,

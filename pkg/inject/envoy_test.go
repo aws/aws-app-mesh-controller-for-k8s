@@ -1667,6 +1667,243 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "base + enable Datadog tracing with hostIP ref",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					enableDatadogTracing:       true,
+					datadogTracerPort:          8126,
+					datadogTracerAddress:       "ref:status.hostIP",
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "ENABLE_ENVOY_DATADOG_TRACING",
+									Value: "1",
+								},
+								{
+									Name:  "DATADOG_TRACER_PORT",
+									Value: "8126",
+								},
+								{
+									Name:  "DATADOG_TRACER_ADDRESS",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "status.hostIP",
+										},
+									},
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "base + enable Stats D hostIP",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					enableStatsD:               true,
+					statsDAddress:              "ref:status.hostIP",
+					statsDPort:                 8125,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "ENABLE_ENVOY_DOG_STATSD",
+									Value: "1",
+								},
+								{
+									Name:  "STATSD_PORT",
+									Value: "8125",
+								},
+								{
+									Name:  "STATSD_ADDRESS",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "status.hostIP",
+										},
+									},
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1686,6 +1923,9 @@ func Test_envoyMutator_mutate(t *testing.T) {
 						return lhs.Name < rhs.Name
 					}),
 					cmpopts.SortSlices(func(lhs corev1.VolumeMount, rhs corev1.VolumeMount) bool {
+						return lhs.Name < rhs.Name
+					}),
+					cmpopts.SortSlices(func(lhs corev1.EnvVar, rhs corev1.EnvVar) bool {
 						return lhs.Name < rhs.Name
 					}),
 				}
