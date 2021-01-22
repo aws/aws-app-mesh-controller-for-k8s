@@ -15,18 +15,18 @@ type VirtualNodeEndpointResolver interface {
 	Resolve(ctx context.Context, vn *appmesh.VirtualNode) ([]*corev1.Pod, []*corev1.Pod, []*corev1.Pod, error)
 }
 
-func NewDefaultVirtualNodeEndpointResolver(PodsWrapper k8s.PodsRepository, log logr.Logger) *defaultVirtualNodeEndpointResolver {
+func NewDefaultVirtualNodeEndpointResolver(podsRepository k8s.PodsRepository, log logr.Logger) *defaultVirtualNodeEndpointResolver {
 	return &defaultVirtualNodeEndpointResolver{
-		PodsWrapper: PodsWrapper,
-		log:         log,
+		podsRepository: podsRepository,
+		log:            log,
 	}
 }
 
 var _ VirtualNodeEndpointResolver = &defaultVirtualNodeEndpointResolver{}
 
 type defaultVirtualNodeEndpointResolver struct {
-	PodsWrapper k8s.PodsRepository
-	log         logr.Logger
+	podsRepository k8s.PodsRepository
+	log            logr.Logger
 }
 
 func (e *defaultVirtualNodeEndpointResolver) Resolve(ctx context.Context, vNode *appmesh.VirtualNode) ([]*corev1.Pod, []*corev1.Pod, []*corev1.Pod, error) {
@@ -36,7 +36,7 @@ func (e *defaultVirtualNodeEndpointResolver) Resolve(ctx context.Context, vNode 
 	listOptions.LabelSelector, _ = metav1.LabelSelectorAsSelector(vNode.Spec.PodSelector)
 	listOptions.Namespace = vNode.Namespace
 
-	if podsList, err = e.PodsWrapper.ListPodsWithMatchingLabels(listOptions); err != nil {
+	if podsList, err = e.podsRepository.ListPodsWithMatchingLabels(listOptions); err != nil {
 		return nil, nil, nil, err
 	}
 
