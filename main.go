@@ -149,7 +149,8 @@ func main() {
 	converter := conversions.NewPodConverter("pods", &corev1.Pod{})
 
 	podController := k8s.NewPodController(
-		clientSet, listPageLimit,
+		clientSet,
+		listPageLimit,
 		metav1.NamespaceAll,
 		converter,
 		syncPeriod,
@@ -168,7 +169,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	PodsWrapper := k8s.NewPodsRepository(mgr.GetClient(), podController)
+	podsRepository := k8s.NewPodsRepository(mgr.GetClient(), podController)
 
 	stopChan := ctrl.SetupSignalHandler()
 	referencesIndexer := references.NewDefaultObjectReferenceIndexer(mgr.GetCache(), mgr.GetFieldIndexer())
@@ -176,7 +177,7 @@ func main() {
 	meshMembersFinalizer := mesh.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("mesh-members"), ctrl.Log)
 	vgMembersFinalizer := virtualgateway.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("virtualgateway-members"), ctrl.Log)
 	referencesResolver := references.NewDefaultResolver(mgr.GetClient(), ctrl.Log)
-	virtualNodeEndpointResolver := cloudmap.NewDefaultVirtualNodeEndpointResolver(PodsWrapper, ctrl.Log)
+	virtualNodeEndpointResolver := cloudmap.NewDefaultVirtualNodeEndpointResolver(podsRepository, ctrl.Log)
 	cloudMapInstancesReconciler := cloudmap.NewDefaultInstancesReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log, stopChan)
 	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
 	vgResManager := virtualgateway.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
