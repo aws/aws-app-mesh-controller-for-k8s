@@ -57,6 +57,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 	annotationCpuLimit, _ := resource.ParseQuantity("256Mi")
 	annotationMemoryLimit, _ := resource.ParseQuantity("80m")
 
+	SDSVolumeType := corev1.HostPathSocket
+
 	podWithResourceAnnotations := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "my-ns",
@@ -988,6 +990,259 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
 									SecretName: "svc1-svc2-ca-bundle",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "enable SDS controller flag + no pod annotation",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    true,
+					enableSDS:                  true,
+					sdsUdsPath:                 "/run/spire/sockets/agent.sock",
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 10,
+					readinessProbePeriod:       2,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-ns",
+						Name:      "my-pod",
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "app",
+								Image: "app/v1",
+							},
+						},
+					},
+				}},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 10,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       2,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "1",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "APPMESH_SDS_SOCKET_PATH",
+									Value: "/run/spire/sockets/agent.sock",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "appmesh-sds-socket-volume",
+									MountPath: "/run/spire/sockets/agent.sock",
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "appmesh-sds-socket-volume",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "/run/spire/sockets/agent.sock",
+									Type: &SDSVolumeType,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "enable SDS controller flag + pod annotation to disable sds",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    true,
+					enableSDS:                  true,
+					sdsUdsPath:                 "/run/spire/sockets/agent.sock",
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 10,
+					readinessProbePeriod:       2,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-ns",
+						Name:      "my-pod",
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/sds": "disabled",
+						},
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "app",
+								Image: "app/v1",
+							},
+						},
+					},
+				}},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+					Annotations: map[string]string{
+						"appmesh.k8s.aws/sds": "disabled",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 10,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       2,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "1",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
 								},
 							},
 						},

@@ -146,3 +146,13 @@ type GRPCConnectionPool struct {
 	// +kubebuilder:validation:Minimum=1
 	MaxRequests int64 `json:"maxRequests"`
 }
+
+type SubjectAlternativeNameMatchers struct {
+	// Exact is a required field
+	Exact []*string `json:"exact"`
+}
+
+type SubjectAlternativeNames struct {
+	// Match is a required field
+	Match *SubjectAlternativeNameMatchers `json:"match"`
+}

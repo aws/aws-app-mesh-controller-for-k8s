@@ -17,6 +17,13 @@ func Convert_CRD_TLSValidationContextFileTrust_To_SDK_TLSValidationContextFileTr
 	return nil
 }
 
+func Convert_CRD_TLSValidationContextSDSTrust_To_SDK_TLSValidationContextSDSTrust(crdObj *appmesh.TLSValidationContextSDSTrust, sdkObj *appmeshsdk.TlsValidationContextSdsTrust, scope conversion.Scope) error {
+	if crdObj.SecretName != nil {
+		sdkObj.SecretName = crdObj.SecretName
+	}
+	return nil
+}
+
 func Convert_CRD_TLSValidationContextTrust_To_SDK_TLSValidationContextTrust(crdObj *appmesh.TLSValidationContextTrust, sdkObj *appmeshsdk.TlsValidationContextTrust, scope conversion.Scope) error {
 	if crdObj.ACM != nil {
 		sdkObj.Acm = &appmeshsdk.TlsValidationContextAcmTrust{}
@@ -35,6 +42,23 @@ func Convert_CRD_TLSValidationContextTrust_To_SDK_TLSValidationContextTrust(crdO
 	} else {
 		sdkObj.File = nil
 	}
+
+	if crdObj.SDS != nil {
+		sdkObj.Sds = &appmeshsdk.TlsValidationContextSdsTrust{}
+		if err := Convert_CRD_TLSValidationContextSDSTrust_To_SDK_TLSValidationContextSDSTrust(crdObj.SDS, sdkObj.Sds, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Sds = nil
+	}
+	return nil
+}
+
+func Convert_CRD_TLSValidationContextSubjectAlternativeNames_To_SDK_TLSValidationContextSubjectAlternativeNames(crdObj *appmesh.SubjectAlternativeNames, sdkObj *appmeshsdk.SubjectAlternativeNames, scope conversion.Scope) error {
+	if crdObj.Match != nil {
+		sdkObj.Match = &appmeshsdk.SubjectAlternativeNameMatchers{}
+		sdkObj.Match.Exact = crdObj.Match.Exact
+	}
 	return nil
 }
 
@@ -42,6 +66,34 @@ func Convert_CRD_TLSValidationContext_To_SDK_TLSValidationContext(crdObj *appmes
 	sdkObj.Trust = &appmeshsdk.TlsValidationContextTrust{}
 	if err := Convert_CRD_TLSValidationContextTrust_To_SDK_TLSValidationContextTrust(&crdObj.Trust, sdkObj.Trust, scope); err != nil {
 		return err
+	}
+
+	if crdObj.SubjectAlternativeNames != nil {
+		sdkObj.SubjectAlternativeNames = &appmeshsdk.SubjectAlternativeNames{}
+		if err := Convert_CRD_TLSValidationContextSubjectAlternativeNames_To_SDK_TLSValidationContextSubjectAlternativeNames(crdObj.SubjectAlternativeNames, sdkObj.SubjectAlternativeNames, scope); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func Convert_CRD_ClientTLSCertificate_To_SDK_ClientTLSCertificate(crdObj *appmesh.ClientTLSCertificate, sdkObj *appmeshsdk.ClientTlsCertificate, scope conversion.Scope) error {
+	if crdObj.File != nil {
+		sdkObj.File = &appmeshsdk.ListenerTlsFileCertificate{}
+		if err := Convert_CRD_ListenerTLSFileCertificate_To_SDK_ListenerTLSFileCertificate(crdObj.File, sdkObj.File, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.File = nil
+	}
+
+	if crdObj.SDS != nil {
+		sdkObj.Sds = &appmeshsdk.ListenerTlsSdsCertificate{}
+		if err := Convert_CRD_ListenerTLSSDSCertificate_To_SDK_ListenerTLSSDSCertificate(crdObj.SDS, sdkObj.Sds, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Sds = nil
 	}
 	return nil
 }
@@ -61,6 +113,13 @@ func Convert_CRD_ClientPolicyTLS_To_SDK_ClientPolicyTLS(crdObj *appmesh.ClientPo
 	sdkObj.Validation = &appmeshsdk.TlsValidationContext{}
 	if err := Convert_CRD_TLSValidationContext_To_SDK_TLSValidationContext(&crdObj.Validation, sdkObj.Validation, scope); err != nil {
 		return err
+	}
+
+	if crdObj.Certificate != nil {
+		sdkObj.Certificate = &appmeshsdk.ClientTlsCertificate{}
+		if err := Convert_CRD_ClientTLSCertificate_To_SDK_ClientTLSCertificate(crdObj.Certificate, sdkObj.Certificate, scope); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -161,6 +220,13 @@ func Convert_CRD_ListenerTLSFileCertificate_To_SDK_ListenerTLSFileCertificate(cr
 	return nil
 }
 
+func Convert_CRD_ListenerTLSSDSCertificate_To_SDK_ListenerTLSSDSCertificate(crdObj *appmesh.ListenerTLSSDSCertificate, sdkObj *appmeshsdk.ListenerTlsSdsCertificate, scope conversion.Scope) error {
+	if crdObj.SecretName != nil {
+		sdkObj.SecretName = crdObj.SecretName
+	}
+	return nil
+}
+
 func Convert_CRD_ListenerTLSCertificate_To_SDK_ListenerTLSCertificate(crdObj *appmesh.ListenerTLSCertificate, sdkObj *appmeshsdk.ListenerTlsCertificate, scope conversion.Scope) error {
 	if crdObj.ACM != nil {
 		sdkObj.Acm = &appmeshsdk.ListenerTlsAcmCertificate{}
@@ -179,6 +245,69 @@ func Convert_CRD_ListenerTLSCertificate_To_SDK_ListenerTLSCertificate(crdObj *ap
 	} else {
 		sdkObj.File = nil
 	}
+
+	if crdObj.SDS != nil {
+		sdkObj.Sds = &appmeshsdk.ListenerTlsSdsCertificate{}
+		if err := Convert_CRD_ListenerTLSSDSCertificate_To_SDK_ListenerTLSSDSCertificate(crdObj.SDS, sdkObj.Sds, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Sds = nil
+	}
+	return nil
+}
+
+func Convert_CRD_ListenerTLSValidationContextFileTrust_To_SDK_ListenerTLSValidationContextFileTrust(crdObj *appmesh.TLSValidationContextFileTrust, sdkObj *appmeshsdk.TlsValidationContextFileTrust, scope conversion.Scope) error {
+	sdkObj.CertificateChain = aws.String(crdObj.CertificateChain)
+	return nil
+}
+
+func Convert_CRD_ListenerTLSValidationContextSDSTrust_To_SDK_ListenerTLSValidationContextSDSTrust(crdObj *appmesh.TLSValidationContextSDSTrust, sdkObj *appmeshsdk.TlsValidationContextSdsTrust, scope conversion.Scope) error {
+	if crdObj.SecretName != nil {
+		sdkObj.SecretName = crdObj.SecretName
+	}
+	return nil
+}
+
+func Convert_CRD_ListenerTLSValidationContextTrust_To_SDK_ListenerTLSValidationContextTrust(crdObj *appmesh.ListenerTLSValidationContextTrust, sdkObj *appmeshsdk.ListenerTlsValidationContextTrust, scope conversion.Scope) error {
+	if crdObj.File != nil {
+		sdkObj.File = &appmeshsdk.TlsValidationContextFileTrust{}
+		if err := Convert_CRD_ListenerTLSValidationContextFileTrust_To_SDK_ListenerTLSValidationContextFileTrust(crdObj.File, sdkObj.File, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.File = nil
+	}
+	if crdObj.SDS != nil {
+		sdkObj.Sds = &appmeshsdk.TlsValidationContextSdsTrust{}
+		if err := Convert_CRD_ListenerTLSValidationContextSDSTrust_To_SDK_ListenerTLSValidationContextSDSTrust(crdObj.SDS, sdkObj.Sds, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Sds = nil
+	}
+	return nil
+}
+
+func Convert_CRD_ListenerTLSValidationContextSubjectAlternativeNames_To_SDK_ListenerTLSValidationContextSubjectAlternativeNames(crdObj *appmesh.SubjectAlternativeNames, sdkObj *appmeshsdk.SubjectAlternativeNames, scope conversion.Scope) error {
+	if crdObj.Match != nil {
+		sdkObj.Match = &appmeshsdk.SubjectAlternativeNameMatchers{}
+		sdkObj.Match.Exact = crdObj.Match.Exact
+	}
+	return nil
+}
+
+func Convert_CRD_ListenerTLSValidationContext_To_SDK_ListenerTLSValidationContext(crdObj *appmesh.ListenerTLSValidationContext, sdkObj *appmeshsdk.ListenerTlsValidationContext, scope conversion.Scope) error {
+	sdkObj.Trust = &appmeshsdk.ListenerTlsValidationContextTrust{}
+	if err := Convert_CRD_ListenerTLSValidationContextTrust_To_SDK_ListenerTLSValidationContextTrust(&crdObj.Trust, sdkObj.Trust, scope); err != nil {
+		return err
+	}
+	if crdObj.SubjectAlternativeNames != nil {
+		sdkObj.SubjectAlternativeNames = &appmeshsdk.SubjectAlternativeNames{}
+		if err := Convert_CRD_ListenerTLSValidationContextSubjectAlternativeNames_To_SDK_ListenerTLSValidationContextSubjectAlternativeNames(crdObj.SubjectAlternativeNames, sdkObj.SubjectAlternativeNames, scope); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -187,6 +316,14 @@ func Convert_CRD_ListenerTLS_To_SDK_ListenerTLS(crdObj *appmesh.ListenerTLS, sdk
 	if err := Convert_CRD_ListenerTLSCertificate_To_SDK_ListenerTLSCertificate(&crdObj.Certificate, sdkObj.Certificate, scope); err != nil {
 		return err
 	}
+
+	if crdObj.Validation != nil {
+		sdkObj.Validation = &appmeshsdk.ListenerTlsValidationContext{}
+		if err := Convert_CRD_ListenerTLSValidationContext_To_SDK_ListenerTLSValidationContext(crdObj.Validation, sdkObj.Validation, scope); err != nil {
+			return err
+		}
+	}
+
 	sdkObj.Mode = aws.String((string)(crdObj.Mode))
 	return nil
 }
