@@ -25,15 +25,15 @@ import (
 // PodConverter implements the interface to convert k8s pod object to a stripped down
 // version of pod to save on memory utilized
 type podConverter struct {
-	K8sResource     string
-	K8sResourceType runtime.Object
+	podResource     string
+	podResourceType runtime.Object
 }
 
 // NewPodConverter returns podConverter object
 func NewPodConverter() *podConverter {
 	return &podConverter{
-		K8sResource:     "pods",
-		K8sResourceType: &corev1.Pod{},
+		podResource:     "pods",
+		podResourceType: &corev1.Pod{},
 	}
 }
 
@@ -69,12 +69,12 @@ func (c *podConverter) ConvertList(originalList interface{}) (convertedList inte
 
 // Resource to watch and list
 func (c *podConverter) Resource() string {
-	return c.K8sResource
+	return c.podResource
 }
 
 // ResourceType to watch and list
 func (c *podConverter) ResourceType() runtime.Object {
-	return c.K8sResourceType
+	return c.podResourceType
 }
 
 // StripDownPod removes all the extra details from pod that are not

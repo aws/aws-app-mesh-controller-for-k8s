@@ -16,17 +16,17 @@ type PodsRepository interface {
 	ListPodsWithMatchingLabels(opts client.ListOptions) (*v1.PodList, error)
 }
 
-// k8sWrapper is the wrapper object with the client
+// podsRepository is the wrapper object with the client
 type podsRepository struct {
-	podController *PodController
-	cacheClient   client.Client
+	customController *CustomController
+	cacheClient      client.Client
 }
 
-// NewPodsRepository returns a new PodsWrapper
-func NewPodsRepository(client client.Client, podController *PodController) PodsRepository {
+// NewPodsRepository returns a new PodsRepository
+func NewPodsRepository(client client.Client, customController *CustomController) PodsRepository {
 	return &podsRepository{
-		cacheClient:   client,
-		podController: podController,
+		cacheClient:      client,
+		customController: customController,
 	}
 }
 
@@ -36,7 +36,7 @@ func (k *podsRepository) GetPod(namespace string, name string) (*v1.Pod, error) 
 		Namespace: namespace,
 		Name:      name,
 	}.String()
-	obj, exists, err := k.podController.GetDataStore().GetByKey(nsName)
+	obj, exists, err := k.customController.GetDataStore().GetByKey(nsName)
 	if err != nil {
 		return nil, err
 	}
@@ -54,17 +54,14 @@ func (k *podsRepository) ListPodsWithMatchingLabels(opts client.ListOptions) (*v
 	var err error
 
 	if opts.Namespace != "" {
-		items, err = k.podController.GetDataStore().ByIndex(NamespaceIndexKey, opts.Namespace)
+		items, err = k.customController.GetDataStore().ByIndex(NamespaceIndexKey, opts.Namespace)
 	} else {
-		items = k.podController.GetDataStore().List()
+		items = k.customController.GetDataStore().List()
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	if err != nil {
-		return nil, err
-	}
 	podList := &v1.PodList{}
 
 	var labelSel labels.Selector

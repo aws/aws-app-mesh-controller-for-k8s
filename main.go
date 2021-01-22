@@ -126,7 +126,7 @@ func main() {
 		"BuildDate", version.BuildDate,
 	)
 
-	podEventNotificationChan := make(chan k8s.GenericEvent)
+	eventNotificationChan := make(chan k8s.GenericEvent)
 
 	kubeConfig := ctrl.GetConfigOrDie()
 	// Set the API Server QPS and Burst
@@ -147,14 +147,14 @@ func main() {
 
 	converter := conversions.NewPodConverter()
 
-	podController := k8s.NewPodController(
+	customController := k8s.NewCustomController(
 		clientSet,
 		listPageLimit,
 		metav1.NamespaceAll,
 		converter,
 		syncPeriod,
 		false,
-		podEventNotificationChan,
+		eventNotificationChan,
 		setupLog.WithName("pod custom controller"))
 
 	if err != nil {
@@ -168,7 +168,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	podsRepository := k8s.NewPodsRepository(mgr.GetClient(), podController)
+	podsRepository := k8s.NewPodsRepository(mgr.GetClient(), customController)
 
 	stopChan := ctrl.SetupSignalHandler()
 	referencesIndexer := references.NewDefaultObjectReferenceIndexer(mgr.GetCache(), mgr.GetFieldIndexer())
@@ -194,7 +194,7 @@ func main() {
 		mgr.GetClient(),
 		finalizerManager,
 		cloudMapResManager,
-		podEventNotificationChan,
+		eventNotificationChan,
 		ctrl.Log.WithName("controllers").WithName("CloudMap"))
 
 	vsReconciler := appmeshcontroller.NewVirtualServiceReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vsResManager, ctrl.Log.WithName("controllers").WithName("VirtualService"))
@@ -261,7 +261,7 @@ func main() {
 		setupLog.Info("starting custom controller")
 
 		// Start the custom controller
-		podController.StartController(stop)
+		customController.StartController(stop)
 		// If the manager is stopped, signal the controller to stop as well.
 		<-stop
 

@@ -10,7 +10,7 @@ import (
 )
 
 func TestConvertObj(t *testing.T) {
-	podConverter := NewPodConverter("pods", &corev1.Pod{})
+	podConverter := NewPodConverter()
 
 	annotations := make(map[string]string)
 	annotations["random"] = "TestValue"
@@ -64,7 +64,7 @@ func TestConvertObj(t *testing.T) {
 }
 
 func TestConvertList(t *testing.T) {
-	podConverter := NewPodConverter("pods", &corev1.Pod{})
+	podConverter := NewPodConverter()
 
 	pod1 := &corev1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
