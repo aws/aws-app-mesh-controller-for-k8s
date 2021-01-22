@@ -10,14 +10,11 @@ import (
 )
 
 func TestConvertObj(t *testing.T) {
-	podConverter := PodConverter{
-		K8sResource:     "pods",
-		K8sResourceType: &corev1.Pod{},
-	}
+	podConverter := NewPodConverter("pods", &corev1.Pod{})
 
 	annotations := make(map[string]string)
 	annotations["random"] = "TestValue"
-	annotations[AppMeshPrefix+"/cpuLimit"] = "60"
+	annotations["appmesh.k8s.aws/cpuLimit"] = "60"
 
 	labels := make(map[string]string)
 	labels["app"] = "TestApp"
@@ -67,10 +64,7 @@ func TestConvertObj(t *testing.T) {
 }
 
 func TestConvertList(t *testing.T) {
-	podConverter := PodConverter{
-		K8sResource:     "pods",
-		K8sResourceType: &corev1.Pod{},
-	}
+	podConverter := NewPodConverter("pods", &corev1.Pod{})
 
 	pod1 := &corev1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{

@@ -15,7 +15,7 @@ type VirtualNodeEndpointResolver interface {
 	Resolve(ctx context.Context, vn *appmesh.VirtualNode) ([]*corev1.Pod, []*corev1.Pod, []*corev1.Pod, error)
 }
 
-func NewDefaultVirtualNodeEndpointResolver(PodsWrapper k8s.PodsWrapper, log logr.Logger) *defaultVirtualNodeEndpointResolver {
+func NewDefaultVirtualNodeEndpointResolver(PodsWrapper k8s.PodsRepository, log logr.Logger) *defaultVirtualNodeEndpointResolver {
 	return &defaultVirtualNodeEndpointResolver{
 		PodsWrapper: PodsWrapper,
 		log:         log,
@@ -25,7 +25,7 @@ func NewDefaultVirtualNodeEndpointResolver(PodsWrapper k8s.PodsWrapper, log logr
 var _ VirtualNodeEndpointResolver = &defaultVirtualNodeEndpointResolver{}
 
 type defaultVirtualNodeEndpointResolver struct {
-	PodsWrapper k8s.PodsWrapper
+	PodsWrapper k8s.PodsRepository
 	log         logr.Logger
 }
 

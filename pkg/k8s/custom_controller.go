@@ -52,25 +52,25 @@ type Controller interface {
 // PodController is an Informer which converts Pod Objects and notifies corresponding event handlers via Channels
 type PodController struct {
 	// ClientSet is the kubernetes client set
-	ClientSet *kubernetes.Clientset
+	clientSet *kubernetes.Clientset
 	// PageLimit is the number of objects returned per page on a list operation
-	PageLimit int64
+	pageLimit int64
 	// Namespace to list/watch for
-	Namespace string
+	namespace string
 	// converter is the converter implementation that converts the k8s
 	// object before storing in the data store
-	Converter Converter
+	converter Converter
 	// ResyncPeriod how often to sync using list with the API Server
-	ResyncPeriod time.Duration
+	resyncPeriod time.Duration
 	// RetryOnError whether item should be retried on error. Should remain false in usual use case
-	RetryOnError bool
+	retryOnError bool
 	// Queue is the Delta FIFO queue
-	Queue *cache.DeltaFIFO
+	queue *cache.DeltaFIFO
 	// PodEventNotificationChan channel will be notified for all pod events
-	PodEventNotificationChan chan<- PodEvent
+	podEventNotificationChan chan<- GenericEvent
 
 	// Log for custom controller
-	Log logr.Logger
+	log logr.Logger
 	// Controller is the K8s Controller
 	controller cache.Controller
 	// dataStore with the converted k8s object. It should not be directly accessed and used with
@@ -78,24 +78,40 @@ type PodController struct {
 	dataStore cache.Indexer
 }
 
+// NewPodController returns a new podController object
+func NewPodController(clientSet *kubernetes.Clientset, pageLimit int64, namesspace string, converter Converter, resyncPeriod time.Duration,
+	retryOnError bool, podEventNotificationChan chan<- GenericEvent, log logr.Logger) *PodController {
+	p := &PodController{
+		clientSet:                clientSet,
+		pageLimit:                pageLimit,
+		namespace:                namesspace,
+		converter:                converter,
+		resyncPeriod:             resyncPeriod,
+		retryOnError:             retryOnError,
+		podEventNotificationChan: podEventNotificationChan,
+		log:                      log,
+	}
+	p.dataStore = cache.NewIndexer(cache.MetaNamespaceKeyFunc, NamespaceKeyIndexerFunc())
+	p.queue = cache.NewDeltaFIFO(cache.MetaNamespaceKeyFunc, p.dataStore)
+	return p
+}
+
 // StartController starts the custom controller by doing a list and watch on the specified k8s
 // resource. The controller would store the converted k8s object in the provided indexer. The
 // stop channel should be notified to stop the controller
-func (c *PodController) StartController(dataStore cache.Indexer, stopChanel <-chan struct{}) {
-	c.dataStore = dataStore
-
+func (c *PodController) StartController(stopChanel <-chan struct{}) {
 	config := &cache.Config{
-		Queue: c.Queue,
-		ListerWatcher: newListWatcher(c.ClientSet.CoreV1().RESTClient(),
-			c.Converter.Resource(), c.Namespace, c.PageLimit, c.Converter),
-		ObjectType:       c.Converter.ResourceType(),
-		FullResyncPeriod: c.ResyncPeriod,
-		RetryOnError:     c.RetryOnError,
+		Queue: c.queue,
+		ListerWatcher: newListWatcher(c.clientSet.CoreV1().RESTClient(),
+			c.converter.Resource(), c.namespace, c.pageLimit, c.converter),
+		ObjectType:       c.converter.ResourceType(),
+		FullResyncPeriod: c.resyncPeriod,
+		RetryOnError:     c.retryOnError,
 		Process: func(obj interface{}) error {
 			// from oldest to newest
 			for _, d := range obj.(cache.Deltas) {
 				// Strip down the pod object and keep only the required details
-				convertedObj, err := c.Converter.ConvertObject(d.Object)
+				convertedObj, err := c.converter.ConvertObject(d.Object)
 				if err != nil {
 					return err
 				}
@@ -130,8 +146,10 @@ func (c *PodController) StartController(dataStore cache.Indexer, stopChanel <-ch
 
 // GetDataStore returns the data store when it has successfully synced with API Server
 func (c *PodController) GetDataStore() cache.Indexer {
+	// Custom data store, it should not be accessed directly as the cache could be out of sync
+	// on startup. Must be accessed from the pod controller's data store instead
 	for c.controller == nil || (!c.controller.HasSynced() && c.controller.LastSyncResourceVersion() == "") {
-		c.Log.Info("waiting for controller to sync")
+		c.log.Info("waiting for controller to sync")
 		time.Sleep(time.Second * 5)
 	}
 	return c.dataStore
@@ -187,7 +205,7 @@ func (c *PodController) notifyChannelOnCreate(obj interface{}) error {
 	if err != nil {
 		return err
 	}
-	c.PodEventNotificationChan <- PodEvent{
+	c.podEventNotificationChan <- GenericEvent{
 		EventType: CREATE,
 		Meta:      meta,
 		Object:    obj.(runtime.Object),
@@ -197,22 +215,22 @@ func (c *PodController) notifyChannelOnCreate(obj interface{}) error {
 
 // notifyChannelOnCreate notifies the add event on the appropriate channel
 func (c *PodController) notifyChannelOnUpdate(oldObj, newObj interface{}) error {
-	metaOld, err := apimeta.Accessor(oldObj)
+	oldMeta, err := apimeta.Accessor(oldObj)
 	if err != nil {
 		return err
 	}
 
-	metaNew, err := apimeta.Accessor(newObj)
+	newMeta, err := apimeta.Accessor(newObj)
 	if err != nil {
 		return err
 	}
 
-	c.PodEventNotificationChan <- PodEvent{
+	c.podEventNotificationChan <- GenericEvent{
 		EventType: UPDATE,
-		MetaOld:   metaOld,
-		ObjectOld: oldObj.(runtime.Object),
-		MetaNew:   metaNew,
-		ObjectNew: newObj.(runtime.Object),
+		OldMeta:   oldMeta,
+		OldObject: oldObj.(runtime.Object),
+		Meta:      newMeta,
+		Object:    newObj.(runtime.Object),
 	}
 	return nil
 }
@@ -223,10 +241,10 @@ func (c *PodController) notifyChannelOnDelete(obj interface{}) error {
 	if err != nil {
 		return err
 	}
-	c.PodEventNotificationChan <- PodEvent{
+	c.podEventNotificationChan <- GenericEvent{
 		EventType: DELETE,
-		Meta:      meta,
-		Object:    obj.(runtime.Object),
+		OldMeta:   meta,
+		OldObject: obj.(runtime.Object),
 	}
 	return nil
 }

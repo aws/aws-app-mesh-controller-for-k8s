@@ -4,14 +4,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/cache"
 )
 
 const (
 	ConditionAWSCloudMapHealthy = "conditions.appmesh.k8s.aws/aws-cloudmap-healthy"
-	NodeNameSpec                = "nodeName"
-	Namespace                   = "namespace"
 )
 
 // GetPodCondition will get pointer to Pod's existing condition.
@@ -22,24 +18,6 @@ func GetPodCondition(pod *corev1.Pod, conditionType corev1.PodConditionType) *co
 		}
 	}
 	return nil
-}
-
-// PodNamespaceIndexer returns indexer to index Pods in datastore using namespace
-func PodNamespaceIndexer() cache.Indexers {
-	indexer := map[string]cache.IndexFunc{}
-	indexer[Namespace] = func(obj interface{}) (strings []string, err error) {
-		return []string{obj.(*corev1.Pod).Namespace}, nil
-	}
-	return indexer
-}
-
-// PodNSKeyIndexer is the key function to index the pod object using namespace/name
-func PodNSKeyIndexer(obj interface{}) (string, error) {
-	pod := obj.(*corev1.Pod)
-	return types.NamespacedName{
-		Namespace: pod.Namespace,
-		Name:      pod.Name,
-	}.String(), nil
 }
 
 // UpdatePodCondition will update Pod's condition. returns whether it's updated.

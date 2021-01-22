@@ -35,7 +35,7 @@ type cloudMapReconciler struct {
 	finalizerManager            k8s.FinalizerManager
 	cloudMapResourceManager     cloudmap.ResourceManager
 	enqueueRequestsForPodEvents handler.EventHandler
-	podEventNotificationChan    <-chan k8s.PodEvent
+	podEventNotificationChan    <-chan k8s.GenericEvent
 }
 
 // NewCloudMapReconciler that can respond to pod events (Create/Update/Delete) via notification channels
@@ -43,8 +43,8 @@ func NewCloudMapReconciler(
 	k8sClient client.Client,
 	finalizerManager k8s.FinalizerManager,
 	cloudMapResourceManager cloudmap.ResourceManager,
-	log logr.Logger,
-	podEventNotificationChan <-chan k8s.PodEvent) *cloudMapReconciler {
+	podEventNotificationChan <-chan k8s.GenericEvent,
+	log logr.Logger) *cloudMapReconciler {
 	return &cloudMapReconciler{
 		k8sClient:                   k8sClient,
 		log:                         log,

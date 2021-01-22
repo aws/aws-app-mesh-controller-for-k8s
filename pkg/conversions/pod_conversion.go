@@ -21,19 +21,23 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-const (
-	AppMeshPrefix = "appmesh.k8s.aws"
-)
-
 // PodConverter implements the interface to convert k8s pod object to a stripped down
 // version of pod to save on memory utilized
-type PodConverter struct {
+type podConverter struct {
 	K8sResource     string
 	K8sResourceType runtime.Object
 }
 
+// NewPodConverter returns podConverter object
+func NewPodConverter(k8sResource string, k8sResourceType runtime.Object) *podConverter {
+	return &podConverter{
+		K8sResource:     k8sResource,
+		K8sResourceType: k8sResourceType,
+	}
+}
+
 // ConvertObject converts original pod object to stripped down pod object
-func (c *PodConverter) ConvertObject(originalObj interface{}) (convertedObj interface{}, err error) {
+func (c *podConverter) ConvertObject(originalObj interface{}) (convertedObj interface{}, err error) {
 	pod, ok := originalObj.(*v1.Pod)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert object to pod")
@@ -42,7 +46,7 @@ func (c *PodConverter) ConvertObject(originalObj interface{}) (convertedObj inte
 }
 
 // ConvertList converts the original pod list to stripped down list of pod objects
-func (c *PodConverter) ConvertList(originalList interface{}) (convertedList interface{}, err error) {
+func (c *podConverter) ConvertList(originalList interface{}) (convertedList interface{}, err error) {
 	podList, ok := originalList.(*v1.PodList)
 	if !ok {
 		return nil, fmt.Errorf("faield to convert object to pod list")
@@ -63,18 +67,18 @@ func (c *PodConverter) ConvertList(originalList interface{}) (convertedList inte
 }
 
 // Resource to watch and list
-func (c *PodConverter) Resource() string {
+func (c *podConverter) Resource() string {
 	return c.K8sResource
 }
 
 // ResourceType to watch and list
-func (c *PodConverter) ResourceType() runtime.Object {
+func (c *podConverter) ResourceType() runtime.Object {
 	return c.K8sResourceType
 }
 
 // StripDownPod removes all the extra details from pod that are not
 // required by the controller.
-func (c *PodConverter) stripDownPod(pod *v1.Pod) *v1.Pod {
+func (c *podConverter) stripDownPod(pod *v1.Pod) *v1.Pod {
 	return &v1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:              pod.Name,

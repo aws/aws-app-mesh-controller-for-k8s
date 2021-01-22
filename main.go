@@ -41,7 +41,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"k8s.io/client-go/tools/cache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -128,11 +127,7 @@ func main() {
 		"BuildDate", version.BuildDate,
 	)
 
-	podEventNotificationChan := make(chan k8s.PodEvent)
-
-	// Custom data store, it should not be accessed directly as the cache could be out of sync
-	// on startup. Must be accessed from the pod controller's data store instead
-	dataStore := cache.NewIndexer(k8s.PodNSKeyIndexer, k8s.PodNamespaceIndexer())
+	podEventNotificationChan := make(chan k8s.GenericEvent)
 
 	kubeConfig := ctrl.GetConfigOrDie()
 	// Set the API Server QPS and Burst
@@ -151,19 +146,16 @@ func main() {
 		HealthProbeBindAddress: healthProbeBindAddress,
 	})
 
-	podController := &k8s.PodController{
-		ClientSet:    clientSet,
-		PageLimit:    int64(listPageLimit),
-		Namespace:    metav1.NamespaceAll,
-		ResyncPeriod: syncPeriod,
-		Queue:        cache.NewDeltaFIFO(k8s.PodNSKeyIndexer, dataStore),
-		Converter: &conversions.PodConverter{
-			K8sResource:     "pods",
-			K8sResourceType: &corev1.Pod{},
-		},
-		PodEventNotificationChan: podEventNotificationChan,
-		Log:                      setupLog.WithName("pod custom controller"),
-	}
+	converter := conversions.NewPodConverter("pods", &corev1.Pod{})
+
+	podController := k8s.NewPodController(
+		clientSet, listPageLimit,
+		metav1.NamespaceAll,
+		converter,
+		syncPeriod,
+		false,
+		podEventNotificationChan,
+		setupLog.WithName("pod custom controller"))
 
 	if err != nil {
 		setupLog.Error(err, "unable to start app mesh controller")
@@ -176,7 +168,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	PodsWrapper := k8s.NewPodsWrapper(mgr.GetClient(), podController)
+	PodsWrapper := k8s.NewPodsRepository(mgr.GetClient(), podController)
 
 	stopChan := ctrl.SetupSignalHandler()
 	referencesIndexer := references.NewDefaultObjectReferenceIndexer(mgr.GetCache(), mgr.GetFieldIndexer())
@@ -202,8 +194,8 @@ func main() {
 		mgr.GetClient(),
 		finalizerManager,
 		cloudMapResManager,
-		ctrl.Log.WithName("controllers").WithName("CloudMap"),
-		podEventNotificationChan)
+		podEventNotificationChan,
+		ctrl.Log.WithName("controllers").WithName("CloudMap"))
 
 	vsReconciler := appmeshcontroller.NewVirtualServiceReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vsResManager, ctrl.Log.WithName("controllers").WithName("VirtualService"))
 	vrReconciler := appmeshcontroller.NewVirtualRouterReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vrResManager, ctrl.Log.WithName("controllers").WithName("VirtualRouter"))
@@ -269,7 +261,7 @@ func main() {
 		setupLog.Info("starting custom controller")
 
 		// Start the custom controller
-		podController.StartController(dataStore, stop)
+		podController.StartController(stop)
 		// If the manager is stopped, signal the controller to stop as well.
 		<-stop
 

@@ -10,28 +10,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// PodsWrapper represents an interface with all the common operations on pod objects
-type PodsWrapper interface {
+// PodsRepository represents an interface with all the common operations on pod objects
+type PodsRepository interface {
 	GetPod(namespace string, name string) (*v1.Pod, error)
 	ListPodsWithMatchingLabels(opts client.ListOptions) (*v1.PodList, error)
 }
 
 // k8sWrapper is the wrapper object with the client
-type podsWrapper struct {
+type podsRepository struct {
 	podController *PodController
 	cacheClient   client.Client
 }
 
-// NewPodsWrapper returns a new PodsWrapper
-func NewPodsWrapper(client client.Client, podController *PodController) PodsWrapper {
-	return &podsWrapper{
+// NewPodsRepository returns a new PodsWrapper
+func NewPodsRepository(client client.Client, podController *PodController) PodsRepository {
+	return &podsRepository{
 		cacheClient:   client,
 		podController: podController,
 	}
 }
 
 // GetPod returns the pod object using NamespacedName
-func (k *podsWrapper) GetPod(namespace string, name string) (*v1.Pod, error) {
+func (k *podsRepository) GetPod(namespace string, name string) (*v1.Pod, error) {
 	nsName := types.NamespacedName{
 		Namespace: namespace,
 		Name:      name,
@@ -49,12 +49,12 @@ func (k *podsWrapper) GetPod(namespace string, name string) (*v1.Pod, error) {
 // ListPods return list of pods within a Namespace having Matching Labels
 // ListOptions.LabelSelector must be specified to return pods with matching labels
 // ListOptions.Namespace will scope result list to a given namespace
-func (k *podsWrapper) ListPodsWithMatchingLabels(opts client.ListOptions) (*v1.PodList, error) {
+func (k *podsRepository) ListPodsWithMatchingLabels(opts client.ListOptions) (*v1.PodList, error) {
 	var items []interface{}
 	var err error
 
 	if opts.Namespace != "" {
-		items, err = k.podController.GetDataStore().ByIndex(Namespace, opts.Namespace)
+		items, err = k.podController.GetDataStore().ByIndex(NamespaceIndexKey, opts.Namespace)
 	} else {
 		items = k.podController.GetDataStore().List()
 	}

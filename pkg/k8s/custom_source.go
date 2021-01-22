@@ -11,6 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const (
@@ -18,45 +19,37 @@ const (
 	defaultBufferSize = 1024
 )
 
-// Source is a source of events
-type Source interface {
-	// Start is internal and should be called only by the Controller to register an EventHandler with the Informer
-	// to enqueue reconcile.Requests.
-	Start(handler.EventHandler, workqueue.RateLimitingInterface, ...predicate.Predicate) error
-}
-
-var _ Source = &NotificationChannel{}
+var _ source.Source = &NotificationChannel{}
 
 // EventType identifies type of PodEvent (CREATE/UPDATE/DELETE)
 type EventType int
 
 const (
+	// CREATE event for given object
 	CREATE EventType = 1
+
+	// DELETE event for given object
 	DELETE EventType = 2
+
+	// UPDATE event for given object
 	UPDATE EventType = 3
 )
 
-// PodEvent is a wrapper for Create/Update/Delete Events
-type PodEvent struct {
+// GenericEvent is a wrapper for Create/Update/Delete Events
+type GenericEvent struct {
 	EventType
 
-	// Meta is the ObjectMeta of the Kubernetes Type that was created
+	// Meta is the ObjectMeta from the incoming request
 	Meta metav1.Object
 
-	// Object is the object from the event
+	// Object is the object from the incoming request
 	Object runtime.Object
 
-	// MetaOld is the ObjectMeta of the Kubernetes Type that was updated (before the update)
-	MetaOld metav1.Object
+	// OldMeta is the ObjectMeta of existing object.Only populated for DELETE and UPDATE requests.
+	OldMeta metav1.Object
 
-	// ObjectOld is the object from the event
-	ObjectOld runtime.Object
-
-	// MetaNew is the ObjectMeta of the Kubernetes Type that was updated (after the update)
-	MetaNew metav1.Object
-
-	// ObjectNew is the object from the event
-	ObjectNew runtime.Object
+	// OldObject is the existing object. Only populated for DELETE and UPDATE requests.
+	OldObject runtime.Object
 }
 
 // NotificationChannel monitors channels of type Create/Update/Delete
@@ -67,10 +60,10 @@ type NotificationChannel struct {
 	// stop is to end ongoing goroutine, and close the Create channel
 	stop <-chan struct{}
 
-	Source <-chan PodEvent
+	Source <-chan GenericEvent
 
 	// dest is the destination channels of the Pod event handlers
-	dest []chan PodEvent
+	dest []chan GenericEvent
 
 	// DestBufferSize is the specified buffer size of dest channels.
 	// Default to 1024 if not specified.
@@ -121,16 +114,16 @@ func (cs *NotificationChannel) Start(
 		go cs.syncLoop()
 	})
 
-	dst := make(chan PodEvent, cs.DestBufferSize)
+	dst := make(chan GenericEvent, cs.DestBufferSize)
 	go func() {
 		for evt := range dst {
 			switch evt.EventType {
 			case CREATE:
 				handler.Create(event.CreateEvent{Meta: evt.Meta, Object: evt.Object}, queue)
 			case DELETE:
-				handler.Delete(event.DeleteEvent{Meta: evt.Meta, Object: evt.Object}, queue)
+				handler.Delete(event.DeleteEvent{Meta: evt.OldMeta, Object: evt.OldObject}, queue)
 			case UPDATE:
-				handler.Update(event.UpdateEvent{MetaOld: evt.MetaOld, ObjectOld: evt.ObjectOld, MetaNew: evt.MetaNew, ObjectNew: evt.ObjectNew}, queue)
+				handler.Update(event.UpdateEvent{MetaOld: evt.OldMeta, ObjectOld: evt.OldObject, MetaNew: evt.Meta, ObjectNew: evt.Object}, queue)
 			default:
 				_ = fmt.Errorf("Invalid Type %T", evt.EventType)
 			}
@@ -154,7 +147,7 @@ func (cs *NotificationChannel) doStop() {
 	}
 }
 
-func (cs *NotificationChannel) distribute(evt PodEvent) {
+func (cs *NotificationChannel) distribute(evt GenericEvent) {
 	cs.destLock.Lock()
 	defer cs.destLock.Unlock()
 
