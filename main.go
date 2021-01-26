@@ -129,9 +129,6 @@ func main() {
 	eventNotificationChan := make(chan k8s.GenericEvent)
 
 	kubeConfig := ctrl.GetConfigOrDie()
-	// Set the API Server QPS and Burst
-	kubeConfig.QPS = float32(defaultAPIServerQPS)
-	kubeConfig.Burst = defaultAPIServerBurst
 
 	clientSet, err := kubernetes.NewForConfig(kubeConfig)
 
