@@ -147,6 +147,8 @@ func (cs *NotificationChannel) doStop() {
 	}
 }
 
+// distribute reads the Source channel and add events to its
+// internal destination buffer
 func (cs *NotificationChannel) distribute(evt GenericEvent) {
 	cs.destLock.Lock()
 	defer cs.destLock.Unlock()
@@ -161,6 +163,8 @@ func (cs *NotificationChannel) distribute(evt GenericEvent) {
 	}
 }
 
+// syncLoop keeps running and it monitors the stop and Source channel
+// If there is an event on Source channel it dispatches it to internal destination buffer
 func (cs *NotificationChannel) syncLoop() {
 	for {
 		select {

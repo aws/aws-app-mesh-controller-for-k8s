@@ -145,13 +145,11 @@ func main() {
 		HealthProbeBindAddress: healthProbeBindAddress,
 	})
 
-	converter := conversions.NewPodConverter()
-
 	customController := k8s.NewCustomController(
 		clientSet,
 		listPageLimit,
 		metav1.NamespaceAll,
-		converter,
+		conversions.NewPodConverter(),
 		syncPeriod,
 		false,
 		eventNotificationChan,
