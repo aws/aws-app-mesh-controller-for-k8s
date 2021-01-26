@@ -65,9 +65,9 @@ type NotificationChannel struct {
 	// dest is the destination channels of the Pod event handlers
 	dest []chan GenericEvent
 
-	// DestBufferSize is the specified buffer size of dest channels.
+	// destBufferSize is the specified buffer size of dest channels.
 	// Default to 1024 if not specified.
-	DestBufferSize int
+	destBufferSize int
 
 	// destLock is to ensure the destination channels are safely added/removed
 	destLock sync.Mutex
@@ -105,8 +105,8 @@ func (cs *NotificationChannel) Start(
 	}
 
 	// use default value if DestBufferSize not specified
-	if cs.DestBufferSize == 0 {
-		cs.DestBufferSize = defaultBufferSize
+	if cs.destBufferSize == 0 {
+		cs.destBufferSize = defaultBufferSize
 	}
 
 	cs.once.Do(func() {
@@ -114,7 +114,7 @@ func (cs *NotificationChannel) Start(
 		go cs.syncLoop()
 	})
 
-	dst := make(chan GenericEvent, cs.DestBufferSize)
+	dst := make(chan GenericEvent, cs.destBufferSize)
 	go func() {
 		for evt := range dst {
 			switch evt.EventType {

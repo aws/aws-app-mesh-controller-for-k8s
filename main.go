@@ -168,7 +168,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	podsRepository := k8s.NewPodsRepository(mgr.GetClient(), customController)
+	podsRepository := k8s.NewPodsRepository(customController)
 
 	stopChan := ctrl.SetupSignalHandler()
 	referencesIndexer := references.NewDefaultObjectReferenceIndexer(mgr.GetCache(), mgr.GetFieldIndexer())

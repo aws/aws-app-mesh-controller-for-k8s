@@ -19,13 +19,11 @@ type PodsRepository interface {
 // podsRepository is the wrapper object with the client
 type podsRepository struct {
 	customController *CustomController
-	cacheClient      client.Client
 }
 
 // NewPodsRepository returns a new PodsRepository
-func NewPodsRepository(client client.Client, customController *CustomController) PodsRepository {
+func NewPodsRepository(customController *CustomController) PodsRepository {
 	return &podsRepository{
-		cacheClient:      client,
 		customController: customController,
 	}
 }

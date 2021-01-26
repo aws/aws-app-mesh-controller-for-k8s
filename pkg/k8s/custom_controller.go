@@ -156,6 +156,8 @@ func (c *CustomController) StartController(stopChanel <-chan struct{}) {
 func (c *CustomController) GetDataStore() cache.Indexer {
 	// Custom data store, it should not be accessed directly as the cache could be out of sync
 	// on startup. Must be accessed from the pod controller's data store instead
+	// TODO: we should refactor this in the future, as this approach will make controllers to run without having pod synced.
+	// (It thus blocks when pod information is accessed)
 	for c.controller == nil || (!c.controller.HasSynced() && c.controller.LastSyncResourceVersion() == "") {
 		c.log.Info("waiting for controller to sync")
 		time.Sleep(time.Second * 5)

@@ -50,7 +50,7 @@ func (c *podConverter) ConvertObject(originalObj interface{}) (convertedObj inte
 func (c *podConverter) ConvertList(originalList interface{}) (convertedList interface{}, err error) {
 	podList, ok := originalList.(*v1.PodList)
 	if !ok {
-		return nil, fmt.Errorf("faield to convert object to pod list")
+		return nil, fmt.Errorf("failed to convert object to pod list")
 	}
 	// We need to set continue in order to allow the pagination to work on converted
 	// pod list object
