@@ -36,7 +36,7 @@ var _ = Describe("test dynamically generated symmetrical mesh", func() {
 
 		BeforeEach(func() {
 			stackPrototype = fishapp.DynamicStack{
-				IsTLSEnabled:                true,
+				IsTLSEnabled: true,
 				//Please set "enable-sds" to true in controller, prior to enabling this.
 				//*TODO* Rename it to include SDS in it's name once we convert file based TLS test -> file based mTLS test.
 				IsmTLSEnabled:               false,
