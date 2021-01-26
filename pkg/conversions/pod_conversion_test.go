@@ -46,9 +46,7 @@ func TestConvertObj(t *testing.T) {
 	}
 
 	convertedObj, err := podConverter.ConvertObject(oldPod)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
 	convertedPod, ok := convertedObj.(*corev1.Pod)
 	if !ok {
@@ -120,9 +118,8 @@ func TestConvertList(t *testing.T) {
 	}
 
 	convertedList, err := podConverter.ConvertList(podList)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
 	assert.NotNil(t, convertedList, "Converted List cannot be Nil")
 	assert.Equal(t, len(convertedList.(*corev1.PodList).Items), 2, "Length mismatch")
 	convertedPods := convertedList.(*v1.PodList).Items
