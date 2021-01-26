@@ -127,8 +127,9 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 	meshName := m.getAugmentedMeshName()
 	virtualGatewayName := aws.StringValue(m.vg.Spec.AWSName)
 	preview := m.getPreview(pod)
+	sdsEnabled := m.mutatorConfig.enableSDS
 	if m.mutatorConfig.enableSDS && isSDSDisabled(pod) {
-		m.mutatorConfig.enableSDS = false
+		sdsEnabled = false
 	}
 
 	return VirtualGatewayEnvoyVariables{
@@ -136,7 +137,7 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 		MeshName:           meshName,
 		VirtualGatewayName: virtualGatewayName,
 		Preview:            preview,
-		EnableSDS:          m.mutatorConfig.enableSDS,
+		EnableSDS:          sdsEnabled,
 		SdsUdsPath:         m.mutatorConfig.sdsUdsPath,
 		LogLevel:           m.mutatorConfig.logLevel,
 		AdminAccessPort:    m.mutatorConfig.adminAccessPort,

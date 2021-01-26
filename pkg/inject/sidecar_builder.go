@@ -57,6 +57,14 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables) corev1.Container {
 		},
 	}
 
+	if vars.EnableSDS {
+		sds_uds_env := corev1.EnvVar{
+			Name:  "APPMESH_SDS_SOCKET_PATH",
+			Value: vars.SdsUdsPath,
+		}
+		env = append(env, sds_uds_env)
+	}
+
 	if vars.AdminAccessPort != 0 {
 		port_env := corev1.EnvVar{
 			// Specify a custom admin port for Envoy to listen on

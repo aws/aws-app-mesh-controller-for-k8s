@@ -18,6 +18,8 @@ type EnvoyTemplateVariables struct {
 	MeshName                     string
 	VirtualNodeName              string
 	Preview                      string
+	EnableSDS                    bool
+	SdsUdsPath                   string
 	LogLevel                     string
 	AdminAccessPort              int32
 	AdminAccessLogFile           string
@@ -40,6 +42,8 @@ type envoyMutatorConfig struct {
 	accountID                  string
 	awsRegion                  string
 	preview                    bool
+	enableSDS                  bool
+	sdsUdsPath                 string
 	logLevel                   string
 	adminAccessPort            int32
 	adminAccessLogFile         string
@@ -102,6 +106,9 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 
 	m.mutateSecretMounts(pod, &container, secretMounts)
+	if m.mutatorConfig.enableSDS && !isSDSDisabled(pod) {
+		mutateSDSMounts(pod, &container, m.mutatorConfig.sdsUdsPath)
+	}
 	pod.Spec.Containers = append(pod.Spec.Containers, container)
 	return nil
 }
@@ -110,12 +117,18 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 	meshName := m.getAugmentedMeshName()
 	virtualNodeName := aws.StringValue(m.vn.Spec.AWSName)
 	preview := m.getPreview(pod)
+	sdsEnabled := m.mutatorConfig.enableSDS
+	if m.mutatorConfig.enableSDS && isSDSDisabled(pod) {
+		sdsEnabled = false
+	}
 
 	return EnvoyTemplateVariables{
 		AWSRegion:                    m.mutatorConfig.awsRegion,
 		MeshName:                     meshName,
 		VirtualNodeName:              virtualNodeName,
 		Preview:                      preview,
+		EnableSDS:                    sdsEnabled,
+		SdsUdsPath:                   m.mutatorConfig.sdsUdsPath,
 		LogLevel:                     m.mutatorConfig.logLevel,
 		AdminAccessPort:              m.mutatorConfig.adminAccessPort,
 		AdminAccessLogFile:           m.mutatorConfig.adminAccessLogFile,
