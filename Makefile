@@ -47,6 +47,7 @@ deploy: check-env manifests
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=controller-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	kustomize build config/crd > config/helm/appmesh-controller/crds/crds.yaml
 
 # Run go fmt against code
 fmt:
