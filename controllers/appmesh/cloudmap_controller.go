@@ -16,17 +16,16 @@ package controllers
 
 import (
 	"context"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/go-logr/logr"
-	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // CloudMapReconciler reconciles a VirtualNode pod instance to CloudMap Service
@@ -36,16 +35,23 @@ type cloudMapReconciler struct {
 	finalizerManager            k8s.FinalizerManager
 	cloudMapResourceManager     cloudmap.ResourceManager
 	enqueueRequestsForPodEvents handler.EventHandler
+	podEventNotificationChan    <-chan k8s.GenericEvent
 }
 
-func NewCloudMapReconciler(k8sClient client.Client, finalizerManager k8s.FinalizerManager,
-	cloudMapResourceManager cloudmap.ResourceManager, log logr.Logger) *cloudMapReconciler {
+// NewCloudMapReconciler that can respond to pod events (Create/Update/Delete) via notification channels
+func NewCloudMapReconciler(
+	k8sClient client.Client,
+	finalizerManager k8s.FinalizerManager,
+	cloudMapResourceManager cloudmap.ResourceManager,
+	podEventNotificationChan <-chan k8s.GenericEvent,
+	log logr.Logger) *cloudMapReconciler {
 	return &cloudMapReconciler{
 		k8sClient:                   k8sClient,
 		log:                         log,
 		finalizerManager:            finalizerManager,
 		cloudMapResourceManager:     cloudMapResourceManager,
 		enqueueRequestsForPodEvents: cloudmap.NewEnqueueRequestsForPodEvents(k8sClient, log),
+		podEventNotificationChan:    podEventNotificationChan,
 	}
 }
 
@@ -60,10 +66,11 @@ func (r *cloudMapReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 }
 
 func (r *cloudMapReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("cloudMap").
 		For(&appmesh.VirtualNode{}).
-		Watches(&source.Kind{Type: &corev1.Pod{}}, r.enqueueRequestsForPodEvents).
+		Watches(&k8s.NotificationChannel{Source: r.podEventNotificationChan}, r.enqueueRequestsForPodEvents).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
 		Complete(r)
 }

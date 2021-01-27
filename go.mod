@@ -26,6 +26,7 @@ require (
 	k8s.io/client-go v0.18.2
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.6.0
+	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78 // indirect
 )
 
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20201221093633-bc327ba9c2f0

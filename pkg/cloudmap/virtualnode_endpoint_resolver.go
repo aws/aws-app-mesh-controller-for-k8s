@@ -2,39 +2,41 @@ package cloudmap
 
 import (
 	"context"
+
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 )
 
 type VirtualNodeEndpointResolver interface {
 	Resolve(ctx context.Context, vn *appmesh.VirtualNode) ([]*corev1.Pod, []*corev1.Pod, []*corev1.Pod, error)
 }
 
-func NewDefaultVirtualNodeEndpointResolver(k8sClient client.Client, log logr.Logger) *defaultVirtualNodeEndpointResolver {
+func NewDefaultVirtualNodeEndpointResolver(podsRepository k8s.PodsRepository, log logr.Logger) *defaultVirtualNodeEndpointResolver {
 	return &defaultVirtualNodeEndpointResolver{
-		k8sClient: k8sClient,
-		log:       log,
+		podsRepository: podsRepository,
+		log:            log,
 	}
 }
 
 var _ VirtualNodeEndpointResolver = &defaultVirtualNodeEndpointResolver{}
 
 type defaultVirtualNodeEndpointResolver struct {
-	k8sClient client.Client
-	log       logr.Logger
+	podsRepository k8s.PodsRepository
+	log            logr.Logger
 }
 
 func (e *defaultVirtualNodeEndpointResolver) Resolve(ctx context.Context, vNode *appmesh.VirtualNode) ([]*corev1.Pod, []*corev1.Pod, []*corev1.Pod, error) {
-	var podsList corev1.PodList
+	var podsList *corev1.PodList
+	var err error
 	var listOptions client.ListOptions
 	listOptions.LabelSelector, _ = metav1.LabelSelectorAsSelector(vNode.Spec.PodSelector)
 	listOptions.Namespace = vNode.Namespace
 
-	if err := e.k8sClient.List(ctx, &podsList, &listOptions); err != nil {
+	if podsList, err = e.podsRepository.ListPodsWithMatchingLabels(listOptions); err != nil {
 		return nil, nil, nil, err
 	}
 

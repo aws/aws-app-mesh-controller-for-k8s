@@ -17,6 +17,9 @@ limitations under the License.
 package main
 
 import (
+	"os"
+	"time"
+
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
@@ -24,17 +27,18 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualrouter"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
 	"github.com/spf13/pflag"
-	"os"
-	"time"
 
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 
 	zapraw "go.uber.org/zap"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -45,6 +49,8 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualgateway"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appmeshv1beta2 "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	appmeshcontroller "github.com/aws/aws-app-mesh-controller-for-k8s/controllers/appmesh"
@@ -76,6 +82,7 @@ func main() {
 	var enableLeaderElection bool
 	var enableCustomHealthCheck bool
 	var logLevel string
+	var listPageLimit int64
 	var healthProbeBindAddress string
 	awsCloudConfig := aws.CloudConfig{ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig()}
 	injectConfig := inject.Config{}
@@ -89,8 +96,11 @@ func main() {
 	fs.BoolVar(&enableCustomHealthCheck, "enable-custom-health-check", false,
 		"Enable custom healthCheck when using cloudMap serviceDiscovery")
 	fs.StringVar(&logLevel, "log-level", "info", "Set the controller log level - info(default), debug")
+	fs.Int64Var(&listPageLimit, "page-limit", 100,
+		"The page size limiting the number of response for list operation to API Server")
 	fs.StringVar(&healthProbeBindAddress, flagHealthProbeBindAddr, defaultHealthProbeBindAddress,
 		"The address the health probes binds to.")
+
 	awsCloudConfig.BindFlags(fs)
 	injectConfig.BindFlags(fs)
 	cloudMapConfig.BindFlags(fs)
@@ -114,7 +124,13 @@ func main() {
 		"BuildDate", version.BuildDate,
 	)
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	eventNotificationChan := make(chan k8s.GenericEvent)
+
+	kubeConfig := ctrl.GetConfigOrDie()
+
+	clientSet, err := kubernetes.NewForConfig(kubeConfig)
+
+	mgr, err := ctrl.NewManager(kubeConfig, ctrl.Options{
 		Scheme:                 scheme,
 		SyncPeriod:             &syncPeriod,
 		MetricsBindAddress:     metricsAddr,
@@ -123,6 +139,17 @@ func main() {
 		LeaderElectionID:       "appmesh-controller-leader-election",
 		HealthProbeBindAddress: healthProbeBindAddress,
 	})
+
+	customController := k8s.NewCustomController(
+		clientSet,
+		listPageLimit,
+		metav1.NamespaceAll,
+		conversions.NewPodConverter(),
+		syncPeriod,
+		false,
+		eventNotificationChan,
+		setupLog.WithName("pod custom controller"))
+
 	if err != nil {
 		setupLog.Error(err, "unable to start app mesh controller")
 		os.Exit(1)
@@ -134,13 +161,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	podsRepository := k8s.NewPodsRepository(customController)
+
 	stopChan := ctrl.SetupSignalHandler()
 	referencesIndexer := references.NewDefaultObjectReferenceIndexer(mgr.GetCache(), mgr.GetFieldIndexer())
 	finalizerManager := k8s.NewDefaultFinalizerManager(mgr.GetClient(), ctrl.Log)
 	meshMembersFinalizer := mesh.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("mesh-members"), ctrl.Log)
 	vgMembersFinalizer := virtualgateway.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("virtualgateway-members"), ctrl.Log)
 	referencesResolver := references.NewDefaultResolver(mgr.GetClient(), ctrl.Log)
-	virtualNodeEndpointResolver := cloudmap.NewDefaultVirtualNodeEndpointResolver(mgr.GetClient(), ctrl.Log)
+	virtualNodeEndpointResolver := cloudmap.NewDefaultVirtualNodeEndpointResolver(podsRepository, ctrl.Log)
 	cloudMapInstancesReconciler := cloudmap.NewDefaultInstancesReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log, stopChan)
 	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
 	vgResManager := virtualgateway.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
@@ -153,7 +182,14 @@ func main() {
 	vgReconciler := appmeshcontroller.NewVirtualGatewayReconciler(mgr.GetClient(), finalizerManager, vgMembersFinalizer, vgResManager, ctrl.Log.WithName("controllers").WithName("VirtualGateway"))
 	grReconciler := appmeshcontroller.NewGatewayRouteReconciler(mgr.GetClient(), finalizerManager, grResManager, ctrl.Log.WithName("controllers").WithName("GatewayRoute"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"))
-	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(mgr.GetClient(), finalizerManager, cloudMapResManager, ctrl.Log.WithName("controllers").WithName("CloudMap"))
+
+	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(
+		mgr.GetClient(),
+		finalizerManager,
+		cloudMapResManager,
+		eventNotificationChan,
+		ctrl.Log.WithName("controllers").WithName("CloudMap"))
+
 	vsReconciler := appmeshcontroller.NewVirtualServiceReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vsResManager, ctrl.Log.WithName("controllers").WithName("VirtualService"))
 	vrReconciler := appmeshcontroller.NewVirtualRouterReconciler(mgr.GetClient(), finalizerManager, referencesIndexer, vrResManager, ctrl.Log.WithName("controllers").WithName("VirtualRouter"))
 	if err = msReconciler.SetupWithManager(mgr); err != nil {
@@ -212,6 +248,20 @@ func main() {
 		setupLog.Error(err, "unable add a health check")
 		os.Exit(1)
 	}
+
+	// Only start the controller when the leader election is won
+	mgr.Add(manager.RunnableFunc(func(stop <-chan struct{}) error {
+		setupLog.Info("starting custom controller")
+
+		// Start the custom controller
+		customController.StartController(stop)
+		// If the manager is stopped, signal the controller to stop as well.
+		<-stop
+
+		setupLog.Info("stopping the controller")
+
+		return nil
+	}))
 
 	// +kubebuilder:scaffold:builder
 
