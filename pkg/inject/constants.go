@@ -43,6 +43,15 @@ const (
 	//for a particular VirtualNode.
 	AppMeshSDSAnnotation = "appmesh.k8s.aws/sds"
 
+	// AppMeshEnvAnnotation specifies the list of enviornment variables that need to be programmed on Envoy sidecars
+	// This allow passing tags like DataDog environment `DD_ENV` to Envoy to help correlate observability data
+	// Here's how a sample annotations will be like
+	//
+	//        e.g. appmesh.k8s.aws/sidecarEnv: "DD_ENV=qa1, ENV2=test"
+	//        e.g. appmesh.k8s.aws/sidecarEnv: "DD_ENV=prod"
+	//
+	AppMeshEnvAnnotation = "appmesh.k8s.aws/sidecarEnv"
+
 	//Pod Labels
 
 	//FargateProfileLabel is added by fargate-scheduler when pod is running on AWS Fargate

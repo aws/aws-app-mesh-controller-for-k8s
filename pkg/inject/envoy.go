@@ -89,8 +89,15 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 	if err != nil {
 		return err
 	}
+
 	variables := m.buildTemplateVariables(pod)
-	container := buildEnvoySidecar(variables)
+
+	customEnv, err := m.getCustomEnv(pod)
+	if err != nil {
+		return err
+	}
+
+	container := buildEnvoySidecar(variables, customEnv)
 
 	// add resource requests and limits
 	container.Resources, err = sidecarResources(getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
@@ -201,6 +208,22 @@ func (m *envoyMutator) getSecretMounts(pod *corev1.Pod) (map[string]string, erro
 		}
 	}
 	return secretMounts, nil
+}
+
+func (m *envoyMutator) getCustomEnv(pod *corev1.Pod) (map[string]string, error) {
+	customEnv := make(map[string]string)
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshEnvAnnotation]; ok {
+		for _, segment := range strings.Split(v, ",") {
+			pair := strings.Split(segment, "=")
+			if len(pair) != 2 { // EnvVariableKey=EnvVariableValue
+				return nil, errors.Errorf("malformed annotation %s, expected format: %s", AppMeshEnvAnnotation, "EnvVariableKey=EnvVariableValue")
+			}
+			envKey := strings.TrimSpace(pair[0])
+			envVal := strings.TrimSpace(pair[1])
+			customEnv[envKey] = envVal
+		}
+	}
+	return customEnv, nil
 }
 
 // containsEnvoyTracingConfigVolume checks whether pod already contains "envoy-tracing-config" volume
