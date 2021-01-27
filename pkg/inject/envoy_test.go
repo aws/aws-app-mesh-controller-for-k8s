@@ -52,6 +52,42 @@ func Test_envoyMutator_mutate(t *testing.T) {
 		},
 	}
 
+	envPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "my-pod",
+			Annotations: map[string]string{
+				"appmesh.k8s.aws/sidecarEnv": "DD_ENV=prod, TEST_ENV1=env_val1, TEST_ENV2=env_val2",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "app",
+					Image: "app/v1",
+				},
+			},
+		},
+	}
+
+	duplicateEnvPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "my-pod",
+			Annotations: map[string]string{
+				"appmesh.k8s.aws/sidecarEnv": "DD_ENV=prod, APPMESH_VIRTUAL_NODE_NAME=random_val",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "app",
+					Image: "app/v1",
+				},
+			},
+		},
+	}
+
 	annotationCpuRequest, _ := resource.ParseQuantity("128Mi")
 	annotationMemoryRequest, _ := resource.ParseQuantity("20m")
 	annotationCpuLimit, _ := resource.ParseQuantity("256Mi")
@@ -1904,6 +1940,252 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "base + custom sidecar env variables",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					enableStatsD:               true,
+					statsDAddress:              "ref:status.hostIP",
+					statsDPort:                 8125,
+				},
+			},
+			args: args{
+				pod: envPod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+					Annotations: map[string]string{
+						"appmesh.k8s.aws/sidecarEnv": "DD_ENV=prod, TEST_ENV1=env_val1, TEST_ENV2=env_val2",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "ENABLE_ENVOY_DOG_STATSD",
+									Value: "1",
+								},
+								{
+									Name:  "STATSD_PORT",
+									Value: "8125",
+								},
+								{
+									Name:  "DD_ENV",
+									Value: "prod",
+								},
+								{
+									Name:  "TEST_ENV1",
+									Value: "env_val1",
+								},
+								{
+									Name:  "TEST_ENV2",
+									Value: "env_val2",
+								},
+								{
+									Name:  "STATSD_ADDRESS",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "status.hostIP",
+										},
+									},
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "base + duplicate sidecar env ",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					sidecarCPULimits:           cpuLimits.String(),
+					sidecarMemoryLimits:        memoryLimits.String(),
+				},
+			},
+			args: args{
+				pod: duplicateEnvPod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+					Annotations: map[string]string{
+						"appmesh.k8s.aws/sidecarEnv": "DD_ENV=prod, APPMESH_VIRTUAL_NODE_NAME=random_val",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: nil,
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "DD_ENV",
+									Value: "prod",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+								Limits: corev1.ResourceList{
+									"cpu":    cpuLimits,
+									"memory": memoryLimits,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2129,6 +2411,73 @@ func Test_envoyMutator_getSecretMounts(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &envoyMutator{}
 			got, err := m.getSecretMounts(tt.args.pod)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_envoyMutator_getCustomEnv(t *testing.T) {
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string]string
+		wantErr error
+	}{
+		{
+			name: "pods with valid appmesh.k8s.aws/sidecarEnv annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/sidecarEnv": "DD_ENV=prod, TEST_ENV=env_val",
+						},
+					},
+				},
+			},
+			want: map[string]string{
+				"DD_ENV":   "prod",
+				"TEST_ENV": "env_val",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "pods with no appmesh.k8s.aws/sidecarEnv annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{},
+					},
+				},
+			},
+			want:    map[string]string{},
+			wantErr: nil,
+		},
+		{
+			name: "pods with invalid appmesh.k8s.aws/sidecarEnv annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/sidecarEnv": "DD_ENV=prod, TEST_ENV",
+						},
+					},
+				},
+			},
+			wantErr: errors.New("malformed annotation appmesh.k8s.aws/sidecarEnv, expected format: EnvVariableKey=EnvVariableValue"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &envoyMutator{}
+			got, err := m.getCustomEnv(tt.args.pod)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {

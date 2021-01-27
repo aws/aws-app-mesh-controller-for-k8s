@@ -15,6 +15,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.10.0
+	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	gomodules.xyz/jsonpatch/v2 v2.0.1
 	gonum.org/v1/gonum v0.7.0
@@ -26,7 +27,6 @@ require (
 	k8s.io/client-go v0.18.2
 	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.6.0
-	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78 // indirect
 )
 
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20201221093633-bc327ba9c2f0

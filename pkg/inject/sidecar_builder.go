@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func buildEnvoySidecar(vars EnvoyTemplateVariables) corev1.Container {
+func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) corev1.Container {
 
 	envoy := corev1.Container{
 		Name:  "envoy",
@@ -34,151 +34,84 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables) corev1.Container {
 	}
 
 	vn := fmt.Sprintf("mesh/%s/virtualNode/%s", vars.MeshName, vars.VirtualNodeName)
-	env := []corev1.EnvVar{
-		{
-			Name:  "APPMESH_VIRTUAL_NODE_NAME",
-			Value: vn,
-		},
-		{
-			// Set the value to 1 to connect to the App Mesh Preview Channel endpoint.
-			// See https://docs.aws.amazon.com/app-mesh/latest/userguide/preview.html
-			Name:  "APPMESH_PREVIEW",
-			Value: vars.Preview,
-		},
-		{
-			// Specifies the log level for the Envoy container
-			// Valid values: trace, debug, info, warning, error, critical, off
-			Name:  "ENVOY_LOG_LEVEL",
-			Value: vars.LogLevel,
-		},
-		{
-			Name:  "AWS_REGION",
-			Value: vars.AWSRegion,
-		},
-	}
+
+	// add all the controller managed env to the map so
+	// 1) we remove duplicates
+	// 2) we don't allow overriding controller managed env with pod annotations
+	env["APPMESH_VIRTUAL_NODE_NAME"] = vn
+	env["AWS_REGION"] = vars.AWSRegion
+
+	// Set the value to 1 to connect to the App Mesh Preview Channel endpoint.
+	// See https://docs.aws.amazon.com/app-mesh/latest/userguide/preview.html
+	env["APPMESH_PREVIEW"] = vars.Preview
+
+	// Specifies the log level for the Envoy container
+	// Valid values: trace, debug, info, warning, error, critical, off
+	env["ENVOY_LOG_LEVEL"] = vars.LogLevel
 
 	if vars.EnableSDS {
-		sds_uds_env := corev1.EnvVar{
-			Name:  "APPMESH_SDS_SOCKET_PATH",
-			Value: vars.SdsUdsPath,
-		}
-		env = append(env, sds_uds_env)
+		env["APPMESH_SDS_SOCKET_PATH"] = vars.SdsUdsPath
 	}
 
 	if vars.AdminAccessPort != 0 {
-		port_env := corev1.EnvVar{
-			// Specify a custom admin port for Envoy to listen on
-			// Default: 9901
-			Name:  "ENVOY_ADMIN_ACCESS_PORT",
-			Value: strconv.Itoa(int(vars.AdminAccessPort)),
-		}
-		env = append(env, port_env)
+		// Specify a custom admin port for Envoy to listen on
+		// Default: 9901
+		env["ENVOY_ADMIN_ACCESS_PORT"] = strconv.Itoa(int(vars.AdminAccessPort))
 	}
 
 	if vars.AdminAccessLogFile != "" {
-		log_env := corev1.EnvVar{
-			// Specify a custom path to write Envoy access logs to
-			// Default: /tmp/envoy_admin_access.log
-			Name:  "ENVOY_ADMIN_ACCESS_LOG_FILE",
-			Value: vars.AdminAccessLogFile,
-		}
-		env = append(env, log_env)
+		// Specify a custom path to write Envoy access logs to
+		// Default: /tmp/envoy_admin_access.log
+		env["ENVOY_ADMIN_ACCESS_LOG_FILE"] = vars.AdminAccessLogFile
 	}
 
 	if vars.EnableXrayTracing {
-		xray_env := []corev1.EnvVar{
-			{
-				// Enables X-Ray tracing using 127.0.0.1:2000 as the default daemon endpoint
-				// To enable, set the value to 1
-				Name:  "ENABLE_ENVOY_XRAY_TRACING",
-				Value: "1",
-			},
-			{
-				// Specify a port value to override the default X-Ray daemon port: 2000
-				Name:  "XRAY_DAEMON_PORT",
-				Value: strconv.Itoa(int(vars.XrayDaemonPort)),
-			},
-		}
-		env = append(env, xray_env...)
+
+		// Enables X-Ray tracing using 127.0.0.1:2000 as the default daemon endpoint
+		// To enable, set the value to 1
+		env["ENABLE_ENVOY_XRAY_TRACING"] = "1"
+
+		// Specify a port value to override the default X-Ray daemon port: 2000
+		env["XRAY_DAEMON_PORT"] = strconv.Itoa(int(vars.XrayDaemonPort))
 
 	}
 
 	if vars.EnableDatadogTracing {
-		dd_env := []corev1.EnvVar{
-			{
-				// Enables Datadog trace collection using 127.0.0.1:8126
-				// as the default Datadog agent endpoint. To enable, set the value to 1
-				Name:  "ENABLE_ENVOY_DATADOG_TRACING",
-				Value: "1",
-			},
-			{
-				// Specify a port value to override the default Datadog agent port: 8126
-				Name:  "DATADOG_TRACER_PORT",
-				Value: strconv.Itoa(int(vars.DatadogTracerPort)),
-			},
-		}
+		// Enables Datadog trace collection using 127.0.0.1:8126
+		// as the default Datadog agent endpoint. To enable, set the value to 1
+		env["ENABLE_ENVOY_DATADOG_TRACING"] = "1"
+
+		// Specify a port value to override the default Datadog agent port: 8126
+		env["DATADOG_TRACER_PORT"] = strconv.Itoa(int(vars.DatadogTracerPort))
 
 		// Specify an IP address or hostname to override the default Datadog agent address: 127.0.0.1
-		if vars.DatadogTracerAddress == "ref:status.hostIP" {
-			dd_env = append(dd_env, refHostIP("DATADOG_TRACER_ADDRESS"))
+		env["DATADOG_TRACER_ADDRESS"] = vars.DatadogTracerAddress
 
-		} else {
-			dd_addr := corev1.EnvVar{
-				Name:  "DATADOG_TRACER_ADDRESS",
-				Value: vars.DatadogTracerAddress,
-			}
-			dd_env = append(dd_env, dd_addr)
-		}
-		env = append(env, dd_env...)
 	}
 
 	if vars.EnableStatsTags {
-		stats_tags_env := corev1.EnvVar{
-			Name:  "ENABLE_ENVOY_STATS_TAGS",
-			Value: "1",
-		}
-		env = append(env, stats_tags_env)
+		env["ENABLE_ENVOY_STATS_TAGS"] = "1"
 	}
 
 	if vars.EnableStatsD {
-		sd_env := []corev1.EnvVar{
-			{
-				// Enables DogStatsD stats using 127.0.0.1:8125
-				// as the default daemon endpoint. To enable, set the value to 1
-				Name:  "ENABLE_ENVOY_DOG_STATSD",
-				Value: "1",
-			},
-			{
-				// Specify a port value to override the default DogStatsD daemon port
-				Name:  "STATSD_PORT",
-				Value: strconv.Itoa(int(vars.StatsDPort)),
-			},
-		}
+		// Enables DogStatsD stats using 127.0.0.1:8125
+		// as the default daemon endpoint. To enable, set the value to 1
+		env["ENABLE_ENVOY_DOG_STATSD"] = "1"
+
+		// // Specify a port value to override the default DogStatsD daemon port
+		env["STATSD_PORT"] = strconv.Itoa(int(vars.StatsDPort))
 
 		// Specify an IP address value to override the default DogStatsD daemon IP address
 		// Default: 127.0.0.1. This variable can only be used with version 1.15.0 or later
 		// of the Envoy image
-		if vars.StatsDAddress == "ref:status.hostIP" {
-			sd_env = append(sd_env, refHostIP("STATSD_ADDRESS"))
+		env["STATSD_ADDRESS"] = vars.StatsDAddress
 
-		} else {
-			sd_addr := corev1.EnvVar{
-				Name:  "STATSD_ADDRESS",
-				Value: vars.StatsDAddress,
-			}
-			sd_env = append(sd_env, sd_addr)
-		}
-		env = append(env, sd_env...)
 	}
 
 	if vars.EnableJaegerTracing {
-		jaeger_env := corev1.EnvVar{
-			// Specify a file path in the Envoy container file system.
-			// See https://www.envoyproxy.io/docs/envoy/latest/api-v2/config/trace/v2/http_tracer.proto
-			Name:  "ENVOY_TRACING_CFG_FILE",
-			Value: "/tmp/envoy/envoyconf.yaml",
-		}
-		env = append(env, jaeger_env)
+		// Specify a file path in the Envoy container file system.
+		// See https://www.envoyproxy.io/docs/envoy/latest/api-v2/config/trace/v2/http_tracer.proto
+		env["ENVOY_TRACING_CFG_FILE"] = "/tmp/envoy/envoyconf.yaml"
 
 		vol_mount := []corev1.VolumeMount{
 			{
@@ -189,9 +122,29 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables) corev1.Container {
 		envoy.VolumeMounts = vol_mount
 	}
 
-	envoy.Env = env
+	envoy.Env = getEnvoyEnv(env)
 	return envoy
 
+}
+
+func getEnvoyEnv(env map[string]string) []corev1.EnvVar {
+
+	ev := []corev1.EnvVar{}
+	for key, val := range env {
+
+		switch k := key; k {
+		case "STATSD_ADDRESS", "DATADOG_TRACER_ADDRESS":
+			if val == "ref:status.hostIP" {
+				ev = append(ev, refHostIP(key))
+			} else {
+				ev = append(ev, envVar(key, val))
+			}
+		default:
+			ev = append(ev, envVar(key, val))
+		}
+
+	}
+	return ev
 }
 
 func envoyReadinessProbe(initialDelaySeconds int32, periodSeconds int32, adminAccessPort string) *corev1.Probe {
@@ -301,5 +254,12 @@ func refHostIP(envName string) corev1.EnvVar {
 				FieldPath: "status.hostIP",
 			},
 		},
+	}
+}
+
+func envVar(envName, envVal string) corev1.EnvVar {
+	return corev1.EnvVar{
+		Name:  envName,
+		Value: envVal,
 	}
 }
