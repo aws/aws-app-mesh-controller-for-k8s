@@ -62,8 +62,6 @@ import (
 const (
 	flagHealthProbeBindAddr       = "health-probe-bind-addr"
 	defaultHealthProbeBindAddress = ":61779"
-	defaultAPIServerQPS           = 1e6
-	defaultAPIServerBurst         = 1e6
 )
 
 var (
