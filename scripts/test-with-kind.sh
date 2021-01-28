@@ -62,7 +62,8 @@ function install_controller {
        echo -n "installing appmesh controller ... "
        local __controller_name="appmesh-controller"
        local __ns="appmesh-system"
-       AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make deploy
+       kubectl create ns $__ns
+       AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make helm-deploy
        check_deployment_rollout $__controller_name $__ns
        echo -n "check the pods in appmesh-system namespace ... "
        kubectl get pod -n $__ns
@@ -105,9 +106,6 @@ export KUBECONFIG="${TMP_DIR}/kubeconfig"
 
 # Generate and install CRDs
 install_crds
-
-# Install cert-manager
-$SCRIPTS_DIR/install-cert-manager.sh
 
 # Install the controller
 install_controller

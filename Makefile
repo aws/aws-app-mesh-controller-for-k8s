@@ -44,6 +44,9 @@ deploy: check-env manifests
 	cd config/controller && kustomize edit set image controller=$(IMAGE)
 	kustomize build config/default | kubectl apply -f -
 
+helm-deploy: check-env manifests
+	helm upgrade -i appmesh-controller config/helm/appmesh-controller --namespace appmesh-system --set image.repository=$(REPO) --set image.tag=$(VERSION)
+
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=controller-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
