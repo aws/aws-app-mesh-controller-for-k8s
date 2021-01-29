@@ -257,7 +257,7 @@ var _ = Describe("VirtualNode", func() {
 			})
 
 			//Let Instances sync with CloudMap and Pod Readiness Gate go through
-			time.Sleep(30 * time.Second)
+			time.Sleep(60 * time.Second)
 			By("validating the virtual node in AWS AppMesh & CloudMap", func() {
 				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
 				Expect(err).NotTo(HaveOccurred())
@@ -730,6 +730,259 @@ var _ = Describe("VirtualNode", func() {
 				Expect(err).To(HaveOccurred())
 			})
 
+		})
+		It("Virtual node mTLS scenarios", func() {
+			mTLSValidationContext := "spiffe://integration-test.aws"
+			mTLSValidationContext_upd := "spiffe://integration-test-updated.aws"
+			tlsEnforce := true
+			meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
+			mesh := &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: meshName,
+				},
+				Spec: appmesh.MeshSpec{
+					NamespaceSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"mesh": meshName,
+						},
+					},
+				},
+			}
+
+			By("creating a mesh resource in k8s", func() {
+				err := meshTest.Create(ctx, f, mesh)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validating the resources in AWS", func() {
+				err := meshTest.CheckInAWS(ctx, f, mesh)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Create a namespace and add labels", func() {
+				namespace, err := f.NSManager.AllocateNamespace(ctx, "appmeshtest")
+				Expect(err).NotTo(HaveOccurred())
+				vnBuilder.Namespace = namespace.Name
+				vnTest.Namespace = namespace
+
+				oldNS := namespace.DeepCopy()
+				namespace.Labels = algorithm.MergeStringMap(map[string]string{
+					"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
+					"mesh":                                   meshName,
+				}, namespace.Labels)
+
+				err = f.K8sClient.Patch(ctx, namespace, client.MergeFrom(oldNS))
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			nodeSVID := mTLSValidationContext + "/" + vnName
+			nodeBackendDefaultsSDS := &appmesh.BackendDefaults{
+				ClientPolicy: &appmesh.ClientPolicy{
+					TLS: &appmesh.ClientPolicyTLS{
+						Enforce: &tlsEnforce,
+						Ports:   nil,
+						Validation: appmesh.TLSValidationContext{
+							Trust: appmesh.TLSValidationContextTrust{
+								SDS: &appmesh.TLSValidationContextSDSTrust{
+									SecretName: &mTLSValidationContext,
+								},
+							},
+							SubjectAlternativeNames: &appmesh.SubjectAlternativeNames{
+								Match: &appmesh.SubjectAlternativeNameMatchers{
+									Exact: []*string{
+										&nodeSVID,
+									},
+								},
+							},
+						},
+						Certificate: &appmesh.ClientTLSCertificate{
+							SDS: &appmesh.ListenerTLSSDSCertificate{
+								SecretName: &nodeSVID,
+							},
+						},
+					},
+				},
+			}
+
+			nodeListenerTLSSDS := &appmesh.ListenerTLS{
+				Certificate: appmesh.ListenerTLSCertificate{
+					SDS: &appmesh.ListenerTLSSDSCertificate{
+						SecretName: &nodeSVID,
+					},
+				},
+				Validation: &appmesh.ListenerTLSValidationContext{
+					Trust: appmesh.ListenerTLSValidationContextTrust{
+						SDS: &appmesh.TLSValidationContextSDSTrust{
+							SecretName: &mTLSValidationContext,
+						},
+					},
+					SubjectAlternativeNames: &appmesh.SubjectAlternativeNames{
+						Match: &appmesh.SubjectAlternativeNameMatchers{
+							Exact: []*string{
+								&nodeSVID,
+							},
+						},
+					},
+				},
+				Mode: "STRICT",
+			}
+			listeners := []appmesh.Listener{vnBuilder.BuildListenerWithTLS("http", AppContainerPort, nodeListenerTLSSDS)}
+			vn := vnBuilder.BuildVirtualNode(vnName, nil, listeners, nodeBackendDefaultsSDS)
+			By("Creating a virtual node with SDS based mTLS enabled", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validate the virtual node in AWS", func() {
+				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Validate update of mTLS - SDS validation context", func() {
+				nodeListenerTLS_SDS := &appmesh.ListenerTLS{
+					Certificate: appmesh.ListenerTLSCertificate{
+						SDS: &appmesh.ListenerTLSSDSCertificate{
+							SecretName: &nodeSVID,
+						},
+					},
+					Validation: &appmesh.ListenerTLSValidationContext{
+						Trust: appmesh.ListenerTLSValidationContextTrust{
+							SDS: &appmesh.TLSValidationContextSDSTrust{
+								SecretName: &mTLSValidationContext_upd,
+							},
+						},
+						SubjectAlternativeNames: &appmesh.SubjectAlternativeNames{
+							Match: &appmesh.SubjectAlternativeNameMatchers{
+								Exact: []*string{
+									&nodeSVID,
+								},
+							},
+						},
+					},
+					Mode: "STRICT",
+				}
+				listeners := []appmesh.Listener{vnBuilder.BuildListenerWithTLS("http", AppContainerPort, nodeListenerTLS_SDS)}
+				oldVN := vnTest.VirtualNodes[vn.Name].DeepCopy()
+
+				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
+
+				err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			fileCACertPath := "/certs/caCert.pem"
+			fileCACertPathNew := "/certs/caCertNew.pem"
+			appCertPath := "/certs/appCert.pem"
+			privateKeyPath := "/certs/appKey.pem"
+			serviceDNS := "app.namespace.svc.cluster.local"
+
+			nodeBackendDefaultsFile := &appmesh.BackendDefaults{
+				ClientPolicy: &appmesh.ClientPolicy{
+					TLS: &appmesh.ClientPolicyTLS{
+						Enforce: &tlsEnforce,
+						Ports:   nil,
+						Validation: appmesh.TLSValidationContext{
+							Trust: appmesh.TLSValidationContextTrust{
+								File: &appmesh.TLSValidationContextFileTrust{
+									CertificateChain: fileCACertPath,
+								},
+							},
+							SubjectAlternativeNames: &appmesh.SubjectAlternativeNames{
+								Match: &appmesh.SubjectAlternativeNameMatchers{
+									Exact: []*string{
+										&serviceDNS,
+									},
+								},
+							},
+						},
+						Certificate: &appmesh.ClientTLSCertificate{
+							File: &appmesh.ListenerTLSFileCertificate{
+								CertificateChain: appCertPath,
+								PrivateKey:       privateKeyPath,
+							},
+						},
+					},
+				},
+			}
+
+			nodeListenerTLSFile := &appmesh.ListenerTLS{
+				Certificate: appmesh.ListenerTLSCertificate{
+					File: &appmesh.ListenerTLSFileCertificate{
+						CertificateChain: appCertPath,
+						PrivateKey:       privateKeyPath,
+					},
+				},
+				Validation: &appmesh.ListenerTLSValidationContext{
+					Trust: appmesh.ListenerTLSValidationContextTrust{
+						File: &appmesh.TLSValidationContextFileTrust{
+							CertificateChain: fileCACertPath,
+						},
+					},
+					SubjectAlternativeNames: &appmesh.SubjectAlternativeNames{
+						Match: &appmesh.SubjectAlternativeNameMatchers{
+							Exact: []*string{
+								&serviceDNS,
+							},
+						},
+					},
+				},
+				Mode: "STRICT",
+			}
+			listeners = []appmesh.Listener{vnBuilder.BuildListenerWithTLS("http", AppContainerPort, nodeListenerTLSFile)}
+			vnName = fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			vn = vnBuilder.BuildVirtualNode(vnName, nil, listeners, nodeBackendDefaultsFile)
+			By("Creating a virtual node with File based mTLS enabled", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validate the virtual node in AWS", func() {
+				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Validate update of mTLS - File validation context", func() {
+				nodeListenerTLSFile := &appmesh.ListenerTLS{
+					Certificate: appmesh.ListenerTLSCertificate{
+						File: &appmesh.ListenerTLSFileCertificate{
+							CertificateChain: appCertPath,
+							PrivateKey:       privateKeyPath,
+						},
+					},
+					Validation: &appmesh.ListenerTLSValidationContext{
+						Trust: appmesh.ListenerTLSValidationContextTrust{
+							File: &appmesh.TLSValidationContextFileTrust{
+								CertificateChain: fileCACertPathNew,
+							},
+						},
+						SubjectAlternativeNames: &appmesh.SubjectAlternativeNames{
+							Match: &appmesh.SubjectAlternativeNameMatchers{
+								Exact: []*string{
+									&serviceDNS,
+								},
+							},
+						},
+					},
+					Mode: "STRICT",
+				}
+				listeners := []appmesh.Listener{vnBuilder.BuildListenerWithTLS("http", AppContainerPort, nodeListenerTLSFile)}
+				oldVN := vnTest.VirtualNodes[vn.Name].DeepCopy()
+
+				vnTest.VirtualNodes[vn.Name].Spec.Listeners = listeners
+
+				err := vnTest.Update(ctx, f, vnTest.VirtualNodes[vn.Name], oldVN)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
+				Expect(err).NotTo(HaveOccurred())
+			})
 		})
 	})
 })
