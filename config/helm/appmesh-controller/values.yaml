@@ -75,6 +75,12 @@ cloudMapDNS:
   # cloudMapDNS.ttl if set will use this global ttl value
   ttl: 300
 
+sds:
+  # sds.enabled: `true` if SDS based mTLS support needs to be enabled in envoy
+  enabled: false
+  #sds.udsPath: UDS Path of the SDS Provider. Default value is tied to SPIRE.
+  udsPath: /run/spire/sockets/agent.sock
+
 serviceAccount:
   # serviceAccount.create: Whether to create a service account or not
   create: true
