@@ -1,6 +1,9 @@
 # Image URL to use all building/pushing image targets
 IMAGE_NAME=amazon/appmesh-controller
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE_NAME)
+REPO_FULL_NAME=aws/aws-app-mesh-controller-for-k8s
+BINARY_NAME ?= "appmesh-controller"
+MAKEFILE_PATH = $(dir $(realpath -s $(firstword $(MAKEFILE_LIST))))
 VERSION ?= $(shell git describe --dirty --tags --always)
 IMAGE ?= $(REPO):$(VERSION)
 PREVIEW=false
@@ -95,6 +98,15 @@ cleanup-appmesh-sdk-override:
 	@if [ "$(APPMESH_SDK_OVERRIDE)" = "y" ] ; then \
 	    ./appmesh_models_override/cleanup.sh ; \
 	fi
+
+version:
+	@echo $(VERSION)
+
+ekscharts-sync:
+	${MAKEFILE_PATH}/scripts/sync-to-eks-charts.sh -b ${BINARY_NAME} -r ${REPO_FULL_NAME}
+
+ekscharts-sync-release:
+	${MAKEFILE_PATH}/scripts/sync-to-eks-charts.sh -b ${BINARY_NAME} -r ${REPO_FULL_NAME} -n
 
 # find or download controller-gen
 # download controller-gen if necessary
