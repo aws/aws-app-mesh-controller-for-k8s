@@ -26,5 +26,7 @@ jobs:
         export PATH=$PATH:/usr/local/kubebuilder/bin
     - name: checkout code
       uses: actions/checkout@v2
-    - name: make test
+    - name: unit tests
       run: make test
+    - name: helm v2 and v3 lint
+      run: make helm-lint
