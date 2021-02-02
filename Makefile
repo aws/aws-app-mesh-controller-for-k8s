@@ -52,6 +52,10 @@ deploy: check-env manifests
 	cd config/controller && kustomize edit set image controller=$(IMAGE)
 	kustomize build config/default | kubectl apply -f -
 
+helm-lint:
+	${MAKEFILE_PATH}/test/helm/helm-lint.sh
+
+
 helm-deploy: check-env manifests
 	helm upgrade -i appmesh-controller config/helm/appmesh-controller --namespace appmesh-system --set image.repository=$(REPO) --set image.tag=$(VERSION) --set preview=$(PREVIEW)
 
