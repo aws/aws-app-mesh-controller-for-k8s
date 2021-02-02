@@ -18,6 +18,7 @@ package main
 
 import (
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
@@ -60,8 +61,8 @@ import (
 )
 
 const (
-	flagHealthProbeBindAddr       = "health-probe-bind-addr"
-	defaultHealthProbeBindAddress = ":61779"
+	flagHealthProbePort    = "health-probe-port"
+	defaultHealthProbePort = 61779
 )
 
 var (
@@ -83,7 +84,7 @@ func main() {
 	var enableCustomHealthCheck bool
 	var logLevel string
 	var listPageLimit int64
-	var healthProbeBindAddress string
+	var healthProbePort int
 	awsCloudConfig := aws.CloudConfig{ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig()}
 	injectConfig := inject.Config{}
 	cloudMapConfig := cloudmap.Config{}
@@ -98,8 +99,8 @@ func main() {
 	fs.StringVar(&logLevel, "log-level", "info", "Set the controller log level - info(default), debug")
 	fs.Int64Var(&listPageLimit, "page-limit", 100,
 		"The page size limiting the number of response for list operation to API Server")
-	fs.StringVar(&healthProbeBindAddress, flagHealthProbeBindAddr, defaultHealthProbeBindAddress,
-		"The address the health probes binds to.")
+	fs.IntVar(&healthProbePort, flagHealthProbePort, defaultHealthProbePort,
+		"The port the health probes binds to.")
 
 	awsCloudConfig.BindFlags(fs)
 	injectConfig.BindFlags(fs)
@@ -123,6 +124,10 @@ func main() {
 		"GitCommit", version.GitCommit,
 		"BuildDate", version.BuildDate,
 	)
+
+	parsedPort := strconv.Itoa(healthProbePort)
+	healthProbeBindAddress := ":" + parsedPort
+	setupLog.Info("Health endpoint", "HealthProbeBindAddress", healthProbeBindAddress)
 
 	eventNotificationChan := make(chan k8s.GenericEvent)
 
