@@ -3,7 +3,7 @@ Follow below instructions to generate docs
 1. Setup the [gen-crd-api-reference-docs](https://github.com/ahmetb/gen-crd-api-reference-docs/) tool
 The tool does not support kubebuilder v2 so we need to add manual hooks to generate the docs
 
-2. Create a doc.go under apis/appmesh/v1beta2/ with below contentseifjc
+2. Create a doc.go under apis/appmesh/v1beta2/ with below contents
 ```
 // Package v1beta2 contains API Schema definitions for the appmesh v1beta2 API group
 // +kubebuilder:object:generate=true
