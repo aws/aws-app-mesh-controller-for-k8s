@@ -208,7 +208,7 @@ ClientPolicy
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.BackendDefaults">BackendDefaults</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.BackendDefaults">BackendDefaults</a>,
 <a href="#appmesh.k8s.aws/v1beta2.VirtualServiceBackend">VirtualServiceBackend</a>)
 </p>
 <p>
@@ -295,6 +295,66 @@ TLSValidationContext
 <p>A reference to an object that represents a TLS validation context.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>certificate</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ClientTLSCertificate">
+ClientTLSCertificate
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents TLS certificate.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.ClientTLSCertificate">ClientTLSCertificate
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ClientPolicyTLS">ClientPolicyTLS</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>file</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSFileCertificate">
+ListenerTLSFileCertificate
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a TLS cert via a local file</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>sds</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSSDSCertificate">
+ListenerTLSSDSCertificate
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a TLS cert via SDS entry</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="appmesh.k8s.aws/v1beta2.DNSServiceDiscovery">DNSServiceDiscovery
@@ -331,10 +391,10 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>, 
-<a href="#appmesh.k8s.aws/v1beta2.GRPCTimeout">GRPCTimeout</a>, 
-<a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">HTTPRetryPolicy</a>, 
-<a href="#appmesh.k8s.aws/v1beta2.HTTPTimeout">HTTPTimeout</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>,
+<a href="#appmesh.k8s.aws/v1beta2.GRPCTimeout">GRPCTimeout</a>,
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">HTTPRetryPolicy</a>,
+<a href="#appmesh.k8s.aws/v1beta2.HTTPTimeout">HTTPTimeout</a>,
 <a href="#appmesh.k8s.aws/v1beta2.OutlierDetection">OutlierDetection</a>,
 <a href="#appmesh.k8s.aws/v1beta2.TCPTimeout">TCPTimeout</a>)
 </p>
@@ -984,7 +1044,7 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCRoute">GRPCRoute</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRoute">GRPCRoute</a>,
 <a href="#appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout</a>)
 </p>
 <p>
@@ -1762,7 +1822,7 @@ Duration
 (<code>string</code> alias)</p></h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>,
 <a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">HTTPRetryPolicy</a>)
 </p>
 <p>
@@ -2000,7 +2060,7 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.HTTPRoute">HTTPRoute</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRoute">HTTPRoute</a>,
 <a href="#appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout</a>)
 </p>
 <p>
@@ -2372,6 +2432,20 @@ ListenerTLSMode
 <p>ListenerTLS mode</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>validation</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSValidationContext">
+ListenerTLSValidationContext
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents an SDS Trust Domain</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="appmesh.k8s.aws/v1beta2.ListenerTLSACMCertificate">ListenerTLSACMCertificate
@@ -2449,12 +2523,27 @@ ListenerTLSFileCertificate
 <p>A reference to an object that represents a local file certificate.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>sds</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSSDSCertificate">
+ListenerTLSSDSCertificate
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents an SDS certificate.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="appmesh.k8s.aws/v1beta2.ListenerTLSFileCertificate">ListenerTLSFileCertificate
 </h3>
 <p>
 (<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ClientTLSCertificate">ClientTLSCertificate</a>,
 <a href="#appmesh.k8s.aws/v1beta2.ListenerTLSCertificate">ListenerTLSCertificate</a>)
 </p>
 <p>
@@ -2500,6 +2589,127 @@ string
 </p>
 <p>
 </p>
+<h3 id="appmesh.k8s.aws/v1beta2.ListenerTLSSDSCertificate">ListenerTLSSDSCertificate
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ClientTLSCertificate">ClientTLSCertificate</a>,
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSCertificate">ListenerTLSCertificate</a>)
+</p>
+<p>
+<p>ListenerTLSSDSCertificate refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsFileCertificate.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ListenerTlsFileCertificate.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>secretName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The certificate trust chain for a certificate issued via SDS cluster</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.ListenerTLSValidationContext">ListenerTLSValidationContext
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLS">ListenerTLS</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>trust</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSValidationContextTrust">
+ListenerTLSValidationContextTrust
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>subjectAlternativeNames</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.SubjectAlternativeNames">
+SubjectAlternativeNames
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Possible alternative names to consider</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.ListenerTLSValidationContextTrust">ListenerTLSValidationContextTrust
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSValidationContext">ListenerTLSValidationContext</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>file</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextFileTrust">
+TLSValidationContextFileTrust
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a TLS validation context trust for a local file.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>sds</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextSDSTrust">
+TLSValidationContextSDSTrust
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a TLS validation context trust for an SDS server</p>
+</td>
+</tr>
+</tbody>
+</table>
 <h3 id="appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout
 </h3>
 <p>
@@ -2612,7 +2822,7 @@ AccessLog
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteMetadataMatchMethod">GRPCRouteMetadataMatchMethod</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteMetadataMatchMethod">GRPCRouteMetadataMatchMethod</a>,
 <a href="#appmesh.k8s.aws/v1beta2.HeaderMatchMethod">HeaderMatchMethod</a>)
 </p>
 <p>
@@ -2860,10 +3070,10 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteSpec">GatewayRouteSpec</a>, 
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewaySpec">VirtualGatewaySpec</a>, 
-<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeSpec">VirtualNodeSpec</a>, 
-<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterSpec">VirtualRouterSpec</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteSpec">GatewayRouteSpec</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewaySpec">VirtualGatewaySpec</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeSpec">VirtualNodeSpec</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterSpec">VirtualRouterSpec</a>,
 <a href="#appmesh.k8s.aws/v1beta2.VirtualServiceSpec">VirtualServiceSpec</a>)
 </p>
 <p>
@@ -3111,7 +3321,7 @@ maxEjectionPercent=100 means outlier detection can potentially eject all of the 
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.Listener">Listener</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.Listener">Listener</a>,
 <a href="#appmesh.k8s.aws/v1beta2.VirtualRouterListener">VirtualRouterListener</a>)
 </p>
 <p>
@@ -3157,11 +3367,11 @@ PortProtocol
 (<code>int64</code> alias)</p></h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.ClientPolicyTLS">ClientPolicyTLS</a>, 
-<a href="#appmesh.k8s.aws/v1beta2.HealthCheckPolicy">HealthCheckPolicy</a>, 
-<a href="#appmesh.k8s.aws/v1beta2.PortMapping">PortMapping</a>, 
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientPolicyTLS">VirtualGatewayClientPolicyTLS</a>, 
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayHealthCheckPolicy">VirtualGatewayHealthCheckPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.ClientPolicyTLS">ClientPolicyTLS</a>,
+<a href="#appmesh.k8s.aws/v1beta2.HealthCheckPolicy">HealthCheckPolicy</a>,
+<a href="#appmesh.k8s.aws/v1beta2.PortMapping">PortMapping</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientPolicyTLS">VirtualGatewayClientPolicyTLS</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayHealthCheckPolicy">VirtualGatewayHealthCheckPolicy</a>,
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayPortMapping">VirtualGatewayPortMapping</a>)
 </p>
 <p>
@@ -3170,7 +3380,7 @@ PortProtocol
 (<code>string</code> alias)</p></h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.HealthCheckPolicy">HealthCheckPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HealthCheckPolicy">HealthCheckPolicy</a>,
 <a href="#appmesh.k8s.aws/v1beta2.PortMapping">PortMapping</a>)
 </p>
 <p>
@@ -3320,6 +3530,69 @@ DNSServiceDiscovery
 </tr>
 </tbody>
 </table>
+<h3 id="appmesh.k8s.aws/v1beta2.SubjectAlternativeNameMatchers">SubjectAlternativeNameMatchers
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.SubjectAlternativeNames">SubjectAlternativeNames</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>exact</code></br>
+<em>
+[]*string
+</em>
+</td>
+<td>
+<p>Exact is a required field</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.SubjectAlternativeNames">SubjectAlternativeNames
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSValidationContext">ListenerTLSValidationContext</a>,
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContext">TLSValidationContext</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContext">VirtualGatewayListenerTLSValidationContext</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContext">VirtualGatewayTLSValidationContext</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>match</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.SubjectAlternativeNameMatchers">
+SubjectAlternativeNameMatchers
+</a>
+</em>
+</td>
+<td>
+<p>Match is a required field</p>
+</td>
+</tr>
+</tbody>
+</table>
 <h3 id="appmesh.k8s.aws/v1beta2.TCPConnectionPool">TCPConnectionPool
 </h3>
 <p>
@@ -3354,7 +3627,7 @@ the envoy can establish concurrently with all the hosts in the upstream cluster.
 (<code>string</code> alias)</p></h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>,
 <a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">HTTPRetryPolicy</a>)
 </p>
 <p>
@@ -3441,7 +3714,7 @@ TCPTimeout
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout</a>,
 <a href="#appmesh.k8s.aws/v1beta2.TCPRoute">TCPRoute</a>)
 </p>
 <p>
@@ -3500,6 +3773,20 @@ TLSValidationContextTrust
 <p>A reference to an object that represents a TLS validation context trust</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>subjectAlternativeNames</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.SubjectAlternativeNames">
+SubjectAlternativeNames
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Possible Alternative names to consider</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="appmesh.k8s.aws/v1beta2.TLSValidationContextACMTrust">TLSValidationContextACMTrust
@@ -3536,6 +3823,7 @@ TLSValidationContextTrust
 </h3>
 <p>
 (<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSValidationContextTrust">ListenerTLSValidationContextTrust</a>,
 <a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextTrust">TLSValidationContextTrust</a>)
 </p>
 <p>
@@ -3558,6 +3846,37 @@ string
 </td>
 <td>
 <p>The certificate trust chain for a certificate stored on the file system of the virtual node that the proxy is running on.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.TLSValidationContextSDSTrust">TLSValidationContextSDSTrust
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSValidationContextTrust">ListenerTLSValidationContextTrust</a>,
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextTrust">TLSValidationContextTrust</a>)
+</p>
+<p>
+<p>TLSValidationContextSDSTrust refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextFileTrust.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TlsValidationContextFileTrust.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>secretName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The certificate trust chain for a certificate obtained via SDS</p>
 </td>
 </tr>
 </tbody>
@@ -3605,6 +3924,20 @@ TLSValidationContextFileTrust
 <td>
 <em>(Optional)</em>
 <p>An object that represents a TLS validation context trust for a local file.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>sds</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextSDSTrust">
+TLSValidationContextSDSTrust
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a TLS validation context trust for a SDS.</p>
 </td>
 </tr>
 </tbody>
@@ -3914,6 +4247,20 @@ If unspecified, default settings from AWS API will be applied. Refer to AWS Docs
 </tr>
 <tr>
 <td>
+<code>certificate</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientTLSCertificate">
+VirtualGatewayClientTLSCertificate
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents TLS certificate.</p>
+</td>
+</tr>
+<tr>
+<td>
 <code>validation</code></br>
 <em>
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContext">
@@ -3923,6 +4270,53 @@ VirtualGatewayTLSValidationContext
 </td>
 <td>
 <p>A reference to an object that represents a TLS validation context.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayClientTLSCertificate">VirtualGatewayClientTLSCertificate
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientPolicyTLS">VirtualGatewayClientPolicyTLS</a>)
+</p>
+<p>
+<p>VirtualGatewayTLSValidationContext refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>file</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSFileCertificate">
+VirtualGatewayListenerTLSFileCertificate
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a TLS cert via a local file</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>sds</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSSDSCertificate">
+VirtualGatewayListenerTLSSDSCertificate
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a TLS cert via SDS entry</p>
 </td>
 </tr>
 </tbody>
@@ -4321,6 +4715,20 @@ VirtualGatewayListenerTLSCertificate
 </tr>
 <tr>
 <td>
+<code>validation</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContext">
+VirtualGatewayListenerTLSValidationContext
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents Validation context</p>
+</td>
+</tr>
+<tr>
+<td>
 <code>mode</code></br>
 <em>
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSMode">
@@ -4409,12 +4817,27 @@ VirtualGatewayListenerTLSFileCertificate
 <p>A reference to an object that represents a local file certificate.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>sds</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSSDSCertificate">
+VirtualGatewayListenerTLSSDSCertificate
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents an SDS issued certificate</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSFileCertificate">VirtualGatewayListenerTLSFileCertificate
 </h3>
 <p>
 (<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientTLSCertificate">VirtualGatewayClientTLSCertificate</a>,
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSCertificate">VirtualGatewayListenerTLSCertificate</a>)
 </p>
 <p>
@@ -4460,6 +4883,141 @@ string
 </p>
 <p>
 </p>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSSDSCertificate">VirtualGatewayListenerTLSSDSCertificate
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientTLSCertificate">VirtualGatewayClientTLSCertificate</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSCertificate">VirtualGatewayListenerTLSCertificate</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>secretName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The certificate trust chain for a certificate issued via SDS cluster</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContext">VirtualGatewayListenerTLSValidationContext
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLS">VirtualGatewayListenerTLS</a>)
+</p>
+<p>
+<p>VirtualGatewayListenerTLSCertificate refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>trust</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContextTrust">
+VirtualGatewayListenerTLSValidationContextTrust
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>subjectAlternativeNames</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.SubjectAlternativeNames">
+SubjectAlternativeNames
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Possible alternate names to consider</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContextTrust">VirtualGatewayListenerTLSValidationContextTrust
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContext">VirtualGatewayListenerTLSValidationContext</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>acm</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextACMTrust">
+VirtualGatewayTLSValidationContextACMTrust
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>A reference to an object that represents a TLS validation context trust for an AWS Certicate Manager (ACM) certificate.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>file</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextFileTrust">
+VirtualGatewayTLSValidationContextFileTrust
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a TLS validation context trust for a local file.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>sds</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextSDSTrust">
+VirtualGatewayTLSValidationContextSDSTrust
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a TLS validation context trust for an SDS system</p>
+</td>
+</tr>
+</tbody>
+</table>
 <h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayLogging">VirtualGatewayLogging
 </h3>
 <p>
@@ -4542,7 +5100,7 @@ VirtualGatewayPortProtocol
 (<code>string</code> alias)</p></h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayHealthCheckPolicy">VirtualGatewayHealthCheckPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayHealthCheckPolicy">VirtualGatewayHealthCheckPolicy</a>,
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayPortMapping">VirtualGatewayPortMapping</a>)
 </p>
 <p>
@@ -4811,12 +5369,27 @@ VirtualGatewayTLSValidationContextTrust
 <p>A reference to an object that represents a TLS validation context trust</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>subjectAlternativeNames</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.SubjectAlternativeNames">
+SubjectAlternativeNames
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Possible alternative names to consider</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextACMTrust">VirtualGatewayTLSValidationContextACMTrust
 </h3>
 <p>
 (<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContextTrust">VirtualGatewayListenerTLSValidationContextTrust</a>,
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextTrust">VirtualGatewayTLSValidationContextTrust</a>)
 </p>
 <p>
@@ -4847,6 +5420,7 @@ VirtualGatewayTLSValidationContextTrust
 </h3>
 <p>
 (<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContextTrust">VirtualGatewayListenerTLSValidationContextTrust</a>,
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextTrust">VirtualGatewayTLSValidationContextTrust</a>)
 </p>
 <p>
@@ -4869,6 +5443,37 @@ string
 </td>
 <td>
 <p>The certificate trust chain for a certificate stored on the file system of the virtual Gateway.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextSDSTrust">VirtualGatewayTLSValidationContextSDSTrust
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContextTrust">VirtualGatewayListenerTLSValidationContextTrust</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextTrust">VirtualGatewayTLSValidationContextTrust</a>)
+</p>
+<p>
+<p>VirtualGatewayTLSValidationContextSDSTrust refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>secretName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The certificate trust chain for a certificate issued via SDS.</p>
 </td>
 </tr>
 </tbody>
@@ -4916,6 +5521,20 @@ VirtualGatewayTLSValidationContextFileTrust
 <td>
 <em>(Optional)</em>
 <p>An object that represents a TLS validation context trust for a local file.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>sds</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextSDSTrust">
+VirtualGatewayTLSValidationContextSDSTrust
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents a TLS validation context trust for a SDS certificate</p>
 </td>
 </tr>
 </tbody>
@@ -5267,7 +5886,7 @@ GRPCConnectionPool
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeServiceProvider">VirtualNodeServiceProvider</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeServiceProvider">VirtualNodeServiceProvider</a>,
 <a href="#appmesh.k8s.aws/v1beta2.WeightedTarget">WeightedTarget</a>)
 </p>
 <p>
@@ -6318,7 +6937,7 @@ VirtualRouterServiceProvider
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteVirtualService">GatewayRouteVirtualService</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteVirtualService">GatewayRouteVirtualService</a>,
 <a href="#appmesh.k8s.aws/v1beta2.VirtualServiceBackend">VirtualServiceBackend</a>)
 </p>
 <p>
@@ -6483,8 +7102,8 @@ int64
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteAction">GRPCRouteAction</a>, 
-<a href="#appmesh.k8s.aws/v1beta2.HTTPRouteAction">HTTPRouteAction</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteAction">GRPCRouteAction</a>,
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRouteAction">HTTPRouteAction</a>,
 <a href="#appmesh.k8s.aws/v1beta2.TCPRouteAction">TCPRouteAction</a>)
 </p>
 <p>
