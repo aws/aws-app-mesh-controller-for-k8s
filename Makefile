@@ -12,7 +12,7 @@ PREVIEW=false
 CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1beta1"
 
 # app mesh aws-sdk-go override in case we need to build against a custom version
-APPMESH_SDK_OVERRIDE ?= "y"
+APPMESH_SDK_OVERRIDE ?= "n"
 
 ifeq ($(APPMESH_SDK_OVERRIDE), "y")
 PREVIEW=true
@@ -95,7 +95,7 @@ delete-all-kind-clusters:	## Delete all local kind clusters
 
 setup-appmesh-sdk-override:
 	@if [ "$(APPMESH_SDK_OVERRIDE)" = "y" ] ; then \
-	    APPMESH_PREVIEW=y ./appmesh_models_override/setup.sh ; \
+	    ./appmesh_models_override/setup.sh ; \
 	fi
 
 cleanup-appmesh-sdk-override:
