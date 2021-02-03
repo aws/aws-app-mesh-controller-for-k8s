@@ -115,9 +115,9 @@ spec:
         {{- end}}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
-    {{- with .Values.nodeSelector }}
         livenessProbe:
-{{ toYaml .Values.livenessProbe | nindent 10 }}
+{{ toYaml .Values.livenessProbe | indent 10 }}
+    {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
     {{- end }}
