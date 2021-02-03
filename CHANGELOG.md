@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## v1.3.0
+
+### Summary
+This release includes support for mTLS feature, memory optimization enhancements in the controller, support for custom env variables for Envoys, new Envoy version v1.16.1.0-prod, automation enhancements and bug fixes.
+
+### Changes
+* AppMesh mTLS support ([#394](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/394)  @achevuru)
+* mTLS-SDS based e2e integration tests ([#404](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/404)  @achevuru)
+* Update golang sys package to latest ([#409](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/409) @haouc)
+* Adding health check and liveness probe for controller ([#410](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/410) @haouc)
+* Add sideEffects:None to webhook ([#411](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/411) @kishorj )
+* Support to control/toggle SDS per VirtualNode ([#418](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/418)  @achevuru)
+* Bump Envoy image version to v1.16.1.0-prod ([#421](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/421) @Y0Username )
+* Optimize Memory Usage ([#422](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/422) @cgchinmay)
+* Fix for Integration Test Panic ([#424](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/424) @cgchinmay)
+* Configure tracing address as the downward API ref to status.hostIP ([#426](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/426) @fawadkhaliq)
+* Pass custom env variables to sidecar from annotations ([#429](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/429) @fawadkhaliq)
+* Move appmesh-controller helm chart to k8s controller repo ([#430](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/430) @fawadkhaliq)
+* Add mTLS based tests to the VirtualNode integration test suite ([#431](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/431)  @achevuru)
+* Setup the controller using Helm for integration tests ([#432](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/432) @fawadkhaliq)
+* Support for mTLS parameters in controller helm chart ([#434](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/434)  @achevuru)
+* Add workflow to sync helm charts to eks-charts ([#435](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/435) @fawadkhaliq)
+* Add configurable Livenessprobe support to helm chart ([#436](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/436) @cgchinmay)
+* Add helm v2 and v3 lint for controller charts ([#437](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/437) @fawadkhaliq)
+* Update API spec in the live docs ([#438](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/438) @fawadkhaliq)
+
 ## v1.2.1
 
 ### Summary
