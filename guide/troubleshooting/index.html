@@ -388,6 +388,47 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#mtls-common-issues" class="md-nav__link">
+    mTLS - Common Issues
+  </a>
+  
+    <nav class="md-nav" aria-label="mTLS - Common Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#envoy-fails-to-boot-up-when-sds-based-mtls-is-enabled" class="md-nav__link">
+    Envoy fails to boot up when SDS based mTLS is enabled
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pod-is-up-and-running-but-envoy-doesnt-have-any-certs-in-sds-mode" class="md-nav__link">
+    Pod is up and running but Envoy doesn’t have any certs in SDS mode.
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pod-liveness-and-readiness-probes-fail-when-mtls-is-enabled" class="md-nav__link">
+    Pod liveness and readiness probes fail when mTLS is enabled
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sds-cluster-is-present-in-envoys-config-even-though-corresponding-virtualnode-doesnt-have-mtls-sds-config" class="md-nav__link">
+    SDS cluster is present in Envoy's config even though corresponding VirtualNode doesn't have mTLS SDS config
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -579,6 +620,47 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#mtls-common-issues" class="md-nav__link">
+    mTLS - Common Issues
+  </a>
+  
+    <nav class="md-nav" aria-label="mTLS - Common Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#envoy-fails-to-boot-up-when-sds-based-mtls-is-enabled" class="md-nav__link">
+    Envoy fails to boot up when SDS based mTLS is enabled
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pod-is-up-and-running-but-envoy-doesnt-have-any-certs-in-sds-mode" class="md-nav__link">
+    Pod is up and running but Envoy doesn’t have any certs in SDS mode.
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pod-liveness-and-readiness-probes-fail-when-mtls-is-enabled" class="md-nav__link">
+    Pod liveness and readiness probes fail when mTLS is enabled
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sds-cluster-is-present-in-envoys-config-even-though-corresponding-virtualnode-doesnt-have-mtls-sds-config" class="md-nav__link">
+    SDS cluster is present in Envoy's config even though corresponding VirtualNode doesn't have mTLS SDS config
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -632,6 +714,45 @@ kubectl port-forward -n <span class="s2">&quot;</span><span class="si">${</span>
 </code></pre></div>
 
 <p>Then navigate to <code>localhost:9901/</code> for the index or <code>localhost:9901/config_dump</code> for the envoy config.</p>
+<h2 id="mtls-common-issues">mTLS - Common Issues<a class="headerlink" href="#mtls-common-issues" title="Permanent link">&para;</a></h2>
+<h3 id="envoy-fails-to-boot-up-when-sds-based-mtls-is-enabled">Envoy fails to boot up when SDS based mTLS is enabled<a class="headerlink" href="#envoy-fails-to-boot-up-when-sds-based-mtls-is-enabled" title="Permanent link">&para;</a></h3>
+<p>When SDS based mTLS is enabled at the controller level via <code>enable-sds</code> flag, controller expects to find SDS Provider’s UDS at path specified by <code>sds-uds-path</code>. It is set to a default value of <code>/run/spire/sockets/agent.sock</code> which is the default SPIRE Agent’s UDS path. Make sure that SDS Provider on the local node is up and running and UDS is active. Currently, SPIRE is the only supported SDS provider. Please check if SPIRE Agent is up and running on the same node as the problematic Envoy.</p>
+<p>You can use the below command to figure out the exact reason of the envoy bootup issue. If the error is due to not being able to mount SDS provider's UDS socket then you would need to address that.</p>
+<div class="highlight"><pre><span></span><code>kubectl describe pod &lt;pod-name&gt; -n &lt;namespace-name&gt; 
+</code></pre></div>
+
+<h3 id="pod-is-up-and-running-but-envoy-doesnt-have-any-certs-in-sds-mode">Pod is up and running but Envoy doesn’t have any certs in SDS mode.<a class="headerlink" href="#pod-is-up-and-running-but-envoy-doesnt-have-any-certs-in-sds-mode" title="Permanent link">&para;</a></h3>
+<ol>
+<li>To begin with, check if <code>APPMESH_SDS_SOCKET_PATH</code> env variable is present under Envoy and if it has the correct UDS path value. If it is missing, then the controller didn’t inject the env variable. Check if <code>enable-sds</code> is set to <code>true</code> for the controller.</li>
+</ol>
+<p>For example, when using SPIRE Agent you should see something like below in Envoy.</p>
+<div class="highlight"><pre><span></span><code>APPMESH_SDS_SOCKET_PATH:      /run/spire/sockets/agent.sock
+</code></pre></div>
+
+<ol>
+<li>If the above env variable is present with the correct value, then check if Envoy is able to communicate with the SDS Provider. Below command will help verify if the Envoy is able to reach out to the local SDS Provider via the UDS path passed in to the controller and also to see if it is healthy.</li>
+</ol>
+<div class="highlight"><pre><span></span><code>kubectl <span class="nb">exec</span> -it &lt;pod-name&gt; -n &lt;namespace-name&gt; -c envoy -- curl http://localhost:9901/clusters <span class="p">|</span> grep -E <span class="s1">&#39;(static_cluster_sds.*cx_active|static_cluster_sds.*healthy)&#39;</span>
+
+static_cluster_sds_unix_socket::/run/spire/sockets/agent.sock::cx_active::1
+static_cluster_sds_unix_socket::/run/spire/sockets/agent.sock::health_flags::healthy
+</code></pre></div>
+
+<ol>
+<li>If the SDS cluster is healthy in Envoy, then check if the workload entry tied to this particular Pod/app container is registered with SPIRE Server and if the selectors match. Use the below command to list out all the registered workload entries.</li>
+</ol>
+<p><div class="highlight"><pre><span></span><code>kubectl <span class="nb">exec</span> -n spire spire-server-0 -- /opt/spire/bin/spire-server entry show
+</code></pre></div>
+Once you have the list of entries, check for the entry that is tied to the app container and check if the selectors match. Default selectors that we currently use are pod’s service account, namespace and labels.</p>
+<h3 id="pod-liveness-and-readiness-probes-fail-when-mtls-is-enabled">Pod liveness and readiness probes fail when mTLS is enabled<a class="headerlink" href="#pod-liveness-and-readiness-probes-fail-when-mtls-is-enabled" title="Permanent link">&para;</a></h3>
+<p>HTTP and TCP health checks from the kubelet will not work as is, if mutual TLS is enabled as the kubelet doesn't have relevant certs.</p>
+<p><strong>Workarounds:</strong></p>
+<ol>
+<li>Expose the health check endpoint on a different port and skip mTLS for that port. You can then set <code>appmesh.k8s.aws/ports</code> annotation with the application port value on the deployment spec.</li>
+</ol>
+<p><strong>Example</strong>: If your main application port is 8080 and if health check endpoint is exposed on 8081, then <code>appmesh.k8s.aws/ports:8080</code> will help bypass mTLS for health check port.</p>
+<h3 id="sds-cluster-is-present-in-envoys-config-even-though-corresponding-virtualnode-doesnt-have-mtls-sds-config">SDS cluster is present in Envoy's config even though corresponding VirtualNode doesn't have mTLS SDS config<a class="headerlink" href="#sds-cluster-is-present-in-envoys-config-even-though-corresponding-virtualnode-doesnt-have-mtls-sds-config" title="Permanent link">&para;</a></h3>
+<p>Set <code>appmesh.k8s.aws/sds:disabled</code> for the deployments behind VirtualNodes without SDS config.</p>
                 
               
               
