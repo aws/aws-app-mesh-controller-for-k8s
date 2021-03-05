@@ -4,7 +4,7 @@ set -e
 
 mkdir -p ./vendor/github.com/aws
 
-SDK_MODEL_SOURCE=https://raw.githubusercontent.com/aws/aws-app-mesh-roadmap/master/appmesh-preview/sdk
+SDK_MODEL_SOURCE=https://raw.githubusercontent.com/aws/aws-app-mesh-roadmap/main/appmesh-preview/sdk
 SDK_VENDOR_PATH=./vendor/github.com/aws/aws-sdk-go
 API_VERSION=2019-01-25
 API_PATH=$SDK_VENDOR_PATH/models/apis/appmesh/$API_VERSION

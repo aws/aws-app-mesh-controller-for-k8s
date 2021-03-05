@@ -12,7 +12,7 @@ PREVIEW=false
 CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1beta1"
 
 # app mesh aws-sdk-go override in case we need to build against a custom version
-APPMESH_SDK_OVERRIDE ?= "n"
+APPMESH_SDK_OVERRIDE ?= "y"
 
 ifeq ($(APPMESH_SDK_OVERRIDE), "y")
 PREVIEW=true

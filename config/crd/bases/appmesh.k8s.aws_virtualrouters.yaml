@@ -202,6 +202,9 @@ spec:
                                           description: The start of the range.
                                           format: int64
                                           type: integer
+                                      required:
+                                      - end
+                                      - start
                                       type: object
                                     regex:
                                       description: The value sent by the client must
@@ -439,6 +442,9 @@ spec:
                                           description: The start of the range.
                                           format: int64
                                           type: integer
+                                      required:
+                                      - end
+                                      - start
                                       type: object
                                     regex:
                                       description: The value sent by the client must
@@ -478,17 +484,52 @@ spec:
                             - PUT
                             - TRACE
                             type: string
+                          path:
+                            description: The client specified Path to match on.
+                            properties:
+                              exact:
+                                description: The value sent by the client must match
+                                  the specified value exactly.
+                                maxLength: 255
+                                minLength: 1
+                                type: string
+                              regex:
+                                description: The value sent by the client must end
+                                  with the specified characters.
+                                maxLength: 255
+                                minLength: 1
+                                type: string
+                            type: object
                           prefix:
-                            description: Specifies the path to match requests with
+                            description: Specifies the prefix to match requests with
                             type: string
+                          queryParameters:
+                            description: The client specified queryParameters to match
+                              on
+                            items:
+                              properties:
+                                match:
+                                  description: The HeaderMatchMethod object.
+                                  properties:
+                                    exact:
+                                      maxLength: 255
+                                      minLength: 1
+                                      type: string
+                                  type: object
+                                name:
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                            maxItems: 10
+                            minItems: 1
+                            type: array
                           scheme:
                             description: The client request scheme to match on
                             enum:
                             - http
                             - https
                             type: string
-                        required:
-                        - prefix
                         type: object
                       retryPolicy:
                         description: An object that represents a retry policy.
@@ -679,6 +720,9 @@ spec:
                                           description: The start of the range.
                                           format: int64
                                           type: integer
+                                      required:
+                                      - end
+                                      - start
                                       type: object
                                     regex:
                                       description: The value sent by the client must
@@ -718,17 +762,52 @@ spec:
                             - PUT
                             - TRACE
                             type: string
+                          path:
+                            description: The client specified Path to match on.
+                            properties:
+                              exact:
+                                description: The value sent by the client must match
+                                  the specified value exactly.
+                                maxLength: 255
+                                minLength: 1
+                                type: string
+                              regex:
+                                description: The value sent by the client must end
+                                  with the specified characters.
+                                maxLength: 255
+                                minLength: 1
+                                type: string
+                            type: object
                           prefix:
-                            description: Specifies the path to match requests with
+                            description: Specifies the prefix to match requests with
                             type: string
+                          queryParameters:
+                            description: The client specified queryParameters to match
+                              on
+                            items:
+                              properties:
+                                match:
+                                  description: The HeaderMatchMethod object.
+                                  properties:
+                                    exact:
+                                      maxLength: 255
+                                      minLength: 1
+                                      type: string
+                                  type: object
+                                name:
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                            maxItems: 10
+                            minItems: 1
+                            type: array
                           scheme:
                             description: The client request scheme to match on
                             enum:
                             - http
                             - https
                             type: string
-                        required:
-                        - prefix
                         type: object
                       retryPolicy:
                         description: An object that represents a retry policy.
