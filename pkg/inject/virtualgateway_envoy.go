@@ -3,11 +3,12 @@ package inject
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	corev1 "k8s.io/api/core/v1"
-	"strconv"
-	"strings"
 )
 
 const envoyImageStub = "injector-envoy-image"
@@ -20,22 +21,26 @@ const envoyVirtualGatewayEnvMap = `
   "ENVOY_ADMIN_ACCESS_LOG_FILE": "{{ .AdminAccessLogFile }}",
   "AWS_REGION": "{{ .AWSRegion }}"{{ if .EnableSDS }},
   "APPMESH_SDS_SOCKET_PATH": "{{ .SdsUdsPath }}"{{ end }}{{ if .EnableXrayTracing }},
-  "ENABLE_ENVOY_XRAY_TRACING": "1","XRAY_DAEMON_PORT": "{{ .XrayDaemonPort }}"{{ end }}
+  "ENABLE_ENVOY_XRAY_TRACING": "1","XRAY_DAEMON_PORT": "{{ .XrayDaemonPort }}"{{ end }}{{ if .EnableJaegerTracing }},
+  "ENABLE_ENVOY_JAEGER_TRACING": "1","JAEGER_TRACER_ADDRESS": "{{ .JaegerAddress }}","JAEGER_TRACER_PORT": "{{ .JaegerPort }}"{{ end }}
 }
 `
 
 type VirtualGatewayEnvoyVariables struct {
-	AWSRegion          string
-	MeshName           string
-	VirtualGatewayName string
-	Preview            string
-	EnableSDS          bool
-	SdsUdsPath         string
-	LogLevel           string
-	AdminAccessPort    int32
-	AdminAccessLogFile string
-	EnableXrayTracing  bool
-	XrayDaemonPort     int32
+	AWSRegion           string
+	MeshName            string
+	VirtualGatewayName  string
+	Preview             string
+	EnableSDS           bool
+	SdsUdsPath          string
+	LogLevel            string
+	AdminAccessPort     int32
+	AdminAccessLogFile  string
+	EnableXrayTracing   bool
+	XrayDaemonPort      int32
+	EnableJaegerTracing bool
+	JaegerAddress       string
+	JaegerPort          int32
 }
 
 type virtualGatwayEnvoyConfig struct {
@@ -52,6 +57,9 @@ type virtualGatwayEnvoyConfig struct {
 	readinessProbePeriod       int32
 	enableXrayTracing          bool
 	xrayDaemonPort             int32
+	enableJaegerTracing        bool
+	jaegerAddress              string
+	jaegerPort                 int32
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -133,17 +141,20 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 	}
 
 	return VirtualGatewayEnvoyVariables{
-		AWSRegion:          m.mutatorConfig.awsRegion,
-		MeshName:           meshName,
-		VirtualGatewayName: virtualGatewayName,
-		Preview:            preview,
-		EnableSDS:          sdsEnabled,
-		SdsUdsPath:         m.mutatorConfig.sdsUdsPath,
-		LogLevel:           m.mutatorConfig.logLevel,
-		AdminAccessPort:    m.mutatorConfig.adminAccessPort,
-		AdminAccessLogFile: m.mutatorConfig.adminAccessLogFile,
-		EnableXrayTracing:  m.mutatorConfig.enableXrayTracing,
-		XrayDaemonPort:     m.mutatorConfig.xrayDaemonPort,
+		AWSRegion:           m.mutatorConfig.awsRegion,
+		MeshName:            meshName,
+		VirtualGatewayName:  virtualGatewayName,
+		Preview:             preview,
+		EnableSDS:           sdsEnabled,
+		SdsUdsPath:          m.mutatorConfig.sdsUdsPath,
+		LogLevel:            m.mutatorConfig.logLevel,
+		AdminAccessPort:     m.mutatorConfig.adminAccessPort,
+		AdminAccessLogFile:  m.mutatorConfig.adminAccessLogFile,
+		EnableXrayTracing:   m.mutatorConfig.enableXrayTracing,
+		XrayDaemonPort:      m.mutatorConfig.xrayDaemonPort,
+		EnableJaegerTracing: m.mutatorConfig.enableJaegerTracing,
+		JaegerAddress:       m.mutatorConfig.jaegerAddress,
+		JaegerPort:          m.mutatorConfig.jaegerPort,
 	}
 }
 
