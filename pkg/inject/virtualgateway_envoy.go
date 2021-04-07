@@ -1,7 +1,6 @@
 package inject
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -27,20 +26,21 @@ const envoyVirtualGatewayEnvMap = `
 `
 
 type VirtualGatewayEnvoyVariables struct {
-	AWSRegion           string
-	MeshName            string
-	VirtualGatewayName  string
-	Preview             string
-	EnableSDS           bool
-	SdsUdsPath          string
-	LogLevel            string
-	AdminAccessPort     int32
-	AdminAccessLogFile  string
-	EnableXrayTracing   bool
-	XrayDaemonPort      int32
-	EnableJaegerTracing bool
-	JaegerAddress       string
-	JaegerPort          int32
+	AWSRegion                    string
+	MeshName                     string
+	VirtualGatewayName           string
+	Preview                      string
+	EnableSDS                    bool
+	SdsUdsPath                   string
+	LogLevel                     string
+	AdminAccessPort              int32
+	AdminAccessLogFile           string
+	EnvoyTracingConfigVolumeName string
+	EnableXrayTracing            bool
+	XrayDaemonPort               int32
+	EnableJaegerTracing          bool
+	JaegerAddress                string
+	JaegerPort                   int32
 }
 
 type virtualGatwayEnvoyConfig struct {
@@ -87,48 +87,108 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 	}
 
 	variables := m.buildTemplateVariables(pod)
-	envoyEnv, err := renderTemplate("vgenvoy", envoyVirtualGatewayEnvMap, variables)
-	if err != nil {
-		return err
-	}
+	envoy := pod.Spec.Containers[envoyIdx]
 
-	newEnvMap := map[string]string{}
-	err = json.Unmarshal([]byte(envoyEnv), &newEnvMap)
-	if err != nil {
-		return err
-	}
+	m.updateEnvoyWithEnvVariables(&envoy, variables)
+
+	// envoyEnv, err := renderTemplate("vgenvoy", envoyVirtualGatewayEnvMap, variables)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// err = json.Unmarshal([]byte(envoyEnv), &newEnvMap)
+	// if err != nil {
+	// 	return err
+	// }
 
 	//we override the image to latest Envoy so customers do not have to manually manage
 	// envoy versions and let controller handle consistency versions across the mesh
 	if m.virtualGatewayImageOverride(pod) {
-		pod.Spec.Containers[envoyIdx].Image = m.mutatorConfig.sidecarImage
+		envoy.Image = m.mutatorConfig.sidecarImage
 	}
 
-	for idx, env := range pod.Spec.Containers[envoyIdx].Env {
-		if val, ok := newEnvMap[env.Name]; ok {
-			if val != env.Value {
-				pod.Spec.Containers[envoyIdx].Env[idx].Value = val
-			}
-			delete(newEnvMap, env.Name)
-		}
-	}
-
-	for name, value := range newEnvMap {
-		e := corev1.EnvVar{Name: name,
-			Value: value}
-		pod.Spec.Containers[envoyIdx].Env = append(pod.Spec.Containers[envoyIdx].Env, e)
-	}
+	// for idx, env := range pod.Spec.Containers[envoyIdx].Env {
+	// 	if val, ok := newEnvMap[env.Name]; ok {
+	// 		if val != env.Value {
+	// 			pod.Spec.Containers[envoyIdx].Env[idx].Value = val
+	// 		}
+	// 		delete(newEnvMap, env.Name)
+	// 	}
+	// }
 
 	// customer can bring their own envoy image/spec for virtual gateway so we will only set readiness probe if not already set
-	if pod.Spec.Containers[envoyIdx].ReadinessProbe == nil {
-		pod.Spec.Containers[envoyIdx].ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay,
+	if envoy.ReadinessProbe == nil {
+		envoy.ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay,
 			m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 	}
 
 	if m.mutatorConfig.enableSDS && !isSDSDisabled(pod) {
-		mutateSDSMounts(pod, &pod.Spec.Containers[envoyIdx], m.mutatorConfig.sdsUdsPath)
+		mutateSDSMounts(pod, &envoy, m.mutatorConfig.sdsUdsPath)
 	}
 	return nil
+}
+
+func (m *virtualGatewayEnvoyConfig) updateEnvoyWithEnvVariables(envoy *corev1.Container, vars VirtualGatewayEnvoyVariables) {
+	env := make(map[string]string)
+	vg := fmt.Sprintf("mesh/%s/virtualGateway/%s", vars.MeshName, vars.VirtualGatewayName)
+
+	env["APPMESH_VIRTUAL_NODE_NAME"] = vg
+	env["AWS_REGION"] = vars.AWSRegion
+
+	// Set the value to 1 to connect to the App Mesh Preview Channel endpoint.
+	// See https://docs.aws.amazon.com/app-mesh/latest/userguide/preview.html
+	env["APPMESH_PREVIEW"] = vars.Preview
+
+	// Specifies the log level for the Envoy container
+	// Valid values: trace, debug, info, warning, error, critical, off
+	env["ENVOY_LOG_LEVEL"] = vars.LogLevel
+
+	if vars.EnableSDS {
+		env["APPMESH_SDS_SOCKET_PATH"] = vars.SdsUdsPath
+	}
+
+	if vars.AdminAccessPort != 0 {
+		// Specify a custom admin port for Envoy to listen on
+		// Default: 9901
+		env["ENVOY_ADMIN_ACCESS_PORT"] = strconv.Itoa(int(vars.AdminAccessPort))
+	}
+
+	if vars.AdminAccessLogFile != "" {
+		// Specify a custom path to write Envoy access logs to
+		// Default: /tmp/envoy_admin_access.log
+		env["ENVOY_ADMIN_ACCESS_LOG_FILE"] = vars.AdminAccessLogFile
+	}
+
+	if vars.EnableXrayTracing {
+
+		// Enables X-Ray tracing using 127.0.0.1:2000 as the default daemon endpoint
+		// To enable, set the value to 1
+		env["ENABLE_ENVOY_XRAY_TRACING"] = "1"
+
+		// Specify a port value to override the default X-Ray daemon port: 2000
+		env["XRAY_DAEMON_PORT"] = strconv.Itoa(int(vars.XrayDaemonPort))
+
+	}
+
+	if vars.EnableJaegerTracing {
+		// Specify a file path in the Envoy container file system.
+		// See https://www.envoyproxy.io/docs/envoy/latest/api-v2/config/trace/v2/http_tracer.proto
+		env["ENVOY_TRACING_CFG_FILE"] = "/tmp/envoy/envoyconf.yaml"
+
+		vol_mount := []corev1.VolumeMount{
+			{
+				Name:      vars.EnvoyTracingConfigVolumeName,
+				MountPath: "/tmp/envoy",
+			},
+		}
+		envoy.VolumeMounts = vol_mount
+	}
+
+	for name, value := range env {
+		e := corev1.EnvVar{Name: name,
+			Value: value}
+		envoy.Env = append(envoy.Env, e)
+	}
 }
 
 func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) VirtualGatewayEnvoyVariables {
@@ -141,20 +201,21 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 	}
 
 	return VirtualGatewayEnvoyVariables{
-		AWSRegion:           m.mutatorConfig.awsRegion,
-		MeshName:            meshName,
-		VirtualGatewayName:  virtualGatewayName,
-		Preview:             preview,
-		EnableSDS:           sdsEnabled,
-		SdsUdsPath:          m.mutatorConfig.sdsUdsPath,
-		LogLevel:            m.mutatorConfig.logLevel,
-		AdminAccessPort:     m.mutatorConfig.adminAccessPort,
-		AdminAccessLogFile:  m.mutatorConfig.adminAccessLogFile,
-		EnableXrayTracing:   m.mutatorConfig.enableXrayTracing,
-		XrayDaemonPort:      m.mutatorConfig.xrayDaemonPort,
-		EnableJaegerTracing: m.mutatorConfig.enableJaegerTracing,
-		JaegerAddress:       m.mutatorConfig.jaegerAddress,
-		JaegerPort:          m.mutatorConfig.jaegerPort,
+		AWSRegion:                    m.mutatorConfig.awsRegion,
+		MeshName:                     meshName,
+		VirtualGatewayName:           virtualGatewayName,
+		Preview:                      preview,
+		EnableSDS:                    sdsEnabled,
+		SdsUdsPath:                   m.mutatorConfig.sdsUdsPath,
+		LogLevel:                     m.mutatorConfig.logLevel,
+		AdminAccessPort:              m.mutatorConfig.adminAccessPort,
+		AdminAccessLogFile:           m.mutatorConfig.adminAccessLogFile,
+		EnvoyTracingConfigVolumeName: envoyTracingConfigVolumeName,
+		EnableXrayTracing:            m.mutatorConfig.enableXrayTracing,
+		XrayDaemonPort:               m.mutatorConfig.xrayDaemonPort,
+		EnableJaegerTracing:          m.mutatorConfig.enableJaegerTracing,
+		JaegerAddress:                m.mutatorConfig.jaegerAddress,
+		JaegerPort:                   m.mutatorConfig.jaegerPort,
 	}
 }
 
