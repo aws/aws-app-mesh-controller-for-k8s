@@ -11,19 +11,6 @@ import (
 )
 
 const envoyImageStub = "injector-envoy-image"
-const envoyVirtualGatewayEnvMap = `
-{
-  "APPMESH_VIRTUAL_NODE_NAME": "mesh/{{ .MeshName }}/virtualGateway/{{ .VirtualGatewayName }}",
-  "APPMESH_PREVIEW": "{{ .Preview }}",
-  "ENVOY_LOG_LEVEL": "{{ .LogLevel }}",
-  "ENVOY_ADMIN_ACCESS_PORT": "{{ .AdminAccessPort }}",
-  "ENVOY_ADMIN_ACCESS_LOG_FILE": "{{ .AdminAccessLogFile }}",
-  "AWS_REGION": "{{ .AWSRegion }}"{{ if .EnableSDS }},
-  "APPMESH_SDS_SOCKET_PATH": "{{ .SdsUdsPath }}"{{ end }}{{ if .EnableXrayTracing }},
-  "ENABLE_ENVOY_XRAY_TRACING": "1","XRAY_DAEMON_PORT": "{{ .XrayDaemonPort }}"{{ end }}{{ if .EnableJaegerTracing }},
-  "ENABLE_ENVOY_JAEGER_TRACING": "1","JAEGER_TRACER_ADDRESS": "{{ .JaegerAddress }}","JAEGER_TRACER_PORT": "{{ .JaegerPort }}"{{ end }}
-}
-`
 
 type VirtualGatewayEnvoyVariables struct {
 	AWSRegion                    string
@@ -39,8 +26,6 @@ type VirtualGatewayEnvoyVariables struct {
 	EnableXrayTracing            bool
 	XrayDaemonPort               int32
 	EnableJaegerTracing          bool
-	JaegerAddress                string
-	JaegerPort                   int32
 }
 
 type virtualGatwayEnvoyConfig struct {
@@ -58,8 +43,6 @@ type virtualGatwayEnvoyConfig struct {
 	enableXrayTracing          bool
 	xrayDaemonPort             int32
 	enableJaegerTracing        bool
-	jaegerAddress              string
-	jaegerPort                 int32
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -89,17 +72,7 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 	variables := m.buildTemplateVariables(pod)
 	envoy := pod.Spec.Containers[envoyIdx]
 
-	m.updateEnvoyWithEnvVariables(&envoy, variables)
-
-	// envoyEnv, err := renderTemplate("vgenvoy", envoyVirtualGatewayEnvMap, variables)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// err = json.Unmarshal([]byte(envoyEnv), &newEnvMap)
-	// if err != nil {
-	// 	return err
-	// }
+	newEnvMap := m.getEnvMapForVirtualGatewayEnvoy(variables)
 
 	//we override the image to latest Envoy so customers do not have to manually manage
 	// envoy versions and let controller handle consistency versions across the mesh
@@ -107,14 +80,30 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 		envoy.Image = m.mutatorConfig.sidecarImage
 	}
 
-	// for idx, env := range pod.Spec.Containers[envoyIdx].Env {
-	// 	if val, ok := newEnvMap[env.Name]; ok {
-	// 		if val != env.Value {
-	// 			pod.Spec.Containers[envoyIdx].Env[idx].Value = val
-	// 		}
-	// 		delete(newEnvMap, env.Name)
-	// 	}
-	// }
+	for idx, env := range pod.Spec.Containers[envoyIdx].Env {
+		if val, ok := newEnvMap[env.Name]; ok {
+			if val != env.Value {
+				envoy.Env[idx].Value = val
+			}
+			delete(newEnvMap, env.Name)
+		}
+	}
+
+	if variables.EnableJaegerTracing {
+		vol_mount := []corev1.VolumeMount{
+			{
+				Name:      variables.EnvoyTracingConfigVolumeName,
+				MountPath: "/tmp/envoy",
+			},
+		}
+		envoy.VolumeMounts = vol_mount
+	}
+
+	for name, value := range newEnvMap {
+		e := corev1.EnvVar{Name: name,
+			Value: value}
+		envoy.Env = append(envoy.Env, e)
+	}
 
 	// customer can bring their own envoy image/spec for virtual gateway so we will only set readiness probe if not already set
 	if envoy.ReadinessProbe == nil {
@@ -125,11 +114,12 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 	if m.mutatorConfig.enableSDS && !isSDSDisabled(pod) {
 		mutateSDSMounts(pod, &envoy, m.mutatorConfig.sdsUdsPath)
 	}
+	pod.Spec.Containers[envoyIdx] = envoy
 	return nil
 }
 
-func (m *virtualGatewayEnvoyConfig) updateEnvoyWithEnvVariables(envoy *corev1.Container, vars VirtualGatewayEnvoyVariables) {
-	env := make(map[string]string)
+func (m *virtualGatewayEnvoyConfig) getEnvMapForVirtualGatewayEnvoy(vars VirtualGatewayEnvoyVariables) map[string]string {
+	env := map[string]string{}
 	vg := fmt.Sprintf("mesh/%s/virtualGateway/%s", vars.MeshName, vars.VirtualGatewayName)
 
 	env["APPMESH_VIRTUAL_NODE_NAME"] = vg
@@ -174,21 +164,9 @@ func (m *virtualGatewayEnvoyConfig) updateEnvoyWithEnvVariables(envoy *corev1.Co
 		// Specify a file path in the Envoy container file system.
 		// See https://www.envoyproxy.io/docs/envoy/latest/api-v2/config/trace/v2/http_tracer.proto
 		env["ENVOY_TRACING_CFG_FILE"] = "/tmp/envoy/envoyconf.yaml"
-
-		vol_mount := []corev1.VolumeMount{
-			{
-				Name:      vars.EnvoyTracingConfigVolumeName,
-				MountPath: "/tmp/envoy",
-			},
-		}
-		envoy.VolumeMounts = vol_mount
+		env["ENABLE_ENVOY_JAEGER_TRACING"] = "1"
 	}
-
-	for name, value := range env {
-		e := corev1.EnvVar{Name: name,
-			Value: value}
-		envoy.Env = append(envoy.Env, e)
-	}
+	return env
 }
 
 func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) VirtualGatewayEnvoyVariables {
@@ -214,8 +192,6 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 		EnableXrayTracing:            m.mutatorConfig.enableXrayTracing,
 		XrayDaemonPort:               m.mutatorConfig.xrayDaemonPort,
 		EnableJaegerTracing:          m.mutatorConfig.enableJaegerTracing,
-		JaegerAddress:                m.mutatorConfig.jaegerAddress,
-		JaegerPort:                   m.mutatorConfig.jaegerPort,
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -832,8 +833,6 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
 					sidecarImage:               "envoy:v2",
 					enableJaegerTracing:        true,
-					jaegerAddress:              "jaeger-collector.system",
-					jaegerPort:                 80,
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 				},
@@ -881,12 +880,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "1",
 								},
 								{
-									Name:  "JAEGER_TRACER_PORT",
-									Value: "80",
-								},
-								{
-									Name:  "JAEGER_TRACER_ADDRESS",
-									Value: "jaeger-collector.system",
+									Name:  "ENVOY_TRACING_CFG_FILE",
+									Value: "/tmp/envoy/envoyconf.yaml",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
@@ -901,6 +896,9 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								PeriodSeconds:       10,
 								SuccessThreshold:    1,
 								FailureThreshold:    3,
+							},
+							VolumeMounts: []v1.VolumeMount{
+								{Name: "envoy-tracing-config", MountPath: "/tmp/envoy"},
 							},
 						},
 					},
