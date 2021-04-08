@@ -89,16 +89,6 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 		}
 	}
 
-	if variables.EnableJaegerTracing {
-		vol_mount := []corev1.VolumeMount{
-			{
-				Name:      variables.EnvoyTracingConfigVolumeName,
-				MountPath: "/tmp/envoy",
-			},
-		}
-		envoy.VolumeMounts = vol_mount
-	}
-
 	for name, value := range newEnvMap {
 		e := corev1.EnvVar{Name: name,
 			Value: value}
@@ -161,9 +151,6 @@ func (m *virtualGatewayEnvoyConfig) getEnvMapForVirtualGatewayEnvoy(vars Virtual
 	}
 
 	if vars.EnableJaegerTracing {
-		// Specify a file path in the Envoy container file system.
-		// See https://www.envoyproxy.io/docs/envoy/latest/api-v2/config/trace/v2/http_tracer.proto
-		env["ENVOY_TRACING_CFG_FILE"] = "/tmp/envoy/envoyconf.yaml"
 		env["ENABLE_ENVOY_JAEGER_TRACING"] = "1"
 	}
 	return env

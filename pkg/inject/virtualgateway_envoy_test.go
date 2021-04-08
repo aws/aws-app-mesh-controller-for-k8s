@@ -9,7 +9,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -879,10 +878,6 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "ENABLE_ENVOY_JAEGER_TRACING",
 									Value: "1",
 								},
-								{
-									Name:  "ENVOY_TRACING_CFG_FILE",
-									Value: "/tmp/envoy/envoyconf.yaml",
-								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -896,9 +891,6 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								PeriodSeconds:       10,
 								SuccessThreshold:    1,
 								FailureThreshold:    3,
-							},
-							VolumeMounts: []v1.VolumeMount{
-								{Name: "envoy-tracing-config", MountPath: "/tmp/envoy"},
 							},
 						},
 					},
