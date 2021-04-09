@@ -105,6 +105,11 @@ func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj
 		return nil, err
 	}
 
+	if len(vgCandidatesWithGWRouteSelector) == 0 {
+		return nil, errors.Errorf("failed to find matching virtualGateway with matching gatewayroute selector: %s, expecting 1 but found %d",
+			obj.GetLabels(), 0)
+	}
+
 	// Found 1 VirtualGateway for a given set of GatewayRoute Selectors so we return
 	if len(vgCandidatesWithGWRouteSelector) == 1 {
 		return vgCandidatesWithGWRouteSelector[0], nil
@@ -135,11 +140,16 @@ func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj
 func (d *membershipDesignator) getVirtualGatewaysForMatchingGatewayRouteSelector(vgCandidates []*appmesh.VirtualGateway, obj *appmesh.GatewayRoute) ([]*appmesh.VirtualGateway, error) {
 	var vgCandidatesWithGWRouteSelector []*appmesh.VirtualGateway
 	for _, vg := range vgCandidates {
-		gatewayrouteSel, err := metav1.LabelSelectorAsSelector(vg.Spec.GatewayRouteSelector)
-		if err != nil {
-			return nil, err
+		gatewayRouteSel := labels.Everything()
+		var err error
+		if vg.Spec.GatewayRouteSelector != nil {
+			gatewayRouteSel, err = metav1.LabelSelectorAsSelector(vg.Spec.GatewayRouteSelector)
+			if err != nil {
+				return nil, err
+			}
 		}
-		if gatewayrouteSel.Matches(labels.Set(obj.Labels)) {
+
+		if gatewayRouteSel.Matches(labels.Set(obj.Labels)) {
 			vgCandidatesWithGWRouteSelector = append(vgCandidatesWithGWRouteSelector, vg)
 		}
 	}
