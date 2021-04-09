@@ -2,6 +2,8 @@ package virtualgateway
 
 import (
 	"context"
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
@@ -15,7 +17,6 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	testclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-	"testing"
 )
 
 func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing.T) {
@@ -55,6 +56,24 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 			NamespaceSelector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"vg": "y",
+				},
+			},
+		},
+	}
+
+	vgWithGatewayRouteSelector := &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "vg-with-gwroute-selector",
+		},
+		Spec: appmesh.VirtualGatewaySpec{
+			NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"vg": "x",
+				},
+			},
+			GatewayRouteSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"gw": "testGW",
 				},
 			},
 		},
@@ -472,6 +491,39 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 			want:    nil,
 			wantErr: errors.New("failed to find matching virtualGateway for namespace: awesome-ns, expecting 1 but found 0"),
 		},
+		{
+			name: "virtualgateway with valid gatewayroute selector",
+			env: env{
+				virtualGateways: []*appmesh.VirtualGateway{
+					vgWithNSSelectorVgX,
+					vgWithGatewayRouteSelector,
+				},
+				namespaces: []*corev1.Namespace{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "awesome-ns",
+							Labels: map[string]string{
+								"vg": "x",
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				obj: &appmesh.GatewayRoute{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-gateway-route",
+						Labels: map[string]string{
+							"gw": "testGW",
+						},
+					},
+					Spec: appmesh.GatewayRouteSpec{},
+				},
+			},
+			want:    vgWithGatewayRouteSelector,
+			wantErr: nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -494,7 +546,6 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 			ctx = webhook.ContextWithAdmissionRequest(ctx, admission.Request{
 				AdmissionRequest: admissionv1beta1.AdmissionRequest{Namespace: "awesome-ns"},
 			})
-
 			got, err := designator.DesignateForGatewayRoute(ctx, tt.args.obj)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())

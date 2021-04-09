@@ -2,6 +2,8 @@ package virtualgateway
 
 import (
 	"context"
+	"strings"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
@@ -11,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 // MembershipDesignator designates VirtualGateway membership for pods and namespaced AppMesh GatewayRoute CRs.
@@ -98,6 +99,28 @@ func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj
 		return nil, errors.Errorf("failed to find matching virtualGateway for namespace: %s, expecting 1 but found %d",
 			obj.GetNamespace(), 0)
 	}
+
+	vgCandidatesWithGWRouteSelector, err := d.getVirtualGatewaysForMatchingGatewayRouteSelector(vgCandidates, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	// Found 1 VirtualGateway for a given set of GatewayRoute Selectors so we return
+	if len(vgCandidatesWithGWRouteSelector) == 1 {
+		return vgCandidatesWithGWRouteSelector[0], nil
+	}
+
+	// Multiple VirtualGateways for a given set of GatewayRoute selector, throw an error
+	if len(vgCandidatesWithGWRouteSelector) > 1 {
+		var vgCandidatesNames []string
+		for _, vg := range vgCandidatesWithGWRouteSelector {
+			vgCandidatesNames = append(vgCandidatesNames, vg.Name)
+		}
+		return nil, errors.Errorf("found multiple matching virtualGateways for same gatewayroute selector: %s, expecting 1 but found %d: %s",
+			obj.GetLabels(), len(vgCandidates), strings.Join(vgCandidatesNames, ","))
+	}
+
+	// No VirtualGateway found based on GatewayRouteSelector so we fallback to namespace selector
 	if len(vgCandidates) > 1 {
 		var vgCandidatesNames []string
 		for _, vg := range vgCandidates {
@@ -107,4 +130,18 @@ func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj
 			obj.GetNamespace(), len(vgCandidates), strings.Join(vgCandidatesNames, ","))
 	}
 	return vgCandidates[0], nil
+}
+
+func (d *membershipDesignator) getVirtualGatewaysForMatchingGatewayRouteSelector(vgCandidates []*appmesh.VirtualGateway, obj *appmesh.GatewayRoute) ([]*appmesh.VirtualGateway, error) {
+	var vgCandidatesWithGWRouteSelector []*appmesh.VirtualGateway
+	for _, vg := range vgCandidates {
+		gatewayrouteSel, err := metav1.LabelSelectorAsSelector(vg.Spec.GatewayRouteSelector)
+		if err != nil {
+			return nil, err
+		}
+		if gatewayrouteSel.Matches(labels.Set(obj.Labels)) {
+			vgCandidatesWithGWRouteSelector = append(vgCandidatesWithGWRouteSelector, vg)
+		}
+	}
+	return vgCandidatesWithGWRouteSelector, nil
 }
