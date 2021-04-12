@@ -26,6 +26,8 @@ type VirtualGatewayEnvoyVariables struct {
 	EnableXrayTracing            bool
 	XrayDaemonPort               int32
 	EnableJaegerTracing          bool
+	JaegerPort                   string
+	JaegerAddress                string
 }
 
 type virtualGatwayEnvoyConfig struct {
@@ -43,6 +45,8 @@ type virtualGatwayEnvoyConfig struct {
 	enableXrayTracing          bool
 	xrayDaemonPort             int32
 	enableJaegerTracing        bool
+	jaegerPort                 string
+	jaegerAddress              string
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -152,6 +156,8 @@ func (m *virtualGatewayEnvoyConfig) getEnvMapForVirtualGatewayEnvoy(vars Virtual
 
 	if vars.EnableJaegerTracing {
 		env["ENABLE_ENVOY_JAEGER_TRACING"] = "1"
+		env["JAEGER_TRACER_PORT"] = vars.JaegerPort
+		env["JAEGER_TRACER_ADDRESS"] = vars.JaegerAddress
 	}
 	return env
 }
@@ -179,6 +185,8 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 		EnableXrayTracing:            m.mutatorConfig.enableXrayTracing,
 		XrayDaemonPort:               m.mutatorConfig.xrayDaemonPort,
 		EnableJaegerTracing:          m.mutatorConfig.enableJaegerTracing,
+		JaegerPort:                   m.mutatorConfig.jaegerPort,
+		JaegerAddress:                m.mutatorConfig.jaegerAddress,
 	}
 }
 

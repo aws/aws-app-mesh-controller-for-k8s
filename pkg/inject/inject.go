@@ -170,6 +170,8 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 			enableXrayTracing:          m.config.EnableXrayTracing,
 			xrayDaemonPort:             m.config.XrayDaemonPort,
 			enableJaegerTracing:        m.config.EnableJaegerTracing,
+			jaegerPort:                 m.config.JaegerPort,
+			jaegerAddress:              m.config.JaegerAddress,
 		}, ms, vg),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,

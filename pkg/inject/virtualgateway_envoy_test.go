@@ -832,6 +832,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
 					sidecarImage:               "envoy:v2",
 					enableJaegerTracing:        true,
+					jaegerPort:                 "80",
+					jaegerAddress:              "jaeger-collector.system",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 				},
@@ -873,6 +875,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
+								},
+								{
+									Name:  "JAEGER_TRACER_PORT",
+									Value: "80",
+								},
+								{
+									Name:  "JAEGER_TRACER_ADDRESS",
+									Value: "jaeger-collector.system",
 								},
 								{
 									Name:  "ENABLE_ENVOY_JAEGER_TRACING",
