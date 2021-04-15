@@ -34,8 +34,8 @@ func (h *enqueueRequestsForMeshEvents) Create(e event.CreateEvent, queue workque
 
 // Update is called in response to an update event
 func (h *enqueueRequestsForMeshEvents) Update(e event.UpdateEvent, queue workqueue.RateLimitingInterface) {
-	// virtualNode reconcile depends on mesh is active or not.
-	// so we only need to trigger virtualNode reconcile if mesh's active status changed.
+	// virtualService reconcile depends on mesh is active or not.
+	// so we only need to trigger virtualService reconcile if mesh's active status changed.
 	msOld := e.ObjectOld.(*appmesh.Mesh)
 	msNew := e.ObjectNew.(*appmesh.Mesh)
 
