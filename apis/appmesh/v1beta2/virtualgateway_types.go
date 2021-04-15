@@ -322,7 +322,7 @@ type VirtualGatewaySpec struct {
 	// 	if absent, it selects no pod.
 	// +optional
 	PodSelector *metav1.LabelSelector `json:"podSelector,omitempty"`
-	// GatewayRouteSelector selects GatewayRoutes using labels to designate GatewayRout membership.
+	// GatewayRouteSelector selects GatewayRoutes using labels to designate GatewayRoute membership.
 	// If not specified it selects all GatewayRoutes in that namespace.
 	// +optional
 	GatewayRouteSelector *metav1.LabelSelector `json:"gatewayRouteSelector,omitempty"`

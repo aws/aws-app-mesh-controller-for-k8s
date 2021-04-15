@@ -86,29 +86,23 @@ func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj
 	}
 
 	var vgCandidates []*appmesh.VirtualGateway
-	var found bool
-	var err error
 
 	for _, vgObj := range vgList.Items {
-		if found, err = matchesNamespaceSelector(objNS, &vgObj); err != nil {
+		if matches, err := matchesNamespaceSelector(objNS, &vgObj); err != nil {
 			return nil, err
-		}
-
-		if !found {
+		} else if !matches {
 			continue
 		}
 
-		if found, err = matchesGatewayRouteSelector(obj, &vgObj); err != nil {
+		if matches, err := matchesGatewayRouteSelector(obj, &vgObj); err != nil {
 			return nil, err
-		}
-
-		if !found {
+		} else if !matches {
 			continue
 		}
-
 		vgCandidates = append(vgCandidates, vgObj.DeepCopy())
 	}
 
+	// No matching VirtualGateway
 	if len(vgCandidates) == 0 {
 		return nil, errors.New("failed to find matching virtualGateway, expecting 1 but found 0")
 	}
@@ -126,6 +120,7 @@ func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj
 	return vgCandidates[0], nil
 }
 
+// Checks if given VirtualGateway has namespace selector which matches with the given namespace labels
 func matchesNamespaceSelector(objNS corev1.Namespace, vgObj *appmesh.VirtualGateway) (bool, error) {
 	selector, err := metav1.LabelSelectorAsSelector(vgObj.Spec.NamespaceSelector)
 	if err != nil {
@@ -137,6 +132,7 @@ func matchesNamespaceSelector(objNS corev1.Namespace, vgObj *appmesh.VirtualGate
 	return true, nil
 }
 
+// Checks if given VirtualGateway has GatewayRouteSelector which matches with the given GatewayRoute
 func matchesGatewayRouteSelector(obj *appmesh.GatewayRoute, vg *appmesh.VirtualGateway) (bool, error) {
 	gatewayRouteSel := labels.Everything()
 	var err error
