@@ -90,7 +90,7 @@ func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj
 	var err error
 
 	for _, vgObj := range vgList.Items {
-		if found, err = d.matchesNamespaceSelector(objNS, &vgObj); err != nil {
+		if found, err = matchesNamespaceSelector(objNS, &vgObj); err != nil {
 			return nil, err
 		}
 
@@ -98,7 +98,7 @@ func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj
 			continue
 		}
 
-		if found, err = d.matchesGatewayRouteSelector(obj, &vgObj); err != nil {
+		if found, err = matchesGatewayRouteSelector(obj, &vgObj); err != nil {
 			return nil, err
 		}
 
@@ -126,7 +126,7 @@ func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj
 	return vgCandidates[0], nil
 }
 
-func (d *membershipDesignator) matchesNamespaceSelector(objNS corev1.Namespace, vgObj *appmesh.VirtualGateway) (bool, error) {
+func matchesNamespaceSelector(objNS corev1.Namespace, vgObj *appmesh.VirtualGateway) (bool, error) {
 	selector, err := metav1.LabelSelectorAsSelector(vgObj.Spec.NamespaceSelector)
 	if err != nil {
 		return false, err
@@ -137,7 +137,7 @@ func (d *membershipDesignator) matchesNamespaceSelector(objNS corev1.Namespace, 
 	return true, nil
 }
 
-func (d *membershipDesignator) matchesGatewayRouteSelector(obj *appmesh.GatewayRoute, vg *appmesh.VirtualGateway) (bool, error) {
+func matchesGatewayRouteSelector(obj *appmesh.GatewayRoute, vg *appmesh.VirtualGateway) (bool, error) {
 	gatewayRouteSel := labels.Everything()
 	var err error
 	if vg.Spec.GatewayRouteSelector != nil {
