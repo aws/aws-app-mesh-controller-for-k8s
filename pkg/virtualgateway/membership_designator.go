@@ -104,7 +104,7 @@ func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj
 
 	// No matching VirtualGateway
 	if len(vgCandidates) == 0 {
-		return nil, errors.New("failed to find matching virtualGateway, expecting 1 but found 0")
+		return nil, errors.Errorf("failed to find matching virtualGateway for gatewayRoute: %s, expecting 1 but found 0", obj.GetName())
 	}
 
 	// Multiple matching VirtualGateway
@@ -113,8 +113,8 @@ func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj
 		for _, vg := range vgCandidates {
 			vgCandidatesNames = append(vgCandidatesNames, vg.Name)
 		}
-		return nil, errors.Errorf("found multiple matching virtualGateways, expecting 1 but found %d: %s",
-			len(vgCandidates), strings.Join(vgCandidatesNames, ","))
+		return nil, errors.Errorf("found multiple matching virtualGateways for gatewayRoute: %s, expecting 1 but found %d: %s",
+			obj.GetName(), len(vgCandidates), strings.Join(vgCandidatesNames, ","))
 	}
 
 	return vgCandidates[0], nil

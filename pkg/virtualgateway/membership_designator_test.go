@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	noMatchingVGWError = errors.New("failed to find matching virtualGateway, expecting 1 but found 0")
+	noMatchingVGWError = "failed to find matching virtualGateway for gatewayRoute: %s, expecting 1 but found 0"
 
 	vgWithNilNSSelector = &appmesh.VirtualGateway{
 		ObjectMeta: metav1.ObjectMeta{
@@ -348,7 +348,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: noMatchingVGWError,
+			wantErr: errors.Errorf(noMatchingVGWError, "my-gateway-route"),
 		},
 		{
 			name: "[a single virtualGateway with nil namespace selector] namespace with labels cannot be selected",
@@ -377,7 +377,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: noMatchingVGWError,
+			wantErr: errors.Errorf(noMatchingVGWError, "my-gateway-route"),
 		},
 		{
 			name: "[a single virtualGateway selects namespace with specific labels] namespace with matching labels can be selected",
@@ -432,7 +432,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: noMatchingVGWError,
+			wantErr: errors.Errorf(noMatchingVGWError, "my-gateway-route"),
 		},
 		{
 			name: "[a single virtualGateway selects namespace with specific labels] namespace with non-matching labels cannot be selected",
@@ -461,7 +461,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: noMatchingVGWError,
+			wantErr: errors.Errorf(noMatchingVGWError, "my-gateway-route"),
 		},
 		{
 			name: "[multiple virtualGateways - one with empty namespace selector, another selects namespace with specific labels] namespaces without labels can be selected",
@@ -548,7 +548,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: errors.New("found multiple matching virtualGateways, expecting 1 but found 2: vg-with-empty-ns-selector,vg-with-ns-selector-vg-x"),
+			wantErr: errors.New("found multiple matching virtualGateways for gatewayRoute: my-gateway-route, expecting 1 but found 2: vg-with-empty-ns-selector,vg-with-ns-selector-vg-x"),
 		},
 		{
 			name: "[multiple virtualGateways - both select namespace with different labels] namespaces with matching labels for one virtualGateway can be selected",
@@ -635,7 +635,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: noMatchingVGWError,
+			wantErr: errors.Errorf(noMatchingVGWError, "my-gateway-route"),
 		},
 		{
 			name: "[multiple virtualGateways - both select namespaces with different labels] namespaces with non-matching labels cannot be selected",
@@ -665,7 +665,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: noMatchingVGWError,
+			wantErr: errors.Errorf(noMatchingVGWError, "my-gateway-route"),
 		},
 		{
 			name: "virtualgateway with valid gatewayroute selector",
