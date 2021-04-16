@@ -17,6 +17,7 @@ nav:
       - APISpec: reference/api_spec.md
       - APIDesign: reference/api_design.md
       - SidecarInjection: reference/injector.md
+      - VirtualGateway CRD: reference/vgw.md
 plugins:
   - search
 theme:
