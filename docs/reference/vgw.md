@@ -1,10 +1,15 @@
-### GatewayRoute to VirtualGateway Association while creating via CRD (Yaml Spec)
-The virtual gateway selects namespaces using the namespaceSelector, here you can select multiple namespaces based on the labels you specify. But from namespace point of view, it is expected to have only 1 virtual gateway and all gateway routes defined in that namespace get attached to that 1 virtual gateway. If there is more than 1 VirtualGateway per namespace then creation of GatewayRoute will fail with following error
-```
-"Error from server (found multiple matching virtualGateways for namespace: namespace, expecting 1 but found N"
-```
+### GatewayRoute to VirtualGateway Association while via CRD (Yaml Spec)
+A VirtualGateway can select GatewayRoute using 2 types of selectors  
+#### namespaceSelector ####  
+VirtualGateway must specify namespaceSelector to associate GatewayRoutes belonging to a particular namespace.
+An empty namespaceSelector would target GatewayRoutes in all namespaces. While nil or not specifying any namespace selector would not select any GatewayRoutes.
 
-You can use multiple GatewayRoutes to route traffic to different applications in one namespace but there can be only 1 VirtualGateway for that namespace. Below is the CRD for VirtualGateway creation which selects namespace with labels (gateway: ingress-gw). We also create 2 GatewayRoutes in this namespace which get associated with this VirtualGateway. For a complete example, please check [example](https://github.com/aws/aws-app-mesh-examples/tree/main/walkthroughs/howto-k8s-ingress-gateway)
+#### gatewayRouteSelector ####  
+VirtualGateway can additionally specify gatewayRouteSelector to select subset of GatewayRoutes in a given namespace. 
+An empty or not specifying this field (nil) will select all GatewayRoutes in a given namespace. If specified then it will select only those GatewayRoutes which have the matching labels. 
+
+Here is a sample spec with 1 VirtualGateway and 2 GatewayRoutes. Here VirtualGateway specified a gatewayRouteSelector, based on which only 1 of the GatewayRoute gets selected.
+
 ```
 apiVersion: appmesh.k8s.aws/v1beta2
 kind: VirtualGateway
@@ -13,6 +18,9 @@ metadata:
   namespace: ${APP_NAMESPACE}
 spec:
   namespaceSelector:
+    matchLabels:
+      gateway: ingress-gw
+  gatewayRouteSelector:
     matchLabels:
       gateway: ingress-gw
   podSelector:
@@ -43,6 +51,8 @@ kind: GatewayRoute
 metadata:
   name: gateway-route-paths
   namespace: ${APP_NAMESPACE}
+  labels:
+    gateway: ingress-gw
 spec:
   httpRoute:
     match:
@@ -52,4 +62,12 @@ spec:
         virtualService:
           virtualServiceRef:
             name: color-paths
----
+----
+```
+
+Since the GatewayRoute: gateway-route-headers doesn't have any matching VirtualGateway, customers will see following error message
+```
+failed to find matching virtualGateway for gatewayRoute: gateway-route-headers, expecting 1 but found 0
+```
+
+The above error message is to only inform the user that the GatewayRoute in the error message has not been associated with any VirtualGateway. So the user should either add matching gatewayRouteSelector to the unmatched gatewayRoute or completely remove the gatewayRouteSelector so that the VirtualGateway ignores this field and uses only the namespaceSelector. 
