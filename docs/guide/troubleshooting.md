@@ -48,8 +48,8 @@ Then navigate to `localhost:9901/` for the index or `localhost:9901/config_dump`
 "Error from server (found multiple matching virtualGateways for namespace: namespace, expecting 1 but found N"
 ```
 You will see an error similar to above if you try to create a gateway route in a namespace which has been associated with multiple virtual gateways.
-Virtual Gateway selects namespace using namespace selector and a given namespace is expected to have only 1 Virtual Gateway. If there are 2 Virtual Gateways
-pointing to same namespace then you would see the above error. For more details refer [LiveDocs Virtual Gateway section](../reference/vgw.md)
+Virtual Gateway selects namespace using namespace selector and it selects all GatewayRoutes present in that namespace. If there are 2 Virtual Gateways
+for same GatewayRoute in a given namespace then you would see the above error. For more details refer [LiveDocs Virtual Gateway section](../reference/vgw.md)
 
 ## mTLS - Common Issues
 
