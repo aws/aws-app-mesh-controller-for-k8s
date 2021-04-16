@@ -43,16 +43,29 @@ kubectl port-forward -n "${APPLICATION_NAMESPACE}" \
 
 Then navigate to `localhost:9901/` for the index or `localhost:9901/config_dump` for the envoy config.
 
+## VirtualGateway - Common Issues
+```
+failed to find matching virtualGateway for gatewayRoute:<gatewayRoute.Name>, expecting 1 but found 0
+```
+You will see above error if any of the GatewayRoutes specified in your spec cannot be associated with VirtualGateway.This can happen if there is no matching GatewayRoute based on the namespaceSelector and/or gatewayRouteSelector specified by the VirtualGateway. 
+For more details refer [LiveDocs Virtual Gateway section](../reference/vgw.md)
+
+```
+"Error from server (found multiple matching virtualGateways for gatewayRoute:<gatewayRoute.Name>, expecting 1 but found N"
+```
+You will see an error similar to above if there are multiple VirtualGateways for a single gatewayRoute based on the specified namespaceSelector and gatewayRouteSelector logic. 
+For more details refer [LiveDocs Virtual Gateway section](../reference/vgw.md)
+
 ## mTLS - Common Issues
 
 ### Envoy fails to boot up when SDS based mTLS is enabled
 
 When SDS based mTLS is enabled at the controller level via `enable-sds` flag, controller expects to find SDS Provider’s UDS at path specified by `sds-uds-path`. It is set to a default value of `/run/spire/sockets/agent.sock` which is the default SPIRE Agent’s UDS path. Make sure that SDS Provider on the local node is up and running and UDS is active. Currently, SPIRE is the only supported SDS provider. Please check if SPIRE Agent is up and running on the same node as the problematic Envoy.
- 
+
 You can use the below command to figure out the exact reason of the envoy bootup issue. If the error is due to not being able to mount SDS provider's UDS socket then you would need to address that.
 
 ```bash
-kubectl describe pod <pod-name> -n <namespace-name> 
+kubectl describe pod <pod-name> -n <namespace-name>
 ```
 
 ### Pod is up and running but Envoy doesn’t have any certs in SDS mode.
