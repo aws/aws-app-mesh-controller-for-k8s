@@ -1,10 +1,15 @@
 ### GatewayRoute to VirtualGateway Association while via CRD (Yaml Spec)
-A VirtualGateway can select GatewayRoute using 2 types of selectors  
+A VirtualGateway can select GatewayRoute using following selectors  
 #### namespaceSelector ####  
 VirtualGateway must specify namespaceSelector to associate GatewayRoutes belonging to a particular namespace.
 An empty namespaceSelector would target GatewayRoutes in all namespaces. While nil or not specifying any namespace selector would not select any GatewayRoutes.
+If there is more than 1 VirtualGateway per GatewayRoute in a given namespace then creation of GatewayRoute will fail with following error
+```
+"Error from server (found multiple matching virtualGateways for namespace: namespace, expecting 1 but found N"
+```
 
-#### gatewayRouteSelector ####  
+
+#### gatewayRouteSelector (Coming Soon: In next Release) ####  
 VirtualGateway can additionally specify gatewayRouteSelector to select subset of GatewayRoutes in a given namespace. 
 An empty or not specifying this field (nil) will select all GatewayRoutes in a given namespace. If specified then it will select only those GatewayRoutes which have the matching labels. 
 
