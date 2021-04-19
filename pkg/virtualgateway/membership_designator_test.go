@@ -2,6 +2,8 @@ package virtualgateway
 
 import (
 	"context"
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
@@ -15,11 +17,12 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	testclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-	"testing"
 )
 
-func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing.T) {
-	vgWithNilNSSelector := &appmesh.VirtualGateway{
+var (
+	noMatchingVGWError = "failed to find matching virtualGateway for gatewayRoute: %s, expecting 1 but found 0"
+
+	vgWithNilNSSelector = &appmesh.VirtualGateway{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "vg-with-nil-ns-selector",
 		},
@@ -27,7 +30,8 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 			NamespaceSelector: nil,
 		},
 	}
-	vgWithEmptyNSSelector := &appmesh.VirtualGateway{
+
+	vgWithEmptyNSSelector = &appmesh.VirtualGateway{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "vg-with-empty-ns-selector",
 		},
@@ -35,7 +39,8 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 			NamespaceSelector: &metav1.LabelSelector{},
 		},
 	}
-	vgWithNSSelectorVgX := &appmesh.VirtualGateway{
+
+	vgWithNSSelectorVgX = &appmesh.VirtualGateway{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "vg-with-ns-selector-vg-x",
 		},
@@ -47,7 +52,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 			},
 		},
 	}
-	vgWithNSSelectorVgY := &appmesh.VirtualGateway{
+	vgWithNSSelectorVgY = &appmesh.VirtualGateway{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "vg-with-ns-selector-vg-y",
 		},
@@ -60,6 +65,196 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 		},
 	}
 
+	vgWithNSSelectorForBackendApps = &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "vg-with-ns-selector-app-backend",
+		},
+		Spec: appmesh.VirtualGatewaySpec{
+			NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "backend",
+				},
+			},
+			GatewayRouteSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"vg": "x",
+				},
+			},
+		},
+	}
+
+	vgWithEmptyGWRouteSelector = &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "vg-with-empty-gwRoute-selector",
+		},
+		Spec: appmesh.VirtualGatewaySpec{
+			GatewayRouteSelector: &metav1.LabelSelector{},
+		},
+	}
+
+	vgWithNilGWRouteSelector = &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "vg-with-nil-gwRoute-selector",
+		},
+		Spec: appmesh.VirtualGatewaySpec{
+			GatewayRouteSelector: nil,
+		},
+	}
+
+	vgWithTestGWRouteSelector = &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "vg-with-test-gwroute-selector",
+		},
+		Spec: appmesh.VirtualGatewaySpec{
+			NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "backend",
+				},
+			},
+			GatewayRouteSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"gw": "testGW",
+				},
+			},
+		},
+	}
+
+	vgWithProdGWRouteSelector = &appmesh.VirtualGateway{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "vg-with-test-gwroute-selector",
+		},
+		Spec: appmesh.VirtualGatewaySpec{
+			GatewayRouteSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"gw": "prodGW",
+				},
+			},
+		},
+	}
+)
+
+func Test_virtualGatewayMembershipDesignator_matchesNamespaceSelector(t *testing.T) {
+	testNamespace := corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "awesome-ns",
+			Labels: map[string]string{
+				"app": "backend",
+			},
+		},
+	}
+
+	tests := []struct {
+		name           string
+		virtualGateway *appmesh.VirtualGateway
+		objNS          corev1.Namespace
+		want           bool
+		wantErr        error
+	}{
+		{
+			name:           "VirtualGateway with Empty namespace selector",
+			virtualGateway: vgWithEmptyNSSelector,
+			objNS:          testNamespace,
+			want:           true,
+			wantErr:        nil,
+		},
+		{
+			name:           "VirtualGateway with Nil namespace selector",
+			virtualGateway: vgWithNilNSSelector,
+			objNS:          testNamespace,
+			want:           false,
+			wantErr:        nil,
+		},
+		{
+			name:           "VirtualGateway with Matching namespace selector",
+			virtualGateway: vgWithNSSelectorForBackendApps,
+			objNS:          testNamespace,
+			want:           true,
+			wantErr:        nil,
+		},
+		{
+			name:           "VirtualGateway with non-matching namespace selector",
+			virtualGateway: vgWithNSSelectorVgX,
+			objNS:          testNamespace,
+			want:           false,
+			wantErr:        nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := matchesNamespaceSelector(tt.objNS, tt.virtualGateway)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func Test_virtualGatewayMembershipDesignator_matchesGatewayRouteSelector(t *testing.T) {
+	testGatewayRoute := &appmesh.GatewayRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "awesome-ns",
+			Name:      "my-gateway-route",
+			Labels: map[string]string{
+				"gw": "testGW",
+			},
+		},
+	}
+
+	tests := []struct {
+		name           string
+		virtualGateway *appmesh.VirtualGateway
+		gatewayRoute   *appmesh.GatewayRoute
+		want           bool
+		wantErr        error
+	}{
+		{
+			name:           "VirtualGateway with Empty namespace selector",
+			virtualGateway: vgWithEmptyGWRouteSelector,
+			gatewayRoute:   testGatewayRoute,
+			want:           true,
+			wantErr:        nil,
+		},
+		{
+			name:           "VirtualGateway with Nil namespace selector",
+			virtualGateway: vgWithNilGWRouteSelector,
+			gatewayRoute:   testGatewayRoute,
+			want:           true,
+			wantErr:        nil,
+		},
+		{
+			name:           "VirtualGateway with Matching namespace selector",
+			virtualGateway: vgWithTestGWRouteSelector,
+			gatewayRoute:   testGatewayRoute,
+			want:           true,
+			wantErr:        nil,
+		},
+		{
+			name:           "VirtualGateway with non-matching namespace selector",
+			virtualGateway: vgWithProdGWRouteSelector,
+			gatewayRoute:   testGatewayRoute,
+			want:           false,
+			wantErr:        nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := matchesGatewayRouteSelector(tt.gatewayRoute, tt.virtualGateway)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing.T) {
 	type env struct {
 		virtualGateways []*appmesh.VirtualGateway
 		namespaces      []*corev1.Namespace
@@ -153,7 +348,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: errors.New("failed to find matching virtualGateway for namespace: awesome-ns, expecting 1 but found 0"),
+			wantErr: errors.Errorf(noMatchingVGWError, "my-gateway-route"),
 		},
 		{
 			name: "[a single virtualGateway with nil namespace selector] namespace with labels cannot be selected",
@@ -182,7 +377,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: errors.New("failed to find matching virtualGateway for namespace: awesome-ns, expecting 1 but found 0"),
+			wantErr: errors.Errorf(noMatchingVGWError, "my-gateway-route"),
 		},
 		{
 			name: "[a single virtualGateway selects namespace with specific labels] namespace with matching labels can be selected",
@@ -237,7 +432,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: errors.New("failed to find matching virtualGateway for namespace: awesome-ns, expecting 1 but found 0"),
+			wantErr: errors.Errorf(noMatchingVGWError, "my-gateway-route"),
 		},
 		{
 			name: "[a single virtualGateway selects namespace with specific labels] namespace with non-matching labels cannot be selected",
@@ -266,7 +461,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: errors.New("failed to find matching virtualGateway for namespace: awesome-ns, expecting 1 but found 0"),
+			wantErr: errors.Errorf(noMatchingVGWError, "my-gateway-route"),
 		},
 		{
 			name: "[multiple virtualGateways - one with empty namespace selector, another selects namespace with specific labels] namespaces without labels can be selected",
@@ -353,7 +548,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: errors.New("found multiple matching virtualGateways for namespace: awesome-ns, expecting 1 but found 2: vg-with-empty-ns-selector,vg-with-ns-selector-vg-x"),
+			wantErr: errors.New("found multiple matching virtualGateways for gatewayRoute: my-gateway-route, expecting 1 but found 2: vg-with-empty-ns-selector,vg-with-ns-selector-vg-x"),
 		},
 		{
 			name: "[multiple virtualGateways - both select namespace with different labels] namespaces with matching labels for one virtualGateway can be selected",
@@ -440,7 +635,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: errors.New("failed to find matching virtualGateway for namespace: awesome-ns, expecting 1 but found 0"),
+			wantErr: errors.Errorf(noMatchingVGWError, "my-gateway-route"),
 		},
 		{
 			name: "[multiple virtualGateways - both select namespaces with different labels] namespaces with non-matching labels cannot be selected",
@@ -470,7 +665,40 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 				},
 			},
 			want:    nil,
-			wantErr: errors.New("failed to find matching virtualGateway for namespace: awesome-ns, expecting 1 but found 0"),
+			wantErr: errors.Errorf(noMatchingVGWError, "my-gateway-route"),
+		},
+		{
+			name: "virtualgateway with valid gatewayroute selector",
+			env: env{
+				virtualGateways: []*appmesh.VirtualGateway{
+					vgWithNSSelectorForBackendApps,
+					vgWithTestGWRouteSelector,
+				},
+				namespaces: []*corev1.Namespace{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "awesome-ns",
+							Labels: map[string]string{
+								"app": "backend",
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				obj: &appmesh.GatewayRoute{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-gateway-route",
+						Labels: map[string]string{
+							"gw": "testGW",
+						},
+					},
+					Spec: appmesh.GatewayRouteSpec{},
+				},
+			},
+			want:    vgWithTestGWRouteSelector,
+			wantErr: nil,
 		},
 	}
 	for _, tt := range tests {
@@ -494,7 +722,6 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 			ctx = webhook.ContextWithAdmissionRequest(ctx, admission.Request{
 				AdmissionRequest: admissionv1beta1.AdmissionRequest{Namespace: "awesome-ns"},
 			})
-
 			got, err := designator.DesignateForGatewayRoute(ctx, tt.args.obj)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())

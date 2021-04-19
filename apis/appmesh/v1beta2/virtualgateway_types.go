@@ -322,6 +322,10 @@ type VirtualGatewaySpec struct {
 	// 	if absent, it selects no pod.
 	// +optional
 	PodSelector *metav1.LabelSelector `json:"podSelector,omitempty"`
+	// GatewayRouteSelector selects GatewayRoutes using labels to designate GatewayRoute membership.
+	// If not specified it selects all GatewayRoutes in that namespace.
+	// +optional
+	GatewayRouteSelector *metav1.LabelSelector `json:"gatewayRouteSelector,omitempty"`
 	// The listener that the virtual gateway is expected to receive inbound traffic from
 	// +kubebuilder:validation:MinItems=0
 	// +kubebuilder:validation:MaxItems=1
