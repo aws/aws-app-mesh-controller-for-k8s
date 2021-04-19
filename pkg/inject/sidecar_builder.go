@@ -110,7 +110,7 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) corev
 
 	if vars.EnableJaegerTracing {
 		// Specify a file path in the Envoy container file system.
-		// See https://www.envoyproxy.io/docs/envoy/latest/api-v2/config/trace/v2/http_tracer.proto
+		// See https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/trace/v3/http_tracer.proto
 		env["ENVOY_TRACING_CFG_FILE"] = "/tmp/envoy/envoyconf.yaml"
 
 		vol_mount := []corev1.VolumeMount{
