@@ -45,7 +45,7 @@ type virtualGatwayEnvoyConfig struct {
 	enableXrayTracing          bool
 	xrayDaemonPort             int32
 	enableJaegerTracing        bool
-	jaegerPort                 int32
+	jaegerPort                 string
 	jaegerAddress              string
 }
 

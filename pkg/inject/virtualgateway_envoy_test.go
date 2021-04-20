@@ -832,7 +832,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
 					sidecarImage:               "envoy:v2",
 					enableJaegerTracing:        true,
-					jaegerPort:                 80,
+					jaegerPort:                 "80",
 					jaegerAddress:              "jaeger-collector.system",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
