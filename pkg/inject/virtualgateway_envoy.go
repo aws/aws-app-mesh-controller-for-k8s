@@ -185,6 +185,8 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 		EnableXrayTracing:            m.mutatorConfig.enableXrayTracing,
 		XrayDaemonPort:               m.mutatorConfig.xrayDaemonPort,
 		EnableJaegerTracing:          m.mutatorConfig.enableJaegerTracing,
+		JaegerPort:                   m.mutatorConfig.jaegerPort,
+		JaegerAddress:                m.mutatorConfig.jaegerAddress,
 	}
 }
 
