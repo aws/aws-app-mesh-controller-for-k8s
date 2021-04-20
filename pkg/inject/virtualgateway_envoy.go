@@ -1,42 +1,14 @@
 package inject
 
 import (
-	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	corev1 "k8s.io/api/core/v1"
-	"strconv"
-	"strings"
 )
-
-const envoyImageStub = "injector-envoy-image"
-const envoyVirtualGatewayEnvMap = `
-{
-  "APPMESH_VIRTUAL_NODE_NAME": "mesh/{{ .MeshName }}/virtualGateway/{{ .VirtualGatewayName }}",
-  "APPMESH_PREVIEW": "{{ .Preview }}",
-  "ENVOY_LOG_LEVEL": "{{ .LogLevel }}",
-  "ENVOY_ADMIN_ACCESS_PORT": "{{ .AdminAccessPort }}",
-  "ENVOY_ADMIN_ACCESS_LOG_FILE": "{{ .AdminAccessLogFile }}",
-  "AWS_REGION": "{{ .AWSRegion }}"{{ if .EnableSDS }},
-  "APPMESH_SDS_SOCKET_PATH": "{{ .SdsUdsPath }}"{{ end }}{{ if .EnableXrayTracing }},
-  "ENABLE_ENVOY_XRAY_TRACING": "1","XRAY_DAEMON_PORT": "{{ .XrayDaemonPort }}"{{ end }}
-}
-`
-
-type VirtualGatewayEnvoyVariables struct {
-	AWSRegion          string
-	MeshName           string
-	VirtualGatewayName string
-	Preview            string
-	EnableSDS          bool
-	SdsUdsPath         string
-	LogLevel           string
-	AdminAccessPort    int32
-	AdminAccessLogFile string
-	EnableXrayTracing  bool
-	XrayDaemonPort     int32
-}
 
 type virtualGatwayEnvoyConfig struct {
 	accountID                  string
@@ -52,6 +24,16 @@ type virtualGatwayEnvoyConfig struct {
 	readinessProbePeriod       int32
 	enableXrayTracing          bool
 	xrayDaemonPort             int32
+	enableJaegerTracing        bool
+	jaegerPort                 string
+	jaegerAddress              string
+	enableDatadogTracing       bool
+	datadogTracerPort          int32
+	datadogTracerAddress       string
+	enableStatsTags            bool
+	enableStatsD               bool
+	statsDPort                 int32
+	statsDAddress              string
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -79,51 +61,45 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 	}
 
 	variables := m.buildTemplateVariables(pod)
-	envoyEnv, err := renderTemplate("vgenvoy", envoyVirtualGatewayEnvMap, variables)
-	if err != nil {
-		return err
-	}
+	envoy := pod.Spec.Containers[envoyIdx]
 
-	newEnvMap := map[string]string{}
-	err = json.Unmarshal([]byte(envoyEnv), &newEnvMap)
-	if err != nil {
-		return err
-	}
+	vg := fmt.Sprintf("mesh/%s/virtualGateway/%s", variables.MeshName, variables.VirtualGatewayOrNodeName)
+
+	envMap := map[string]string{}
+	updateEnvMapForEnvoy(variables, envMap, vg)
 
 	//we override the image to latest Envoy so customers do not have to manually manage
 	// envoy versions and let controller handle consistency versions across the mesh
 	if m.virtualGatewayImageOverride(pod) {
-		pod.Spec.Containers[envoyIdx].Image = m.mutatorConfig.sidecarImage
+		envoy.Image = m.mutatorConfig.sidecarImage
 	}
 
 	for idx, env := range pod.Spec.Containers[envoyIdx].Env {
-		if val, ok := newEnvMap[env.Name]; ok {
+		if val, ok := envMap[env.Name]; ok {
 			if val != env.Value {
-				pod.Spec.Containers[envoyIdx].Env[idx].Value = val
+				envoy.Env[idx].Value = val
 			}
-			delete(newEnvMap, env.Name)
+			delete(envMap, env.Name)
 		}
 	}
 
-	for name, value := range newEnvMap {
-		e := corev1.EnvVar{Name: name,
-			Value: value}
-		pod.Spec.Containers[envoyIdx].Env = append(pod.Spec.Containers[envoyIdx].Env, e)
-	}
+	env := getEnvoyEnv(envMap)
+	envoy.Env = append(envoy.Env, env...)
 
 	// customer can bring their own envoy image/spec for virtual gateway so we will only set readiness probe if not already set
-	if pod.Spec.Containers[envoyIdx].ReadinessProbe == nil {
-		pod.Spec.Containers[envoyIdx].ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay,
+	if envoy.ReadinessProbe == nil {
+		envoy.ReadinessProbe = envoyReadinessProbe(m.mutatorConfig.readinessProbeInitialDelay,
 			m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 	}
 
 	if m.mutatorConfig.enableSDS && !isSDSDisabled(pod) {
-		mutateSDSMounts(pod, &pod.Spec.Containers[envoyIdx], m.mutatorConfig.sdsUdsPath)
+		mutateSDSMounts(pod, &envoy, m.mutatorConfig.sdsUdsPath)
 	}
+	pod.Spec.Containers[envoyIdx] = envoy
 	return nil
 }
 
-func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) VirtualGatewayEnvoyVariables {
+func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVariables {
 	meshName := m.getAugmentedMeshName()
 	virtualGatewayName := aws.StringValue(m.vg.Spec.AWSName)
 	preview := m.getPreview(pod)
@@ -132,18 +108,28 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 		sdsEnabled = false
 	}
 
-	return VirtualGatewayEnvoyVariables{
-		AWSRegion:          m.mutatorConfig.awsRegion,
-		MeshName:           meshName,
-		VirtualGatewayName: virtualGatewayName,
-		Preview:            preview,
-		EnableSDS:          sdsEnabled,
-		SdsUdsPath:         m.mutatorConfig.sdsUdsPath,
-		LogLevel:           m.mutatorConfig.logLevel,
-		AdminAccessPort:    m.mutatorConfig.adminAccessPort,
-		AdminAccessLogFile: m.mutatorConfig.adminAccessLogFile,
-		EnableXrayTracing:  m.mutatorConfig.enableXrayTracing,
-		XrayDaemonPort:     m.mutatorConfig.xrayDaemonPort,
+	return EnvoyTemplateVariables{
+		AWSRegion:                m.mutatorConfig.awsRegion,
+		MeshName:                 meshName,
+		VirtualGatewayOrNodeName: virtualGatewayName,
+		Preview:                  preview,
+		EnableSDS:                sdsEnabled,
+		SdsUdsPath:               m.mutatorConfig.sdsUdsPath,
+		LogLevel:                 m.mutatorConfig.logLevel,
+		AdminAccessPort:          m.mutatorConfig.adminAccessPort,
+		AdminAccessLogFile:       m.mutatorConfig.adminAccessLogFile,
+		EnableXrayTracing:        m.mutatorConfig.enableXrayTracing,
+		XrayDaemonPort:           m.mutatorConfig.xrayDaemonPort,
+		EnableJaegerTracing:      m.mutatorConfig.enableJaegerTracing,
+		JaegerPort:               m.mutatorConfig.jaegerPort,
+		JaegerAddress:            m.mutatorConfig.jaegerAddress,
+		EnableDatadogTracing:     m.mutatorConfig.enableDatadogTracing,
+		DatadogTracerPort:        m.mutatorConfig.datadogTracerPort,
+		DatadogTracerAddress:     m.mutatorConfig.datadogTracerAddress,
+		EnableStatsTags:          m.mutatorConfig.enableStatsTags,
+		EnableStatsD:             m.mutatorConfig.enableStatsD,
+		StatsDPort:               m.mutatorConfig.statsDPort,
+		StatsDAddress:            m.mutatorConfig.statsDAddress,
 	}
 }
 
