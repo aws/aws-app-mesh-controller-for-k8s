@@ -877,16 +877,16 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "0",
 								},
 								{
+									Name:  "ENABLE_ENVOY_JAEGER_TRACING",
+									Value: "1",
+								},
+								{
 									Name:  "JAEGER_TRACER_PORT",
 									Value: "80",
 								},
 								{
 									Name:  "JAEGER_TRACER_ADDRESS",
 									Value: "jaeger-collector.system",
-								},
-								{
-									Name:  "ENABLE_ENVOY_JAEGER_TRACING",
-									Value: "1",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{

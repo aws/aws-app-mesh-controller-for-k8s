@@ -45,8 +45,8 @@ type virtualGatwayEnvoyConfig struct {
 	enableXrayTracing          bool
 	xrayDaemonPort             int32
 	enableJaegerTracing        bool
-	jaegerPort                 string
 	jaegerAddress              string
+	jaegerPort                 int32
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -172,21 +172,20 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Virt
 	}
 
 	return VirtualGatewayEnvoyVariables{
-		AWSRegion:                    m.mutatorConfig.awsRegion,
-		MeshName:                     meshName,
-		VirtualGatewayName:           virtualGatewayName,
-		Preview:                      preview,
-		EnableSDS:                    sdsEnabled,
-		SdsUdsPath:                   m.mutatorConfig.sdsUdsPath,
-		LogLevel:                     m.mutatorConfig.logLevel,
-		AdminAccessPort:              m.mutatorConfig.adminAccessPort,
-		AdminAccessLogFile:           m.mutatorConfig.adminAccessLogFile,
-		EnvoyTracingConfigVolumeName: envoyTracingConfigVolumeName,
-		EnableXrayTracing:            m.mutatorConfig.enableXrayTracing,
-		XrayDaemonPort:               m.mutatorConfig.xrayDaemonPort,
-		EnableJaegerTracing:          m.mutatorConfig.enableJaegerTracing,
-		JaegerPort:                   m.mutatorConfig.jaegerPort,
-		JaegerAddress:                m.mutatorConfig.jaegerAddress,
+		AWSRegion:           m.mutatorConfig.awsRegion,
+		MeshName:            meshName,
+		VirtualGatewayName:  virtualGatewayName,
+		Preview:             preview,
+		EnableSDS:           sdsEnabled,
+		SdsUdsPath:          m.mutatorConfig.sdsUdsPath,
+		LogLevel:            m.mutatorConfig.logLevel,
+		AdminAccessPort:     m.mutatorConfig.adminAccessPort,
+		AdminAccessLogFile:  m.mutatorConfig.adminAccessLogFile,
+		EnableXrayTracing:   m.mutatorConfig.enableXrayTracing,
+		XrayDaemonPort:      m.mutatorConfig.xrayDaemonPort,
+		EnableJaegerTracing: m.mutatorConfig.enableJaegerTracing,
+		JaegerAddress:       m.mutatorConfig.jaegerAddress,
+		JaegerPort:          m.mutatorConfig.jaegerPort,
 	}
 }
 
