@@ -2,6 +2,8 @@ package virtualgateway
 
 import (
 	"context"
+	"strings"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
@@ -11,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 // MembershipDesignator designates VirtualGateway membership for pods and namespaced AppMesh GatewayRoute CRs.
@@ -85,26 +86,65 @@ func (d *membershipDesignator) DesignateForGatewayRoute(ctx context.Context, obj
 	}
 
 	var vgCandidates []*appmesh.VirtualGateway
+
 	for _, vgObj := range vgList.Items {
-		selector, err := metav1.LabelSelectorAsSelector(vgObj.Spec.NamespaceSelector)
-		if err != nil {
+		if matches, err := matchesNamespaceSelector(objNS, &vgObj); err != nil {
 			return nil, err
+		} else if !matches {
+			continue
 		}
-		if selector.Matches(labels.Set(objNS.Labels)) {
-			vgCandidates = append(vgCandidates, vgObj.DeepCopy())
+
+		if matches, err := matchesGatewayRouteSelector(obj, &vgObj); err != nil {
+			return nil, err
+		} else if !matches {
+			continue
 		}
+		vgCandidates = append(vgCandidates, vgObj.DeepCopy())
 	}
+
+	// No matching VirtualGateway
 	if len(vgCandidates) == 0 {
-		return nil, errors.Errorf("failed to find matching virtualGateway for namespace: %s, expecting 1 but found %d",
-			obj.GetNamespace(), 0)
+		return nil, errors.Errorf("failed to find matching virtualGateway for gatewayRoute: %s, expecting 1 but found 0", obj.GetName())
 	}
+
+	// Multiple matching VirtualGateway
 	if len(vgCandidates) > 1 {
 		var vgCandidatesNames []string
 		for _, vg := range vgCandidates {
 			vgCandidatesNames = append(vgCandidatesNames, vg.Name)
 		}
-		return nil, errors.Errorf("found multiple matching virtualGateways for namespace: %s, expecting 1 but found %d: %s",
-			obj.GetNamespace(), len(vgCandidates), strings.Join(vgCandidatesNames, ","))
+		return nil, errors.Errorf("found multiple matching virtualGateways for gatewayRoute: %s, expecting 1 but found %d: %s",
+			obj.GetName(), len(vgCandidates), strings.Join(vgCandidatesNames, ","))
 	}
+
 	return vgCandidates[0], nil
+}
+
+// Checks if given VirtualGateway has namespace selector which matches with the given namespace labels
+func matchesNamespaceSelector(objNS corev1.Namespace, vgObj *appmesh.VirtualGateway) (bool, error) {
+	selector, err := metav1.LabelSelectorAsSelector(vgObj.Spec.NamespaceSelector)
+	if err != nil {
+		return false, err
+	}
+	if !selector.Matches(labels.Set(objNS.Labels)) {
+		return false, nil
+	}
+	return true, nil
+}
+
+// Checks if given VirtualGateway has GatewayRouteSelector which matches with the given GatewayRoute
+func matchesGatewayRouteSelector(obj *appmesh.GatewayRoute, vg *appmesh.VirtualGateway) (bool, error) {
+	gatewayRouteSel := labels.Everything()
+	var err error
+	if vg.Spec.GatewayRouteSelector != nil {
+		gatewayRouteSel, err = metav1.LabelSelectorAsSelector(vg.Spec.GatewayRouteSelector)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	if !gatewayRouteSel.Matches(labels.Set(obj.Labels)) {
+		return false, nil
+	}
+	return true, nil
 }
