@@ -1,6 +1,8 @@
 package inject
 
 import (
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/google/go-cmp/cmp"
@@ -8,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
@@ -798,6 +799,288 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "XRAY_DAEMON_PORT",
 									Value: "2000",
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "enable jaeger tracing",
+			fields: fields{
+				vg: vg,
+				ms: ms,
+				mutatorConfig: virtualGatwayEnvoyConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
+					sidecarImage:               "envoy:v2",
+					enableJaegerTracing:        true,
+					jaegerPort:                 "80",
+					jaegerAddress:              "jaeger-collector.system",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					enableDatadogTracing:       false,
+					datadogTracerPort:          8126,
+					datadogTracerAddress:       "127.0.0.1",
+					enableStatsD:               false,
+					statsDAddress:              "127.0.0.1",
+					statsDPort:                 8125,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							Env: []corev1.EnvVar{
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_LOG_FILE",
+									Value: "/tmp/envoy_admin_access.log",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "JAEGER_TRACER_PORT",
+									Value: "80",
+								},
+								{
+									Name:  "JAEGER_TRACER_ADDRESS",
+									Value: "jaeger-collector.system",
+								},
+								{
+									Name:  "ENABLE_ENVOY_JAEGER_TRACING",
+									Value: "1",
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "enable statsD tracing",
+			fields: fields{
+				vg: vg,
+				ms: ms,
+				mutatorConfig: virtualGatwayEnvoyConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
+					sidecarImage:               "envoy:v2",
+					enableJaegerTracing:        false,
+					jaegerPort:                 "80",
+					jaegerAddress:              "jaeger-collector.system",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					enableDatadogTracing:       false,
+					datadogTracerPort:          8126,
+					datadogTracerAddress:       "127.0.0.1",
+					enableStatsD:               true,
+					statsDAddress:              "127.0.0.1",
+					statsDPort:                 8125,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							Env: []corev1.EnvVar{
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_LOG_FILE",
+									Value: "/tmp/envoy_admin_access.log",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENABLE_ENVOY_DOG_STATSD",
+									Value: "1",
+								},
+								{
+									Name:  "STATSD_PORT",
+									Value: "8125",
+								},
+								{
+									Name:  "STATSD_ADDRESS",
+									Value: "127.0.0.1",
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 1,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       10,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "enable datadog tracing",
+			fields: fields{
+				vg: vg,
+				ms: ms,
+				mutatorConfig: virtualGatwayEnvoyConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
+					sidecarImage:               "envoy:v2",
+					enableJaegerTracing:        false,
+					jaegerPort:                 "80",
+					jaegerAddress:              "jaeger-collector.system",
+					readinessProbeInitialDelay: 1,
+					readinessProbePeriod:       10,
+					enableDatadogTracing:       true,
+					datadogTracerPort:          8126,
+					datadogTracerAddress:       "127.0.0.1",
+					enableStatsD:               false,
+					statsDAddress:              "127.0.0.1",
+					statsDPort:                 8125,
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							Env: []corev1.EnvVar{
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_LOG_FILE",
+									Value: "/tmp/envoy_admin_access.log",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "0",
+								},
+								{
+									Name:  "ENABLE_ENVOY_DATADOG_TRACING",
+									Value: "1",
+								},
+								{
+									Name:  "DATADOG_TRACER_PORT",
+									Value: "8126",
+								},
+								{
+									Name:  "DATADOG_TRACER_ADDRESS",
+									Value: "127.0.0.1",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
