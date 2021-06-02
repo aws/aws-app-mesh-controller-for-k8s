@@ -2,6 +2,8 @@ package inject
 
 import (
 	"errors"
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/google/go-cmp/cmp"
@@ -10,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func Test_envoyMutator_mutate(t *testing.T) {
@@ -461,6 +462,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableJaegerTracing:        true,
+					jaegerPort:                 "8000",
+					jaegerAddress:              "localhost",
 				},
 			},
 			args: args{
@@ -529,18 +532,20 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "9901",
 								},
 								{
-									Name:  "ENVOY_TRACING_CFG_FILE",
-									Value: "/tmp/envoy/envoyconf.yaml",
+									Name:  "ENABLE_ENVOY_JAEGER_TRACING",
+									Value: "1",
+								},
+								{
+									Name:  "JAEGER_TRACER_PORT",
+									Value: "8000",
+								},
+								{
+									Name:  "JAEGER_TRACER_ADDRESS",
+									Value: "localhost",
 								},
 								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
-								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "envoy-tracing-config",
-									MountPath: "/tmp/envoy",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
