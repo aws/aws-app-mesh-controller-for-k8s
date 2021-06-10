@@ -2503,6 +2503,36 @@ func TestConvert_CRD_DNSServiceDiscovery_To_SDK_DNSServiceDiscovery(t *testing.T
 				Hostname: aws.String("www.example.com"),
 			},
 		},
+		{
+			name: "LOADBALANCER DNS case",
+			args: args{
+				crdObj: &appmesh.DNSServiceDiscovery{
+					Hostname:     "www.example.com",
+					ResponseType: aws.String("LOADBALANCER"),
+				},
+				sdkObj: &appmeshsdk.DnsServiceDiscovery{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.DnsServiceDiscovery{
+				Hostname:     aws.String("www.example.com"),
+				ResponseType: aws.String("LOADBALANCER"),
+			},
+		},
+		{
+			name: "ENDPOINTS DNS case",
+			args: args{
+				crdObj: &appmesh.DNSServiceDiscovery{
+					Hostname:     "www.example.com",
+					ResponseType: aws.String("ENDPOINTS"),
+				},
+				sdkObj: &appmeshsdk.DnsServiceDiscovery{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.DnsServiceDiscovery{
+				Hostname:     aws.String("www.example.com"),
+				ResponseType: aws.String("ENDPOINTS"),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
