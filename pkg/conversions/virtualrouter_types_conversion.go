@@ -33,34 +33,6 @@ func Convert_CRD_WeightedTarget_To_SDK_WeightedTarget(crdObj *appmesh.WeightedTa
 	return nil
 }
 
-func Convert_CRD_MatchRange_To_SDK_MatchRange(crdObj *appmesh.MatchRange,
-	sdkObj *appmeshsdk.MatchRange, scope conversion.Scope) error {
-	sdkObj.Start = aws.Int64(crdObj.Start)
-	sdkObj.End = aws.Int64(crdObj.End)
-	return nil
-}
-
-func Convert_CRD_HeaderMatchMethod_To_SDK_HeaderMatchMethod(crdObj *appmesh.HeaderMatchMethod,
-	sdkObj *appmeshsdk.HeaderMatchMethod, scope conversion.Scope) error {
-
-	sdkObj.Exact = crdObj.Exact
-	sdkObj.Prefix = crdObj.Prefix
-
-	if crdObj.Range != nil {
-
-		sdkObj.Range = &appmeshsdk.MatchRange{}
-		if err := Convert_CRD_MatchRange_To_SDK_MatchRange(crdObj.Range, sdkObj.Range, scope); err != nil {
-			return err
-		}
-	} else {
-		sdkObj.Range = nil
-	}
-
-	sdkObj.Regex = crdObj.Regex
-	sdkObj.Suffix = crdObj.Suffix
-	return nil
-}
-
 func Convert_CRD_HTTPRouteHeader_To_SDK_HttpRouteHeader(crdObj *appmesh.HTTPRouteHeader,
 	sdkObj *appmeshsdk.HttpRouteHeader, scope conversion.Scope) error {
 
@@ -68,7 +40,7 @@ func Convert_CRD_HTTPRouteHeader_To_SDK_HttpRouteHeader(crdObj *appmesh.HTTPRout
 
 	if crdObj.Match != nil {
 		sdkObj.Match = &appmeshsdk.HeaderMatchMethod{}
-		if err := Convert_CRD_HeaderMatchMethod_To_SDK_HeaderMatchMethod(crdObj.Match, sdkObj.Match, scope); err != nil {
+		if err := Convert_CRD_HTTPHeaderMatchMethod_To_SDK_HttpHeaderMatchMethod(crdObj.Match, sdkObj.Match); err != nil {
 			return err
 		}
 	} else {
@@ -96,10 +68,40 @@ func Convert_CRD_HTTPRouteMatch_To_SDK_HttpRouteMatch(crdObj *appmesh.HTTPRouteM
 
 	sdkObj.Headers = sdkHeaders
 	sdkObj.Method = crdObj.Method
-	sdkObj.Prefix = aws.String(crdObj.Prefix)
+	sdkObj.Prefix = crdObj.Prefix
 	sdkObj.Scheme = crdObj.Scheme
-	return nil
 
+	if crdObj.Path != nil {
+		Convert_CRD_HTTPPathMatch_To_SDK_HttpPathMatch(crdObj, sdkObj)
+	}
+
+	if crdObj.QueryParameters != nil && len(crdObj.QueryParameters) != 0 {
+		Convert_CRD_HTTPRouteQueryParams_To_SDK_HttpRouteQueryParams(crdObj, sdkObj)
+	}
+	return nil
+}
+
+func Convert_CRD_HTTPRouteQueryParams_To_SDK_HttpRouteQueryParams(crdObj *appmesh.HTTPRouteMatch, sdkObj *appmeshsdk.HttpRouteMatch) {
+	length := len(crdObj.QueryParameters)
+	sdkQueryParams := make([]*appmeshsdk.HttpQueryParameter, 0, length)
+	for _, queryParam := range crdObj.QueryParameters {
+		sdkQueryParam := &appmeshsdk.HttpQueryParameter{}
+		sdkQueryParam.Name = queryParam.Name
+		if queryParam.Match != nil {
+			sdkQueryParam.Match = &appmeshsdk.QueryParameterMatch{Exact: queryParam.Match.Exact}
+		} else {
+			sdkQueryParam.Match = nil
+		}
+		sdkQueryParams = append(sdkQueryParams, sdkQueryParam)
+	}
+	sdkObj.QueryParameters = sdkQueryParams
+}
+
+func Convert_CRD_HTTPPathMatch_To_SDK_HttpPathMatch(crdObj *appmesh.HTTPRouteMatch, sdkObj *appmeshsdk.HttpRouteMatch) {
+	sdkObj.Path = &appmeshsdk.HttpPathMatch{
+		Exact: crdObj.Path.Exact,
+		Regex: crdObj.Path.Regex,
+	}
 }
 
 func Convert_CRD_HTTPRouteAction_To_SDK_HttpRouteAction(crdObj *appmesh.HTTPRouteAction,
@@ -261,14 +263,14 @@ func Convert_CRD_TCPRoute_To_SDK_TcpRoute(crdObj *appmesh.TCPRoute,
 }
 
 func Convert_CRD_GRPCRouteMetadataMatchMethod_To_SDK_GrpcRouteMetadataMatchMethod(crdObj *appmesh.GRPCRouteMetadataMatchMethod,
-	sdkObj *appmeshsdk.GrpcRouteMetadataMatchMethod, scope conversion.Scope) error {
+	sdkObj *appmeshsdk.GrpcRouteMetadataMatchMethod) error {
 
 	sdkObj.Exact = crdObj.Exact
 	sdkObj.Prefix = crdObj.Prefix
 
 	if crdObj.Range != nil {
 		sdkObj.Range = &appmeshsdk.MatchRange{}
-		if err := Convert_CRD_MatchRange_To_SDK_MatchRange(crdObj.Range, sdkObj.Range, scope); err != nil {
+		if err := Convert_CRD_MatchRange_To_SDK_MatchRange(crdObj.Range, sdkObj.Range); err != nil {
 			return err
 		}
 	} else {
@@ -287,7 +289,7 @@ func Convert_CRD_GRPCRouteMetadata_To_SDK_GrpcRouteMetadata(crdObj *appmesh.GRPC
 
 	if crdObj.Match != nil {
 		sdkObj.Match = &appmeshsdk.GrpcRouteMetadataMatchMethod{}
-		if err := Convert_CRD_GRPCRouteMetadataMatchMethod_To_SDK_GrpcRouteMetadataMatchMethod(crdObj.Match, sdkObj.Match, scope); err != nil {
+		if err := Convert_CRD_GRPCRouteMetadataMatchMethod_To_SDK_GrpcRouteMetadataMatchMethod(crdObj.Match, sdkObj.Match); err != nil {
 			return err
 		}
 	} else {
