@@ -97,6 +97,9 @@ func (t *instancesReconcileTask) reconcile(ctx context.Context, service serviceS
 	}
 
 	instancesToCreateOrUpdate, instancesToDelete := t.matchDesiredInstancesAgainstExistingInstances(desiredReadyInstanceInfoByID, desiredNotReadyInstanceInfoByID, existingInstanceAttrsByID)
+
+	t.log.V(1).Info("CloudMap: Register Instances", "InstanceToCreateOrUpdate", instancesToCreateOrUpdate)
+
 	for instanceID, info := range instancesToCreateOrUpdate {
 		if t.instancesWithOngoingOperation.Has(instanceID) {
 			continue
@@ -110,6 +113,8 @@ func (t *instancesReconcileTask) reconcile(ctx context.Context, service serviceS
 			}
 		}(instanceID, info)
 	}
+
+	t.log.V(1).Info("CloudMap: Deregister Instances", "instancesToDelete", instancesToDelete)
 
 	for _, instanceID := range instancesToDelete {
 		if t.instancesWithOngoingOperation.Has(instanceID) {
