@@ -2,41 +2,16 @@ package inject
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"strconv"
-	"strings"
 )
 
-const envoyTracingConfigVolumeName = "envoy-tracing-config"
 const envoyContainerName = "envoy"
-
-type EnvoyTemplateVariables struct {
-	AWSRegion                    string
-	MeshName                     string
-	VirtualNodeName              string
-	Preview                      string
-	EnableSDS                    bool
-	SdsUdsPath                   string
-	LogLevel                     string
-	AdminAccessPort              int32
-	AdminAccessLogFile           string
-	PreStopDelay                 string
-	SidecarImage                 string
-	EnvoyTracingConfigVolumeName string
-	EnableXrayTracing            bool
-	XrayDaemonPort               int32
-	EnableJaegerTracing          bool
-	EnableDatadogTracing         bool
-	DatadogTracerPort            int32
-	DatadogTracerAddress         string
-	EnableStatsTags              bool
-	EnableStatsD                 bool
-	StatsDPort                   int32
-	StatsDAddress                string
-}
 
 type envoyMutatorConfig struct {
 	accountID                  string
@@ -58,6 +33,8 @@ type envoyMutatorConfig struct {
 	enableXrayTracing          bool
 	xrayDaemonPort             int32
 	enableJaegerTracing        bool
+	jaegerPort                 string
+	jaegerAddress              string
 	enableDatadogTracing       bool
 	datadogTracerPort          int32
 	datadogTracerAddress       string
@@ -130,28 +107,29 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 	}
 
 	return EnvoyTemplateVariables{
-		AWSRegion:                    m.mutatorConfig.awsRegion,
-		MeshName:                     meshName,
-		VirtualNodeName:              virtualNodeName,
-		Preview:                      preview,
-		EnableSDS:                    sdsEnabled,
-		SdsUdsPath:                   m.mutatorConfig.sdsUdsPath,
-		LogLevel:                     m.mutatorConfig.logLevel,
-		AdminAccessPort:              m.mutatorConfig.adminAccessPort,
-		AdminAccessLogFile:           m.mutatorConfig.adminAccessLogFile,
-		PreStopDelay:                 m.mutatorConfig.preStopDelay,
-		SidecarImage:                 m.mutatorConfig.sidecarImage,
-		EnvoyTracingConfigVolumeName: envoyTracingConfigVolumeName,
-		EnableXrayTracing:            m.mutatorConfig.enableXrayTracing,
-		XrayDaemonPort:               m.mutatorConfig.xrayDaemonPort,
-		EnableJaegerTracing:          m.mutatorConfig.enableJaegerTracing,
-		EnableDatadogTracing:         m.mutatorConfig.enableDatadogTracing,
-		DatadogTracerPort:            m.mutatorConfig.datadogTracerPort,
-		DatadogTracerAddress:         m.mutatorConfig.datadogTracerAddress,
-		EnableStatsTags:              m.mutatorConfig.enableStatsTags,
-		EnableStatsD:                 m.mutatorConfig.enableStatsD,
-		StatsDPort:                   m.mutatorConfig.statsDPort,
-		StatsDAddress:                m.mutatorConfig.statsDAddress,
+		AWSRegion:                m.mutatorConfig.awsRegion,
+		MeshName:                 meshName,
+		VirtualGatewayOrNodeName: virtualNodeName,
+		Preview:                  preview,
+		EnableSDS:                sdsEnabled,
+		SdsUdsPath:               m.mutatorConfig.sdsUdsPath,
+		LogLevel:                 m.mutatorConfig.logLevel,
+		AdminAccessPort:          m.mutatorConfig.adminAccessPort,
+		AdminAccessLogFile:       m.mutatorConfig.adminAccessLogFile,
+		PreStopDelay:             m.mutatorConfig.preStopDelay,
+		SidecarImage:             m.mutatorConfig.sidecarImage,
+		EnableXrayTracing:        m.mutatorConfig.enableXrayTracing,
+		XrayDaemonPort:           m.mutatorConfig.xrayDaemonPort,
+		EnableJaegerTracing:      m.mutatorConfig.enableJaegerTracing,
+		JaegerPort:               m.mutatorConfig.jaegerPort,
+		JaegerAddress:            m.mutatorConfig.jaegerAddress,
+		EnableDatadogTracing:     m.mutatorConfig.enableDatadogTracing,
+		DatadogTracerPort:        m.mutatorConfig.datadogTracerPort,
+		DatadogTracerAddress:     m.mutatorConfig.datadogTracerAddress,
+		EnableStatsTags:          m.mutatorConfig.enableStatsTags,
+		EnableStatsD:             m.mutatorConfig.enableStatsD,
+		StatsDPort:               m.mutatorConfig.statsDPort,
+		StatsDAddress:            m.mutatorConfig.statsDAddress,
 	}
 }
 
@@ -224,14 +202,4 @@ func (m *envoyMutator) getCustomEnv(pod *corev1.Pod) (map[string]string, error) 
 		}
 	}
 	return customEnv, nil
-}
-
-// containsEnvoyTracingConfigVolume checks whether pod already contains "envoy-tracing-config" volume
-func containsEnvoyTracingConfigVolume(pod *corev1.Pod) bool {
-	for _, volume := range pod.Spec.Volumes {
-		if volume.Name == envoyTracingConfigVolumeName {
-			return true
-		}
-	}
-	return false
 }

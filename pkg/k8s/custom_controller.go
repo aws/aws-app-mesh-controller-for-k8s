@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	v1 "k8s.io/api/core/v1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -103,7 +104,7 @@ func (c *CustomController) StartController(stopChanel <-chan struct{}) {
 	config := &cache.Config{
 		Queue: c.queue,
 		ListerWatcher: newListWatcher(c.clientSet.CoreV1().RESTClient(),
-			c.converter.Resource(), c.namespace, c.pageLimit, c.converter),
+			c.converter.Resource(), c.namespace, c.pageLimit, c.converter, c.log),
 		ObjectType:       c.converter.ResourceType(),
 		FullResyncPeriod: c.resyncPeriod,
 		RetryOnError:     c.retryOnError,
@@ -117,7 +118,9 @@ func (c *CustomController) StartController(stopChanel <-chan struct{}) {
 				}
 				switch d.Type {
 				case cache.Sync, cache.Added, cache.Updated:
+					c.log.V(1).Info("Received Cache event", "event type", d.Type)
 					if old, exists, err := c.dataStore.Get(convertedObj); err == nil && exists {
+						c.log.V(1).Info("Update event", "pod Ip", convertedObj.(*v1.Pod).Status.PodIP)
 						if err := c.dataStore.Update(convertedObj); err != nil {
 							return err
 						}
@@ -125,6 +128,7 @@ func (c *CustomController) StartController(stopChanel <-chan struct{}) {
 							return err
 						}
 					} else if err == nil && !exists {
+						c.log.V(1).Info("Add/Create event", "pod Ip", convertedObj.(*v1.Pod).Status.PodIP)
 						if err := c.dataStore.Add(convertedObj); err != nil {
 							return err
 						}
@@ -135,6 +139,7 @@ func (c *CustomController) StartController(stopChanel <-chan struct{}) {
 						return err
 					}
 				case cache.Deleted:
+					c.log.V(1).Info("Delete event", "pod Ip", convertedObj.(*v1.Pod).Status.PodIP)
 					if err := c.dataStore.Delete(convertedObj); err != nil {
 						return err
 					}
@@ -168,8 +173,8 @@ func (c *CustomController) GetDataStore() cache.Indexer {
 // newListWatcher returns a list watcher with a custom list function that converts the
 // response for each page using the converter function and returns a general watcher
 func newListWatcher(restClient cache.Getter, resource string, namespace string, limit int64,
-	converter Converter) *cache.ListWatch {
-
+	converter Converter, log logr.Logger) *cache.ListWatch {
+	log.V(1).Info("Initializing List Watcher")
 	listFunc := func(options metav1.ListOptions) (runtime.Object, error) {
 		ctx := context.Background()
 
@@ -185,12 +190,15 @@ func newListWatcher(restClient cache.Getter, resource string, namespace string, 
 			Do(ctx).
 			Get()
 
+		printList(list, "Original List", log)
 		if err != nil {
 			return list, err
 		}
 		// Strip down the the list before passing the paginated response back to
 		// the pager function
 		convertedList, err := converter.ConvertList(list)
+
+		printList(convertedList, "Converted List", log)
 		return convertedList.(runtime.Object), err
 	}
 
@@ -207,6 +215,18 @@ func newListWatcher(restClient cache.Getter, resource string, namespace string, 
 			Watch(ctx)
 	}
 	return &cache.ListWatch{ListFunc: listFunc, WatchFunc: watchFunc}
+}
+
+func printList(list interface{}, listType string, log logr.Logger) {
+	podList, ok := list.(*v1.PodList)
+	if !ok {
+		log.V(1).Info("Error converting in printList function")
+	}
+	ip := make([]string, 0, len(podList.Items))
+	for _, pod := range podList.Items {
+		ip = append(ip, pod.Status.PodIP)
+	}
+	log.V(1).Info("List of PodIPs", listType, ip)
 }
 
 // notifyChannelOnCreate notifies the add event on the appropriate channel

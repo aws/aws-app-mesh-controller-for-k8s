@@ -1,12 +1,13 @@
 package appmesh
 
 import (
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func Test_virtualRouterValidator_enforceFieldsImmutability(t *testing.T) {
@@ -192,7 +193,7 @@ func Test_virtualRouterValidator_checkForDuplicateRouteEntries(t *testing.T) {
 								HTTPRoute: &appmesh.HTTPRoute{
 									Match: appmesh.HTTPRouteMatch{
 										Method: &testRESTMethod,
-										Prefix: "/",
+										Prefix: aws.String("/"),
 									},
 									Action: appmesh.HTTPRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
@@ -213,7 +214,7 @@ func Test_virtualRouterValidator_checkForDuplicateRouteEntries(t *testing.T) {
 								HTTPRoute: &appmesh.HTTPRoute{
 									Match: appmesh.HTTPRouteMatch{
 										Method: &testRESTMethod,
-										Prefix: "/test",
+										Prefix: aws.String("/test"),
 									},
 									Action: appmesh.HTTPRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
@@ -255,7 +256,7 @@ func Test_virtualRouterValidator_checkForDuplicateRouteEntries(t *testing.T) {
 								HTTPRoute: &appmesh.HTTPRoute{
 									Match: appmesh.HTTPRouteMatch{
 										Method: &testRESTMethod,
-										Prefix: "/",
+										Prefix: aws.String("/"),
 									},
 									Action: appmesh.HTTPRouteAction{
 										WeightedTargets: []appmesh.WeightedTarget{
@@ -282,6 +283,75 @@ func Test_virtualRouterValidator_checkForDuplicateRouteEntries(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			v := &virtualRouterValidator{}
 			err := v.checkForDuplicateRouteEntries(tt.args.vr)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test_virtualRouterValidator_validateRoute(t *testing.T) {
+	tests := []struct {
+		name    string
+		vr      appmesh.Route
+		wantErr error
+	}{
+		{
+			name: "Prefix and Path both specified",
+			vr: appmesh.Route{
+				HTTPRoute: &appmesh.HTTPRoute{
+					Match: appmesh.HTTPRouteMatch{
+						Prefix: aws.String("/"),
+						Path: &appmesh.HTTPPathMatch{
+							Exact: aws.String("/color/blue"),
+						},
+					},
+				},
+			},
+			wantErr: errors.New("Both Prefix and Path cannot be specified, only 1 allowed"),
+		},
+		{
+			name: "Prefix and Path both not specified",
+			vr: appmesh.Route{
+				HTTPRoute: &appmesh.HTTPRoute{
+					Match: appmesh.HTTPRouteMatch{},
+				},
+			},
+			wantErr: errors.New("Either Prefix or Path must be specified"),
+		},
+		{
+			name: "Valid Case",
+			vr: appmesh.Route{
+				HTTPRoute: &appmesh.HTTPRoute{
+					Match: appmesh.HTTPRouteMatch{
+						Path: &appmesh.HTTPPathMatch{
+							Exact: aws.String("/color/blue"),
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Invalid Case for HTTP2 Route",
+			vr: appmesh.Route{
+				HTTP2Route: &appmesh.HTTPRoute{
+					Match: appmesh.HTTPRouteMatch{
+						Prefix: aws.String("/"),
+						Path: &appmesh.HTTPPathMatch{
+							Exact: aws.String("/color/blue"),
+						},
+					},
+				},
+			},
+			wantErr: errors.New("Both Prefix and Path cannot be specified, only 1 allowed"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateRoute(tt.vr)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {

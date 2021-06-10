@@ -45,11 +45,9 @@ Then navigate to `localhost:9901/` for the index or `localhost:9901/config_dump`
 
 ## VirtualGateway - Common Issues
 ```
-"Error from server (found multiple matching virtualGateways for namespace: namespace, expecting 1 but found N"
+"failed to find matching virtualGateway for gatewayRoute: gateway-route-headers, expecting 1 but found 0"
 ```
-You will see an error similar to above if you try to create a gateway route in a namespace which has been associated with multiple virtual gateways.
-Virtual Gateway selects namespace using namespace selector and it selects all GatewayRoutes present in that namespace. If there are 2 Virtual Gateways
-for same GatewayRoute in a given namespace then you would see the above error. For more details refer [LiveDocs Virtual Gateway section](../reference/vgw.md)
+The above error message is to inform the user that the GatewayRoute in the error message has not been associated with any VirtualGateway. So the user should either add matching gatewayRouteSelector to the unmatched gatewayRoute or completely remove the gatewayRouteSelector so that the VirtualGateway ignores this field and uses only the namespaceSelector.For more details refer [LiveDocs Virtual Gateway section](../reference/vgw.md)
 
 ## mTLS - Common Issues
 

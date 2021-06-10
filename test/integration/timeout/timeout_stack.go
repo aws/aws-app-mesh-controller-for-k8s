@@ -3,9 +3,10 @@ package timeout
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
@@ -453,7 +454,7 @@ func (s *TimeoutStack) createServicesForTimeoutStack(ctx context.Context, f *fra
 				Name: "Timeout",
 				HTTPRoute: &appmesh.HTTPRoute{
 					Match: appmesh.HTTPRouteMatch{
-						Prefix: "/timeoutroute",
+						Prefix: aws.String("/timeoutroute"),
 					},
 					Action: appmesh.HTTPRouteAction{
 						WeightedTargets: weightedTargets,
@@ -472,7 +473,7 @@ func (s *TimeoutStack) createServicesForTimeoutStack(ctx context.Context, f *fra
 				Name: "No-Timeout",
 				HTTPRoute: &appmesh.HTTPRoute{
 					Match: appmesh.HTTPRouteMatch{
-						Prefix: "/defaultroute",
+						Prefix: aws.String("/defaultroute"),
 					},
 					Action: appmesh.HTTPRouteAction{
 						WeightedTargets: weightedTargets,

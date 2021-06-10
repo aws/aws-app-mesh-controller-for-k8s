@@ -3,6 +3,11 @@ package tls
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"time"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
@@ -11,14 +16,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"io/ioutil"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/http"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -838,7 +839,7 @@ func (s *TLSStack) createServicesForTLSStack(ctx context.Context, f *framework.F
 				Name: "TLSRoute",
 				HTTPRoute: &appmesh.HTTPRoute{
 					Match: appmesh.HTTPRouteMatch{
-						Prefix: "/tlsroute",
+						Prefix: aws.String("/tlsroute"),
 					},
 					Action: appmesh.HTTPRouteAction{
 						WeightedTargets: weightedTargets,
