@@ -3,15 +3,16 @@ package fishapp
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"io/ioutil"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
 	"sync"
 	"time"
+
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
@@ -1684,7 +1685,7 @@ func (s *DynamicStack) obtainPodToVirtualServiceConnectivityEntries(ctx context.
 		vs := s.createdServiceVSs[vsIndex]
 		vr := s.createdServiceVRs[vsIndex]
 		for _, route := range vr.Spec.Routes {
-			path := route.HTTPRoute.Match.Prefix
+			path := aws.StringValue(route.HTTPRoute.Match.Prefix)
 			checkEntries = append(checkEntries, connectivityCheckEntry{
 				dstVirtualService: k8s.NamespacedName(vs),
 				dstURL:            fmt.Sprintf("http://%s:%d%s", aws.StringValue(vs.Spec.AWSName), AppContainerPort, path),

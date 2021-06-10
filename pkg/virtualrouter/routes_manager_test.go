@@ -1,13 +1,14 @@
 package virtualrouter
 
 import (
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"testing"
 )
 
 func Test_matchRoutesAgainstSDKRouteRefs(t *testing.T) {
@@ -379,7 +380,7 @@ func Test_BuildSDKRouteSpec(t *testing.T) {
 								},
 							},
 							Method: aws.String("GET"),
-							Prefix: "/appmesh",
+							Prefix: aws.String("/appmesh"),
 							Scheme: aws.String("https"),
 						},
 						Action: appmesh.HTTPRouteAction{
@@ -527,7 +528,7 @@ func Test_BuildSDKRouteSpec(t *testing.T) {
 								},
 							},
 							Method: aws.String("GET"),
-							Prefix: "/appmesh",
+							Prefix: aws.String("/appmesh"),
 							Scheme: aws.String("https"),
 						},
 						Action: appmesh.HTTPRouteAction{

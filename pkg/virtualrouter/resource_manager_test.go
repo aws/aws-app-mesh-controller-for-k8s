@@ -2,6 +2,8 @@ package virtualrouter
 
 import (
 	"context"
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	mock_resolver "github.com/aws/aws-app-mesh-controller-for-k8s/mocks/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
@@ -20,7 +22,6 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	testclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"testing"
 )
 
 func Test_defaultResourceManager_updateCRDVirtualRouter(t *testing.T) {
@@ -645,7 +646,7 @@ func Test_defaultResourceManager_findVirtualNodeDependencies(t *testing.T) {
 											},
 										},
 										Method: aws.String("GET"),
-										Prefix: "/appmesh",
+										Prefix: aws.String("/appmesh"),
 										Scheme: aws.String("https"),
 									},
 									Action: appmesh.HTTPRouteAction{
@@ -711,7 +712,7 @@ func Test_defaultResourceManager_findVirtualNodeDependencies(t *testing.T) {
 											},
 										},
 										Method: aws.String("GET"),
-										Prefix: "/appmesh",
+										Prefix: aws.String("/appmesh"),
 										Scheme: aws.String("https"),
 									},
 									Action: appmesh.HTTPRouteAction{
