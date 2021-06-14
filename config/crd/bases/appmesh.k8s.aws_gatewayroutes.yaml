@@ -61,7 +61,8 @@ spec:
                     rewrite:
                       properties:
                         hostname:
-                          description: Need to check this with AppMesh API team
+                          description: ENABLE or DISABLE default behavior for Hostname
+                            rewrite
                           properties:
                             defaultTargetHostname:
                               enum:
@@ -216,7 +217,8 @@ spec:
                     rewrite:
                       properties:
                         hostname:
-                          description: Need to check this with AppMesh API team
+                          description: ENABLE or DISABLE default behavior for Hostname
+                            rewrite
                           properties:
                             defaultTargetHostname:
                               enum:
@@ -439,7 +441,8 @@ spec:
                     rewrite:
                       properties:
                         hostname:
-                          description: Need to check this with AppMesh API team
+                          description: ENABLE or DISABLE default behavior for Hostname
+                            rewrite
                           properties:
                             defaultTargetHostname:
                               enum:
