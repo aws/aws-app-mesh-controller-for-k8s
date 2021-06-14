@@ -35,3 +35,12 @@ AppMesh controller supports integration with multiple tracing solutions for data
 
 ## Jaeger tracing
 Follow instructions in [appmesh-jaeger](https://github.com/aws/eks-charts/tree/master/stable/appmesh-jaeger) helm chart.
+
+## Tips
+
+### Tracing agents running as DaemonSets
+For Jaeger and Datadog, running tracing agents as DaemonSets will need the `tracing.address` set to `status.hostIP` to use the node's IP.
+To do this, use the flag below
+   ```sh
+   --set tracing.address=ref:status.hostIP
+   ```
