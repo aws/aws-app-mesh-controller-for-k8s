@@ -563,6 +563,7 @@ func Convert_CRD_AWSCloudMapServiceDiscovery_To_SDK_AWSCloudMapServiceDiscovery(
 
 func Convert_CRD_DNSServiceDiscovery_To_SDK_DNSServiceDiscovery(crdObj *appmesh.DNSServiceDiscovery, sdkObj *appmeshsdk.DnsServiceDiscovery, scope conversion.Scope) error {
 	sdkObj.Hostname = aws.String(crdObj.Hostname)
+	sdkObj.ResponseType = crdObj.ResponseType
 	return nil
 }
 

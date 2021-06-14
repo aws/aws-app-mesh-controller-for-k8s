@@ -331,6 +331,10 @@ type AWSCloudMapServiceDiscovery struct {
 type DNSServiceDiscovery struct {
 	// Specifies the DNS service discovery hostname for the virtual node.
 	Hostname string `json:"hostname"`
+	// Choose between ENDPOINTS (strict DNS) and LOADBALANCER (logical DNS) mode in Envoy sidecar
+	// +kubebuilder:validation:Enum=ENDPOINTS;LOADBALANCER
+	// +optional
+	ResponseType *string `json:"responseType,omitempty"`
 }
 
 // ServiceDiscovery refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ServiceDiscovery.html

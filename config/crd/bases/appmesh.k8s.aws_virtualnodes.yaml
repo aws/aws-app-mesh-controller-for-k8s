@@ -988,6 +988,13 @@ spec:
                       description: Specifies the DNS service discovery hostname for
                         the virtual node.
                       type: string
+                    responseType:
+                      description: Choose between ENDPOINTS (strict DNS) and LOADBALANCER
+                        (logical DNS) mode in Envoy sidecar
+                      enum:
+                      - ENDPOINTS
+                      - LOADBALANCER
+                      type: string
                   required:
                   - hostname
                   type: object
