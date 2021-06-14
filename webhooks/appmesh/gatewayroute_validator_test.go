@@ -73,6 +73,63 @@ func Test_gatewayRouteValidator_validateGRPCGatewayRouteSpec(t *testing.T) {
 
 }
 
+func Test_gatewayRouteValidator_validateQueryParamsIfAny(t *testing.T) {
+	tests := []struct {
+		name    string
+		currGR  *appmesh.HTTPGatewayRouteMatch
+		wantErr error
+	}{
+		{
+			name: "Valid case",
+			currGR: &appmesh.HTTPGatewayRouteMatch{
+				QueryParameters: []appmesh.HTTPQueryParameters{
+					{
+						Name: aws.String("user"),
+						Match: &appmesh.QueryMatchMethod{
+							Exact: aws.String("Test"),
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "No matching filters for single query parameter",
+			currGR: &appmesh.HTTPGatewayRouteMatch{
+				QueryParameters: []appmesh.HTTPQueryParameters{
+					{
+						Name:  aws.String("user"),
+						Match: &appmesh.QueryMatchMethod{},
+					},
+				},
+			},
+			wantErr: errors.New("Missing Match criteria for one or more exact query match block, don't specify match block if you dont need it"),
+		},
+		{
+			name: "QueryParams with only name and no match block specified",
+			currGR: &appmesh.HTTPGatewayRouteMatch{
+				QueryParameters: []appmesh.HTTPQueryParameters{
+					{
+						Name: aws.String("user"),
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateQueryParametersIfAny(tt.currGR.QueryParameters)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func Test_gatewayRouteValidator_validateHeadersIfAny(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -105,7 +162,7 @@ func Test_gatewayRouteValidator_validateHeadersIfAny(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.New("Missing Match critieria for header match block, don't specify match block if you dont need it"),
+			wantErr: errors.New("Missing Match criteria for one or more header match block, don't specify match block if you dont need it"),
 		},
 		{
 			name: "Header with only name and no match block specified",
