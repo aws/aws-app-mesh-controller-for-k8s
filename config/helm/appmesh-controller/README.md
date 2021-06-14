@@ -393,3 +393,4 @@ Parameter | Description | Default
 `accountId` | AWS Account ID for the Kubernetes cluster | None
 `env` |  environment variables to be injected into the appmesh-controller pod | `{}`
 `livenessProbe` | Liveness probe settings for the controller | (see `values.yaml`)
+`podDisruptionBudget` | PodDisruptionBudget | `{}`
