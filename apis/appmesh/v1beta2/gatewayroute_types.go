@@ -169,7 +169,7 @@ type GatewayRoutePrefixRewrite struct {
 	Value *string `json:"value,omitempty"`
 }
 
-// Need to check this with AppMesh API team
+// ENABLE or DISABLE default behavior for Hostname rewrite
 type GatewayRouteHostnameRewrite struct {
 	// +optional
 	// +kubebuilder:validation:Enum=ENABLED;DISABLED;
