@@ -69,6 +69,18 @@ func getNumberOfRouteTypes(spec appmesh.GatewayRouteSpec) int {
 	return numOfRoutes
 }
 
+func validateQueryParametersIfAny(queryParams []appmesh.HTTPQueryParameters) error {
+	for _, queryParam := range queryParams {
+		if queryParam.Match == nil {
+			continue
+		}
+		if queryParam.Match.Exact == nil {
+			return errors.New("Missing Match criteria for one or more exact query match block, don't specify match block if you dont need it")
+		}
+	}
+	return nil
+}
+
 func validateHTTPHeadersIfAny(headers []appmesh.HTTPGatewayRouteHeader) error {
 	for _, header := range headers {
 		if header.Match == nil {
@@ -79,7 +91,7 @@ func validateHTTPHeadersIfAny(headers []appmesh.HTTPGatewayRouteHeader) error {
 			return errors.New("Too many Match Filters specified, only 1 allowed per header")
 		}
 		if numOfMatchFilters == 0 {
-			return errors.New("Missing Match critieria for header match block, don't specify match block if you dont need it")
+			return errors.New("Missing Match criteria for one or more header match block, don't specify match block if you dont need it")
 		}
 		if header.Match.Range != nil {
 			return validateMatchRange(header.Match.Range)
@@ -208,7 +220,9 @@ func validateHTTPRouteMatch(match appmesh.HTTPGatewayRouteMatch) error {
 	if match.Headers != nil && len(match.Headers) != 0 {
 		return validateHTTPHeadersIfAny(match.Headers)
 	}
-	// We are not validating of QueryParameters as it has only one field which is optional
+	if match.QueryParameters != nil && len(match.QueryParameters) != 0 {
+		return validateQueryParametersIfAny(match.QueryParameters)
+	}
 	return nil
 }
 
