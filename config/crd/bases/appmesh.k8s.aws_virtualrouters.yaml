@@ -507,9 +507,10 @@ spec:
                             description: The client specified queryParameters to match
                               on
                             items:
+                              description: HTTPQueryParameters refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpQueryParameter.html
                               properties:
                                 match:
-                                  description: The HeaderMatchMethod object.
+                                  description: The QueryMatchMethod object.
                                   properties:
                                     exact:
                                       maxLength: 255
@@ -785,9 +786,10 @@ spec:
                             description: The client specified queryParameters to match
                               on
                             items:
+                              description: HTTPQueryParameters refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpQueryParameter.html
                               properties:
                                 match:
-                                  description: The HeaderMatchMethod object.
+                                  description: The QueryMatchMethod object.
                                   properties:
                                     exact:
                                       maxLength: 255

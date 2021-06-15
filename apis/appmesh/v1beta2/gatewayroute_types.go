@@ -21,7 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// GatewayRouteVirtualService refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+// GatewayRouteVirtualService refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteVirtualService.html
 type GatewayRouteVirtualService struct {
 	// Reference to Kubernetes VirtualService CR in cluster to associate with the gateway route virtual service target. Exactly one of 'virtualServiceRef' or 'virtualServiceARN' must be specified.
 	// +optional
@@ -31,13 +31,13 @@ type GatewayRouteVirtualService struct {
 	VirtualServiceARN *string `json:"virtualServiceARN,omitempty"`
 }
 
-// GatewayRouteTarget refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+// GatewayRouteTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteTarget.html
 type GatewayRouteTarget struct {
 	// The virtual service to associate with the gateway route target.
 	VirtualService GatewayRouteVirtualService `json:"virtualService"`
 }
 
-// GRPCGatewayRouteMatch refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+// GRPCGatewayRouteMatch refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteMatch.html
 type GRPCGatewayRouteMatch struct {
 	// Either ServiceName or Hostname must be specified. Both are allowed as well
 	// The fully qualified domain name for the service to match from the request.
@@ -53,7 +53,7 @@ type GRPCGatewayRouteMatch struct {
 	Metadata []GRPCGatewayRouteMetadata `json:"metadata,omitempty"`
 }
 
-// GRPCGatewayRouteMetadata refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadata.html
+// GRPCGatewayRouteMetadata refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteMetadata.html
 type GRPCGatewayRouteMetadata struct {
 	// The name of the route.
 	// +kubebuilder:validation:MinLength=1
@@ -67,7 +67,7 @@ type GRPCGatewayRouteMetadata struct {
 	Invert *bool `json:"invert,omitempty"`
 }
 
-// GRPCGatewayRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+// GRPCGatewayRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteAction.html
 type GRPCGatewayRouteAction struct {
 	// An object that represents the target that traffic is routed to when a request matches the route.
 	Target GatewayRouteTarget `json:"target"`
@@ -75,11 +75,12 @@ type GRPCGatewayRouteAction struct {
 	Rewrite *GrpcGatewayRouteRewrite `json:"rewrite,omitempty"`
 }
 
+// GrpcGatewayRouteRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteRewrite.html
 type GrpcGatewayRouteRewrite struct {
 	Hostname *GatewayRouteHostnameRewrite `json:"hostname,omitempty"`
 }
 
-// GRPCGatewayRoute refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+// GRPCGatewayRoute refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/gateway-routes.html
 type GRPCGatewayRoute struct {
 	// An object that represents the criteria for determining a request match.
 	Match GRPCGatewayRouteMatch `json:"match"`
@@ -87,14 +88,16 @@ type GRPCGatewayRoute struct {
 	Action GRPCGatewayRouteAction `json:"action"`
 }
 
-// HTTPGatewayRouteMatch refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+// HTTPGatewayRouteMatch refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteMatch.html
 type HTTPGatewayRouteMatch struct {
 	// Either Prefix or Hostname must be specified. Both are allowed as well.
-	// Specifies the path to match requests with
+	// Specifies the prefix to match requests with
 	// +optional
 	Prefix *string `json:"prefix,omitempty"`
+	// Specified path of the request to be matched on
 	// +optional
 	Path *HTTPPathMatch `json:"path,omitempty"`
+	// Client specified query parameters to match on
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=10
 	// +optional
@@ -113,7 +116,7 @@ type HTTPGatewayRouteMatch struct {
 	Headers []HTTPGatewayRouteHeader `json:"headers,omitempty"`
 }
 
-// HTTPGatewayRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html
+// HTTPGatewayRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteHeader.html
 type HTTPGatewayRouteHeader struct {
 	// A name for the HTTP header in the client request that will be matched on.
 	// +kubebuilder:validation:MinLength=1
@@ -128,6 +131,7 @@ type HTTPGatewayRouteHeader struct {
 }
 
 // Hostname based match, either Exact or Suffix must be specified. Both are not allowed
+// Refer to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteHostnameMatch.html
 type GatewayRouteHostnameMatch struct {
 	// The value sent by the client must match the specified value exactly.
 	// +kubebuilder:validation:MinLength=1
@@ -141,7 +145,7 @@ type GatewayRouteHostnameMatch struct {
 	Suffix *string `json:"suffix,omitempty"`
 }
 
-// HTTPGatewayRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+// HTTPGatewayRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteAction.html
 type HTTPGatewayRouteAction struct {
 	// An object that represents the target that traffic is routed to when a request matches the route.
 	Target GatewayRouteTarget `json:"target"`
@@ -149,6 +153,7 @@ type HTTPGatewayRouteAction struct {
 	Rewrite *HTTPGatewayRouteRewrite `json:"rewrite,omitempty"`
 }
 
+// HTTPGatewayRouteRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteRewrite.html
 type HTTPGatewayRouteRewrite struct {
 	// +optional
 	Prefix *GatewayRoutePrefixRewrite `json:"prefix,omitempty"`
@@ -158,6 +163,7 @@ type HTTPGatewayRouteRewrite struct {
 	Hostname *GatewayRouteHostnameRewrite `json:"hostname,omitempty"`
 }
 
+// GatewayRoutePrefixRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRoutePrefixRewrite.html
 type GatewayRoutePrefixRewrite struct {
 	// +optional
 	// +kubebuilder:validation:Enum=ENABLED;DISABLED;
@@ -169,6 +175,7 @@ type GatewayRoutePrefixRewrite struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// GatewayRouteHostnameRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteHostnameRewrite.html
 // ENABLE or DISABLE default behavior for Hostname rewrite
 type GatewayRouteHostnameRewrite struct {
 	// +optional
@@ -176,6 +183,7 @@ type GatewayRouteHostnameRewrite struct {
 	DefaultTargetHostname *string `json:"defaultTargetHostname,omitempty"`
 }
 
+// GatewayRoutePathRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRoutePathRewrite.html
 type GatewayRoutePathRewrite struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=255
@@ -183,7 +191,7 @@ type GatewayRoutePathRewrite struct {
 	Exact *string `json:"exact,omitempty"`
 }
 
-// HTTPGatewayRoute refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
+// HTTPGatewayRoute refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/gateway-routes.html
 type HTTPGatewayRoute struct {
 	// An object that represents the criteria for determining a request match.
 	Match HTTPGatewayRouteMatch `json:"match"`
