@@ -151,6 +151,7 @@ type VirtualGatewayReference struct {
 	UID types.UID `json:"uid"`
 }
 
+// HTTPPathMatch refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpPathMatch.html
 type HTTPPathMatch struct {
 	// The value sent by the client must match the specified value exactly.
 	// +kubebuilder:validation:MinLength=1
@@ -163,9 +164,11 @@ type HTTPPathMatch struct {
 	// +optional
 	Regex *string `json:"regex,omitempty"`
 }
+
+// HTTPQueryParameters refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpQueryParameter.html
 type HTTPQueryParameters struct {
 	Name *string `json:"name"`
-	// The HeaderMatchMethod object.
+	// The QueryMatchMethod object.
 	// +optional
 	Match *QueryMatchMethod `json:"match,omitempty"`
 }

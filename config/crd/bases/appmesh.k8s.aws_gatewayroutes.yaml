@@ -59,10 +59,11 @@ spec:
                     is determined.
                   properties:
                     rewrite:
+                      description: GrpcGatewayRouteRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteRewrite.html
                       properties:
                         hostname:
-                          description: ENABLE or DISABLE default behavior for Hostname
-                            rewrite
+                          description: GatewayRouteHostnameRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteHostnameRewrite.html
+                            ENABLE or DISABLE default behavior for Hostname rewrite
                           properties:
                             defaultTargetHostname:
                               enum:
@@ -134,7 +135,7 @@ spec:
                       description: An object that represents the data to match from
                         the request.
                       items:
-                        description: GRPCGatewayRouteMetadata refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadata.html
+                        description: GRPCGatewayRouteMetadata refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteMetadata.html
                         properties:
                           invert:
                             description: Specify True to match anything except the
@@ -215,10 +216,11 @@ spec:
                     is determined.
                   properties:
                     rewrite:
+                      description: HTTPGatewayRouteRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteRewrite.html
                       properties:
                         hostname:
-                          description: ENABLE or DISABLE default behavior for Hostname
-                            rewrite
+                          description: GatewayRouteHostnameRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteHostnameRewrite.html
+                            ENABLE or DISABLE default behavior for Hostname rewrite
                           properties:
                             defaultTargetHostname:
                               enum:
@@ -227,6 +229,7 @@ spec:
                               type: string
                           type: object
                         path:
+                          description: GatewayRoutePathRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRoutePathRewrite.html
                           properties:
                             exact:
                               maxLength: 255
@@ -234,6 +237,7 @@ spec:
                               type: string
                           type: object
                         prefix:
+                          description: GatewayRoutePrefixRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRoutePrefixRewrite.html
                           properties:
                             defaultPrefix:
                               enum:
@@ -295,7 +299,7 @@ spec:
                       description: An object that represents the client request headers
                         to match on.
                       items:
-                        description: HTTPGatewayRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html
+                        description: HTTPGatewayRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteHeader.html
                         properties:
                           invert:
                             description: Specify True to match anything except the
@@ -387,6 +391,7 @@ spec:
                       - TRACE
                       type: string
                     path:
+                      description: Specified path of the request to be matched on
                       properties:
                         exact:
                           description: The value sent by the client must match the
@@ -403,14 +408,16 @@ spec:
                       type: object
                     prefix:
                       description: Either Prefix or Hostname must be specified. Both
-                        are allowed as well. Specifies the path to match requests
+                        are allowed as well. Specifies the prefix to match requests
                         with
                       type: string
                     queryParameters:
+                      description: Client specified query parameters to match on
                       items:
+                        description: HTTPQueryParameters refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpQueryParameter.html
                         properties:
                           match:
-                            description: The HeaderMatchMethod object.
+                            description: The QueryMatchMethod object.
                             properties:
                               exact:
                                 maxLength: 255
@@ -439,10 +446,11 @@ spec:
                     is determined.
                   properties:
                     rewrite:
+                      description: HTTPGatewayRouteRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteRewrite.html
                       properties:
                         hostname:
-                          description: ENABLE or DISABLE default behavior for Hostname
-                            rewrite
+                          description: GatewayRouteHostnameRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteHostnameRewrite.html
+                            ENABLE or DISABLE default behavior for Hostname rewrite
                           properties:
                             defaultTargetHostname:
                               enum:
@@ -451,6 +459,7 @@ spec:
                               type: string
                           type: object
                         path:
+                          description: GatewayRoutePathRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRoutePathRewrite.html
                           properties:
                             exact:
                               maxLength: 255
@@ -458,6 +467,7 @@ spec:
                               type: string
                           type: object
                         prefix:
+                          description: GatewayRoutePrefixRewrite refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRoutePrefixRewrite.html
                           properties:
                             defaultPrefix:
                               enum:
@@ -519,7 +529,7 @@ spec:
                       description: An object that represents the client request headers
                         to match on.
                       items:
-                        description: HTTPGatewayRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html
+                        description: HTTPGatewayRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteHeader.html
                         properties:
                           invert:
                             description: Specify True to match anything except the
@@ -611,6 +621,7 @@ spec:
                       - TRACE
                       type: string
                     path:
+                      description: Specified path of the request to be matched on
                       properties:
                         exact:
                           description: The value sent by the client must match the
@@ -627,14 +638,16 @@ spec:
                       type: object
                     prefix:
                       description: Either Prefix or Hostname must be specified. Both
-                        are allowed as well. Specifies the path to match requests
+                        are allowed as well. Specifies the prefix to match requests
                         with
                       type: string
                     queryParameters:
+                      description: Client specified query parameters to match on
                       items:
+                        description: HTTPQueryParameters refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpQueryParameter.html
                         properties:
                           match:
-                            description: The HeaderMatchMethod object.
+                            description: The QueryMatchMethod object.
                             properties:
                               exact:
                                 maxLength: 255
