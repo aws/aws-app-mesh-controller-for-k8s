@@ -14,7 +14,7 @@
     
     
       
-        <title>Installation - AWS App Mesh Controller</title>
+        <title>VirtualGateway CRD - AWS App Mesh Controller</title>
       
     
     
@@ -61,7 +61,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#appmesh-installation-guide" class="md-skip">
+        <a href="#gatewayroute-to-virtualgateway-association-via-yaml-spec" class="md-skip">
           Skip to content
         </a>
       
@@ -91,7 +91,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              Installation
+              VirtualGateway CRD
             
           </span>
         </div>
@@ -201,12 +201,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
     
     <label class="md-nav__link" for="nav-2">
       Guide
@@ -224,49 +222,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Installation
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../../guide/installation/" class="md-nav__link">
       Installation
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#via-helm" class="md-nav__link">
-    Via Helm
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -276,7 +236,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../monitoring/" class="md-nav__link">
+    <a href="../../guide/monitoring/" class="md-nav__link">
       Monitoring
     </a>
   </li>
@@ -288,7 +248,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../tracing/" class="md-nav__link">
+    <a href="../../guide/tracing/" class="md-nav__link">
       Tracing
     </a>
   </li>
@@ -300,7 +260,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../troubleshooting/" class="md-nav__link">
+    <a href="../../guide/troubleshooting/" class="md-nav__link">
       Troubleshooting
     </a>
   </li>
@@ -312,7 +272,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../development/" class="md-nav__link">
+    <a href="../../guide/development/" class="md-nav__link">
       Development
     </a>
   </li>
@@ -365,10 +325,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
     <label class="md-nav__link" for="nav-4">
       Reference
@@ -388,7 +350,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../reference/api_spec/" class="md-nav__link">
+    <a href="../api_spec/" class="md-nav__link">
       APISpec
     </a>
   </li>
@@ -400,7 +362,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../reference/api_design/" class="md-nav__link">
+    <a href="../api_design/" class="md-nav__link">
       APIDesign
     </a>
   </li>
@@ -412,7 +374,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../reference/injector/" class="md-nav__link">
+    <a href="../injector/" class="md-nav__link">
       SidecarInjection
     </a>
   </li>
@@ -422,11 +384,65 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../../reference/vgw/" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        VirtualGateway CRD
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" class="md-nav__link md-nav__link--active">
       VirtualGateway CRD
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#gatewayroute-to-virtualgateway-association-via-yaml-spec" class="md-nav__link">
+    GatewayRoute to VirtualGateway Association via (Yaml Spec)
+  </a>
+  
+    <nav class="md-nav" aria-label="GatewayRoute to VirtualGateway Association via (Yaml Spec)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#namespaceselector" class="md-nav__link">
+    namespaceSelector ####
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gatewayrouteselector" class="md-nav__link">
+    gatewayRouteSelector ####
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -449,8 +465,6 @@
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -459,9 +473,29 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#via-helm" class="md-nav__link">
-    Via Helm
+  <a href="#gatewayroute-to-virtualgateway-association-via-yaml-spec" class="md-nav__link">
+    GatewayRoute to VirtualGateway Association via (Yaml Spec)
   </a>
+  
+    <nav class="md-nav" aria-label="GatewayRoute to VirtualGateway Association via (Yaml Spec)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#namespaceselector" class="md-nav__link">
+    namespaceSelector ####
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gatewayrouteselector" class="md-nav__link">
+    gatewayRouteSelector ####
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -477,14 +511,79 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/guide/installation.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/reference/vgw.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                <h1 id="appmesh-installation-guide">AppMesh Installation Guide<a class="headerlink" href="#appmesh-installation-guide" title="Permanent link">&para;</a></h1>
-<h2 id="via-helm">Via Helm<a class="headerlink" href="#via-helm" title="Permanent link">&para;</a></h2>
-<p>Follow instructions in <a href="https://github.com/aws/eks-charts/tree/master/stable/appmesh-controller">appmesh-controller</a> helm chart.</p>
+                  <h1>VirtualGateway CRD</h1>
+                
+                <h3 id="gatewayroute-to-virtualgateway-association-via-yaml-spec">GatewayRoute to VirtualGateway Association via (Yaml Spec)<a class="headerlink" href="#gatewayroute-to-virtualgateway-association-via-yaml-spec" title="Permanent link">&para;</a></h3>
+<p>A VirtualGateway can select GatewayRoute using following selectors  </p>
+<h4 id="namespaceselector">namespaceSelector ####<a class="headerlink" href="#namespaceselector" title="Permanent link">&para;</a></h4>
+<p>VirtualGateway must specify namespaceSelector to associate GatewayRoutes belonging to a particular namespace.
+An empty namespaceSelector would target GatewayRoutes in all namespaces. While nil or not specifying any namespace selector would not select any GatewayRoutes.</p>
+<h4 id="gatewayrouteselector">gatewayRouteSelector ####<a class="headerlink" href="#gatewayrouteselector" title="Permanent link">&para;</a></h4>
+<p>VirtualGateway can additionally specify gatewayRouteSelector to select subset of GatewayRoutes in a given namespace. 
+An empty or not specifying this field (nil) will select all GatewayRoutes in a given namespace. If specified then it will select only those GatewayRoutes which have the matching labels. </p>
+<p>Here is a sample spec with 1 VirtualGateway and 2 GatewayRoutes. Here VirtualGateway specified a gatewayRouteSelector, based on which only one of the GatewayRoutes get selected.</p>
+<div class="highlight"><pre><span></span><code>apiVersion: appmesh.k8s.aws/v1beta2
+kind: VirtualGateway
+metadata:
+  name: ingress-gw
+  namespace: ${APP_NAMESPACE}
+spec:
+  namespaceSelector:
+    matchLabels:
+      gateway: ingress-gw
+  gatewayRouteSelector:
+    matchLabels:
+      gateway: ingress-gw
+  podSelector:
+    matchLabels:
+      app: ingress-gw
+  listeners:
+    - portMapping:
+        port: 8088
+        protocol: http
+---
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: GatewayRoute
+metadata:
+  name: gateway-route-headers
+  namespace: ${APP_NAMESPACE}
+spec:
+  httpRoute:
+    match:
+      prefix: &quot;/headers&quot;
+    action:
+      target:
+        virtualService:
+          virtualServiceRef:
+            name: color-headers
+---
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: GatewayRoute
+metadata:
+  name: gateway-route-paths
+  namespace: ${APP_NAMESPACE}
+  labels:
+    gateway: ingress-gw
+spec:
+  httpRoute:
+    match:
+      prefix: &quot;/paths&quot;
+    action:
+      target:
+        virtualService:
+          virtualServiceRef:
+            name: color-paths
+----
+</code></pre></div>
+<p>Since the GatewayRoute: gateway-route-headers doesn't have any matching VirtualGateway, customers will see following error message
+<div class="highlight"><pre><span></span><code>failed to find matching virtualGateway for gatewayRoute: gateway-route-headers, expecting 1 but found 0
+</code></pre></div></p>
+<p>The above error message is to only notify the user that the GatewayRoute in the error message has not been associated with any VirtualGateway. So the user should either add matching gatewayRouteSelector to the unmatched gatewayRoute or completely remove the gatewayRouteSelector so that the VirtualGateway ignores this field and uses only the namespaceSelector. </p>
                 
               
               
@@ -503,7 +602,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../.." class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../injector/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -512,25 +611,11 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Home
+                SidecarInjection
               </div>
             </div>
           </a>
         
-        
-          <a href="../monitoring/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Monitoring
-              </div>
-            </div>
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-            </div>
-          </a>
         
       </nav>
     </div>
