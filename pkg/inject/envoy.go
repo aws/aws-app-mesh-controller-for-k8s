@@ -67,6 +67,10 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 
+	volumeMounts, err := m.getVolumeMounts(pod)
+	if err != nil {
+		return err
+	}
 	variables := m.buildTemplateVariables(pod)
 
 	customEnv, err := m.getCustomEnv(pod)
@@ -90,6 +94,7 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 
 	m.mutateSecretMounts(pod, &container, secretMounts)
+	m.mutateVolumeMounts(pod, &container, volumeMounts)
 	if m.mutatorConfig.enableSDS && !isSDSDisabled(pod) {
 		mutateSDSMounts(pod, &container, m.mutatorConfig.sdsUdsPath)
 	}
@@ -202,4 +207,31 @@ func (m *envoyMutator) getCustomEnv(pod *corev1.Pod) (map[string]string, error) 
 		}
 	}
 	return customEnv, nil
+}
+
+func (m *envoyMutator) mutateVolumeMounts(pod *corev1.Pod, envoyContainer *corev1.Container, volumeMounts map[string]string) {
+	for volumeName, mountPath := range volumeMounts {
+		volumeMount := corev1.VolumeMount{
+			Name:      volumeName,
+			MountPath: mountPath,
+			ReadOnly:  true,
+		}
+		envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
+	}
+}
+
+func (m *envoyMutator) getVolumeMounts(pod *corev1.Pod) (map[string]string, error) {
+	volumeMounts := make(map[string]string)
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshVolumeMountsAnnotation]; ok {
+		for _, segment := range strings.Split(v, ",") {
+			pair := strings.Split(segment, ":")
+			if len(pair) != 2 { // volumeName:mountPath
+				return nil, errors.Errorf("malformed annotation %s, expected format: %s", AppMeshSecretMountsAnnotation, "secretName:mountPath")
+			}
+			secretName := strings.TrimSpace(pair[0])
+			mountPath := strings.TrimSpace(pair[1])
+			volumeMounts[secretName] = mountPath
+		}
+	}
+	return volumeMounts, nil
 }
