@@ -10,6 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strconv"
 	"time"
 )
 
@@ -157,7 +158,7 @@ func (r *defaultInstancesReconciler) buildInstanceAttributes(ms *appmesh.Mesh, v
 	attr[AttrAWSInstanceIPV4] = pod.Status.PodIP
 
 	//In future, in case of multiple port mappings, the first mapping will be selected.
-	attr[AttrAWSInstancePort] = aws.StringValue(vn.Spec.Listeners[0].PortMapping.Port)
+	attr[AttrAWSInstancePort] = strconv.Itoa(int(vn.Spec.Listeners[0].PortMapping.Port))
 	attr[AttrK8sPod] = pod.Name
 	attr[AttrK8sNamespace] = pod.Namespace
 	attr[AttrAppMeshMesh] = aws.StringValue(ms.Spec.AWSName)
