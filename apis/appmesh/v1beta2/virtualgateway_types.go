@@ -365,6 +365,7 @@ type VirtualGatewayStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="ARN",type="string",JSONPath=".status.virtualGatewayARN",description="The AppMesh VirtualGateway object's Amazon Resource Name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:pruning:PreserveUnknownFields
 // VirtualGateway is the Schema for the virtualgateways API
 type VirtualGateway struct {
 	metav1.TypeMeta   `json:",inline"`
