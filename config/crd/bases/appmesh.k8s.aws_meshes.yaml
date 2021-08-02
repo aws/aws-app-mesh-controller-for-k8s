@@ -1,6 +1,6 @@
 
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
@@ -8,14 +8,6 @@ metadata:
   creationTimestamp: null
   name: meshes.appmesh.k8s.aws
 spec:
-  additionalPrinterColumns:
-  - JSONPath: .status.meshARN
-    description: The AppMesh Mesh object's Amazon Resource Name
-    name: ARN
-    type: string
-  - JSONPath: .metadata.creationTimestamp
-    name: AGE
-    type: date
   group: appmesh.k8s.aws
   names:
     kind: Mesh
@@ -23,140 +15,149 @@ spec:
     plural: meshes
     singular: mesh
   scope: Cluster
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      description: Mesh is the Schema for the meshes API
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: MeshSpec defines the desired state of Mesh refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_MeshSpec.html
-          properties:
-            awsName:
-              description: AWSName is the AppMesh Mesh object's name. If unspecified
-                or empty, it defaults to be "${name}" of k8s Mesh
-              type: string
-            egressFilter:
-              description: The egress filter rules for the service mesh. If unspecified,
-                default settings from AWS API will be applied. Refer to AWS Docs for
-                default settings.
-              properties:
-                type:
-                  description: The egress filter type.
-                  enum:
-                  - ALLOW_ALL
-                  - DROP_ALL
-                  type: string
-              required:
-              - type
-              type: object
-            meshOwner:
-              description: The AWS IAM account ID of the service mesh owner. Required
-                if the account ID is not your own.
-              type: string
-            namespaceSelector:
-              description: "NamespaceSelector selects Namespaces using labels to designate
-                mesh membership. This field follows standard label selector semantics:
-                \tif present but empty, it selects all namespaces. \tif absent, it
-                selects no namespace."
-              properties:
-                matchExpressions:
-                  description: matchExpressions is a list of label selector requirements.
-                    The requirements are ANDed.
-                  items:
-                    description: A label selector requirement is a selector that contains
-                      values, a key, and an operator that relates the key and values.
-                    properties:
-                      key:
-                        description: key is the label key that the selector applies
-                          to.
-                        type: string
-                      operator:
-                        description: operator represents a key's relationship to a
-                          set of values. Valid operators are In, NotIn, Exists and
-                          DoesNotExist.
-                        type: string
-                      values:
-                        description: values is an array of string values. If the operator
-                          is In or NotIn, the values array must be non-empty. If the
-                          operator is Exists or DoesNotExist, the values array must
-                          be empty. This array is replaced during a strategic merge
-                          patch.
-                        items:
-                          type: string
-                        type: array
-                    required:
-                    - key
-                    - operator
-                    type: object
-                  type: array
-                matchLabels:
-                  additionalProperties:
-                    type: string
-                  description: matchLabels is a map of {key,value} pairs. A single
-                    {key,value} in the matchLabels map is equivalent to an element
-                    of matchExpressions, whose key field is "key", the operator is
-                    "In", and the values array contains only "value". The requirements
-                    are ANDed.
-                  type: object
-              type: object
-          type: object
-        status:
-          description: MeshStatus defines the observed state of Mesh
-          properties:
-            conditions:
-              description: The current Mesh status.
-              items:
+  versions:
+  - additionalPrinterColumns:
+    - description: The AppMesh Mesh object's Amazon Resource Name
+      jsonPath: .status.meshARN
+      name: ARN
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: AGE
+      type: date
+    name: v1beta2
+    schema:
+      openAPIV3Schema:
+        description: Mesh is the Schema for the meshes API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: MeshSpec defines the desired state of Mesh refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_MeshSpec.html
+            properties:
+              awsName:
+                description: AWSName is the AppMesh Mesh object's name. If unspecified
+                  or empty, it defaults to be "${name}" of k8s Mesh
+                type: string
+              egressFilter:
+                description: The egress filter rules for the service mesh. If unspecified,
+                  default settings from AWS API will be applied. Refer to AWS Docs
+                  for default settings.
                 properties:
-                  lastTransitionTime:
-                    description: Last time the condition transitioned from one status
-                      to another.
-                    format: date-time
-                    type: string
-                  message:
-                    description: A human readable message indicating details about
-                      the transition.
-                    type: string
-                  reason:
-                    description: The reason for the condition's last transition.
-                    type: string
-                  status:
-                    description: Status of the condition, one of True, False, Unknown.
-                    type: string
                   type:
-                    description: Type of mesh condition.
+                    description: The egress filter type.
+                    enum:
+                    - ALLOW_ALL
+                    - DROP_ALL
                     type: string
                 required:
-                - status
                 - type
                 type: object
-              type: array
-            meshARN:
-              description: MeshARN is the AppMesh Mesh object's Amazon Resource Name
-              type: string
-            observedGeneration:
-              description: The generation observed by the Mesh controller.
-              format: int64
-              type: integer
-          type: object
-      type: object
-  version: v1beta2
-  versions:
-  - name: v1beta2
+              meshOwner:
+                description: The AWS IAM account ID of the service mesh owner. Required
+                  if the account ID is not your own.
+                type: string
+              namespaceSelector:
+                description: "NamespaceSelector selects Namespaces using labels to
+                  designate mesh membership. This field follows standard label selector
+                  semantics: \tif present but empty, it selects all namespaces. \tif
+                  absent, it selects no namespace."
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: A label selector requirement is a selector that
+                        contains values, a key, and an operator that relates the key
+                        and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: operator represents a key's relationship to
+                            a set of values. Valid operators are In, NotIn, Exists
+                            and DoesNotExist.
+                          type: string
+                        values:
+                          description: values is an array of string values. If the
+                            operator is In or NotIn, the values array must be non-empty.
+                            If the operator is Exists or DoesNotExist, the values
+                            array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: matchLabels is a map of {key,value} pairs. A single
+                      {key,value} in the matchLabels map is equivalent to an element
+                      of matchExpressions, whose key field is "key", the operator
+                      is "In", and the values array contains only "value". The requirements
+                      are ANDed.
+                    type: object
+                type: object
+            type: object
+          status:
+            description: MeshStatus defines the observed state of Mesh
+            properties:
+              conditions:
+                description: The current Mesh status.
+                items:
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human readable message indicating details about
+                        the transition.
+                      type: string
+                    reason:
+                      description: The reason for the condition's last transition.
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: Type of mesh condition.
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+              meshARN:
+                description: MeshARN is the AppMesh Mesh object's Amazon Resource
+                  Name
+                type: string
+              observedGeneration:
+                description: The generation observed by the Mesh controller.
+                format: int64
+                type: integer
+            type: object
+        type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
