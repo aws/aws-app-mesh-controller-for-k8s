@@ -3,13 +3,13 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
-region: ""
-accountId: ""
+region: ''
+accountId: ''
 preview: false
 
 image:
   repository: 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller
-  tag: v1.4.0
+  tag: v1.5.0
   pullPolicy: IfNotPresent
 
 sidecar:
@@ -46,8 +46,8 @@ xray:
     repository: amazon/aws-xray-daemon
     tag: latest
 
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: ''
+fullnameOverride: ''
 
 resources:
   limits:
@@ -57,27 +57,19 @@ resources:
     cpu: 100m
     memory: 200Mi
 
-nodeSelector: {
-    test: test
-}
+nodeSelector: { test: test }
 
 tolerations:
-  - key: "key1"
-    operator: "Equal"
-    value: "value1"
-    effect: "NoExecute"
+  - key: 'key1'
+    operator: 'Equal'
+    value: 'value1'
+    effect: 'NoExecute'
 
-affinity: {
-    test: test
-}
+affinity: { test: test }
 
-podAnnotations: {
-    test: test
-}
+podAnnotations: { test: test }
 
-podLabels: {
-    test: test
-}
+podLabels: { test: test }
 
 cloudMapCustomHealthCheck:
   # cloudMapCustomHealthCheck.enabled: `true` if CustomHealthCheck needs to be enabled in CloudMap
@@ -99,9 +91,7 @@ serviceAccount:
   # serviceAccount.name: The name of the service account to create or use
   name: test
   # serviceAccount.annotations: optional annotations to be applied to service account
-  annotations: {
-      test: test
-  }
+  annotations: { test: test }
 
 rbac:
   # rbac.create: `true` if rbac resources should be created
@@ -111,7 +101,7 @@ rbac:
 
 log:
   #log.level: info (default), debug
-  level: "info"
+  level: 'info'
 
 tracing:
   # tracing.enabled: `true` if Envoy should be configured tracing
@@ -137,7 +127,8 @@ stats:
 enableCertManager: false
 
 # podDisruptionBudget for Appmesh controller
-podDisruptionBudget: {}
+podDisruptionBudget:
+  {}
   # minAvailable: 1
 
 # Environment variables to set in appmesh-controller pod
