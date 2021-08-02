@@ -9,7 +9,7 @@ IMAGE ?= $(REPO):$(VERSION)
 PREVIEW=false
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1beta1"
+CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1"
 
 # app mesh aws-sdk-go override in case we need to build against a custom version
 APPMESH_SDK_OVERRIDE ?= "n"
