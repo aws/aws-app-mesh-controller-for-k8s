@@ -157,7 +157,9 @@ func (r *defaultInstancesReconciler) buildInstanceAttributes(ms *appmesh.Mesh, v
 	podsNodeName := pod.Spec.NodeName
 	attr[AttrAWSInstanceIPV4] = pod.Status.PodIP
 
-	//In future, in case of multiple port mappings, the first mapping will be selected.
+	/* VirtualNode currently supports only one listener. In future even if support for multiple listeners is introduced,
+	we will always derive the port value from the first listener config. */
+
 	attr[AttrAWSInstancePort] = strconv.Itoa(int(vn.Spec.Listeners[0].PortMapping.Port))
 	attr[AttrK8sPod] = pod.Name
 	attr[AttrK8sNamespace] = pod.Namespace
