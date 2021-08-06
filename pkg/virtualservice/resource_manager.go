@@ -2,6 +2,7 @@ package virtualservice
 
 import (
 	"context"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
@@ -344,7 +345,7 @@ func BuildSDKVirtualServiceSpec(vs *appmesh.VirtualService, vnByKey map[types.Na
 	})
 
 	sdkVSSpec := &appmeshsdk.VirtualServiceSpec{}
-	if err := converter.Convert(&vs.Spec, sdkVSSpec, conversion.DestFromSource, nil); err != nil {
+	if err := converter.Convert(&vs.Spec, sdkVSSpec, nil); err != nil {
 		return nil, err
 	}
 	return sdkVSSpec, nil

@@ -20,6 +20,7 @@ RUN GIT_VERSION=$(git describe --tags --dirty --always) && \
 FROM amazonlinux:2
 RUN yum update -y && \
     yum install -y ca-certificates && \
+    yum update curl && \
     yum clean all && \
     rm -rf /var/cache/yum
 

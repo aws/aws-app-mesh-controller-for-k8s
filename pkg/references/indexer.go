@@ -3,7 +3,7 @@ package references
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime"
+
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -12,11 +12,11 @@ import (
 // ObjectReferenceIndexer is responsible for build indexes based on object's reference,
 // and fetch objects based on reference using index.
 type ObjectReferenceIndexer interface {
-	Setup(obj runtime.Object, indexFuncByKind map[string]ObjectReferenceIndexFunc) error
-	Fetch(ctx context.Context, objList runtime.Object, referentKind string, referentKey types.NamespacedName, opts ...client.ListOption) error
+	Setup(obj client.Object, indexFuncByKind map[string]ObjectReferenceIndexFunc) error
+	Fetch(ctx context.Context, objList client.ObjectList, referentKind string, referentKey types.NamespacedName, opts ...client.ListOption) error
 }
 
-type ObjectReferenceIndexFunc func(obj runtime.Object) []types.NamespacedName
+type ObjectReferenceIndexFunc func(obj client.Object) []types.NamespacedName
 
 func NewDefaultObjectReferenceIndexer(k8sCache cache.Cache, k8sFieldIndexer client.FieldIndexer) *defaultObjectReferenceIndexer {
 	return &defaultObjectReferenceIndexer{
@@ -32,10 +32,10 @@ type defaultObjectReferenceIndexer struct {
 	k8sFieldIndexer client.FieldIndexer
 }
 
-func (i *defaultObjectReferenceIndexer) Setup(obj runtime.Object, indexFuncByKind map[string]ObjectReferenceIndexFunc) error {
+func (i *defaultObjectReferenceIndexer) Setup(obj client.Object, indexFuncByKind map[string]ObjectReferenceIndexFunc) error {
 	for kind := range indexFuncByKind {
 		indexFunc := indexFuncByKind[kind]
-		ctrlIndexFunc := func(obj runtime.Object) []string {
+		ctrlIndexFunc := func(obj client.Object) []string {
 			var indexValues []string
 			for _, referent := range indexFunc(obj) {
 				indexValues = append(indexValues, buildIndexValue(referent))
@@ -49,7 +49,7 @@ func (i *defaultObjectReferenceIndexer) Setup(obj runtime.Object, indexFuncByKin
 	return nil
 }
 
-func (i *defaultObjectReferenceIndexer) Fetch(ctx context.Context, objList runtime.Object, referentKind string, referentKey types.NamespacedName, opts ...client.ListOption) error {
+func (i *defaultObjectReferenceIndexer) Fetch(ctx context.Context, objList client.ObjectList, referentKind string, referentKey types.NamespacedName, opts ...client.ListOption) error {
 	indexKey := buildIndexKey(referentKind)
 	indexValue := buildIndexValue(referentKey)
 	opts = append(opts, client.MatchingFields{indexKey: indexValue})
