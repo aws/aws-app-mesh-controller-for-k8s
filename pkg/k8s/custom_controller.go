@@ -19,12 +19,12 @@ import (
 
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // Converter for converting k8s object and object list used in watches and list operation
@@ -100,7 +100,7 @@ func NewCustomController(clientSet *kubernetes.Clientset, pageLimit int64, names
 // StartController starts the custom controller by doing a list and watch on the specified k8s
 // resource. The controller would store the converted k8s object in the provided indexer. The
 // stop channel should be notified to stop the controller
-func (c *CustomController) StartController(stopChanel <-chan struct{}) {
+func (c *CustomController) StartController(ctx context.Context) {
 	config := &cache.Config{
 		Queue: c.queue,
 		ListerWatcher: newListWatcher(c.clientSet.CoreV1().RESTClient(),
@@ -154,7 +154,7 @@ func (c *CustomController) StartController(stopChanel <-chan struct{}) {
 	c.controller = cache.New(config)
 
 	// Run the controller
-	c.controller.Run(stopChanel)
+	c.controller.Run(ctx.Done())
 }
 
 // GetDataStore returns the data store when it has successfully synced with API Server
@@ -231,50 +231,28 @@ func printList(list interface{}, listType string, log logr.Logger) {
 
 // notifyChannelOnCreate notifies the add event on the appropriate channel
 func (c *CustomController) notifyChannelOnCreate(obj interface{}) error {
-	meta, err := apimeta.Accessor(obj)
-	if err != nil {
-		return err
-	}
 	c.eventNotificationChan <- GenericEvent{
 		EventType: CREATE,
-		Meta:      meta,
-		Object:    obj.(runtime.Object),
+		Object:    obj.(controllerutil.Object),
 	}
 	return nil
 }
 
 // notifyChannelOnCreate notifies the add event on the appropriate channel
 func (c *CustomController) notifyChannelOnUpdate(oldObj, newObj interface{}) error {
-	oldMeta, err := apimeta.Accessor(oldObj)
-	if err != nil {
-		return err
-	}
-
-	newMeta, err := apimeta.Accessor(newObj)
-	if err != nil {
-		return err
-	}
-
 	c.eventNotificationChan <- GenericEvent{
 		EventType: UPDATE,
-		OldMeta:   oldMeta,
-		OldObject: oldObj.(runtime.Object),
-		Meta:      newMeta,
-		Object:    newObj.(runtime.Object),
+		OldObject: oldObj.(controllerutil.Object),
+		Object:    newObj.(controllerutil.Object),
 	}
 	return nil
 }
 
 // notifyChannelOnDelete notifies the delete event on the appropriate channel
 func (c *CustomController) notifyChannelOnDelete(obj interface{}) error {
-	meta, err := apimeta.Accessor(obj)
-	if err != nil {
-		return err
-	}
 	c.eventNotificationChan <- GenericEvent{
 		EventType: DELETE,
-		OldMeta:   meta,
-		OldObject: obj.(runtime.Object),
+		OldObject: obj.(controllerutil.Object),
 	}
 	return nil
 }

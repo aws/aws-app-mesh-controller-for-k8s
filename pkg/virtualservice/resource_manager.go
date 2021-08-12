@@ -344,7 +344,7 @@ func BuildSDKVirtualServiceSpec(vs *appmesh.VirtualService, vnByKey map[types.Na
 	})
 
 	sdkVSSpec := &appmeshsdk.VirtualServiceSpec{}
-	if err := converter.Convert(&vs.Spec, sdkVSSpec, conversion.DestFromSource, nil); err != nil {
+	if err := converter.Convert(&vs.Spec, sdkVSSpec, nil); err != nil {
 		return nil, err
 	}
 	return sdkVSSpec, nil

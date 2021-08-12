@@ -2,6 +2,8 @@ package conversions
 
 import (
 	"fmt"
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	mock_conversion "github.com/aws/aws-app-mesh-controller-for-k8s/mocks/apimachinery/pkg/conversion"
 	"github.com/aws/aws-sdk-go/aws"
@@ -9,7 +11,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/conversion"
-	"testing"
 )
 
 func TestConvert_CRD_VirtualGatewayTLSValidationContextACMTrust_To_SDK_VirtualGatewayTLSValidationContextACMTrust(t *testing.T) {
@@ -1738,7 +1739,7 @@ func TestConvert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(t *testing.T) 
 	type args struct {
 		crdObj           *appmesh.VirtualGatewaySpec
 		sdkObj           *appmeshsdk.VirtualGatewaySpec
-		scopeConvertFunc func(src, dest interface{}, flags conversion.FieldMatchingFlags) error
+		scopeConvertFunc func(src, dest interface{}) error
 	}
 	tests := []struct {
 		name       string
@@ -1806,7 +1807,7 @@ func TestConvert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(t *testing.T) 
 					MeshRef: nil,
 				},
 				sdkObj: &appmeshsdk.VirtualGatewaySpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -1892,7 +1893,7 @@ func TestConvert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(t *testing.T) 
 					MeshRef: nil,
 				},
 				sdkObj: &appmeshsdk.VirtualGatewaySpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -1964,7 +1965,7 @@ func TestConvert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(t *testing.T) 
 					MeshRef:         nil,
 				},
 				sdkObj: &appmeshsdk.VirtualGatewaySpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -2067,7 +2068,7 @@ func TestConvert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(t *testing.T) 
 					MeshRef: nil,
 				},
 				sdkObj: &appmeshsdk.VirtualGatewaySpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -2131,9 +2132,8 @@ func TestConvert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(t *testing.T) 
 			defer ctrl.Finish()
 			scope := mock_conversion.NewMockScope(ctrl)
 			if tt.args.scopeConvertFunc != nil {
-				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
+				scope.EXPECT().Convert(gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 			err := Convert_CRD_VirtualGatewaySpec_To_SDK_VirtualGatewaySpec(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())

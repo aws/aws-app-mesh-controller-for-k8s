@@ -1,12 +1,12 @@
 package k8s
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/workqueue"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -39,17 +39,11 @@ const (
 type GenericEvent struct {
 	EventType
 
-	// Meta is the ObjectMeta from the incoming request
-	Meta metav1.Object
-
 	// Object is the object from the incoming request
-	Object runtime.Object
-
-	// OldMeta is the ObjectMeta of existing object.Only populated for DELETE and UPDATE requests.
-	OldMeta metav1.Object
+	Object controllerutil.Object
 
 	// OldObject is the existing object. Only populated for DELETE and UPDATE requests.
-	OldObject runtime.Object
+	OldObject controllerutil.Object
 }
 
 // NotificationChannel monitors channels of type Create/Update/Delete
@@ -91,6 +85,7 @@ func (cs *NotificationChannel) String() string {
 
 // Start implements Source and should only be called by the Controller.
 func (cs *NotificationChannel) Start(
+	ctx context.Context,
 	handler handler.EventHandler,
 	queue workqueue.RateLimitingInterface,
 	prct ...predicate.Predicate) error {
@@ -119,11 +114,11 @@ func (cs *NotificationChannel) Start(
 		for evt := range dst {
 			switch evt.EventType {
 			case CREATE:
-				handler.Create(event.CreateEvent{Meta: evt.Meta, Object: evt.Object}, queue)
+				handler.Create(event.CreateEvent{Object: evt.Object}, queue)
 			case DELETE:
-				handler.Delete(event.DeleteEvent{Meta: evt.OldMeta, Object: evt.OldObject}, queue)
+				handler.Delete(event.DeleteEvent{Object: evt.OldObject}, queue)
 			case UPDATE:
-				handler.Update(event.UpdateEvent{MetaOld: evt.OldMeta, ObjectOld: evt.OldObject, MetaNew: evt.Meta, ObjectNew: evt.Object}, queue)
+				handler.Update(event.UpdateEvent{ObjectOld: evt.OldObject, ObjectNew: evt.Object}, queue)
 			default:
 				_ = fmt.Errorf("Invalid Type %T", evt.EventType)
 			}

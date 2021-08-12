@@ -2,6 +2,8 @@ package conversions
 
 import (
 	"fmt"
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	mock_conversion "github.com/aws/aws-app-mesh-controller-for-k8s/mocks/apimachinery/pkg/conversion"
 	"github.com/aws/aws-sdk-go/aws"
@@ -10,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/conversion"
-	"testing"
 )
 
 func TestConvert_CRD_TLSValidationContextACMTrust_To_SDK_TLSValidationContextACMTrust(t *testing.T) {
@@ -676,7 +677,7 @@ func TestConvert_CRD_VirtualServiceBackend_To_SDK_VirtualServiceBackend(t *testi
 	type args struct {
 		crdObj           *appmesh.VirtualServiceBackend
 		sdkObj           *appmeshsdk.VirtualServiceBackend
-		scopeConvertFunc func(src, dest interface{}, flags conversion.FieldMatchingFlags) error
+		scopeConvertFunc func(src, dest interface{}) error
 	}
 	tests := []struct {
 		name       string
@@ -707,7 +708,7 @@ func TestConvert_CRD_VirtualServiceBackend_To_SDK_VirtualServiceBackend(t *testi
 					},
 				},
 				sdkObj: &appmeshsdk.VirtualServiceBackend{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -742,7 +743,7 @@ func TestConvert_CRD_VirtualServiceBackend_To_SDK_VirtualServiceBackend(t *testi
 					ClientPolicy: nil,
 				},
 				sdkObj: &appmeshsdk.VirtualServiceBackend{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -803,7 +804,7 @@ func TestConvert_CRD_VirtualServiceBackend_To_SDK_VirtualServiceBackend(t *testi
 					ClientPolicy: nil,
 				},
 				sdkObj: &appmeshsdk.VirtualServiceBackend{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					return errors.New("error convert VirtualServiceReference")
 				},
 			},
@@ -816,9 +817,8 @@ func TestConvert_CRD_VirtualServiceBackend_To_SDK_VirtualServiceBackend(t *testi
 			defer ctrl.Finish()
 			scope := mock_conversion.NewMockScope(ctrl)
 			if tt.args.scopeConvertFunc != nil {
-				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc)
+				scope.EXPECT().Convert(gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc)
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_VirtualServiceBackend_To_SDK_VirtualServiceBackend(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
@@ -835,7 +835,7 @@ func TestConvert_CRD_Backend_To_SDK_Backend(t *testing.T) {
 	type args struct {
 		crdObj           *appmesh.Backend
 		sdkObj           *appmeshsdk.Backend
-		scopeConvertFunc func(src, dest interface{}, flags conversion.FieldMatchingFlags) error
+		scopeConvertFunc func(src, dest interface{}) error
 	}
 	tests := []struct {
 		name       string
@@ -855,7 +855,7 @@ func TestConvert_CRD_Backend_To_SDK_Backend(t *testing.T) {
 					},
 				},
 				sdkObj: &appmeshsdk.Backend{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -875,9 +875,8 @@ func TestConvert_CRD_Backend_To_SDK_Backend(t *testing.T) {
 			defer ctrl.Finish()
 			scope := mock_conversion.NewMockScope(ctrl)
 			if tt.args.scopeConvertFunc != nil {
-				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc)
+				scope.EXPECT().Convert(gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc)
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource)
 			err := Convert_CRD_Backend_To_SDK_Backend(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
@@ -2792,7 +2791,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 	type args struct {
 		crdObj           *appmesh.VirtualNodeSpec
 		sdkObj           *appmeshsdk.VirtualNodeSpec
-		scopeConvertFunc func(src, dest interface{}, flags conversion.FieldMatchingFlags) error
+		scopeConvertFunc func(src, dest interface{}) error
 	}
 	tests := []struct {
 		name       string
@@ -2896,7 +2895,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 					MeshRef: nil,
 				},
 				sdkObj: &appmeshsdk.VirtualNodeSpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -3055,7 +3054,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 					MeshRef: nil,
 				},
 				sdkObj: &appmeshsdk.VirtualNodeSpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -3210,7 +3209,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 					MeshRef: nil,
 				},
 				sdkObj: &appmeshsdk.VirtualNodeSpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -3365,7 +3364,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 					MeshRef: nil,
 				},
 				sdkObj: &appmeshsdk.VirtualNodeSpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -3516,7 +3515,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 					MeshRef: nil,
 				},
 				sdkObj: &appmeshsdk.VirtualNodeSpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -3685,7 +3684,7 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 					MeshRef: nil,
 				},
 				sdkObj: &appmeshsdk.VirtualNodeSpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vsRef := src.(*appmesh.VirtualServiceReference)
 					vsNamePtr := dest.(*string)
 					*vsNamePtr = fmt.Sprintf("%s.%s", vsRef.Name, aws.StringValue(vsRef.Namespace))
@@ -3779,9 +3778,8 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 			defer ctrl.Finish()
 			scope := mock_conversion.NewMockScope(ctrl)
 			if tt.args.scopeConvertFunc != nil {
-				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
+				scope.EXPECT().Convert(gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 			err := Convert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())

@@ -8,7 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -418,7 +418,7 @@ func Test_membershipDesignator_Designate(t *testing.T) {
 				assert.NoError(t, err)
 			}
 			ctx = webhook.ContextWithAdmissionRequest(ctx, admission.Request{
-				AdmissionRequest: admissionv1beta1.AdmissionRequest{Namespace: "awesome-ns"},
+				AdmissionRequest: admissionv1.AdmissionRequest{Namespace: "awesome-ns"},
 			})
 
 			got, err := designator.Designate(ctx, tt.args.pod)

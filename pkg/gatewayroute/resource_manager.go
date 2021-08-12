@@ -355,7 +355,7 @@ func BuildSDKGatewayRouteSpec(ctx context.Context, gr *appmesh.GatewayRoute, vsB
 		return sdkVSRefConvertFunc(a.(*appmesh.VirtualServiceReference), b.(*string), scope)
 	})
 	sdkGRSpec := &appmeshsdk.GatewayRouteSpec{}
-	if err := converter.Convert(&gr.Spec, sdkGRSpec, conversion.DestFromSource, nil); err != nil {
+	if err := converter.Convert(&gr.Spec, sdkGRSpec, nil); err != nil {
 		return nil, err
 	}
 	return sdkGRSpec, nil

@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
@@ -55,8 +56,8 @@ type meshReconciler struct {
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=meshes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=meshes/status,verbs=get;update;patch
 
-func (r *meshReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	return runtime.HandleReconcileError(r.reconcile(req), r.log)
+func (r *meshReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	return runtime.HandleReconcileError(r.reconcile(ctx, req), r.log)
 }
 
 func (r *meshReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -65,8 +66,7 @@ func (r *meshReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *meshReconciler) reconcile(req ctrl.Request) error {
-	ctx := context.Background()
+func (r *meshReconciler) reconcile(ctx context.Context, req ctrl.Request) error {
 	ms := &appmesh.Mesh{}
 	if err := r.k8sClient.Get(ctx, req.NamespacedName, ms); err != nil {
 		return client.IgnoreNotFound(err)

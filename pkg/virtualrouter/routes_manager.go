@@ -258,7 +258,7 @@ func BuildSDKRouteSpec(vr *appmesh.VirtualRouter, route appmesh.Route, vnByKey m
 		return sdkVNRefConvertFunc(a.(*appmesh.VirtualNodeReference), b.(*string), scope)
 	})
 	sdkRouteSpec := &appmeshsdk.RouteSpec{}
-	if err := converter.Convert(&route, sdkRouteSpec, conversion.DestFromSource, nil); err != nil {
+	if err := converter.Convert(&route, sdkRouteSpec, nil); err != nil {
 		return nil, err
 	}
 	return sdkRouteSpec, nil

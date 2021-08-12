@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
@@ -61,8 +62,8 @@ type virtualRouterReconciler struct {
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualrouters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualrouters/status,verbs=get;update;patch
 
-func (r *virtualRouterReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	return runtime.HandleReconcileError(r.reconcile(req), r.log)
+func (r *virtualRouterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	return runtime.HandleReconcileError(r.reconcile(ctx, req), r.log)
 }
 
 func (r *virtualRouterReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -79,8 +80,7 @@ func (r *virtualRouterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *virtualRouterReconciler) reconcile(req ctrl.Request) error {
-	ctx := context.Background()
+func (r *virtualRouterReconciler) reconcile(ctx context.Context, req ctrl.Request) error {
 	vr := &appmesh.VirtualRouter{}
 	if err := r.k8sClient.Get(ctx, req.NamespacedName, vr); err != nil {
 		return client.IgnoreNotFound(err)

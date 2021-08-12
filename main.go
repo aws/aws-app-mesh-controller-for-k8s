@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"os"
 	"strconv"
 	"time"
@@ -168,14 +169,14 @@ func main() {
 
 	podsRepository := k8s.NewPodsRepository(customController)
 
-	stopChan := ctrl.SetupSignalHandler()
+	ctx := ctrl.SetupSignalHandler()
 	referencesIndexer := references.NewDefaultObjectReferenceIndexer(mgr.GetCache(), mgr.GetFieldIndexer())
 	finalizerManager := k8s.NewDefaultFinalizerManager(mgr.GetClient(), ctrl.Log)
 	meshMembersFinalizer := mesh.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("mesh-members"), ctrl.Log)
 	vgMembersFinalizer := virtualgateway.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("virtualgateway-members"), ctrl.Log)
 	referencesResolver := references.NewDefaultResolver(mgr.GetClient(), ctrl.Log)
 	virtualNodeEndpointResolver := cloudmap.NewDefaultVirtualNodeEndpointResolver(podsRepository, ctrl.Log)
-	cloudMapInstancesReconciler := cloudmap.NewDefaultInstancesReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log, stopChan)
+	cloudMapInstancesReconciler := cloudmap.NewDefaultInstancesReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log, ctx.Done())
 	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
 	vgResManager := virtualgateway.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	grResManager := gatewayroute.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
@@ -255,13 +256,13 @@ func main() {
 	}
 
 	// Only start the controller when the leader election is won
-	mgr.Add(manager.RunnableFunc(func(stop <-chan struct{}) error {
+	mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
 		setupLog.Info("starting custom controller")
 
 		// Start the custom controller
-		customController.StartController(stop)
+		customController.StartController(ctx)
 		// If the manager is stopped, signal the controller to stop as well.
-		<-stop
+		<-ctx.Done()
 
 		setupLog.Info("stopping the controller")
 
@@ -271,7 +272,7 @@ func main() {
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting controller")
-	if err := mgr.Start(stopChan); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running controller")
 		os.Exit(1)
 	}

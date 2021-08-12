@@ -57,23 +57,20 @@ func New(options Options) *Framework {
 	clientgoscheme.AddToScheme(k8sSchema)
 	appmesh.AddToScheme(k8sSchema)
 
-	stopChan := ctrl.SetupSignalHandler()
+	signalCtx := ctrl.SetupSignalHandler()
 	cache, err := cache.New(restCfg, cache.Options{Scheme: k8sSchema})
 	Expect(err).NotTo(HaveOccurred())
 	go func() {
-		cache.Start(stopChan)
+		cache.Start(signalCtx)
 	}()
-	cache.WaitForCacheSync(stopChan)
+	cache.WaitForCacheSync(signalCtx)
 	realClient, err := client.New(restCfg, client.Options{Scheme: k8sSchema})
 	Expect(err).NotTo(HaveOccurred())
-	k8sClient := client.DelegatingClient{
-		Reader: &client.DelegatingReader{
-			CacheReader:  cache,
-			ClientReader: realClient,
-		},
-		Writer:       realClient,
-		StatusClient: realClient,
-	}
+	k8sClient, err := client.NewDelegatingClient(client.NewDelegatingClientInput{
+		CacheReader: cache,
+		Client:      realClient,
+	})
+	Expect(err).NotTo(HaveOccurred())
 
 	cloud, err := aws.NewCloud(aws.CloudConfig{
 		Region:         options.AWSRegion,
@@ -97,7 +94,7 @@ func New(options Options) *Framework {
 		GRManager:      gatewayroute.NewManager(k8sClient, cloud.AppMesh()),
 		CloudMapClient: cloud.CloudMap(),
 		Logger:         utils.NewGinkgoLogger(),
-		StopChan:       stopChan,
+		StopChan:       signalCtx.Done(),
 	}
 	return f
 }

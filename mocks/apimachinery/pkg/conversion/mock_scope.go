@@ -5,77 +5,50 @@
 package mock_conversion
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	conversion "k8s.io/apimachinery/pkg/conversion"
-	reflect "reflect"
 )
 
-// MockScope is a mock of Scope interface
+// MockScope is a mock of Scope interface.
 type MockScope struct {
 	ctrl     *gomock.Controller
 	recorder *MockScopeMockRecorder
 }
 
-// MockScopeMockRecorder is the mock recorder for MockScope
+// MockScopeMockRecorder is the mock recorder for MockScope.
 type MockScopeMockRecorder struct {
 	mock *MockScope
 }
 
-// NewMockScope creates a new mock instance
+// NewMockScope creates a new mock instance.
 func NewMockScope(ctrl *gomock.Controller) *MockScope {
 	mock := &MockScope{ctrl: ctrl}
 	mock.recorder = &MockScopeMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockScope) EXPECT() *MockScopeMockRecorder {
 	return m.recorder
 }
 
-// Convert mocks base method
-func (m *MockScope) Convert(arg0, arg1 interface{}, arg2 conversion.FieldMatchingFlags) error {
+// Convert mocks base method.
+func (m *MockScope) Convert(arg0, arg1 interface{}) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Convert", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Convert", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Convert indicates an expected call of Convert
-func (mr *MockScopeMockRecorder) Convert(arg0, arg1, arg2 interface{}) *gomock.Call {
+// Convert indicates an expected call of Convert.
+func (mr *MockScopeMockRecorder) Convert(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Convert", reflect.TypeOf((*MockScope)(nil).Convert), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Convert", reflect.TypeOf((*MockScope)(nil).Convert), arg0, arg1)
 }
 
-// DestTag mocks base method
-func (m *MockScope) DestTag() reflect.StructTag {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DestTag")
-	ret0, _ := ret[0].(reflect.StructTag)
-	return ret0
-}
-
-// DestTag indicates an expected call of DestTag
-func (mr *MockScopeMockRecorder) DestTag() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DestTag", reflect.TypeOf((*MockScope)(nil).DestTag))
-}
-
-// Flags mocks base method
-func (m *MockScope) Flags() conversion.FieldMatchingFlags {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Flags")
-	ret0, _ := ret[0].(conversion.FieldMatchingFlags)
-	return ret0
-}
-
-// Flags indicates an expected call of Flags
-func (mr *MockScopeMockRecorder) Flags() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Flags", reflect.TypeOf((*MockScope)(nil).Flags))
-}
-
-// Meta mocks base method
+// Meta mocks base method.
 func (m *MockScope) Meta() *conversion.Meta {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Meta")
@@ -83,22 +56,8 @@ func (m *MockScope) Meta() *conversion.Meta {
 	return ret0
 }
 
-// Meta indicates an expected call of Meta
+// Meta indicates an expected call of Meta.
 func (mr *MockScopeMockRecorder) Meta() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Meta", reflect.TypeOf((*MockScope)(nil).Meta))
-}
-
-// SrcTag mocks base method
-func (m *MockScope) SrcTag() reflect.StructTag {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SrcTag")
-	ret0, _ := ret[0].(reflect.StructTag)
-	return ret0
-}
-
-// SrcTag indicates an expected call of SrcTag
-func (mr *MockScopeMockRecorder) SrcTag() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SrcTag", reflect.TypeOf((*MockScope)(nil).SrcTag))
 }
