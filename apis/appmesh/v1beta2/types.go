@@ -165,14 +165,12 @@ type HTTPPathMatch struct {
 }
 type HTTPQueryParameters struct {
 	Name *string `json:"name"`
-	// The HeaderMatchMethod object.
+	// The HTTPQueryMatchMethod object.
 	// +optional
 	Match *QueryMatchMethod `json:"match,omitempty"`
 }
 
 type QueryMatchMethod struct {
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=255
 	// +optional
 	Exact *string `json:"exact,omitempty"`
 }

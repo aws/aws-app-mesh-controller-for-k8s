@@ -509,11 +509,9 @@ spec:
                             items:
                               properties:
                                 match:
-                                  description: The HeaderMatchMethod object.
+                                  description: The HTTPQueryMatchMethod object.
                                   properties:
                                     exact:
-                                      maxLength: 255
-                                      minLength: 1
                                       type: string
                                   type: object
                                 name:
@@ -787,11 +785,9 @@ spec:
                             items:
                               properties:
                                 match:
-                                  description: The HeaderMatchMethod object.
+                                  description: The HTTPQueryMatchMethod object.
                                   properties:
                                     exact:
-                                      maxLength: 255
-                                      minLength: 1
                                       type: string
                                   type: object
                                 name:
