@@ -226,11 +226,11 @@ func (m *envoyMutator) getVolumeMounts(pod *corev1.Pod) (map[string]string, erro
 		for _, segment := range strings.Split(v, ",") {
 			pair := strings.Split(segment, ":")
 			if len(pair) != 2 { // volumeName:mountPath
-				return nil, errors.Errorf("malformed annotation %s, expected format: %s", AppMeshSecretMountsAnnotation, "secretName:mountPath")
+				return nil, errors.Errorf("malformed annotation %s, expected format: %s", AppMeshVolumeMountsAnnotation, "volumeName:mountPath")
 			}
-			secretName := strings.TrimSpace(pair[0])
+			volumeName := strings.TrimSpace(pair[0])
 			mountPath := strings.TrimSpace(pair[1])
-			volumeMounts[secretName] = mountPath
+			volumeMounts[volumeName] = mountPath
 		}
 	}
 	return volumeMounts, nil
