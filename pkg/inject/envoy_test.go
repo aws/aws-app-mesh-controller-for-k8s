@@ -2426,6 +2426,73 @@ func Test_envoyMutator_getSecretMounts(t *testing.T) {
 	}
 }
 
+func Test_envoyMutator_getVolumeMounts(t *testing.T) {
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string]string
+		wantErr error
+	}{
+		{
+			name: "pods with valid appmesh.k8s.aws/volumeMounts annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/volumeMounts": "svc1-cert-chain-key:/certs/svc1, svc1-svc2-ca-bundle:/certs",
+						},
+					},
+				},
+			},
+			want: map[string]string{
+				"svc1-cert-chain-key": "/certs/svc1",
+				"svc1-svc2-ca-bundle": "/certs",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "pods with no appmesh.k8s.aws/volumeMounts annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{},
+					},
+				},
+			},
+			want:    map[string]string{},
+			wantErr: nil,
+		},
+		{
+			name: "pods with invalid appmesh.k8s.aws/volumeMounts annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/volumeMounts": "svc1-cert-chain-ke",
+						},
+					},
+				},
+			},
+			wantErr: errors.New("malformed annotation appmesh.k8s.aws/volumeMounts, expected format: volumeName:mountPath"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &envoyMutator{}
+			got, err := m.getVolumeMounts(tt.args.pod)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, got, tt.want)
+			}
+		})
+	}
+}
+
 func Test_envoyMutator_getCustomEnv(t *testing.T) {
 	type args struct {
 		pod *corev1.Pod
