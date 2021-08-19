@@ -6,6 +6,7 @@ import (
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strconv"
 	"time"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
@@ -142,7 +143,7 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 		instanceAttributeMap[cloudmap.AttrK8sNamespace] = pod.Namespace
 		instanceAttributeMap[cloudmap.AttrAppMeshMesh] = awssdk.StringValue(ms.Spec.AWSName)
 		instanceAttributeMap[cloudmap.AttrAppMeshVirtualNode] = awssdk.StringValue(vn.Spec.AWSName)
-
+		instanceAttributeMap[cloudmap.AttrAWSInstancePort] = strconv.Itoa(int(vn.Spec.Listeners[0].PortMapping.Port))
 		localInstanceInfoMap[pod.Status.PodIP] = instanceAttributeMap
 	}
 	cloudMapConfig := vn.Spec.ServiceDiscovery.AWSCloudMap
@@ -203,6 +204,7 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 				cloudMapInstanceAttributes[cloudmap.AttrK8sNamespace] = *instance.Attributes[cloudmap.AttrK8sNamespace]
 				cloudMapInstanceAttributes[cloudmap.AttrAppMeshMesh] = *instance.Attributes[cloudmap.AttrAppMeshMesh]
 				cloudMapInstanceAttributes[cloudmap.AttrAppMeshVirtualNode] = *instance.Attributes[cloudmap.AttrAppMeshVirtualNode]
+				cloudMapInstanceAttributes[cloudmap.AttrAWSInstancePort] = *instance.Attributes[cloudmap.AttrAWSInstancePort]
 
 				cloudMapInstanceInfoMap[*instance.Id] = cloudMapInstanceAttributes
 			}
@@ -228,7 +230,8 @@ func compareInstances(cloudMapInstanceInfo map[string]map[string]string, localIn
 			cloudMapInstanceAttr[cloudmap.AttrK8sPod] != localInstanceAttributes[cloudmap.AttrK8sPod] ||
 			cloudMapInstanceAttr[cloudmap.AttrK8sNamespace] != localInstanceAttributes[cloudmap.AttrK8sNamespace] ||
 			cloudMapInstanceAttr[cloudmap.AttrAppMeshMesh] != localInstanceAttributes[cloudmap.AttrAppMeshMesh] ||
-			cloudMapInstanceAttr[cloudmap.AttrAppMeshVirtualNode] != localInstanceAttributes[cloudmap.AttrAppMeshVirtualNode] {
+			cloudMapInstanceAttr[cloudmap.AttrAppMeshVirtualNode] != localInstanceAttributes[cloudmap.AttrAppMeshVirtualNode] ||
+			cloudMapInstanceAttr[cloudmap.AttrAWSInstancePort] != localInstanceAttributes[cloudmap.AttrAWSInstancePort] {
 			return fmt.Errorf("instance info mismatch")
 		}
 	}
