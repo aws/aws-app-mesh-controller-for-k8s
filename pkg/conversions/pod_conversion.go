@@ -16,7 +16,7 @@ package conversions
 import (
 	"fmt"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -32,13 +32,13 @@ type podConverter struct {
 func NewPodConverter() *podConverter {
 	return &podConverter{
 		podResource:     "pods",
-		podResourceType: &v1.Pod{},
+		podResourceType: &corev1.Pod{},
 	}
 }
 
 // ConvertObject converts original pod object to stripped down pod object
 func (c *podConverter) ConvertObject(originalObj interface{}) (convertedObj interface{}, err error) {
-	pod, ok := originalObj.(*v1.Pod)
+	pod, ok := originalObj.(*corev1.Pod)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert object to pod")
 	}
@@ -47,13 +47,13 @@ func (c *podConverter) ConvertObject(originalObj interface{}) (convertedObj inte
 
 // ConvertList converts the original pod list to stripped down list of pod objects
 func (c *podConverter) ConvertList(originalList interface{}) (convertedList interface{}, err error) {
-	podList, ok := originalList.(*v1.PodList)
+	podList, ok := originalList.(*corev1.PodList)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert object to pod list")
 	}
 	// We need to set continue in order to allow the pagination to work on converted
 	// pod list object
-	strippedPodList := v1.PodList{
+	strippedPodList := corev1.PodList{
 		ListMeta: metaV1.ListMeta{
 			Continue:        podList.Continue,
 			ResourceVersion: podList.ResourceVersion,
@@ -78,19 +78,19 @@ func (c *podConverter) ResourceType() runtime.Object {
 
 // StripDownPod removes all the extra details from pod that are not
 // required by the controller.
-func (c *podConverter) stripDownPod(pod *v1.Pod) *v1.Pod {
-	return &v1.Pod{
+func (c *podConverter) stripDownPod(pod *corev1.Pod) *corev1.Pod {
+	return &corev1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:              pod.Name,
 			Namespace:         pod.Namespace,
 			Labels:            pod.Labels,
 			DeletionTimestamp: pod.DeletionTimestamp,
 		},
-		Spec: v1.PodSpec{
+		Spec: corev1.PodSpec{
 			NodeName:      pod.Spec.NodeName,
 			RestartPolicy: pod.Spec.RestartPolicy,
 		},
-		Status: v1.PodStatus{
+		Status: corev1.PodStatus{
 			Conditions: pod.Status.Conditions,
 			Phase:      pod.Status.Phase,
 			PodIP:      pod.Status.PodIP,

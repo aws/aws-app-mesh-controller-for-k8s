@@ -268,6 +268,7 @@ func main() {
 		// Start the custom controller
 		customController.StartController(ctx.Done())
 		// If the manager is stopped, signal the controller to stop as well.
+		<-ctx.Done()
 
 		setupLog.Info("stopping the controller")
 
