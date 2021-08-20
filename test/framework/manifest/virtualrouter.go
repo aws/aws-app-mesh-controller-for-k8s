@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"fmt"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,7 +57,7 @@ func (b *VRBuilder) BuildRoutes(routeCfgs []RouteToWeightedVirtualNodes) []appme
 			Name: fmt.Sprintf("route-%d", index),
 			HTTPRoute: &appmesh.HTTPRoute{
 				Match: appmesh.HTTPRouteMatch{
-					Prefix: routeCfg.Path,
+					Prefix: aws.String(routeCfg.Path),
 				},
 				Action: appmesh.HTTPRouteAction{
 					WeightedTargets: targets,

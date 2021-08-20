@@ -2,41 +2,16 @@ package inject
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"strconv"
-	"strings"
 )
 
-const envoyTracingConfigVolumeName = "envoy-tracing-config"
 const envoyContainerName = "envoy"
-
-type EnvoyTemplateVariables struct {
-	AWSRegion                    string
-	MeshName                     string
-	VirtualNodeName              string
-	Preview                      string
-	EnableSDS                    bool
-	SdsUdsPath                   string
-	LogLevel                     string
-	AdminAccessPort              int32
-	AdminAccessLogFile           string
-	PreStopDelay                 string
-	SidecarImage                 string
-	EnvoyTracingConfigVolumeName string
-	EnableXrayTracing            bool
-	XrayDaemonPort               int32
-	EnableJaegerTracing          bool
-	EnableDatadogTracing         bool
-	DatadogTracerPort            int32
-	DatadogTracerAddress         string
-	EnableStatsTags              bool
-	EnableStatsD                 bool
-	StatsDPort                   int32
-	StatsDAddress                string
-}
 
 type envoyMutatorConfig struct {
 	accountID                  string
@@ -58,6 +33,8 @@ type envoyMutatorConfig struct {
 	enableXrayTracing          bool
 	xrayDaemonPort             int32
 	enableJaegerTracing        bool
+	jaegerPort                 string
+	jaegerAddress              string
 	enableDatadogTracing       bool
 	datadogTracerPort          int32
 	datadogTracerAddress       string
@@ -90,6 +67,10 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 
+	volumeMounts, err := m.getVolumeMounts(pod)
+	if err != nil {
+		return err
+	}
 	variables := m.buildTemplateVariables(pod)
 
 	customEnv, err := m.getCustomEnv(pod)
@@ -113,6 +94,7 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 
 	m.mutateSecretMounts(pod, &container, secretMounts)
+	m.mutateVolumeMounts(pod, &container, volumeMounts)
 	if m.mutatorConfig.enableSDS && !isSDSDisabled(pod) {
 		mutateSDSMounts(pod, &container, m.mutatorConfig.sdsUdsPath)
 	}
@@ -130,28 +112,29 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 	}
 
 	return EnvoyTemplateVariables{
-		AWSRegion:                    m.mutatorConfig.awsRegion,
-		MeshName:                     meshName,
-		VirtualNodeName:              virtualNodeName,
-		Preview:                      preview,
-		EnableSDS:                    sdsEnabled,
-		SdsUdsPath:                   m.mutatorConfig.sdsUdsPath,
-		LogLevel:                     m.mutatorConfig.logLevel,
-		AdminAccessPort:              m.mutatorConfig.adminAccessPort,
-		AdminAccessLogFile:           m.mutatorConfig.adminAccessLogFile,
-		PreStopDelay:                 m.mutatorConfig.preStopDelay,
-		SidecarImage:                 m.mutatorConfig.sidecarImage,
-		EnvoyTracingConfigVolumeName: envoyTracingConfigVolumeName,
-		EnableXrayTracing:            m.mutatorConfig.enableXrayTracing,
-		XrayDaemonPort:               m.mutatorConfig.xrayDaemonPort,
-		EnableJaegerTracing:          m.mutatorConfig.enableJaegerTracing,
-		EnableDatadogTracing:         m.mutatorConfig.enableDatadogTracing,
-		DatadogTracerPort:            m.mutatorConfig.datadogTracerPort,
-		DatadogTracerAddress:         m.mutatorConfig.datadogTracerAddress,
-		EnableStatsTags:              m.mutatorConfig.enableStatsTags,
-		EnableStatsD:                 m.mutatorConfig.enableStatsD,
-		StatsDPort:                   m.mutatorConfig.statsDPort,
-		StatsDAddress:                m.mutatorConfig.statsDAddress,
+		AWSRegion:                m.mutatorConfig.awsRegion,
+		MeshName:                 meshName,
+		VirtualGatewayOrNodeName: virtualNodeName,
+		Preview:                  preview,
+		EnableSDS:                sdsEnabled,
+		SdsUdsPath:               m.mutatorConfig.sdsUdsPath,
+		LogLevel:                 m.mutatorConfig.logLevel,
+		AdminAccessPort:          m.mutatorConfig.adminAccessPort,
+		AdminAccessLogFile:       m.mutatorConfig.adminAccessLogFile,
+		PreStopDelay:             m.mutatorConfig.preStopDelay,
+		SidecarImage:             m.mutatorConfig.sidecarImage,
+		EnableXrayTracing:        m.mutatorConfig.enableXrayTracing,
+		XrayDaemonPort:           m.mutatorConfig.xrayDaemonPort,
+		EnableJaegerTracing:      m.mutatorConfig.enableJaegerTracing,
+		JaegerPort:               m.mutatorConfig.jaegerPort,
+		JaegerAddress:            m.mutatorConfig.jaegerAddress,
+		EnableDatadogTracing:     m.mutatorConfig.enableDatadogTracing,
+		DatadogTracerPort:        m.mutatorConfig.datadogTracerPort,
+		DatadogTracerAddress:     m.mutatorConfig.datadogTracerAddress,
+		EnableStatsTags:          m.mutatorConfig.enableStatsTags,
+		EnableStatsD:             m.mutatorConfig.enableStatsD,
+		StatsDPort:               m.mutatorConfig.statsDPort,
+		StatsDAddress:            m.mutatorConfig.statsDAddress,
 	}
 }
 
@@ -226,12 +209,29 @@ func (m *envoyMutator) getCustomEnv(pod *corev1.Pod) (map[string]string, error) 
 	return customEnv, nil
 }
 
-// containsEnvoyTracingConfigVolume checks whether pod already contains "envoy-tracing-config" volume
-func containsEnvoyTracingConfigVolume(pod *corev1.Pod) bool {
-	for _, volume := range pod.Spec.Volumes {
-		if volume.Name == envoyTracingConfigVolumeName {
-			return true
+func (m *envoyMutator) mutateVolumeMounts(pod *corev1.Pod, envoyContainer *corev1.Container, volumeMounts map[string]string) {
+	for volumeName, mountPath := range volumeMounts {
+		volumeMount := corev1.VolumeMount{
+			Name:      volumeName,
+			MountPath: mountPath,
+			ReadOnly:  true,
+		}
+		envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
+	}
+}
+
+func (m *envoyMutator) getVolumeMounts(pod *corev1.Pod) (map[string]string, error) {
+	volumeMounts := make(map[string]string)
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshVolumeMountsAnnotation]; ok {
+		for _, segment := range strings.Split(v, ",") {
+			pair := strings.Split(segment, ":")
+			if len(pair) != 2 { // volumeName:mountPath
+				return nil, errors.Errorf("malformed annotation %s, expected format: %s", AppMeshVolumeMountsAnnotation, "volumeName:mountPath")
+			}
+			volumeName := strings.TrimSpace(pair[0])
+			mountPath := strings.TrimSpace(pair[1])
+			volumeMounts[volumeName] = mountPath
 		}
 	}
-	return false
+	return volumeMounts, nil
 }

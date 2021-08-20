@@ -2,6 +2,8 @@ package conversions
 
 import (
 	"fmt"
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	mock_conversion "github.com/aws/aws-app-mesh-controller-for-k8s/mocks/apimachinery/pkg/conversion"
 	"github.com/aws/aws-sdk-go/aws"
@@ -9,7 +11,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/conversion"
-	"testing"
 )
 
 func TestConvert_CRD_VirtualRouterListener_To_SDK_VirtualRouterListener(t *testing.T) {
@@ -120,188 +121,6 @@ func TestConvert_CRD_WeightedTarget_To_SDK_WeightedTarget(t *testing.T) {
 			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_WeightedTarget_To_SDK_WeightedTarget(tt.args.crdObj, tt.args.sdkObj, scope)
-			if tt.wantErr != nil {
-				assert.EqualError(t, err, tt.wantErr.Error())
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
-			}
-		})
-	}
-}
-
-func TestConvert_CRD_HeaderMatchMethod_To_SDK_HeaderMatchMethod(t *testing.T) {
-	type args struct {
-		crdObj *appmesh.HeaderMatchMethod
-		sdkObj *appmeshsdk.HeaderMatchMethod
-		scope  conversion.Scope
-	}
-	tests := []struct {
-		name       string
-		args       args
-		wantSDKObj *appmeshsdk.HeaderMatchMethod
-		wantErr    error
-	}{
-		{
-			name: "normal case",
-			args: args{
-				crdObj: &appmesh.HeaderMatchMethod{
-					Exact: aws.String("header1"),
-					Range: &appmesh.MatchRange{
-						Start: int64(20),
-						End:   int64(80),
-					},
-					Prefix: aws.String("prefix-1"),
-					Regex:  aws.String("am*zon"),
-					Suffix: aws.String("suffix-1"),
-				},
-				sdkObj: &appmeshsdk.HeaderMatchMethod{},
-				scope:  nil,
-			},
-			wantSDKObj: &appmeshsdk.HeaderMatchMethod{
-				Exact: aws.String("header1"),
-				Range: &appmeshsdk.MatchRange{
-					Start: aws.Int64(20),
-					End:   aws.Int64(80),
-				},
-				Prefix: aws.String("prefix-1"),
-				Regex:  aws.String("am*zon"),
-				Suffix: aws.String("suffix-1"),
-			},
-		},
-		{
-			name: "normal case + nil exact",
-			args: args{
-				crdObj: &appmesh.HeaderMatchMethod{
-					Exact: nil,
-					Range: &appmesh.MatchRange{
-						Start: int64(20),
-						End:   int64(80),
-					},
-					Prefix: aws.String("prefix-1"),
-					Regex:  aws.String("am*zon"),
-					Suffix: aws.String("suffix-1"),
-				},
-				sdkObj: &appmeshsdk.HeaderMatchMethod{},
-				scope:  nil,
-			},
-			wantSDKObj: &appmeshsdk.HeaderMatchMethod{
-				Exact: nil,
-				Range: &appmeshsdk.MatchRange{
-					Start: aws.Int64(20),
-					End:   aws.Int64(80),
-				},
-				Prefix: aws.String("prefix-1"),
-				Regex:  aws.String("am*zon"),
-				Suffix: aws.String("suffix-1"),
-			},
-		},
-		{
-			name: "normal case + nil range",
-			args: args{
-				crdObj: &appmesh.HeaderMatchMethod{
-					Exact:  aws.String("header1"),
-					Range:  nil,
-					Prefix: aws.String("prefix-1"),
-					Regex:  aws.String("am*zon"),
-					Suffix: aws.String("suffix-1"),
-				},
-				sdkObj: &appmeshsdk.HeaderMatchMethod{},
-				scope:  nil,
-			},
-			wantSDKObj: &appmeshsdk.HeaderMatchMethod{
-				Exact:  aws.String("header1"),
-				Range:  nil,
-				Prefix: aws.String("prefix-1"),
-				Regex:  aws.String("am*zon"),
-				Suffix: aws.String("suffix-1"),
-			},
-		},
-		{
-			name: "normal case + nil prefix",
-			args: args{
-				crdObj: &appmesh.HeaderMatchMethod{
-					Exact: aws.String("header1"),
-					Range: &appmesh.MatchRange{
-						Start: int64(20),
-						End:   int64(80),
-					},
-					Prefix: nil,
-					Regex:  aws.String("am*zon"),
-					Suffix: aws.String("suffix-1"),
-				},
-				sdkObj: &appmeshsdk.HeaderMatchMethod{},
-				scope:  nil,
-			},
-			wantSDKObj: &appmeshsdk.HeaderMatchMethod{
-				Exact: aws.String("header1"),
-				Range: &appmeshsdk.MatchRange{
-					Start: aws.Int64(20),
-					End:   aws.Int64(80),
-				},
-				Prefix: nil,
-				Regex:  aws.String("am*zon"),
-				Suffix: aws.String("suffix-1"),
-			},
-		},
-		{
-			name: "normal case + nil regex",
-			args: args{
-				crdObj: &appmesh.HeaderMatchMethod{
-					Exact: aws.String("header1"),
-					Range: &appmesh.MatchRange{
-						Start: int64(20),
-						End:   int64(80),
-					},
-					Prefix: aws.String("prefix-1"),
-					Regex:  nil,
-					Suffix: aws.String("suffix-1"),
-				},
-				sdkObj: &appmeshsdk.HeaderMatchMethod{},
-				scope:  nil,
-			},
-			wantSDKObj: &appmeshsdk.HeaderMatchMethod{
-				Exact: aws.String("header1"),
-				Range: &appmeshsdk.MatchRange{
-					Start: aws.Int64(20),
-					End:   aws.Int64(80),
-				},
-				Prefix: aws.String("prefix-1"),
-				Regex:  nil,
-				Suffix: aws.String("suffix-1"),
-			},
-		},
-		{
-			name: "normal case + nil suffix",
-			args: args{
-				crdObj: &appmesh.HeaderMatchMethod{
-					Exact: aws.String("header1"),
-					Range: &appmesh.MatchRange{
-						Start: int64(20),
-						End:   int64(80),
-					},
-					Prefix: aws.String("prefix-1"),
-					Regex:  aws.String("am*zon"),
-					Suffix: nil,
-				},
-				sdkObj: &appmeshsdk.HeaderMatchMethod{},
-				scope:  nil,
-			},
-			wantSDKObj: &appmeshsdk.HeaderMatchMethod{
-				Exact: aws.String("header1"),
-				Range: &appmeshsdk.MatchRange{
-					Start: aws.Int64(20),
-					End:   aws.Int64(80),
-				},
-				Prefix: aws.String("prefix-1"),
-				Regex:  aws.String("am*zon"),
-				Suffix: nil,
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := Convert_CRD_HeaderMatchMethod_To_SDK_HeaderMatchMethod(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
@@ -472,7 +291,7 @@ func TestConvert_CRD_HTTPRouteMatch_To_SDK_HttpRouteMatch(t *testing.T) {
 						},
 					},
 					Method: aws.String("GET"),
-					Prefix: "/appmesh",
+					Prefix: aws.String("/appmesh"),
 					Scheme: aws.String("https"),
 				},
 
@@ -550,7 +369,7 @@ func TestConvert_CRD_HTTPRouteMatch_To_SDK_HttpRouteMatch(t *testing.T) {
 						},
 					},
 					Method: nil,
-					Prefix: "/appmesh",
+					Prefix: aws.String("/appmesh"),
 					Scheme: nil,
 				},
 
@@ -877,7 +696,7 @@ func TestConvert_CRD_HTTPRoute_To_SDK_HttpRoute(t *testing.T) {
 							},
 						},
 						Method: aws.String("GET"),
-						Prefix: "/appmesh",
+						Prefix: aws.String("/appmesh"),
 						Scheme: aws.String("https"),
 					},
 					Action: appmesh.HTTPRouteAction{
@@ -1031,7 +850,7 @@ func TestConvert_CRD_HTTPRoute_To_SDK_HttpRoute(t *testing.T) {
 							},
 						},
 						Method: aws.String("GET"),
-						Prefix: "/appmesh",
+						Prefix: aws.String("/appmesh"),
 						Scheme: aws.String("https"),
 					},
 					Action: appmesh.HTTPRouteAction{
@@ -1463,7 +1282,7 @@ func TestConvert_CRD_GRPCRouteMetadataMatchMethod_To_SDK_GrpcRouteMetadataMatchM
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := Convert_CRD_GRPCRouteMetadataMatchMethod_To_SDK_GrpcRouteMetadataMatchMethod(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			err := Convert_CRD_GRPCRouteMetadataMatchMethod_To_SDK_GrpcRouteMetadataMatchMethod(tt.args.crdObj, tt.args.sdkObj)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
@@ -2521,7 +2340,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 								},
 							},
 							Method: aws.String("GET"),
-							Prefix: "/appmesh",
+							Prefix: aws.String("/appmesh"),
 							Scheme: aws.String("https"),
 						},
 						Action: appmesh.HTTPRouteAction{
@@ -2586,7 +2405,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 								},
 							},
 							Method: aws.String("GET"),
-							Prefix: "/appmesh",
+							Prefix: aws.String("/appmesh"),
 							Scheme: aws.String("https"),
 						},
 						Action: appmesh.HTTPRouteAction{
@@ -2878,7 +2697,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 								},
 							},
 							Method: aws.String("GET"),
-							Prefix: "/appmesh",
+							Prefix: aws.String("/appmesh"),
 							Scheme: aws.String("https"),
 						},
 						Action: appmesh.HTTPRouteAction{
@@ -2943,7 +2762,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 								},
 							},
 							Method: aws.String("GET"),
-							Prefix: "/appmesh",
+							Prefix: aws.String("/appmesh"),
 							Scheme: aws.String("https"),
 						},
 						Action: appmesh.HTTPRouteAction{
@@ -3242,7 +3061,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 								},
 							},
 							Method: aws.String("GET"),
-							Prefix: "/appmesh",
+							Prefix: aws.String("/appmesh"),
 							Scheme: aws.String("https"),
 						},
 						Action: appmesh.HTTPRouteAction{
@@ -3540,7 +3359,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 								},
 							},
 							Method: aws.String("GET"),
-							Prefix: "/appmesh",
+							Prefix: aws.String("/appmesh"),
 							Scheme: aws.String("https"),
 						},
 						Action: appmesh.HTTPRouteAction{

@@ -2,43 +2,48 @@ package inject
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/aws/aws-sdk-go/aws"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"strconv"
 )
 
-func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) corev1.Container {
+const envoyTracingConfigVolumeName = "envoy-tracing-config"
 
-	envoy := corev1.Container{
-		Name:  "envoy",
-		Image: vars.SidecarImage,
-		SecurityContext: &corev1.SecurityContext{
-			RunAsUser: aws.Int64(1337),
-		},
-		Ports: []corev1.ContainerPort{
-			{
-				Name:          "stats",
-				ContainerPort: vars.AdminAccessPort,
-				Protocol:      "TCP",
-			},
-		},
-		Lifecycle: &corev1.Lifecycle{
-			PostStart: nil,
-			PreStop: &corev1.Handler{
-				Exec: &corev1.ExecAction{Command: []string{
-					"sh", "-c", fmt.Sprintf("sleep %s", vars.PreStopDelay),
-				}},
-			},
-		},
-	}
+// Envoy template variables used by envoys in pod and the envoy in VirtualGateway
+//as we use the same envoy image
+type EnvoyTemplateVariables struct {
+	AWSRegion                string
+	MeshName                 string
+	VirtualGatewayOrNodeName string
+	Preview                  string
+	EnableSDS                bool
+	SdsUdsPath               string
+	LogLevel                 string
+	AdminAccessPort          int32
+	AdminAccessLogFile       string
+	PreStopDelay             string
+	SidecarImage             string
+	EnableXrayTracing        bool
+	XrayDaemonPort           int32
+	EnableJaegerTracing      bool
+	JaegerPort               string
+	JaegerAddress            string
+	EnableDatadogTracing     bool
+	DatadogTracerPort        int32
+	DatadogTracerAddress     string
+	EnableStatsTags          bool
+	EnableStatsD             bool
+	StatsDPort               int32
+	StatsDAddress            string
+}
 
-	vn := fmt.Sprintf("mesh/%s/virtualNode/%s", vars.MeshName, vars.VirtualNodeName)
-
+func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) {
 	// add all the controller managed env to the map so
 	// 1) we remove duplicates
 	// 2) we don't allow overriding controller managed env with pod annotations
-	env["APPMESH_VIRTUAL_NODE_NAME"] = vn
+	env["APPMESH_VIRTUAL_NODE_NAME"] = vname
 	env["AWS_REGION"] = vars.AWSRegion
 
 	// Set the value to 1 to connect to the App Mesh Preview Channel endpoint.
@@ -109,19 +114,39 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) corev
 	}
 
 	if vars.EnableJaegerTracing {
-		// Specify a file path in the Envoy container file system.
-		// See https://www.envoyproxy.io/docs/envoy/latest/api-v2/config/trace/v2/http_tracer.proto
-		env["ENVOY_TRACING_CFG_FILE"] = "/tmp/envoy/envoyconf.yaml"
+		env["ENABLE_ENVOY_JAEGER_TRACING"] = "1"
+		env["JAEGER_TRACER_PORT"] = vars.JaegerPort
+		env["JAEGER_TRACER_ADDRESS"] = vars.JaegerAddress
+	}
+}
 
-		vol_mount := []corev1.VolumeMount{
+func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) corev1.Container {
+
+	envoy := corev1.Container{
+		Name:  "envoy",
+		Image: vars.SidecarImage,
+		SecurityContext: &corev1.SecurityContext{
+			RunAsUser: aws.Int64(1337),
+		},
+		Ports: []corev1.ContainerPort{
 			{
-				Name:      vars.EnvoyTracingConfigVolumeName,
-				MountPath: "/tmp/envoy",
+				Name:          "stats",
+				ContainerPort: vars.AdminAccessPort,
+				Protocol:      "TCP",
 			},
-		}
-		envoy.VolumeMounts = vol_mount
+		},
+		Lifecycle: &corev1.Lifecycle{
+			PostStart: nil,
+			PreStop: &corev1.Handler{
+				Exec: &corev1.ExecAction{Command: []string{
+					"sh", "-c", fmt.Sprintf("sleep %s", vars.PreStopDelay),
+				}},
+			},
+		},
 	}
 
+	vname := fmt.Sprintf("mesh/%s/virtualNode/%s", vars.MeshName, vars.VirtualGatewayOrNodeName)
+	updateEnvMapForEnvoy(vars, env, vname)
 	envoy.Env = getEnvoyEnv(env)
 	return envoy
 
@@ -262,4 +287,14 @@ func envVar(envName, envVal string) corev1.EnvVar {
 		Name:  envName,
 		Value: envVal,
 	}
+}
+
+// containsEnvoyTracingConfigVolume checks whether pod already contains "envoy-tracing-config" volume
+func containsEnvoyTracingConfigVolume(pod *corev1.Pod) bool {
+	for _, volume := range pod.Spec.Volumes {
+		if volume.Name == envoyTracingConfigVolumeName {
+			return true
+		}
+	}
+	return false
 }

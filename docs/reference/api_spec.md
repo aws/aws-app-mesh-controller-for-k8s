@@ -208,7 +208,7 @@ ClientPolicy
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.BackendDefaults">BackendDefaults</a>,
+<a href="#appmesh.k8s.aws/v1beta2.BackendDefaults">BackendDefaults</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualServiceBackend">VirtualServiceBackend</a>)
 </p>
 <p>
@@ -385,17 +385,29 @@ string
 <p>Specifies the DNS service discovery hostname for the virtual node.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>responseType</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Choose between ENDPOINTS (strict DNS) and LOADBALANCER (logical DNS) mode in Envoy sidecar</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="appmesh.k8s.aws/v1beta2.Duration">Duration
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>,
-<a href="#appmesh.k8s.aws/v1beta2.GRPCTimeout">GRPCTimeout</a>,
-<a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">HTTPRetryPolicy</a>,
-<a href="#appmesh.k8s.aws/v1beta2.HTTPTimeout">HTTPTimeout</a>,
-<a href="#appmesh.k8s.aws/v1beta2.OutlierDetection">OutlierDetection</a>,
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.GRPCTimeout">GRPCTimeout</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">HTTPRetryPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPTimeout">HTTPTimeout</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.OutlierDetection">OutlierDetection</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.TCPTimeout">TCPTimeout</a>)
 </p>
 <p>
@@ -516,7 +528,7 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayConnectionPool">VirtualGatewayConnectionPool</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayConnectionPool">VirtualGatewayConnectionPool</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualNodeConnectionPool">VirtualNodeConnectionPool</a>)
 </p>
 <p>
@@ -550,7 +562,7 @@ can concurrently support across all the hosts in the upstream cluster</p>
 <a href="#appmesh.k8s.aws/v1beta2.GatewayRouteSpec">GatewayRouteSpec</a>)
 </p>
 <p>
-<p>GRPCGatewayRoute refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+<p>GRPCGatewayRoute refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/gateway-routes.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/gateway-routes.html</a></p>
 </p>
 <table>
 <thead>
@@ -595,7 +607,7 @@ GRPCGatewayRouteAction
 <a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRoute">GRPCGatewayRoute</a>)
 </p>
 <p>
-<p>GRPCGatewayRouteAction refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+<p>GRPCGatewayRouteAction refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteAction.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteAction.html</a></p>
 </p>
 <table>
 <thead>
@@ -618,6 +630,19 @@ GatewayRouteTarget
 <p>An object that represents the target that traffic is routed to when a request matches the route.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>rewrite</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GrpcGatewayRouteRewrite">
+GrpcGatewayRouteRewrite
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="appmesh.k8s.aws/v1beta2.GRPCGatewayRouteMatch">GRPCGatewayRouteMatch
@@ -627,7 +652,7 @@ GatewayRouteTarget
 <a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRoute">GRPCGatewayRoute</a>)
 </p>
 <p>
-<p>GRPCGatewayRouteMatch refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+<p>GRPCGatewayRouteMatch refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteMatch.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteMatch.html</a></p>
 </p>
 <table>
 <thead>
@@ -646,7 +671,92 @@ string
 </td>
 <td>
 <em>(Optional)</em>
-<p>The fully qualified domain name for the service to match from the request.</p>
+<p>Either ServiceName or Hostname must be specified. Both are allowed as well
+The fully qualified domain name for the service to match from the request.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>hostname</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteHostnameMatch">
+GatewayRouteHostnameMatch
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The client specified Hostname to match on.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>metadata</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRouteMetadata">
+[]GRPCGatewayRouteMetadata
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the data to match from the request.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GRPCGatewayRouteMetadata">GRPCGatewayRouteMetadata
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRouteMatch">GRPCGatewayRouteMatch</a>)
+</p>
+<p>
+<p>GRPCGatewayRouteMetadata refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteMetadata.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteMetadata.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>The name of the route.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>match</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteMetadataMatchMethod">
+GRPCRouteMetadataMatchMethod
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the data to match from the request.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>invert</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Specify True to match anything except the match criteria. The default value is False.</p>
 </td>
 </tr>
 </tbody>
@@ -963,6 +1073,7 @@ bool
 </h3>
 <p>
 (<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRouteMetadata">GRPCGatewayRouteMetadata</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.GRPCRouteMetadata">GRPCRouteMetadata</a>)
 </p>
 <p>
@@ -1044,7 +1155,7 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCRoute">GRPCRoute</a>,
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRoute">GRPCRoute</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout</a>)
 </p>
 <p>
@@ -1138,6 +1249,19 @@ string
 <em>(Optional)</em>
 <p>AWSName is the AppMesh GatewayRoute object&rsquo;s name.
 If unspecified or empty, it defaults to be &ldquo;${name}_${namespace}&rdquo; of k8s GatewayRoute</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>priority</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Priority for the gatewayroute.
+Default Priority is 1000 which is lowest priority</p>
 </td>
 </tr>
 <tr>
@@ -1323,6 +1447,155 @@ string
 </p>
 <p>
 </p>
+<h3 id="appmesh.k8s.aws/v1beta2.GatewayRouteHostnameMatch">GatewayRouteHostnameMatch
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRouteMatch">GRPCGatewayRouteMatch</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteMatch">HTTPGatewayRouteMatch</a>)
+</p>
+<p>
+<p>Hostname based match, either Exact or Suffix must be specified. Both are not allowed
+GatewayRouteHostnameMatch refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteHostnameMatch.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteHostnameMatch.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>exact</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The value sent by the client must match the specified value exactly.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>suffix</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The value sent by the client must end with the specified characters.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GatewayRouteHostnameRewrite">GatewayRouteHostnameRewrite
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GrpcGatewayRouteRewrite">GrpcGatewayRouteRewrite</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteRewrite">HTTPGatewayRouteRewrite</a>)
+</p>
+<p>
+<p>GatewayRouteHostnameRewrite refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteHostnameRewrite.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteHostnameRewrite.html</a>
+ENABLE or DISABLE default behavior for Hostname rewrite</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>defaultTargetHostname</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GatewayRoutePathRewrite">GatewayRoutePathRewrite
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteRewrite">HTTPGatewayRouteRewrite</a>)
+</p>
+<p>
+<p>GatewayRoutePathRewrite refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRoutePathRewrite.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRoutePathRewrite.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>exact</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.GatewayRoutePrefixRewrite">GatewayRoutePrefixRewrite
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteRewrite">HTTPGatewayRouteRewrite</a>)
+</p>
+<p>
+<p>GatewayRoutePrefixRewrite refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRoutePrefixRewrite.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRoutePrefixRewrite.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>defaultPrefix</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+<tr>
+<td>
+<code>value</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>When DefaultPrefix is specified, Value cannot be set</p>
+</td>
+</tr>
+</tbody>
+</table>
 <h3 id="appmesh.k8s.aws/v1beta2.GatewayRouteSpec">GatewayRouteSpec
 </h3>
 <p>
@@ -1331,7 +1604,7 @@ string
 </p>
 <p>
 <p>GatewayRouteSpec defines the desired state of GatewayRoute
-refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteSpec.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteSpec.html</a></p>
 </p>
 <table>
 <thead>
@@ -1352,6 +1625,19 @@ string
 <em>(Optional)</em>
 <p>AWSName is the AppMesh GatewayRoute object&rsquo;s name.
 If unspecified or empty, it defaults to be &ldquo;${name}_${namespace}&rdquo; of k8s GatewayRoute</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>priority</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Priority for the gatewayroute.
+Default Priority is 1000 which is lowest priority</p>
 </td>
 </tr>
 <tr>
@@ -1493,11 +1779,11 @@ int64
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRouteAction">GRPCGatewayRouteAction</a>,
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRouteAction">GRPCGatewayRouteAction</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteAction">HTTPGatewayRouteAction</a>)
 </p>
 <p>
-<p>GatewayRouteTarget refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+<p>GatewayRouteTarget refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteTarget.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteTarget.html</a></p>
 </p>
 <table>
 <thead>
@@ -1529,7 +1815,7 @@ GatewayRouteVirtualService
 <a href="#appmesh.k8s.aws/v1beta2.GatewayRouteTarget">GatewayRouteTarget</a>)
 </p>
 <p>
-<p>GatewayRouteVirtualService refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+<p>GatewayRouteVirtualService refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteVirtualService.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GatewayRouteVirtualService.html</a></p>
 </p>
 <table>
 <thead>
@@ -1567,11 +1853,42 @@ string
 </tr>
 </tbody>
 </table>
+<h3 id="appmesh.k8s.aws/v1beta2.GrpcGatewayRouteRewrite">GrpcGatewayRouteRewrite
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.GRPCGatewayRouteAction">GRPCGatewayRouteAction</a>)
+</p>
+<p>
+<p>GrpcGatewayRouteRewrite refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteRewrite.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteRewrite.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>hostname</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteHostnameRewrite">
+GatewayRouteHostnameRewrite
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
 <h3 id="appmesh.k8s.aws/v1beta2.HTTP2ConnectionPool">HTTP2ConnectionPool
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayConnectionPool">VirtualGatewayConnectionPool</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayConnectionPool">VirtualGatewayConnectionPool</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualNodeConnectionPool">VirtualNodeConnectionPool</a>)
 </p>
 <p>
@@ -1602,7 +1919,7 @@ can concurrently support across all the hosts in the upstream cluster</p>
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayConnectionPool">VirtualGatewayConnectionPool</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayConnectionPool">VirtualGatewayConnectionPool</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualNodeConnectionPool">VirtualNodeConnectionPool</a>)
 </p>
 <p>
@@ -1649,7 +1966,7 @@ that an envoy will queue to an upstream cluster.</p>
 <a href="#appmesh.k8s.aws/v1beta2.GatewayRouteSpec">GatewayRouteSpec</a>)
 </p>
 <p>
-<p>HTTPGatewayRoute refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+<p>HTTPGatewayRoute refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/gateway-routes.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/gateway-routes.html</a></p>
 </p>
 <table>
 <thead>
@@ -1694,7 +2011,7 @@ HTTPGatewayRouteAction
 <a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRoute">HTTPGatewayRoute</a>)
 </p>
 <p>
-<p>HTTPGatewayRouteAction refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+<p>HTTPGatewayRouteAction refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteAction.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteAction.html</a></p>
 </p>
 <table>
 <thead>
@@ -1717,6 +2034,75 @@ GatewayRouteTarget
 <p>An object that represents the target that traffic is routed to when a request matches the route.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>rewrite</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteRewrite">
+HTTPGatewayRouteRewrite
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPGatewayRouteHeader">HTTPGatewayRouteHeader
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteMatch">HTTPGatewayRouteMatch</a>)
+</p>
+<p>
+<p>HTTPGatewayRouteHeader refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteHeader.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteHeader.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>A name for the HTTP header in the client request that will be matched on.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>match</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HeaderMatchMethod">
+HeaderMatchMethod
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The HeaderMatchMethod object.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>invert</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Specify True to match anything except the match criteria. The default value is False.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="appmesh.k8s.aws/v1beta2.HTTPGatewayRouteMatch">HTTPGatewayRouteMatch
@@ -1726,7 +2112,7 @@ GatewayRouteTarget
 <a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRoute">HTTPGatewayRoute</a>)
 </p>
 <p>
-<p>HTTPGatewayRouteMatch refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html">https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html</a></p>
+<p>HTTPGatewayRouteMatch refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteMatch.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteMatch.html</a></p>
 </p>
 <table>
 <thead>
@@ -1744,7 +2130,223 @@ string
 </em>
 </td>
 <td>
-<p>Specifies the path to match requests with</p>
+<em>(Optional)</em>
+<p>Either Prefix or Hostname must be specified. Both are allowed as well.
+Specifies the prefix to match requests with</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>path</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPPathMatch">
+HTTPPathMatch
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Specified path of the request to be matched on</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>queryParameters</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPQueryParameters">
+[]HTTPQueryParameters
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>Client specified query parameters to match on</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>method</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The client request method to match on.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>hostname</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteHostnameMatch">
+GatewayRouteHostnameMatch
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The client specified Hostname to match on.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>headers</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteHeader">
+[]HTTPGatewayRouteHeader
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the client request headers to match on.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPGatewayRouteRewrite">HTTPGatewayRouteRewrite
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteAction">HTTPGatewayRouteAction</a>)
+</p>
+<p>
+<p>HTTPGatewayRouteRewrite refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteRewrite.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpGatewayRouteRewrite.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>prefix</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRoutePrefixRewrite">
+GatewayRoutePrefixRewrite
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+<tr>
+<td>
+<code>path</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRoutePathRewrite">
+GatewayRoutePathRewrite
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+<tr>
+<td>
+<code>hostname</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteHostnameRewrite">
+GatewayRouteHostnameRewrite
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPPathMatch">HTTPPathMatch
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteMatch">HTTPGatewayRouteMatch</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRouteMatch">HTTPRouteMatch</a>)
+</p>
+<p>
+<p>HTTPPathMatch refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpPathMatch.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpPathMatch.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>exact</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The value sent by the client must match the specified value exactly.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>regex</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The value sent by the client must end with the specified characters.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.HTTPQueryParameters">HTTPQueryParameters
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteMatch">HTTPGatewayRouteMatch</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRouteMatch">HTTPRouteMatch</a>)
+</p>
+<p>
+<p>HTTPQueryParameters refers to <a href="https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpQueryParameter.html">https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpQueryParameter.html</a></p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>name</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>match</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.QueryMatchMethod">
+QueryMatchMethod
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The QueryMatchMethod object.</p>
 </td>
 </tr>
 </tbody>
@@ -1822,7 +2424,7 @@ Duration
 (<code>string</code> alias)</p></h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>,
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">HTTPRetryPolicy</a>)
 </p>
 <p>
@@ -2039,7 +2641,8 @@ string
 </em>
 </td>
 <td>
-<p>Specifies the path to match requests with</p>
+<em>(Optional)</em>
+<p>Specifies the prefix to match requests with</p>
 </td>
 </tr>
 <tr>
@@ -2054,13 +2657,41 @@ string
 <p>The client request scheme to match on</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>path</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPPathMatch">
+HTTPPathMatch
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The client specified Path to match on.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>queryParameters</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPQueryParameters">
+[]HTTPQueryParameters
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The client specified queryParameters to match on</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="appmesh.k8s.aws/v1beta2.HTTPTimeout">HTTPTimeout
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.HTTPRoute">HTTPRoute</a>,
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRoute">HTTPRoute</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout</a>)
 </p>
 <p>
@@ -2107,6 +2738,7 @@ Duration
 </h3>
 <p>
 (<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPGatewayRouteHeader">HTTPGatewayRouteHeader</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.HTTPRouteHeader">HTTPRouteHeader</a>)
 </p>
 <p>
@@ -2543,7 +3175,7 @@ ListenerTLSSDSCertificate
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.ClientTLSCertificate">ClientTLSCertificate</a>,
+<a href="#appmesh.k8s.aws/v1beta2.ClientTLSCertificate">ClientTLSCertificate</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.ListenerTLSCertificate">ListenerTLSCertificate</a>)
 </p>
 <p>
@@ -2593,7 +3225,7 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.ClientTLSCertificate">ClientTLSCertificate</a>,
+<a href="#appmesh.k8s.aws/v1beta2.ClientTLSCertificate">ClientTLSCertificate</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.ListenerTLSCertificate">ListenerTLSCertificate</a>)
 </p>
 <p>
@@ -2822,7 +3454,7 @@ AccessLog
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteMetadataMatchMethod">GRPCRouteMetadataMatchMethod</a>,
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteMetadataMatchMethod">GRPCRouteMetadataMatchMethod</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.HeaderMatchMethod">HeaderMatchMethod</a>)
 </p>
 <p>
@@ -2843,7 +3475,6 @@ int64
 </em>
 </td>
 <td>
-<em>(Optional)</em>
 <p>The start of the range.</p>
 </td>
 </tr>
@@ -2855,7 +3486,6 @@ int64
 </em>
 </td>
 <td>
-<em>(Optional)</em>
 <p>The end of the range.</p>
 </td>
 </tr>
@@ -3070,10 +3700,10 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteSpec">GatewayRouteSpec</a>,
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewaySpec">VirtualGatewaySpec</a>,
-<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeSpec">VirtualNodeSpec</a>,
-<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterSpec">VirtualRouterSpec</a>,
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteSpec">GatewayRouteSpec</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewaySpec">VirtualGatewaySpec</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeSpec">VirtualNodeSpec</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualRouterSpec">VirtualRouterSpec</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualServiceSpec">VirtualServiceSpec</a>)
 </p>
 <p>
@@ -3321,7 +3951,7 @@ maxEjectionPercent=100 means outlier detection can potentially eject all of the 
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.Listener">Listener</a>,
+<a href="#appmesh.k8s.aws/v1beta2.Listener">Listener</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualRouterListener">VirtualRouterListener</a>)
 </p>
 <p>
@@ -3367,11 +3997,11 @@ PortProtocol
 (<code>int64</code> alias)</p></h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.ClientPolicyTLS">ClientPolicyTLS</a>,
-<a href="#appmesh.k8s.aws/v1beta2.HealthCheckPolicy">HealthCheckPolicy</a>,
-<a href="#appmesh.k8s.aws/v1beta2.PortMapping">PortMapping</a>,
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientPolicyTLS">VirtualGatewayClientPolicyTLS</a>,
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayHealthCheckPolicy">VirtualGatewayHealthCheckPolicy</a>,
+<a href="#appmesh.k8s.aws/v1beta2.ClientPolicyTLS">ClientPolicyTLS</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HealthCheckPolicy">HealthCheckPolicy</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.PortMapping">PortMapping</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientPolicyTLS">VirtualGatewayClientPolicyTLS</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayHealthCheckPolicy">VirtualGatewayHealthCheckPolicy</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayPortMapping">VirtualGatewayPortMapping</a>)
 </p>
 <p>
@@ -3380,11 +4010,40 @@ PortProtocol
 (<code>string</code> alias)</p></h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.HealthCheckPolicy">HealthCheckPolicy</a>,
+<a href="#appmesh.k8s.aws/v1beta2.HealthCheckPolicy">HealthCheckPolicy</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.PortMapping">PortMapping</a>)
 </p>
 <p>
 </p>
+<h3 id="appmesh.k8s.aws/v1beta2.QueryMatchMethod">QueryMatchMethod
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.HTTPQueryParameters">HTTPQueryParameters</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>exact</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+</td>
+</tr>
+</tbody>
+</table>
 <h3 id="appmesh.k8s.aws/v1beta2.Route">Route
 </h3>
 <p>
@@ -3550,7 +4209,7 @@ DNSServiceDiscovery
 <td>
 <code>exact</code></br>
 <em>
-[]*string
+[]string
 </em>
 </td>
 <td>
@@ -3563,9 +4222,9 @@ DNSServiceDiscovery
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSValidationContext">ListenerTLSValidationContext</a>,
-<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContext">TLSValidationContext</a>,
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContext">VirtualGatewayListenerTLSValidationContext</a>,
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSValidationContext">ListenerTLSValidationContext</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.TLSValidationContext">TLSValidationContext</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContext">VirtualGatewayListenerTLSValidationContext</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContext">VirtualGatewayTLSValidationContext</a>)
 </p>
 <p>
@@ -3627,7 +4286,7 @@ the envoy can establish concurrently with all the hosts in the upstream cluster.
 (<code>string</code> alias)</p></h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>,
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRetryPolicy">GRPCRetryPolicy</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.HTTPRetryPolicy">HTTPRetryPolicy</a>)
 </p>
 <p>
@@ -3714,7 +4373,7 @@ TCPTimeout
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout</a>,
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTimeout">ListenerTimeout</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.TCPRoute">TCPRoute</a>)
 </p>
 <p>
@@ -3823,7 +4482,7 @@ SubjectAlternativeNames
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSValidationContextTrust">ListenerTLSValidationContextTrust</a>,
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSValidationContextTrust">ListenerTLSValidationContextTrust</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextTrust">TLSValidationContextTrust</a>)
 </p>
 <p>
@@ -3854,7 +4513,7 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSValidationContextTrust">ListenerTLSValidationContextTrust</a>,
+<a href="#appmesh.k8s.aws/v1beta2.ListenerTLSValidationContextTrust">ListenerTLSValidationContextTrust</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.TLSValidationContextTrust">TLSValidationContextTrust</a>)
 </p>
 <p>
@@ -4025,6 +4684,21 @@ Kubernetes meta/v1.LabelSelector
 This field follows standard label selector semantics:
 if present but empty, it selects all pods within namespace.
 if absent, it selects no pod.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>gatewayRouteSelector</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#labelselector-v1-meta">
+Kubernetes meta/v1.LabelSelector
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>GatewayRouteSelector selects GatewayRoutes using labels to designate GatewayRoute membership.
+If not specified it selects all GatewayRoutes in that namespace.</p>
 </td>
 </tr>
 <tr>
@@ -4837,7 +5511,7 @@ VirtualGatewayListenerTLSSDSCertificate
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientTLSCertificate">VirtualGatewayClientTLSCertificate</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientTLSCertificate">VirtualGatewayClientTLSCertificate</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSCertificate">VirtualGatewayListenerTLSCertificate</a>)
 </p>
 <p>
@@ -4887,7 +5561,7 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientTLSCertificate">VirtualGatewayClientTLSCertificate</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayClientTLSCertificate">VirtualGatewayClientTLSCertificate</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSCertificate">VirtualGatewayListenerTLSCertificate</a>)
 </p>
 <p>
@@ -5100,7 +5774,7 @@ VirtualGatewayPortProtocol
 (<code>string</code> alias)</p></h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayHealthCheckPolicy">VirtualGatewayHealthCheckPolicy</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayHealthCheckPolicy">VirtualGatewayHealthCheckPolicy</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayPortMapping">VirtualGatewayPortMapping</a>)
 </p>
 <p>
@@ -5220,6 +5894,21 @@ Kubernetes meta/v1.LabelSelector
 This field follows standard label selector semantics:
 if present but empty, it selects all pods within namespace.
 if absent, it selects no pod.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>gatewayRouteSelector</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#labelselector-v1-meta">
+Kubernetes meta/v1.LabelSelector
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>GatewayRouteSelector selects GatewayRoutes using labels to designate GatewayRoute membership.
+If not specified it selects all GatewayRoutes in that namespace.</p>
 </td>
 </tr>
 <tr>
@@ -5389,7 +6078,7 @@ SubjectAlternativeNames
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContextTrust">VirtualGatewayListenerTLSValidationContextTrust</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContextTrust">VirtualGatewayListenerTLSValidationContextTrust</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextTrust">VirtualGatewayTLSValidationContextTrust</a>)
 </p>
 <p>
@@ -5420,7 +6109,7 @@ SubjectAlternativeNames
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContextTrust">VirtualGatewayListenerTLSValidationContextTrust</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContextTrust">VirtualGatewayListenerTLSValidationContextTrust</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextTrust">VirtualGatewayTLSValidationContextTrust</a>)
 </p>
 <p>
@@ -5451,7 +6140,7 @@ string
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContextTrust">VirtualGatewayListenerTLSValidationContextTrust</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayListenerTLSValidationContextTrust">VirtualGatewayListenerTLSValidationContextTrust</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualGatewayTLSValidationContextTrust">VirtualGatewayTLSValidationContextTrust</a>)
 </p>
 <p>
@@ -5886,7 +6575,7 @@ GRPCConnectionPool
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeServiceProvider">VirtualNodeServiceProvider</a>,
+<a href="#appmesh.k8s.aws/v1beta2.VirtualNodeServiceProvider">VirtualNodeServiceProvider</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.WeightedTarget">WeightedTarget</a>)
 </p>
 <p>
@@ -6937,7 +7626,7 @@ VirtualRouterServiceProvider
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteVirtualService">GatewayRouteVirtualService</a>,
+<a href="#appmesh.k8s.aws/v1beta2.GatewayRouteVirtualService">GatewayRouteVirtualService</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.VirtualServiceBackend">VirtualServiceBackend</a>)
 </p>
 <p>
@@ -7102,8 +7791,8 @@ int64
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteAction">GRPCRouteAction</a>,
-<a href="#appmesh.k8s.aws/v1beta2.HTTPRouteAction">HTTPRouteAction</a>,
+<a href="#appmesh.k8s.aws/v1beta2.GRPCRouteAction">GRPCRouteAction</a>, 
+<a href="#appmesh.k8s.aws/v1beta2.HTTPRouteAction">HTTPRouteAction</a>, 
 <a href="#appmesh.k8s.aws/v1beta2.TCPRouteAction">TCPRouteAction</a>)
 </p>
 <p>
