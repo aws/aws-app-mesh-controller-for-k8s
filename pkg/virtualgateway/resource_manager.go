@@ -2,6 +2,7 @@ package virtualgateway
 
 import (
 	"context"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
@@ -268,7 +269,7 @@ func BuildSDKVirtualGatewaySpec(ctx context.Context, vg *appmesh.VirtualGateway)
 	})
 
 	sdkVGSpec := &appmeshsdk.VirtualGatewaySpec{}
-	if err := converter.Convert(&vg.Spec, sdkVGSpec, conversion.DestFromSource, nil); err != nil {
+	if err := converter.Convert(&vg.Spec, sdkVGSpec, nil); err != nil {
 		return nil, err
 	}
 	return sdkVGSpec, nil

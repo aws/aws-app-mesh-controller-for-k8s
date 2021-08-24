@@ -2,6 +2,7 @@ package virtualnode
 
 import (
 	"context"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
@@ -310,7 +311,7 @@ func BuildSDKVirtualNodeSpec(vn *appmesh.VirtualNode, vsByKey map[types.Namespac
 		return sdkVSRefConvertFunc(a.(*appmesh.VirtualServiceReference), b.(*string), scope)
 	})
 	sdkVNSpec := &appmeshsdk.VirtualNodeSpec{}
-	if err := converter.Convert(&vn.Spec, sdkVNSpec, conversion.DestFromSource, nil); err != nil {
+	if err := converter.Convert(&vn.Spec, sdkVNSpec, nil); err != nil {
 		return nil, err
 	}
 	return sdkVNSpec, nil

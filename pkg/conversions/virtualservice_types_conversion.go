@@ -12,7 +12,7 @@ func Convert_CRD_VirtualNodeServiceProvider_To_SDK_VirtualNodeServiceProvider(cr
 
 	sdkObj.VirtualNodeName = aws.String("")
 	if crdObj.VirtualNodeRef != nil {
-		if err := scope.Convert(crdObj.VirtualNodeRef, sdkObj.VirtualNodeName, scope.Flags()); err != nil {
+		if err := scope.Convert(crdObj.VirtualNodeRef, sdkObj.VirtualNodeName); err != nil {
 			return err
 		}
 	}
@@ -29,7 +29,7 @@ func Convert_CRD_VirtualRouterServiceProvider_To_SDK_VirtualRouterServiceProvide
 
 	sdkObj.VirtualRouterName = aws.String("")
 	if crdObj.VirtualRouterRef != nil {
-		if err := scope.Convert(crdObj.VirtualRouterRef, sdkObj.VirtualRouterName, scope.Flags()); err != nil {
+		if err := scope.Convert(crdObj.VirtualRouterRef, sdkObj.VirtualRouterName); err != nil {
 			return err
 		}
 	}

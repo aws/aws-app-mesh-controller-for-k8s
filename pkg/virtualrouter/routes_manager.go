@@ -2,6 +2,7 @@ package virtualrouter
 
 import (
 	"context"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
@@ -258,7 +259,7 @@ func BuildSDKRouteSpec(vr *appmesh.VirtualRouter, route appmesh.Route, vnByKey m
 		return sdkVNRefConvertFunc(a.(*appmesh.VirtualNodeReference), b.(*string), scope)
 	})
 	sdkRouteSpec := &appmeshsdk.RouteSpec{}
-	if err := converter.Convert(&route, sdkRouteSpec, conversion.DestFromSource, nil); err != nil {
+	if err := converter.Convert(&route, sdkRouteSpec, nil); err != nil {
 		return nil, err
 	}
 	return sdkRouteSpec, nil

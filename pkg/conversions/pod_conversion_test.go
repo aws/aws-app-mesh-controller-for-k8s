@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -22,17 +21,17 @@ func TestConvertObj(t *testing.T) {
 
 	commands := []string{"sh", "-c", "echo Container 1 is Running; sleep 360000"}
 
-	container := corev1.Container{
+	container := v1.Container{
 		Name:            "busybox",
 		Image:           "busybox",
 		ImagePullPolicy: "IfNotPresent",
 		Command:         commands,
 	}
 
-	containers := make([]corev1.Container, 0)
+	containers := make([]v1.Container, 0)
 	containers = append(containers, container)
 
-	oldPod := &corev1.Pod{
+	oldPod := &v1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:        "TestPod",
 			Namespace:   "TestNameSpace",
@@ -48,7 +47,7 @@ func TestConvertObj(t *testing.T) {
 	convertedObj, err := podConverter.ConvertObject(oldPod)
 	assert.NoError(t, err)
 
-	convertedPod, ok := convertedObj.(*corev1.Pod)
+	convertedPod, ok := convertedObj.(*v1.Pod)
 	if !ok {
 		t.Error("Conversion Failed")
 	}
@@ -68,7 +67,7 @@ func TestConvertList(t *testing.T) {
 	annotations["random"] = "TestValue"
 	annotations["appmesh.k8s.aws/cpuLimit"] = "60"
 
-	pod1 := &corev1.Pod{
+	pod1 := &v1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:        "TestPod1",
 			Namespace:   "TestNameSpace",
@@ -79,7 +78,7 @@ func TestConvertList(t *testing.T) {
 		},
 	}
 
-	pod2 := &corev1.Pod{
+	pod2 := &v1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:        "TestPod2",
 			Namespace:   "TestNameSpace",
@@ -90,7 +89,7 @@ func TestConvertList(t *testing.T) {
 		},
 	}
 
-	expectedpod1 := &corev1.Pod{
+	expectedpod1 := &v1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      "TestPod1",
 			Namespace: "TestNameSpace",
@@ -100,7 +99,7 @@ func TestConvertList(t *testing.T) {
 		},
 	}
 
-	expectedpod2 := &corev1.Pod{
+	expectedpod2 := &v1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      "TestPod2",
 			Namespace: "TestNameSpace",
@@ -110,8 +109,8 @@ func TestConvertList(t *testing.T) {
 		},
 	}
 
-	podList := &corev1.PodList{
-		Items: []corev1.Pod{
+	podList := &v1.PodList{
+		Items: []v1.Pod{
 			*pod1,
 			*pod2,
 		},
@@ -121,7 +120,7 @@ func TestConvertList(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.NotNil(t, convertedList, "Converted List cannot be Nil")
-	assert.Equal(t, len(convertedList.(*corev1.PodList).Items), 2, "Length mismatch")
+	assert.Equal(t, len(convertedList.(*v1.PodList).Items), 2, "Length mismatch")
 	convertedPods := convertedList.(*v1.PodList).Items
 	assert.Equal(t, convertedPods[0].Spec.NodeName, expectedpod1.Spec.NodeName, "Nodename mismatch for pod1")
 	assert.Equal(t, convertedPods[1].Spec.NodeName, expectedpod2.Spec.NodeName, "Nodename mismatch for pod2")

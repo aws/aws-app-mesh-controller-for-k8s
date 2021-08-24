@@ -34,17 +34,17 @@ func (m *MockScope) EXPECT() *MockScopeMockRecorder {
 }
 
 // Convert mocks base method
-func (m *MockScope) Convert(arg0, arg1 interface{}, arg2 conversion.FieldMatchingFlags) error {
+func (m *MockScope) Convert(arg0, arg1 interface{}) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Convert", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Convert", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Convert indicates an expected call of Convert
-func (mr *MockScopeMockRecorder) Convert(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockScopeMockRecorder) Convert(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Convert", reflect.TypeOf((*MockScope)(nil).Convert), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Convert", reflect.TypeOf((*MockScope)(nil).Convert), arg0, arg1)
 }
 
 // DestTag mocks base method
@@ -59,20 +59,6 @@ func (m *MockScope) DestTag() reflect.StructTag {
 func (mr *MockScopeMockRecorder) DestTag() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DestTag", reflect.TypeOf((*MockScope)(nil).DestTag))
-}
-
-// Flags mocks base method
-func (m *MockScope) Flags() conversion.FieldMatchingFlags {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Flags")
-	ret0, _ := ret[0].(conversion.FieldMatchingFlags)
-	return ret0
-}
-
-// Flags indicates an expected call of Flags
-func (mr *MockScopeMockRecorder) Flags() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Flags", reflect.TypeOf((*MockScope)(nil).Flags))
 }
 
 // Meta mocks base method
