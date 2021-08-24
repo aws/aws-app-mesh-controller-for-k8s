@@ -21,8 +21,9 @@ jobs:
       run: |
         arch=$(go env GOARCH)
         os=$(go env GOOS)
-        curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/
-        sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
+        version="2.3.1"
+        curl -L https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${version}/kubebuilder_${version}_${os}_${arch}.tar.gz | tar -xz -C /tmp/
+        sudo mv /tmp/kubebuilder_${version}_${os}_${arch} /usr/local/kubebuilder
         export PATH=$PATH:/usr/local/kubebuilder/bin
     - name: checkout code
       uses: actions/checkout@v2
