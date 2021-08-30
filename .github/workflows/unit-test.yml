@@ -12,17 +12,18 @@ jobs:
     name: unit-test
     runs-on: ubuntu-18.04
     steps:
-    - name: setup go 1.14
+    - name: setup go 1.16
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.14
+        go-version: ^1.16
       id: go
     - name: setup kubebuilder
       run: |
         arch=$(go env GOARCH)
         os=$(go env GOOS)
-        curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/
-        sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
+        version="2.3.1"
+        curl -L https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${version}/kubebuilder_${version}_${os}_${arch}.tar.gz | tar -xz -C /tmp/
+        sudo mv /tmp/kubebuilder_${version}_${os}_${arch} /usr/local/kubebuilder
         export PATH=$PATH:/usr/local/kubebuilder/bin
     - name: checkout code
       uses: actions/checkout@v2

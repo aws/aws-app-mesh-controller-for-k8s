@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -720,7 +720,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 			}
 
 			ctx = webhook.ContextWithAdmissionRequest(ctx, admission.Request{
-				AdmissionRequest: admissionv1beta1.AdmissionRequest{Namespace: "awesome-ns"},
+				AdmissionRequest: admissionv1.AdmissionRequest{Namespace: "awesome-ns"},
 			})
 			got, err := designator.DesignateForGatewayRoute(ctx, tt.args.obj)
 			if tt.wantErr != nil {
@@ -1134,7 +1134,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForPod(t *testing.T) {
 			}
 
 			ctx = webhook.ContextWithAdmissionRequest(ctx, admission.Request{
-				AdmissionRequest: admissionv1beta1.AdmissionRequest{Namespace: "awesome-ns"},
+				AdmissionRequest: admissionv1.AdmissionRequest{Namespace: "awesome-ns"},
 			})
 
 			got, err := designator.DesignateForPod(ctx, tt.args.pod)

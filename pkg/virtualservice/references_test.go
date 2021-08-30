@@ -1,13 +1,15 @@
 package virtualservice
 
 import (
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"testing"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func TestVirtualNodeReferenceIndexFunc(t *testing.T) {
@@ -126,7 +128,7 @@ func TestVirtualNodeReferenceIndexFunc(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := VirtualNodeReferenceIndexFunc(tt.args.obj)
+			got := VirtualNodeReferenceIndexFunc(tt.args.obj.(client.Object))
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -248,7 +250,7 @@ func TestVirtualRouterReferenceIndexFunc(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := VirtualRouterReferenceIndexFunc(tt.args.obj)
+			got := VirtualRouterReferenceIndexFunc(tt.args.obj.(client.Object))
 			assert.Equal(t, tt.want, got)
 		})
 	}

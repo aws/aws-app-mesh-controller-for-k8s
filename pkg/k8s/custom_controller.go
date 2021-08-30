@@ -19,12 +19,12 @@ import (
 
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Converter for converting k8s object and object list used in watches and list operation
@@ -231,50 +231,28 @@ func printList(list interface{}, listType string, log logr.Logger) {
 
 // notifyChannelOnCreate notifies the add event on the appropriate channel
 func (c *CustomController) notifyChannelOnCreate(obj interface{}) error {
-	meta, err := apimeta.Accessor(obj)
-	if err != nil {
-		return err
-	}
 	c.eventNotificationChan <- GenericEvent{
 		EventType: CREATE,
-		Meta:      meta,
-		Object:    obj.(runtime.Object),
+		Object:    obj.(client.Object),
 	}
 	return nil
 }
 
 // notifyChannelOnCreate notifies the add event on the appropriate channel
 func (c *CustomController) notifyChannelOnUpdate(oldObj, newObj interface{}) error {
-	oldMeta, err := apimeta.Accessor(oldObj)
-	if err != nil {
-		return err
-	}
-
-	newMeta, err := apimeta.Accessor(newObj)
-	if err != nil {
-		return err
-	}
-
 	c.eventNotificationChan <- GenericEvent{
 		EventType: UPDATE,
-		OldMeta:   oldMeta,
-		OldObject: oldObj.(runtime.Object),
-		Meta:      newMeta,
-		Object:    newObj.(runtime.Object),
+		OldObject: oldObj.(client.Object),
+		Object:    newObj.(client.Object),
 	}
 	return nil
 }
 
 // notifyChannelOnDelete notifies the delete event on the appropriate channel
 func (c *CustomController) notifyChannelOnDelete(obj interface{}) error {
-	meta, err := apimeta.Accessor(obj)
-	if err != nil {
-		return err
-	}
 	c.eventNotificationChan <- GenericEvent{
 		EventType: DELETE,
-		OldMeta:   meta,
-		OldObject: obj.(runtime.Object),
+		OldObject: obj.(client.Object),
 	}
 	return nil
 }

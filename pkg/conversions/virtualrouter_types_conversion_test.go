@@ -64,7 +64,7 @@ func TestConvert_CRD_WeightedTarget_To_SDK_WeightedTarget(t *testing.T) {
 	type args struct {
 		crdObj           *appmesh.WeightedTarget
 		sdkObj           *appmeshsdk.WeightedTarget
-		scopeConvertFunc func(src, dest interface{}, flags conversion.FieldMatchingFlags) error
+		scopeConvertFunc func(src, dest interface{}) error
 	}
 	tests := []struct {
 		name       string
@@ -83,7 +83,7 @@ func TestConvert_CRD_WeightedTarget_To_SDK_WeightedTarget(t *testing.T) {
 					Weight: int64(100),
 				},
 				sdkObj: &appmeshsdk.WeightedTarget{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -116,9 +116,8 @@ func TestConvert_CRD_WeightedTarget_To_SDK_WeightedTarget(t *testing.T) {
 			defer ctrl.Finish()
 			scope := mock_conversion.NewMockScope(ctrl)
 			if tt.args.scopeConvertFunc != nil {
-				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc)
+				scope.EXPECT().Convert(gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc)
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_WeightedTarget_To_SDK_WeightedTarget(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
@@ -430,7 +429,7 @@ func TestConvert_CRD_HTTPRouteAction_To_SDK_HttpRouteAction(t *testing.T) {
 	type args struct {
 		crdObj           *appmesh.HTTPRouteAction
 		sdkObj           *appmeshsdk.HttpRouteAction
-		scopeConvertFunc func(src, dest interface{}, flags conversion.FieldMatchingFlags) error
+		scopeConvertFunc func(src, dest interface{}) error
 	}
 	tests := []struct {
 		name       string
@@ -460,7 +459,7 @@ func TestConvert_CRD_HTTPRouteAction_To_SDK_HttpRouteAction(t *testing.T) {
 					},
 				},
 				sdkObj: &appmeshsdk.HttpRouteAction{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -487,9 +486,8 @@ func TestConvert_CRD_HTTPRouteAction_To_SDK_HttpRouteAction(t *testing.T) {
 			defer ctrl.Finish()
 			scope := mock_conversion.NewMockScope(ctrl)
 			if tt.args.scopeConvertFunc != nil {
-				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
+				scope.EXPECT().Convert(gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_HTTPRouteAction_To_SDK_HttpRouteAction(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
@@ -652,7 +650,7 @@ func TestConvert_CRD_HTTPRoute_To_SDK_HttpRoute(t *testing.T) {
 	type args struct {
 		crdObj           *appmesh.HTTPRoute
 		sdkObj           *appmeshsdk.HttpRoute
-		scopeConvertFunc func(src, dest interface{}, flags conversion.FieldMatchingFlags) error
+		scopeConvertFunc func(src, dest interface{}) error
 	}
 	tests := []struct {
 		name       string
@@ -738,7 +736,7 @@ func TestConvert_CRD_HTTPRoute_To_SDK_HttpRoute(t *testing.T) {
 					},
 				},
 				sdkObj: &appmeshsdk.HttpRoute{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -874,7 +872,7 @@ func TestConvert_CRD_HTTPRoute_To_SDK_HttpRoute(t *testing.T) {
 					RetryPolicy: nil,
 				},
 				sdkObj: &appmeshsdk.HttpRoute{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -939,9 +937,8 @@ func TestConvert_CRD_HTTPRoute_To_SDK_HttpRoute(t *testing.T) {
 			defer ctrl.Finish()
 			scope := mock_conversion.NewMockScope(ctrl)
 			if tt.args.scopeConvertFunc != nil {
-				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
+				scope.EXPECT().Convert(gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_HTTPRoute_To_SDK_HttpRoute(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
@@ -958,7 +955,7 @@ func TestConvert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(t *testing.T) {
 	type args struct {
 		crdObj           *appmesh.TCPRouteAction
 		sdkObj           *appmeshsdk.TcpRouteAction
-		scopeConvertFunc func(src, dest interface{}, flags conversion.FieldMatchingFlags) error
+		scopeConvertFunc func(src, dest interface{}) error
 	}
 	tests := []struct {
 		name       string
@@ -988,7 +985,7 @@ func TestConvert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(t *testing.T) {
 					},
 				},
 				sdkObj: &appmeshsdk.TcpRouteAction{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -1015,7 +1012,7 @@ func TestConvert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(t *testing.T) {
 					WeightedTargets: []appmesh.WeightedTarget{},
 				},
 				sdkObj: &appmeshsdk.TcpRouteAction{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -1033,7 +1030,7 @@ func TestConvert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(t *testing.T) {
 					WeightedTargets: nil,
 				},
 				sdkObj: &appmeshsdk.TcpRouteAction{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -1051,9 +1048,8 @@ func TestConvert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(t *testing.T) {
 			defer ctrl.Finish()
 			scope := mock_conversion.NewMockScope(ctrl)
 			if tt.args.scopeConvertFunc != nil {
-				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
+				scope.EXPECT().Convert(gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
@@ -1115,7 +1111,7 @@ func TestConvert_CRD_TCPRoute_To_SDK_TcpRoute(t *testing.T) {
 	type args struct {
 		crdObj           *appmesh.TCPRoute
 		sdkObj           *appmeshsdk.TcpRoute
-		scopeConvertFunc func(src, dest interface{}, flags conversion.FieldMatchingFlags) error
+		scopeConvertFunc func(src, dest interface{}) error
 	}
 	tests := []struct {
 		name       string
@@ -1147,7 +1143,7 @@ func TestConvert_CRD_TCPRoute_To_SDK_TcpRoute(t *testing.T) {
 					},
 				},
 				sdkObj: &appmeshsdk.TcpRoute{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -1176,9 +1172,8 @@ func TestConvert_CRD_TCPRoute_To_SDK_TcpRoute(t *testing.T) {
 			defer ctrl.Finish()
 			scope := mock_conversion.NewMockScope(ctrl)
 			if tt.args.scopeConvertFunc != nil {
-				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
+				scope.EXPECT().Convert(gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_TCPRoute_To_SDK_TcpRoute(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
@@ -1588,7 +1583,7 @@ func TestConvert_CRD_GRPCRouteAction_To_SDK_GrpcRouteAction(t *testing.T) {
 	type args struct {
 		crdObj           *appmesh.GRPCRouteAction
 		sdkObj           *appmeshsdk.GrpcRouteAction
-		scopeConvertFunc func(src, dest interface{}, flags conversion.FieldMatchingFlags) error
+		scopeConvertFunc func(src, dest interface{}) error
 	}
 	tests := []struct {
 		name       string
@@ -1618,7 +1613,7 @@ func TestConvert_CRD_GRPCRouteAction_To_SDK_GrpcRouteAction(t *testing.T) {
 					},
 				},
 				sdkObj: &appmeshsdk.GrpcRouteAction{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -1645,7 +1640,7 @@ func TestConvert_CRD_GRPCRouteAction_To_SDK_GrpcRouteAction(t *testing.T) {
 					WeightedTargets: []appmesh.WeightedTarget{},
 				},
 				sdkObj: &appmeshsdk.GrpcRouteAction{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -1663,9 +1658,8 @@ func TestConvert_CRD_GRPCRouteAction_To_SDK_GrpcRouteAction(t *testing.T) {
 			defer ctrl.Finish()
 			scope := mock_conversion.NewMockScope(ctrl)
 			if tt.args.scopeConvertFunc != nil {
-				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
+				scope.EXPECT().Convert(gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_GRPCRouteAction_To_SDK_GrpcRouteAction(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
@@ -1943,7 +1937,7 @@ func TestConvert_CRD_GRPCRoute_To_SDK_GrpcRoute(t *testing.T) {
 	type args struct {
 		crdObj           *appmesh.GRPCRoute
 		sdkObj           *appmeshsdk.GrpcRoute
-		scopeConvertFunc func(src, dest interface{}, flags conversion.FieldMatchingFlags) error
+		scopeConvertFunc func(src, dest interface{}) error
 	}
 	tests := []struct {
 		name       string
@@ -2020,7 +2014,7 @@ func TestConvert_CRD_GRPCRoute_To_SDK_GrpcRoute(t *testing.T) {
 					Timeout: nil,
 				},
 				sdkObj: &appmeshsdk.GrpcRoute{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -2146,7 +2140,7 @@ func TestConvert_CRD_GRPCRoute_To_SDK_GrpcRoute(t *testing.T) {
 					Timeout:     nil,
 				},
 				sdkObj: &appmeshsdk.GrpcRoute{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -2210,9 +2204,8 @@ func TestConvert_CRD_GRPCRoute_To_SDK_GrpcRoute(t *testing.T) {
 			defer ctrl.Finish()
 			scope := mock_conversion.NewMockScope(ctrl)
 			if tt.args.scopeConvertFunc != nil {
-				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
+				scope.EXPECT().Convert(gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_GRPCRoute_To_SDK_GrpcRoute(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {
@@ -2229,7 +2222,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 	type args struct {
 		crdObj           *appmesh.Route
 		sdkObj           *appmeshsdk.RouteSpec
-		scopeConvertFunc func(src, dest interface{}, flags conversion.FieldMatchingFlags) error
+		scopeConvertFunc func(src, dest interface{}) error
 	}
 	tests := []struct {
 		name       string
@@ -2459,7 +2452,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 					Priority: aws.Int64(400),
 				},
 				sdkObj: &appmeshsdk.RouteSpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -2816,7 +2809,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 					Priority: nil,
 				},
 				sdkObj: &appmeshsdk.RouteSpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -3115,7 +3108,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 					Priority: aws.Int64(400),
 				},
 				sdkObj: &appmeshsdk.RouteSpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -3396,7 +3389,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 					Priority:   aws.Int64(400),
 				},
 				sdkObj: &appmeshsdk.RouteSpec{},
-				scopeConvertFunc: func(src, dest interface{}, flags conversion.FieldMatchingFlags) error {
+				scopeConvertFunc: func(src, dest interface{}) error {
 					vnRef := src.(*appmesh.VirtualNodeReference)
 					vnNamePtr := dest.(*string)
 					*vnNamePtr = fmt.Sprintf("%s.%s", vnRef.Name, aws.StringValue(vnRef.Namespace))
@@ -3532,9 +3525,8 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 			defer ctrl.Finish()
 			scope := mock_conversion.NewMockScope(ctrl)
 			if tt.args.scopeConvertFunc != nil {
-				scope.EXPECT().Convert(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
+				scope.EXPECT().Convert(gomock.Any(), gomock.Any()).DoAndReturn(tt.args.scopeConvertFunc).AnyTimes()
 			}
-			scope.EXPECT().Flags().Return(conversion.DestFromSource).AnyTimes()
 
 			err := Convert_CRD_Route_To_SDK_RouteSpec(tt.args.crdObj, tt.args.sdkObj, scope)
 			if tt.wantErr != nil {

@@ -15,10 +15,10 @@ jobs:
     - name: clean work dir from previous runs
       run: |
         rm -rf *
-    - name: setup go 1.14
+    - name: setup go 1.16
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.14
+        go-version: ^1.16
       id: go
     - name: setup environment
       run: |

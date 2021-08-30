@@ -14,6 +14,7 @@ package controllers
 
 import (
 	"context"
+
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
@@ -51,8 +52,8 @@ type virtualNodeReconciler struct {
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes/status,verbs=get;update;patch
 
-func (r *virtualNodeReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	return runtime.HandleReconcileError(r.reconcile(req), r.log)
+func (r *virtualNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	return runtime.HandleReconcileError(r.reconcile(ctx, req), r.log)
 }
 
 func (r *virtualNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -63,8 +64,7 @@ func (r *virtualNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *virtualNodeReconciler) reconcile(req ctrl.Request) error {
-	ctx := context.Background()
+func (r *virtualNodeReconciler) reconcile(ctx context.Context, req ctrl.Request) error {
 	vn := &appmesh.VirtualNode{}
 	if err := r.k8sClient.Get(ctx, req.NamespacedName, vn); err != nil {
 		return client.IgnoreNotFound(err)

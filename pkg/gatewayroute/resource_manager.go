@@ -2,6 +2,7 @@ package gatewayroute
 
 import (
 	"context"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
@@ -355,7 +356,7 @@ func BuildSDKGatewayRouteSpec(ctx context.Context, gr *appmesh.GatewayRoute, vsB
 		return sdkVSRefConvertFunc(a.(*appmesh.VirtualServiceReference), b.(*string), scope)
 	})
 	sdkGRSpec := &appmeshsdk.GatewayRouteSpec{}
-	if err := converter.Convert(&gr.Spec, sdkGRSpec, conversion.DestFromSource, nil); err != nil {
+	if err := converter.Convert(&gr.Spec, sdkGRSpec, nil); err != nil {
 		return nil, err
 	}
 	return sdkGRSpec, nil

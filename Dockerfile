@@ -17,11 +17,7 @@ RUN GIT_VERSION=$(git describe --tags --dirty --always) && \
     -ldflags="-X ${VERSION_PKG}.GitVersion=${GIT_VERSION} -X ${VERSION_PKG}.GitCommit=${GIT_COMMIT} -X ${VERSION_PKG}.BuildDate=${BUILD_DATE}" -a -o controller main.go
 
 # Build the container image
-FROM amazonlinux:2
-RUN yum update -y && \
-    yum install -y ca-certificates && \
-    yum clean all && \
-    rm -rf /var/cache/yum
+FROM public.ecr.aws/eks-distro-build-tooling/eks-distro-minimal-base:2021-08-22-1629654770
 
 WORKDIR /
 COPY --from=builder /workspace/controller .
