@@ -1,4 +1,4 @@
-name: integration-test
+name: merge-integration-test
 on:
   push:
     branches:
@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build:
-    name: integration-test
+    name: merge-integration-test
     runs-on: [self-hosted, aws-app-mesh-controller-for-k8s]
     steps:
     - name: clean work dir from previous runs
