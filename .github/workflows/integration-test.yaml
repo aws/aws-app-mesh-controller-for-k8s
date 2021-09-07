@@ -1,4 +1,4 @@
-name: integration-test-post-merge
+name: merge-integration-test
 on:
   push:
     branches:
