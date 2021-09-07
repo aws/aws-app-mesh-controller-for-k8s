@@ -12,7 +12,7 @@
 
 ## AWS App Mesh Controller For K8s
 
-AWS App Mesh Controller For K8s is a controller to help manage [App Mesh](https://aws.amazon.com/app-mesh/) resources for a Kubernetes cluster and injecting sidecars to Kubernetes [Pods](https://kubernetes.io/docs/concepts/workloads/pods/pod/).  The controller watches custom resources for changes and reflects those changes into the [App Mesh API](https://docs.aws.amazon.com/app-mesh/latest/APIReference/Welcome.html). The controller maintains the custom resources ([CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)): meshes, virtualnodes, virtualrouters, virtualservices, virtualgateways and gatewayroutes.  The custom resources map to App Mesh API objects.
+AWS App Mesh Controller For K8s is the controller to help manage [App Mesh](https://aws.amazon.com/app-mesh/) resources for a Kubernetes cluster and injecting sidecars to Kubernetes [Pods](https://kubernetes.io/docs/concepts/workloads/pods/pod/).  The controller watches custom resources for changes and reflects those changes into the [App Mesh API](https://docs.aws.amazon.com/app-mesh/latest/APIReference/Welcome.html). The controller maintains the custom resources ([CRDs](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)): meshes, virtualnodes, virtualrouters, virtualservices, virtualgateways and gatewayroutes.  The custom resources map to App Mesh API objects.
 
 Note: For v0.5.0 or older versions of the controller, please refer to [legacy-controller branch](https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/legacy-controller)
 
