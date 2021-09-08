@@ -138,8 +138,9 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		// Specify a unix domain socket for DogStatsD daemon. If not specified and if DogStatsD
 		// is enabled then defaults to DogStatsD daemon IP address port [default: 127.0.0.1:8125].
 		// This variable can only be used with version v1.19.1 or later.
-		env["STATSD_SOCKET_PATH"] = strings.TrimSpace(vars.StatsDSocketPath)
-
+		if statsDSocketPath := strings.TrimSpace(vars.StatsDSocketPath); statsDSocketPath != "" {
+			env["STATSD_SOCKET_PATH"] = statsDSocketPath
+		}
 	}
 
 	if vars.EnableJaegerTracing {
