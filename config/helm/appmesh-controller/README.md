@@ -94,7 +94,7 @@ Make sure that the Envoy proxies have the following IAM policies attached for th
 
 There are **2 ways** you can attach the above policy to the Envoy Pod  
 #### With IRSA     
-Download the Envoy IAM polocy  
+Download the Envoy IAM policy  
 ```
 curl -o envoy-iam-policy.json https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/master/config/iam/envoy-iam-policy.json
 ```
@@ -380,13 +380,15 @@ Parameter | Description | Default
 `stats.tagsEnabled` |  If `true`, Envoy should include app-mesh tags | `false`
 `stats.statsdEnabled` |  If `true`, Envoy should publish stats to statsd endpoint @ 127.0.0.1:8125 | `false`
 `stats.statsdAddress` |  DogStatsD daemon IP address | `127.0.0.1`
+`stats.statsdSocketPath` | DogStatsD Unix domain socket path | None
 `stats.statsdPort` |  DogStatsD daemon port | `8125`
 `cloudMapCustomHealthCheck.enabled` |  If `true`, CustomHealthCheck will be enabled for CloudMap Services | `false`
 `cloudMapDNS.ttl` |  Sets CloudMap DNS TTL | `300`
 `tracing.enabled` |  If `true`, Envoy will be configured with tracing | `false`
 `tracing.provider` |  The tracing provider can be x-ray, jaeger or datadog | `x-ray`
 `tracing.address` |  Jaeger or Datadog agent server address (ignored for X-Ray) | `appmesh-jaeger.appmesh-system`
-`tracing.port` |  Jaeger or Datadog agent port (ignored for X-Ray) | `9411`
+`tracing.port` |  X-Ray, Jaeger or Datadog agent port | `9411`
+`tracing.samplingRate` | X-Ray tracer sampling rate. Value can be a decimal number between 0 and 1.00 (100%)  | `0.05`
 `enableCertManager` |  Enable Cert-Manager | `false`
 `xray.image.repository` | X-Ray image repository | `amazon/aws-xray-daemon`
 `xray.image.tag` | X-Ray image tag | `latest`

@@ -106,8 +106,10 @@ tracing:
   provider: x-ray
   # tracing.address: Jaeger or Datadog agent server address (ignored for X-Ray)
   address: appmesh-jaeger.appmesh-system
-  # tracing.port: Jaeger or Datadog agent server port
+  # tracing.port: X-ray, Jaeger or Datadog agent server port
   port: 2000
+  # tracing.samplingRate: X-Ray tracer sampling rate
+  samplingRate: 0.01
 
 stats:
   # stats.tagsEnabled: `true` if Envoy should include app-mesh tags
@@ -118,6 +120,8 @@ stats:
   statsdAddress: 127.0.0.1
   #stats.statsdPort: DogStatsD daemon port
   statsdPort: 8125
+  #stats.statsdSocketPath: DogStatsD unix domain socket path
+  statsdSocketPath: /var/run/datadog/dsd.socket
 
 # Enable cert-manager
 enableCertManager: false

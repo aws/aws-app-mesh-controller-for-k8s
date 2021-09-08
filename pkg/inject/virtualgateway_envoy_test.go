@@ -750,6 +750,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					enableXrayTracing:          true,
 					xrayDaemonPort:             2000,
+					xraySamplingRate:           "0.01",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 				},
@@ -799,6 +800,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "XRAY_DAEMON_PORT",
 									Value: "2000",
+								},
+								{
+									Name:  "XRAY_SAMPLING_RATE",
+									Value: "0.01",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
@@ -936,6 +941,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					enableStatsD:               true,
 					statsDAddress:              "127.0.0.1",
 					statsDPort:                 8125,
+					statsDSocketPath:           "/var/run/datadog/dsd.socket",
 				},
 			},
 			args: args{
@@ -987,6 +993,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "STATSD_ADDRESS",
 									Value: "127.0.0.1",
+								},
+								{
+									Name:  "STATSD_SOCKET_PATH",
+									Value: "/var/run/datadog/dsd.socket",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{

@@ -24,6 +24,7 @@ type virtualGatwayEnvoyConfig struct {
 	readinessProbePeriod       int32
 	enableXrayTracing          bool
 	xrayDaemonPort             int32
+	xraySamplingRate           string
 	enableJaegerTracing        bool
 	jaegerPort                 string
 	jaegerAddress              string
@@ -34,6 +35,7 @@ type virtualGatwayEnvoyConfig struct {
 	enableStatsD               bool
 	statsDPort                 int32
 	statsDAddress              string
+	statsDSocketPath           string
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -120,6 +122,7 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Envo
 		AdminAccessLogFile:       m.mutatorConfig.adminAccessLogFile,
 		EnableXrayTracing:        m.mutatorConfig.enableXrayTracing,
 		XrayDaemonPort:           m.mutatorConfig.xrayDaemonPort,
+		XraySamplingRate:         m.mutatorConfig.xraySamplingRate,
 		EnableJaegerTracing:      m.mutatorConfig.enableJaegerTracing,
 		JaegerPort:               m.mutatorConfig.jaegerPort,
 		JaegerAddress:            m.mutatorConfig.jaegerAddress,
@@ -130,6 +133,7 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Envo
 		EnableStatsD:             m.mutatorConfig.enableStatsD,
 		StatsDPort:               m.mutatorConfig.statsDPort,
 		StatsDAddress:            m.mutatorConfig.statsDAddress,
+		StatsDSocketPath:         m.mutatorConfig.statsDSocketPath,
 	}
 }
 

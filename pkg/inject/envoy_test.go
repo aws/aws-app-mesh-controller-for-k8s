@@ -354,6 +354,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableXrayTracing:          true,
 					xrayDaemonPort:             2000,
+					xraySamplingRate:           "0.01",
 				},
 			},
 			args: args{
@@ -432,6 +433,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "XRAY_DAEMON_PORT",
 									Value: "2000",
+								},
+								{
+									Name:  "XRAY_SAMPLING_RATE",
+									Value: "0.01",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
@@ -795,6 +800,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					enableStatsD:               true,
 					statsDAddress:              "127.0.0.1",
 					statsDPort:                 8125,
+					statsDSocketPath:           "/var/run/datadog/dsd.socket",
 				},
 			},
 			args: args{
@@ -877,6 +883,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "STATSD_ADDRESS",
 									Value: "127.0.0.1",
+								},
+								{
+									Name:  "STATSD_SOCKET_PATH",
+									Value: "/var/run/datadog/dsd.socket",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
