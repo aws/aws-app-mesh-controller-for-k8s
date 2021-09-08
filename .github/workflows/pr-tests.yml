@@ -19,17 +19,24 @@ jobs:
       - name: clean work dir from previous runs
         run: |
           rm -rf *
+          
       - name: setup go 1.16
         uses: actions/setup-go@v2
         with:
           go-version: ^1.16
         id: go
+        
       - name: setup environment
         run: |
           source ~/.bashrc
-      - name: checkout code
+          
+      - name: Check out latest commit in the PR as a merge commit
         uses: actions/checkout@v2
+        with:
+          ref: 'refs/pull/${{ github.event.inputs.pull_request_number }}/merge'
+          
       - name: setup kind and run integration tests
         run: make integration-test
+        
       - name: cleanup all the kind clusters
         run: make delete-all-kind-clusters
