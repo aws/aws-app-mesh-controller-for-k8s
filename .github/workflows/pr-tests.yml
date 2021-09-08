@@ -1,12 +1,12 @@
 name: Manual test runner workflow
 
 on:
-  workflow_dispatch:
-    inputs:
-      pull_request_number:
-        description: 'PR number for which integration tests need to be run'
-        default: ''
-        required: true
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 permissions:
   contents: read
