@@ -120,7 +120,7 @@ tracing:
   provider: x-ray
   # tracing.address: Jaeger or Datadog agent server address (ignored for X-Ray)
   address: appmesh-jaeger.appmesh-system
-  # tracing.port: X-ray, Jaeger or Datadog agent server port
+  # tracing.port: X-Ray, Jaeger or Datadog agent server port
   port: 2000
   # tracing.samplingRate: X-Ray tracer sampling rate
   samplingRate: 0.01

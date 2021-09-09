@@ -127,12 +127,13 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		// as the default daemon endpoint. To enable, set the value to 1
 		env["ENABLE_ENVOY_DOG_STATSD"] = "1"
 
-		// // Specify a port value to override the default DogStatsD daemon port
+		// Specify a port value to override the default DogStatsD daemon port.
+		// This value will be overridden if `STATSD_SOCKET_PATH` is specified.
 		env["STATSD_PORT"] = strconv.Itoa(int(vars.StatsDPort))
 
 		// Specify an IP address value to override the default DogStatsD daemon IP address
 		// Default: 127.0.0.1. This variable can only be used with version 1.15.0 or later
-		// of the Envoy image
+		// of the Envoy image. This value will be overridden if `STATSD_SOCKET_PATH` is specified.
 		env["STATSD_ADDRESS"] = vars.StatsDAddress
 
 		// Specify a unix domain socket for DogStatsD daemon. If not specified and if DogStatsD

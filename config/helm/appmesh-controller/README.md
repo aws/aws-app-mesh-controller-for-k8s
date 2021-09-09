@@ -379,9 +379,9 @@ Parameter | Description | Default
 `init.image.tag` | Route manager image tag | `<VERSION>`
 `stats.tagsEnabled` |  If `true`, Envoy should include app-mesh tags | `false`
 `stats.statsdEnabled` |  If `true`, Envoy should publish stats to statsd endpoint @ 127.0.0.1:8125 | `false`
-`stats.statsdAddress` |  DogStatsD daemon IP address | `127.0.0.1`
-`stats.statsdSocketPath` | DogStatsD Unix domain socket path | None
-`stats.statsdPort` |  DogStatsD daemon port | `8125`
+`stats.statsdAddress` |  DogStatsD daemon IP address. This will be overridden if `stats.statsdSocketPath` is specified | `127.0.0.1`
+`stats.statsdPort` |  DogStatsD daemon port. This will be overridden if `stats.statsdSocketPath` is specified | `8125`
+`stats.statsdSocketPath` | DogStatsD Unix domain socket path. If not specified and if `stats.statsdEnabled` is set to `true` then it will default to DogStatsD daemon IP address port [default: `127.0.0.1:8125`] | None
 `cloudMapCustomHealthCheck.enabled` |  If `true`, CustomHealthCheck will be enabled for CloudMap Services | `false`
 `cloudMapDNS.ttl` |  Sets CloudMap DNS TTL | `300`
 `tracing.enabled` |  If `true`, Envoy will be configured with tracing | `false`
