@@ -1,6 +1,9 @@
-name: merge-integration-test
+name: integration-test
 on:
   push:
+    branches:
+      - master
+  pull_request:
     branches:
       - master
 
