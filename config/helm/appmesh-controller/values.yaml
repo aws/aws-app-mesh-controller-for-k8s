@@ -120,8 +120,6 @@ stats:
   statsdAddress: 127.0.0.1
   #stats.statsdPort: DogStatsD daemon port
   statsdPort: 8125
-  #stats.statsdSocketPath: DogStatsD unix domain socket path
-  statsdSocketPath: /var/run/datadog/dsd.socket
 
 # Enable cert-manager
 enableCertManager: false
