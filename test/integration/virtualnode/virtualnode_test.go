@@ -3,12 +3,11 @@ package virtualnode_test
 import (
 	"context"
 	"fmt"
-	"sync"
-	"time"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	appsv1 "k8s.io/api/apps/v1"
+	"sync"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
