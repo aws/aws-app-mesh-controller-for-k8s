@@ -381,7 +381,7 @@ Parameter | Description | Default
 `stats.statsdEnabled` |  If `true`, Envoy should publish stats to statsd endpoint @ 127.0.0.1:8125 | `false`
 `stats.statsdAddress` |  DogStatsD daemon IP address. This will be overridden if `stats.statsdSocketPath` is specified | `127.0.0.1`
 `stats.statsdPort` |  DogStatsD daemon port. This will be overridden if `stats.statsdSocketPath` is specified | `8125`
-`stats.statsdSocketPath` | DogStatsD Unix domain socket path. If not specified and if `stats.statsdEnabled` is set to `true` then it will default to DogStatsD daemon IP address port [default: `127.0.0.1:8125`] | None
+`stats.statsdSocketPath` | DogStatsD Unix domain socket path. If statsd is enabled but this value is not specified then we will use combination of <statsAddress:statsPort> as the default | None
 `cloudMapCustomHealthCheck.enabled` |  If `true`, CustomHealthCheck will be enabled for CloudMap Services | `false`
 `cloudMapDNS.ttl` |  Sets CloudMap DNS TTL | `300`
 `tracing.enabled` |  If `true`, Envoy will be configured with tracing | `false`
