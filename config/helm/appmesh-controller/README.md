@@ -387,7 +387,7 @@ Parameter | Description | Default
 `tracing.enabled` |  If `true`, Envoy will be configured with tracing | `false`
 `tracing.provider` |  The tracing provider can be x-ray, jaeger or datadog | `x-ray`
 `tracing.address` |  Jaeger or Datadog agent server address (ignored for X-Ray) | `appmesh-jaeger.appmesh-system`
-`tracing.port` |  X-Ray, Jaeger or Datadog agent port | `9411`
+`tracing.port` |  Jaeger or Datadog agent port (ignored for X-Ray) | `9411`
 `tracing.samplingRate` | X-Ray tracer sampling rate. Value can be a decimal number between 0 and 1.00 (100%)  | `0.05`
 `enableCertManager` |  Enable Cert-Manager | `false`
 `xray.image.repository` | X-Ray image repository | `amazon/aws-xray-daemon`
