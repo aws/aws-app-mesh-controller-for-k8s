@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -43,7 +44,7 @@ type EnvoyTemplateVariables struct {
 	StatsDSocketPath         string
 }
 
-func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) {
+func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) error {
 	// add all the controller managed env to the map so
 	// 1) we remove duplicates
 	// 2) we don't allow overriding controller managed env with pod annotations
@@ -96,9 +97,9 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		}
 		fixedRate, err := strconv.ParseFloat(samplingRate, 32)
 		if err != nil || float64(0) > fixedRate || float64(1) < fixedRate {
-			// TODO: Return error if this value is not a decimal between 0 & 1.00
-			// Don't set this env if the value is not between 0 and 1.00, the
-			// xray extension will take care of sampling at 0.05 5% by default
+			// the value is not a decimal between 0 and 1.00
+			return errors.Errorf("tracing.samplingRate should be a decimal between 0 & 1.00, " +
+				"but instead got %s %v", samplingRate, err)
 		} else {
 			fixedRate = math.Round(fixedRate*100) / 100
 			env["XRAY_SAMPLING_RATE"] = strconv.FormatFloat(fixedRate, 'f', -1, 32)
@@ -149,9 +150,10 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		env["JAEGER_TRACER_PORT"] = vars.JaegerPort
 		env["JAEGER_TRACER_ADDRESS"] = vars.JaegerAddress
 	}
+	return nil
 }
 
-func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) corev1.Container {
+func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (corev1.Container, error) {
 
 	envoy := corev1.Container{
 		Name:  "envoy",
@@ -177,9 +179,11 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) corev
 	}
 
 	vname := fmt.Sprintf("mesh/%s/virtualNode/%s", vars.MeshName, vars.VirtualGatewayOrNodeName)
-	updateEnvMapForEnvoy(vars, env, vname)
+	if err := updateEnvMapForEnvoy(vars, env, vname); err != nil {
+		return envoy, err
+	}
 	envoy.Env = getEnvoyEnv(env)
-	return envoy
+	return envoy, nil
 
 }
 

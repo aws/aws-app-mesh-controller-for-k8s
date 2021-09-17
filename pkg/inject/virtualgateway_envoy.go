@@ -68,7 +68,9 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 	vg := fmt.Sprintf("mesh/%s/virtualGateway/%s", variables.MeshName, variables.VirtualGatewayOrNodeName)
 
 	envMap := map[string]string{}
-	updateEnvMapForEnvoy(variables, envMap, vg)
+	if err := updateEnvMapForEnvoy(variables, envMap, vg); err != nil {
+		return err
+	}
 
 	//we override the image to latest Envoy so customers do not have to manually manage
 	// envoy versions and let controller handle consistency versions across the mesh

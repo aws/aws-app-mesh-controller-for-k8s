@@ -80,7 +80,10 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 
-	container := buildEnvoySidecar(variables, customEnv)
+	container, err := buildEnvoySidecar(variables, customEnv)
+	if err != nil {
+		return err
+	}
 
 	// add resource requests and limits
 	container.Resources, err = sidecarResources(getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
