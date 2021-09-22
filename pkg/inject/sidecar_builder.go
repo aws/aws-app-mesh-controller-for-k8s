@@ -2,9 +2,12 @@ package inject
 
 import (
 	"fmt"
+	"math"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -27,6 +30,7 @@ type EnvoyTemplateVariables struct {
 	SidecarImage             string
 	EnableXrayTracing        bool
 	XrayDaemonPort           int32
+	XraySamplingRate         string
 	EnableJaegerTracing      bool
 	JaegerPort               string
 	JaegerAddress            string
@@ -37,9 +41,10 @@ type EnvoyTemplateVariables struct {
 	EnableStatsD             bool
 	StatsDPort               int32
 	StatsDAddress            string
+	StatsDSocketPath         string
 }
 
-func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) {
+func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) error {
 	// add all the controller managed env to the map so
 	// 1) we remove duplicates
 	// 2) we don't allow overriding controller managed env with pod annotations
@@ -79,6 +84,29 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		// Specify a port value to override the default X-Ray daemon port: 2000
 		env["XRAY_DAEMON_PORT"] = strconv.Itoa(int(vars.XrayDaemonPort))
 
+		// Override the default sampling rate of 0.05 (5%) for AWS X-Ray tracer
+		// The value should be specified as a decimal between 0 and 1.00 (100%)
+		samplingRate, ok := env["XRAY_SAMPLING_RATE"]
+		if ok {
+			// `podAnnotations` contains the sampling rate and gets preference over helm configuration
+			// For now delete this value from env so that we can validate before adding again
+			delete(env, "XRAY_SAMPLING_RATE")
+		} else {
+			// `podAnnotations` doesn't contain the sampling rate so get value from helm configuration
+			samplingRate = vars.XraySamplingRate
+		}
+		if samplingRate != "" {
+			// Process only if this value is set
+			fixedRate, err := strconv.ParseFloat(samplingRate, 32)
+			if err != nil || float64(0) > fixedRate || float64(1) < fixedRate {
+				// The value is not a decimal between 0 and 1.00
+				return errors.Errorf("tracing.samplingRate should be a decimal between 0 & 1.00, "+
+					"but instead got %s %v", samplingRate, err)
+			} else {
+				fixedRate = math.Round(fixedRate*100) / 100
+				env["XRAY_SAMPLING_RATE"] = strconv.FormatFloat(fixedRate, 'f', -1, 32)
+			}
+		}
 	}
 
 	if vars.EnableDatadogTracing {
@@ -103,14 +131,21 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		// as the default daemon endpoint. To enable, set the value to 1
 		env["ENABLE_ENVOY_DOG_STATSD"] = "1"
 
-		// // Specify a port value to override the default DogStatsD daemon port
+		// Specify a port value to override the default DogStatsD daemon port.
+		// This value will be overridden if `STATSD_SOCKET_PATH` is specified.
 		env["STATSD_PORT"] = strconv.Itoa(int(vars.StatsDPort))
 
 		// Specify an IP address value to override the default DogStatsD daemon IP address
 		// Default: 127.0.0.1. This variable can only be used with version 1.15.0 or later
-		// of the Envoy image
+		// of the Envoy image. This value will be overridden if `STATSD_SOCKET_PATH` is specified.
 		env["STATSD_ADDRESS"] = vars.StatsDAddress
 
+		// Specify a unix domain socket for DogStatsD daemon. If not specified and if DogStatsD
+		// is enabled then defaults to DogStatsD daemon IP address port [default: 127.0.0.1:8125].
+		// This variable can only be used with version v1.19.1 or later.
+		if statsDSocketPath := strings.TrimSpace(vars.StatsDSocketPath); statsDSocketPath != "" {
+			env["STATSD_SOCKET_PATH"] = statsDSocketPath
+		}
 	}
 
 	if vars.EnableJaegerTracing {
@@ -118,9 +153,10 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		env["JAEGER_TRACER_PORT"] = vars.JaegerPort
 		env["JAEGER_TRACER_ADDRESS"] = vars.JaegerAddress
 	}
+	return nil
 }
 
-func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) corev1.Container {
+func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (corev1.Container, error) {
 
 	envoy := corev1.Container{
 		Name:  "envoy",
@@ -146,9 +182,11 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) corev
 	}
 
 	vname := fmt.Sprintf("mesh/%s/virtualNode/%s", vars.MeshName, vars.VirtualGatewayOrNodeName)
-	updateEnvMapForEnvoy(vars, env, vname)
+	if err := updateEnvMapForEnvoy(vars, env, vname); err != nil {
+		return envoy, err
+	}
 	envoy.Env = getEnvoyEnv(env)
-	return envoy
+	return envoy, nil
 
 }
 
