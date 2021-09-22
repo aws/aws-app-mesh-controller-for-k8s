@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# This script run integration tests on the EKS VPC Resource Controller
-# This is not intended to run integration tests when controller is running
-# on the data plane for development and testing purposes.
+# This script run integration tests on the AWS AppMesh Controller
 
 set -e
 
@@ -27,7 +25,7 @@ ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
 
 NODE_GROUP_NAME=${CLUSTER_NAME}"ng"
 
-NODE_INSTANCE_ROLE_ARN=$(aws eks describe-nodegroup --cluster-name $CLUSTER_NAME --nodegroup-name nodegroup | jq -r '.nodegroup.nodeRole')
+NODE_INSTANCE_ROLE_ARN=$(aws eks describe-nodegroup --cluster-name $CLUSTER_NAME --nodegroup-name $NODE_GROUP_NAME | jq -r '.nodegroup.nodeRole')
 NODE_ROLE_NAME=${NODE_INSTANCE_ROLE_ARN##*/}
 
 echo "VPC ID: $VPC_ID, Service Role ARN: $SERVICE_ROLE_ARN, Role Name: $ROLE_NAME"
@@ -42,11 +40,13 @@ aws iam attach-role-policy \
 echo "Enabling Pod ENI on aws-node"
 kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=true
 
-# Install appmesh-controller
+# Install appmesh CRDs
 echo "Installing appmesh CRDs"
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update
 kubectl apply -k "github.com/aws/eks-charts/stable/appmesh-controller//crds?ref=master"
+
+echo "Create namespace appmesh-system"
 kubectl create ns appmesh-system || true
 
 eksctl utils associate-iam-oidc-provider --region=$REGION \
@@ -57,22 +57,22 @@ curl -o controller-iam-policy.json https://raw.githubusercontent.com/aws/aws-app
 
 aws iam create-policy \
     --policy-name AWSAppMeshK8sControllerIAMPolicy \
-    --policy-document file://controller-iam-policy.json > /dev/null || true
+    --policy-document file://controller-iam-policy.json || true
 
 curl -o envoy-iam-policy.json https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/master/config/iam/envoy-iam-policy.json
 
 aws iam create-policy \
     --policy-name AWSAppMeshEnvoyIAMPolicy \
-    --policy-document file://envoy-iam-policy.json > /dev/null || true
+    --policy-document file://envoy-iam-policy.json || true
 
 echo "Attaching Controller and Envoy policies to Node Instance Role"
 aws iam attach-role-policy \
     --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/AWSAppMeshK8sControllerIAMPolicy \
-    --role-name "$NODE_ROLE_NAME" > /dev/null || true
+    --role-name "$NODE_ROLE_NAME" || true
 
 aws iam attach-role-policy \
     --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/AWSAppMeshEnvoyIAMPolicy \
-    --role-name "$NODE_ROLE_NAME" > /dev/null || true
+    --role-name "$NODE_ROLE_NAME" || true
 
 echo "Deploying appmesh-controller"
 helm upgrade -i appmesh-controller eks/appmesh-controller \
@@ -89,7 +89,7 @@ echo "Successfully finished the test suite"
 echo "Detaching the IAM Policy from Cluster Service Role"
 aws iam detach-role-policy \
     --policy-arn arn:aws:iam::aws:policy/AmazonEKSVPCResourceController \
-    --role-name $ROLE_NAME > /dev/null || true
+    --role-name $ROLE_NAME || true
 
 echo "Disabling Pod ENI on aws-node"
 kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=false
@@ -97,11 +97,11 @@ kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=false
 echo "Detaching the IAM Policies from Node Instance Role"
 aws iam detach-role-policy \
     --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/AWSAppMeshK8sControllerIAMPolicy \
-    --role-name $NODE_ROLE_NAME > /dev/null || true
+    --role-name $NODE_ROLE_NAME || true
 
 aws iam detach-role-policy \
     --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/AWSAppMeshEnvoyIAMPolicy \
-    --role-name $NODE_ROLE_NAME > /dev/null || true
+    --role-name $NODE_ROLE_NAME || true
 
 #Delete AppMesh CRDs
 echo "Deleting appmesh CRD's"
