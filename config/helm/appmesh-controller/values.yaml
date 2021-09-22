@@ -109,7 +109,7 @@ tracing:
   # tracing.port: X-Ray, Jaeger or Datadog agent server port
   port: 2000
   # tracing.samplingRate: X-Ray tracer sampling rate
-  samplingRate: ""
+  samplingRate: 0.05
 
 stats:
   # stats.tagsEnabled: `true` if Envoy should include app-mesh tags
