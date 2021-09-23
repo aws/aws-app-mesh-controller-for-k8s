@@ -13,8 +13,8 @@ AppMesh controller supports integration with multiple tracing solutions for data
 
     You can optionally use a specific X-Ray image by setting the following flags in addition to the above:
     ```sh
-        --set xray.image.repository=amazon/aws-xray-daemon \
-        --set xray.image.tag=3.2.0
+        --set xray.image.repository=public.ecr.aws/xray/aws-xray-daemon \
+        --set xray.image.tag=3.3.3
     ```
 
 **Note**: You should restart all pods running inside the mesh after enabling tracing.

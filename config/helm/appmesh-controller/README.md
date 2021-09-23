@@ -390,7 +390,7 @@ Parameter | Description | Default
 `tracing.port` |  Jaeger or Datadog agent port (ignored for X-Ray) | `9411`
 `tracing.samplingRate` | X-Ray tracer sampling rate. Value can be a decimal number between 0 and 1.00 (100%)  | `0.05`
 `enableCertManager` |  Enable Cert-Manager | `false`
-`xray.image.repository` | X-Ray image repository | `amazon/aws-xray-daemon`
+`xray.image.repository` | X-Ray image repository | `public.ecr.aws/xray/aws-xray-daemon`
 `xray.image.tag` | X-Ray image tag | `latest`
 `accountId` | AWS Account ID for the Kubernetes cluster | None
 `env` |  environment variables to be injected into the appmesh-controller pod | `{}`

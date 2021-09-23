@@ -43,7 +43,7 @@ init:
 
 xray:
   image:
-    repository: amazon/aws-xray-daemon
+    repository: public.ecr.aws/xray/aws-xray-daemon
     tag: latest
 
 nameOverride: ""

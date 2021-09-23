@@ -66,7 +66,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 		sidecarMemoryRequests: memoryRequests.String(),
 		sidecarCPULimits:      cpuLimits.String(),
 		sidecarMemoryLimits:   memoryLimits.String(),
-		xRayImage:             "amazon/aws-xray-daemon",
+		xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
 		xRayDaemonPort:        2000,
 	}
 	type fields struct {
@@ -172,7 +172,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 						},
 						{
 							Name:  "xray-daemon",
-							Image: "amazon/aws-xray-daemon",
+							Image: "public.ecr.aws/xray/aws-xray-daemon",
 							SecurityContext: &corev1.SecurityContext{
 								RunAsUser: aws.Int64(1337),
 							},
@@ -212,7 +212,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 					awsRegion:             "us-west-2",
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
-					xRayImage:             "amazon/aws-xray-daemon",
+					xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
 					xRayDaemonPort:        2000,
 				},
 			},
@@ -232,7 +232,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 						},
 						{
 							Name:  "xray-daemon",
-							Image: "amazon/aws-xray-daemon",
+							Image: "public.ecr.aws/xray/aws-xray-daemon",
 							SecurityContext: &corev1.SecurityContext{
 								RunAsUser: aws.Int64(1337),
 							},
@@ -269,7 +269,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
 					sidecarMemoryLimits:   memoryLimits.String(),
-					xRayImage:             "amazon/aws-xray-daemon",
+					xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
 					xRayDaemonPort:        2000,
 				},
 			},
@@ -289,7 +289,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 						},
 						{
 							Name:  "xray-daemon",
-							Image: "amazon/aws-xray-daemon",
+							Image: "public.ecr.aws/xray/aws-xray-daemon",
 							SecurityContext: &corev1.SecurityContext{
 								RunAsUser: aws.Int64(1337),
 							},
@@ -329,7 +329,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
 					sidecarCPULimits:      cpuLimits.String(),
-					xRayImage:             "amazon/aws-xray-daemon",
+					xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
 					xRayDaemonPort:        2000,
 				},
 			},
@@ -349,7 +349,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 						},
 						{
 							Name:  "xray-daemon",
-							Image: "amazon/aws-xray-daemon",
+							Image: "public.ecr.aws/xray/aws-xray-daemon",
 							SecurityContext: &corev1.SecurityContext{
 								RunAsUser: aws.Int64(1337),
 							},
@@ -388,7 +388,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 					awsRegion:             "us-west-2",
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
-					xRayImage:             "amazon/aws-xray-daemon",
+					xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
 				},
 			},
 			args: args{
@@ -417,7 +417,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 				mutatorConfig: xrayMutatorConfig{
 					sidecarCPURequests:    cpuRequests.String(),
 					sidecarMemoryRequests: memoryRequests.String(),
-					xRayImage:             "amazon/aws-xray-daemon",
+					xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
 					xRayDaemonPort:        2000,
 				},
 			},
@@ -555,7 +555,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 						},
 						{
 							Name:  "xray-daemon",
-							Image: "amazon/aws-xray-daemon",
+							Image: "public.ecr.aws/xray/aws-xray-daemon",
 							SecurityContext: &corev1.SecurityContext{
 								RunAsUser: aws.Int64(1337),
 							},
