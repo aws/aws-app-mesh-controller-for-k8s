@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script run integration tests on the AWS AppMesh Controller
+# This script runs integration tests for the AWS AppMesh Controller
 
 set -e
 
@@ -65,18 +65,25 @@ aws iam create-policy \
     --policy-name AWSAppMeshEnvoyIAMPolicy \
     --policy-document file://envoy-iam-policy.json || true
 
-echo "Attaching Controller and Envoy policies to Node Instance Role"
-aws iam attach-role-policy \
-    --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/AWSAppMeshK8sControllerIAMPolicy \
-    --role-name "$NODE_ROLE_NAME" || true
+echo "Creating service account"
+eksctl create iamserviceaccount --cluster $CLUSTER_NAME \
+    --namespace appmesh-system \
+    --name appmesh-controller \
+    --attach-policy-arn arn:aws:iam::$ACCOUNT_ID:policy/AWSAppMeshK8sControllerIAMPolicy  \
+    --override-existing-serviceaccounts \
+    --approve
 
+echo "Attaching Envoy policy to Node Instance Role"
 aws iam attach-role-policy \
     --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/AWSAppMeshEnvoyIAMPolicy \
     --role-name "$NODE_ROLE_NAME" || true
 
 echo "Deploying appmesh-controller"
 helm upgrade -i appmesh-controller eks/appmesh-controller \
-    --namespace appmesh-system
+    --namespace appmesh-system \
+    --set region=$REGION \
+    --set serviceAccount.create=false \
+    --set serviceAccount.name=appmesh-controller
 
 #Start the test
 echo "Starting the ginkgo test suite" 
@@ -94,14 +101,13 @@ aws iam detach-role-policy \
 echo "Disabling Pod ENI on aws-node"
 kubectl set env daemonset aws-node -n kube-system ENABLE_POD_ENI=false
 
-echo "Detaching the IAM Policies from Node Instance Role"
-aws iam detach-role-policy \
-    --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/AWSAppMeshK8sControllerIAMPolicy \
-    --role-name $NODE_ROLE_NAME || true
-
+echo "Detaching the Envoy IAM Policy from Node Instance Role"
 aws iam detach-role-policy \
     --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/AWSAppMeshEnvoyIAMPolicy \
     --role-name $NODE_ROLE_NAME || true
+
+echo "Delete iamserviceaccount"    
+eksctl delete iamserviceaccount --name appmesh-controller --namespace appmesh-system --cluster $CLUSTER_NAME || true
 
 #Delete AppMesh CRDs
 echo "Deleting appmesh CRD's"
