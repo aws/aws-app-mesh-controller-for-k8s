@@ -157,7 +157,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"X-Ray Agent tracing port")
 	fs.StringVar(&cfg.XraySamplingRate, flagXraySamplingRate, "",
 		"X-Ray tracer sampling rate")
-	fs.StringVar(&cfg.XRayImage, flagXRayImage, "amazon/aws-xray-daemon",
+	fs.StringVar(&cfg.XRayImage, flagXRayImage, "public.ecr.aws/xray/aws-xray-daemon",
 		"X-Ray daemon container image")
 	fs.BoolVar(&cfg.EnableStatsTags, flagEnableStatsTags, false,
 		"Enable Envoy to tag stats")

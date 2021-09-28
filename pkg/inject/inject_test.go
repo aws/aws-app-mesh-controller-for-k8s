@@ -158,7 +158,7 @@ func Test_InjectEnvoyContainerVN(t *testing.T) {
 			conf: getConfig(func(cnf Config) Config {
 				cnf.EnableXrayTracing = true
 				cnf.XrayDaemonPort = 2000
-				cnf.XRayImage = "amazon/aws-xray-daemon"
+				cnf.XRayImage = "public.ecr.aws/xray/aws-xray-daemon"
 				return cnf
 			}),
 			args: args{
@@ -302,7 +302,7 @@ func Test_InjectEnvoyContainerVG(t *testing.T) {
 			conf: getConfig(func(cnf Config) Config {
 				cnf.EnableXrayTracing = true
 				cnf.XrayDaemonPort = 2000
-				cnf.XRayImage = "amazon/aws-xray-daemon"
+				cnf.XRayImage = "public.ecr.aws/xray/aws-xray-daemon"
 				return cnf
 			}),
 			args: args{
@@ -320,7 +320,7 @@ func Test_InjectEnvoyContainerVG(t *testing.T) {
 			name: "Inject Envoy container with xray - missing xray daemon port",
 			conf: getConfig(func(cnf Config) Config {
 				cnf.EnableXrayTracing = true
-				cnf.XRayImage = "amazon/aws-xray-daemon"
+				cnf.XRayImage = "public.ecr.aws/xray/aws-xray-daemon"
 				return cnf
 			}),
 			args: args{
