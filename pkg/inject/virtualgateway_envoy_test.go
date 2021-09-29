@@ -1,7 +1,6 @@
 package inject
 
 import (
-	"errors"
 	"testing"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
@@ -751,7 +750,6 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					enableXrayTracing:          true,
 					xrayDaemonPort:             2000,
-					xraySamplingRate:           "0.01",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 				},
@@ -802,10 +800,6 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "XRAY_DAEMON_PORT",
 									Value: "2000",
 								},
-								{
-									Name:  "XRAY_SAMPLING_RATE",
-									Value: "0.01",
-								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -824,30 +818,6 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					},
 				},
 			},
-		},
-		{
-			name: "xray with bad sampling rate",
-			fields: fields{
-				vg: vg,
-				ms: ms,
-				mutatorConfig: virtualGatwayEnvoyConfig{
-					awsRegion:                  "us-west-2",
-					preview:                    false,
-					logLevel:                   "debug",
-					adminAccessPort:            9901,
-					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
-					enableXrayTracing:          true,
-					xrayDaemonPort:             2000,
-					xraySamplingRate:           "1.01",
-					readinessProbeInitialDelay: 1,
-					readinessProbePeriod:       10,
-				},
-			},
-			args: args{
-				pod: pod,
-			},
-			wantErr: errors.New("tracing.samplingRate should be a decimal between 0 & 1.00, but instead got 1.01 <nil>"),
 		},
 		{
 			name: "enable jaeger tracing",

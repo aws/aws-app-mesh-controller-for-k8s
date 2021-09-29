@@ -87,7 +87,6 @@ spec:
         - --enable-xray-tracing=true
         - --xray-image={{ .Values.xray.image.repository}}:{{ .Values.xray.image.tag }}
         - --xray-daemon-port={{ .Values.tracing.port }}
-        - --xray-sampling-rate={{ .Values.tracing.samplingRate }}
         {{- end }}
         {{- if and .Values.tracing.enabled ( eq .Values.tracing.provider "jaeger" ) }}
         - --enable-jaeger-tracing=true
