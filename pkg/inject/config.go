@@ -36,7 +36,6 @@ const (
 	flagDatadogPort          = "datadog-port"
 	flagEnableXrayTracing    = "enable-xray-tracing"
 	flagXrayDaemonPort       = "xray-daemon-port"
-	flagXraySamplingRate     = "xray-sampling-rate"
 	flagEnableStatsTags      = "enable-stats-tags"
 	flagEnableStatsD         = "enable-statsd"
 	flagStatsDAddress        = "statsd-address"
@@ -83,7 +82,6 @@ type Config struct {
 	DatadogPort          int32
 	EnableXrayTracing    bool
 	XrayDaemonPort       int32
-	XraySamplingRate     string
 	EnableStatsTags      bool
 	EnableStatsD         bool
 	StatsDAddress        string
@@ -155,8 +153,6 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"Enable Envoy X-Ray tracing integration and injects xray-daemon as sidecar")
 	fs.Int32Var(&cfg.XrayDaemonPort, flagXrayDaemonPort, 2000,
 		"X-Ray Agent tracing port")
-	fs.StringVar(&cfg.XraySamplingRate, flagXraySamplingRate, "",
-		"X-Ray tracer sampling rate")
 	fs.StringVar(&cfg.XRayImage, flagXRayImage, "public.ecr.aws/xray/aws-xray-daemon",
 		"X-Ray daemon container image")
 	fs.BoolVar(&cfg.EnableStatsTags, flagEnableStatsTags, false,
