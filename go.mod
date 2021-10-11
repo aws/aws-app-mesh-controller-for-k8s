@@ -19,13 +19,20 @@ require (
 	gomodules.xyz/jsonpatch/v2 v2.2.0
 	gonum.org/v1/gonum v0.7.0
 	gotest.tools v2.2.0+incompatible
-	helm.sh/helm/v3 v3.6.1
-	k8s.io/api v0.21.3
-	k8s.io/apimachinery v0.21.3
-	k8s.io/cli-runtime v0.21.2
-	k8s.io/client-go v0.21.3
-	rsc.io/letsencrypt v0.0.3 // indirect
-	sigs.k8s.io/controller-runtime v0.9.6
+	helm.sh/helm/v3 v3.7.1
+	k8s.io/api v0.22.1
+	k8s.io/apimachinery v0.22.1
+	k8s.io/cli-runtime v0.22.1
+	k8s.io/client-go v0.22.1
+	sigs.k8s.io/controller-runtime v0.9.2
 )
 
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40
+
+replace k8s.io/client-go => k8s.io/client-go v0.21.2
+
+replace k8s.io/api => k8s.io/api v0.21.2
+
+replace k8s.io/apimachinery => k8s.io/apimachinery v0.21.2
+
+replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.21.2
