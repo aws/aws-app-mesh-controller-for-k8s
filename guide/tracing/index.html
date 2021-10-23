@@ -563,8 +563,8 @@
 </code></pre></div>
     The above configuration will inject the AWS X-Ray daemon sidecar in each pod scheduled to run on the mesh.</p>
 <p>You can optionally use a specific X-Ray image by setting the following flags in addition to the above:
-<div class="highlight"><pre><span></span><code>    --set xray.image.repository<span class="o">=</span>amazon/aws-xray-daemon <span class="se">\</span>
-    --set xray.image.tag<span class="o">=</span><span class="m">3</span>.2.0
+<div class="highlight"><pre><span></span><code>    --set xray.image.repository<span class="o">=</span>public.ecr.aws/xray/aws-xray-daemon <span class="se">\</span>
+    --set xray.image.tag<span class="o">=</span><span class="m">3</span>.3.3
 </code></pre></div></p>
 </li>
 </ol>
