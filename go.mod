@@ -1,6 +1,6 @@
 module github.com/aws/aws-app-mesh-controller-for-k8s
 
-go 1.13
+go 1.16
 
 require (
 	github.com/aws/aws-sdk-go v1.38.59

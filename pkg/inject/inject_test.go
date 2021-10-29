@@ -2,6 +2,8 @@ package inject
 
 import (
 	"context"
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
 	"github.com/aws/aws-sdk-go/aws"
@@ -14,7 +16,6 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	testclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-	"testing"
 )
 
 func getConfig(fp func(Config) Config) Config {
@@ -22,8 +23,8 @@ func getConfig(fp func(Config) Config) Config {
 		IgnoredIPs:                  "169.254.169.254",
 		LogLevel:                    "debug",
 		Preview:                     false,
-		SidecarImage:                "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.16.1.1-prod",
-		InitImage:                   "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v3-prod",
+		SidecarImage:                "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.20.0.1-prod",
+		InitImage:                   "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v4-prod",
 		SidecarMemoryRequests:       "32Mi",
 		SidecarCpuRequests:          "10m",
 		EnableIAMForServiceAccounts: true,
@@ -157,7 +158,8 @@ func Test_InjectEnvoyContainerVN(t *testing.T) {
 			conf: getConfig(func(cnf Config) Config {
 				cnf.EnableXrayTracing = true
 				cnf.XrayDaemonPort = 2000
-				cnf.XRayImage = "amazon/aws-xray-daemon"
+				cnf.XraySamplingRate = "0.05"
+				cnf.XRayImage = "public.ecr.aws/xray/aws-xray-daemon"
 				return cnf
 			}),
 			args: args{
@@ -301,7 +303,8 @@ func Test_InjectEnvoyContainerVG(t *testing.T) {
 			conf: getConfig(func(cnf Config) Config {
 				cnf.EnableXrayTracing = true
 				cnf.XrayDaemonPort = 2000
-				cnf.XRayImage = "amazon/aws-xray-daemon"
+				cnf.XraySamplingRate = "0.05"
+				cnf.XRayImage = "public.ecr.aws/xray/aws-xray-daemon"
 				return cnf
 			}),
 			args: args{
@@ -319,7 +322,7 @@ func Test_InjectEnvoyContainerVG(t *testing.T) {
 			name: "Inject Envoy container with xray - missing xray daemon port",
 			conf: getConfig(func(cnf Config) Config {
 				cnf.EnableXrayTracing = true
-				cnf.XRayImage = "amazon/aws-xray-daemon"
+				cnf.XRayImage = "public.ecr.aws/xray/aws-xray-daemon"
 				return cnf
 			}),
 			args: args{
@@ -338,6 +341,7 @@ func Test_InjectEnvoyContainerVG(t *testing.T) {
 			conf: getConfig(func(cnf Config) Config {
 				cnf.EnableXrayTracing = true
 				cnf.XrayDaemonPort = 2000
+				cnf.XraySamplingRate = "0.05"
 				return cnf
 			}),
 			args: args{

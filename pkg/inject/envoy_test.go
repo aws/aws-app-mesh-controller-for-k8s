@@ -354,6 +354,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableXrayTracing:          true,
 					xrayDaemonPort:             2000,
+					xraySamplingRate:           "0.01",
 				},
 			},
 			args: args{
@@ -433,6 +434,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "XRAY_DAEMON_PORT",
 									Value: "2000",
 								},
+								{
+									Name:  "XRAY_SAMPLING_RATE",
+									Value: "0.01",
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -444,6 +449,33 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "xray tracing with bad sampling rate",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 3,
+					readinessProbePeriod:       5,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					enableXrayTracing:          true,
+					xrayDaemonPort:             2000,
+					xraySamplingRate:           "5%",
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantErr: errors.New("tracing.samplingRate should be a decimal between 0 & 1.00, " +
+				"but instead got 5% strconv.ParseFloat: parsing \"5%\": invalid syntax"),
 		},
 		{
 			name: "no tracing + enable Jaeger tracing",
@@ -795,6 +827,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					enableStatsD:               true,
 					statsDAddress:              "127.0.0.1",
 					statsDPort:                 8125,
+					statsDSocketPath:           "/var/run/datadog/dsd.socket",
 				},
 			},
 			args: args{
@@ -877,6 +910,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "STATSD_ADDRESS",
 									Value: "127.0.0.1",
+								},
+								{
+									Name:  "STATSD_SOCKET_PATH",
+									Value: "/var/run/datadog/dsd.socket",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
@@ -2416,6 +2453,73 @@ func Test_envoyMutator_getSecretMounts(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &envoyMutator{}
 			got, err := m.getSecretMounts(tt.args.pod)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_envoyMutator_getVolumeMounts(t *testing.T) {
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string]string
+		wantErr error
+	}{
+		{
+			name: "pods with valid appmesh.k8s.aws/volumeMounts annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/volumeMounts": "svc1-cert-chain-key:/certs/svc1, svc1-svc2-ca-bundle:/certs",
+						},
+					},
+				},
+			},
+			want: map[string]string{
+				"svc1-cert-chain-key": "/certs/svc1",
+				"svc1-svc2-ca-bundle": "/certs",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "pods with no appmesh.k8s.aws/volumeMounts annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{},
+					},
+				},
+			},
+			want:    map[string]string{},
+			wantErr: nil,
+		},
+		{
+			name: "pods with invalid appmesh.k8s.aws/volumeMounts annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/volumeMounts": "svc1-cert-chain-ke",
+						},
+					},
+				},
+			},
+			wantErr: errors.New("malformed annotation appmesh.k8s.aws/volumeMounts, expected format: volumeName:mountPath"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &envoyMutator{}
+			got, err := m.getVolumeMounts(tt.args.pod)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {

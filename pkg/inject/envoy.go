@@ -32,6 +32,7 @@ type envoyMutatorConfig struct {
 	sidecarMemoryLimits        string
 	enableXrayTracing          bool
 	xrayDaemonPort             int32
+	xraySamplingRate           string
 	enableJaegerTracing        bool
 	jaegerPort                 string
 	jaegerAddress              string
@@ -42,6 +43,7 @@ type envoyMutatorConfig struct {
 	enableStatsD               bool
 	statsDPort                 int32
 	statsDAddress              string
+	statsDSocketPath           string
 }
 
 func newEnvoyMutator(mutatorConfig envoyMutatorConfig, ms *appmesh.Mesh, vn *appmesh.VirtualNode) *envoyMutator {
@@ -67,6 +69,10 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 
+	volumeMounts, err := m.getVolumeMounts(pod)
+	if err != nil {
+		return err
+	}
 	variables := m.buildTemplateVariables(pod)
 
 	customEnv, err := m.getCustomEnv(pod)
@@ -74,7 +80,10 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 
-	container := buildEnvoySidecar(variables, customEnv)
+	container, err := buildEnvoySidecar(variables, customEnv)
+	if err != nil {
+		return err
+	}
 
 	// add resource requests and limits
 	container.Resources, err = sidecarResources(getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
@@ -90,6 +99,7 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		m.mutatorConfig.readinessProbePeriod, strconv.Itoa(int(m.mutatorConfig.adminAccessPort)))
 
 	m.mutateSecretMounts(pod, &container, secretMounts)
+	m.mutateVolumeMounts(pod, &container, volumeMounts)
 	if m.mutatorConfig.enableSDS && !isSDSDisabled(pod) {
 		mutateSDSMounts(pod, &container, m.mutatorConfig.sdsUdsPath)
 	}
@@ -120,6 +130,7 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		SidecarImage:             m.mutatorConfig.sidecarImage,
 		EnableXrayTracing:        m.mutatorConfig.enableXrayTracing,
 		XrayDaemonPort:           m.mutatorConfig.xrayDaemonPort,
+		XraySamplingRate:         m.mutatorConfig.xraySamplingRate,
 		EnableJaegerTracing:      m.mutatorConfig.enableJaegerTracing,
 		JaegerPort:               m.mutatorConfig.jaegerPort,
 		JaegerAddress:            m.mutatorConfig.jaegerAddress,
@@ -130,6 +141,7 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		EnableStatsD:             m.mutatorConfig.enableStatsD,
 		StatsDPort:               m.mutatorConfig.statsDPort,
 		StatsDAddress:            m.mutatorConfig.statsDAddress,
+		StatsDSocketPath:         m.mutatorConfig.statsDSocketPath,
 	}
 }
 
@@ -202,4 +214,31 @@ func (m *envoyMutator) getCustomEnv(pod *corev1.Pod) (map[string]string, error) 
 		}
 	}
 	return customEnv, nil
+}
+
+func (m *envoyMutator) mutateVolumeMounts(pod *corev1.Pod, envoyContainer *corev1.Container, volumeMounts map[string]string) {
+	for volumeName, mountPath := range volumeMounts {
+		volumeMount := corev1.VolumeMount{
+			Name:      volumeName,
+			MountPath: mountPath,
+			ReadOnly:  true,
+		}
+		envoyContainer.VolumeMounts = append(envoyContainer.VolumeMounts, volumeMount)
+	}
+}
+
+func (m *envoyMutator) getVolumeMounts(pod *corev1.Pod) (map[string]string, error) {
+	volumeMounts := make(map[string]string)
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshVolumeMountsAnnotation]; ok {
+		for _, segment := range strings.Split(v, ",") {
+			pair := strings.Split(segment, ":")
+			if len(pair) != 2 { // volumeName:mountPath
+				return nil, errors.Errorf("malformed annotation %s, expected format: %s", AppMeshVolumeMountsAnnotation, "volumeName:mountPath")
+			}
+			volumeName := strings.TrimSpace(pair[0])
+			mountPath := strings.TrimSpace(pair[1])
+			volumeMounts[volumeName] = mountPath
+		}
+	}
+	return volumeMounts, nil
 }

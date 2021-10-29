@@ -34,6 +34,11 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
 							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{},
 						},
+						Listeners: []appmesh.Listener{{
+							PortMapping: appmesh.PortMapping{
+								Port: appmesh.PortNumber(8080),
+							}},
+						},
 					},
 				},
 				pod: &corev1.Pod{
@@ -55,6 +60,7 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 				"podLabelA":                   "valueA",
 				"podLabelB":                   "valueB",
 				"AWS_INSTANCE_IPV4":           "192.168.1.42",
+				"AWS_INSTANCE_PORT":           "8080",
 				"k8s.io/pod":                  "pod-name",
 				"k8s.io/namespace":            "pod-ns",
 				"appmesh.k8s.aws/mesh":        "my-mesh",
@@ -87,6 +93,11 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 								},
 							},
 						},
+						Listeners: []appmesh.Listener{{
+							PortMapping: appmesh.PortMapping{
+								Port: appmesh.PortNumber(8080),
+							}},
+						},
 					},
 				},
 				pod: &corev1.Pod{
@@ -105,6 +116,7 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 				"attrKeyA":                    "valueA",
 				"attrKeyB":                    "valueB",
 				"AWS_INSTANCE_IPV4":           "192.168.1.42",
+				"AWS_INSTANCE_PORT":           "8080",
 				"k8s.io/pod":                  "pod-name",
 				"k8s.io/namespace":            "pod-ns",
 				"appmesh.k8s.aws/mesh":        "my-mesh",
@@ -137,6 +149,12 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 								},
 							},
 						},
+
+						Listeners: []appmesh.Listener{{
+							PortMapping: appmesh.PortMapping{
+								Port: appmesh.PortNumber(8080),
+							}},
+						},
 					},
 				},
 				pod: &corev1.Pod{
@@ -160,6 +178,7 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 				"attrKeyA":                    "valueA",
 				"attrKeyB":                    "valueB",
 				"AWS_INSTANCE_IPV4":           "192.168.1.42",
+				"AWS_INSTANCE_PORT":           "8080",
 				"k8s.io/pod":                  "pod-name",
 				"k8s.io/namespace":            "pod-ns",
 				"appmesh.k8s.aws/mesh":        "my-mesh",
@@ -192,6 +211,11 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 								},
 							},
 						},
+						Listeners: []appmesh.Listener{{
+							PortMapping: appmesh.PortMapping{
+								Port: appmesh.PortNumber(8080),
+							}},
+						},
 					},
 				},
 				pod: &corev1.Pod{
@@ -213,6 +237,7 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 				"podLabelA":                   "valueA",
 				"attrKeyA":                    "valueA",
 				"AWS_INSTANCE_IPV4":           "192.168.1.42",
+				"AWS_INSTANCE_PORT":           "8080",
 				"k8s.io/pod":                  "pod-name",
 				"k8s.io/namespace":            "pod-ns",
 				"appmesh.k8s.aws/mesh":        "my-mesh",
@@ -286,6 +311,11 @@ func Test_defaultInstancesReconciler_buildInstanceInfoByID(t *testing.T) {
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
 							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{},
 						},
+						Listeners: []appmesh.Listener{{
+							PortMapping: appmesh.PortMapping{
+								Port: appmesh.PortNumber(8080),
+							}},
+						},
 					},
 				},
 				pods: []*corev1.Pod{
@@ -325,6 +355,7 @@ func Test_defaultInstancesReconciler_buildInstanceInfoByID(t *testing.T) {
 						"podLabelA":                   "valueA",
 						"podLabelB":                   "valueB",
 						"AWS_INSTANCE_IPV4":           "192.168.1.42",
+						"AWS_INSTANCE_PORT":           "8080",
 						"k8s.io/pod":                  "pod-name-1",
 						"k8s.io/namespace":            "pod-ns",
 						"appmesh.k8s.aws/mesh":        "my-mesh",
@@ -350,6 +381,7 @@ func Test_defaultInstancesReconciler_buildInstanceInfoByID(t *testing.T) {
 						"podLabelA":                   "valueA",
 						"podLabelB":                   "valueB",
 						"AWS_INSTANCE_IPV4":           "192.168.2.42",
+						"AWS_INSTANCE_PORT":           "8080",
 						"k8s.io/pod":                  "pod-name-2",
 						"k8s.io/namespace":            "pod-ns",
 						"appmesh.k8s.aws/mesh":        "my-mesh",
@@ -386,6 +418,11 @@ func Test_defaultInstancesReconciler_buildInstanceInfoByID(t *testing.T) {
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
 							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{},
 						},
+						Listeners: []appmesh.Listener{{
+							PortMapping: appmesh.PortMapping{
+								Port: appmesh.PortNumber(8080),
+							}},
+						},
 					},
 				},
 				pods: nil,
@@ -405,6 +442,11 @@ func Test_defaultInstancesReconciler_buildInstanceInfoByID(t *testing.T) {
 						AWSName: aws.String("my-vn"),
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
 							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{},
+						},
+						Listeners: []appmesh.Listener{{
+							PortMapping: appmesh.PortMapping{
+								Port: appmesh.PortNumber(8080),
+							}},
 						},
 					},
 				},
