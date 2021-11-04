@@ -795,6 +795,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					enableStatsD:               true,
 					statsDAddress:              "127.0.0.1",
 					statsDPort:                 8125,
+					statsDSocketPath:           "/var/run/datadog/dsd.socket",
 				},
 			},
 			args: args{
@@ -877,6 +878,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "STATSD_ADDRESS",
 									Value: "127.0.0.1",
+								},
+								{
+									Name:  "STATSD_SOCKET_PATH",
+									Value: "/var/run/datadog/dsd.socket",
 								},
 							},
 							Resources: corev1.ResourceRequirements{

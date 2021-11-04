@@ -43,7 +43,7 @@ init:
 
 xray:
   image:
-    repository: amazon/aws-xray-daemon
+    repository: public.ecr.aws/xray/aws-xray-daemon
     tag: latest
 
 nameOverride: ""
@@ -106,7 +106,7 @@ tracing:
   provider: x-ray
   # tracing.address: Jaeger or Datadog agent server address (ignored for X-Ray)
   address: appmesh-jaeger.appmesh-system
-  # tracing.port: Jaeger or Datadog agent server port
+  # tracing.port: X-Ray, Jaeger or Datadog agent server port
   port: 2000
 
 stats:
@@ -118,6 +118,8 @@ stats:
   statsdAddress: 127.0.0.1
   #stats.statsdPort: DogStatsD daemon port
   statsdPort: 8125
+  #stats.statsdSocketPath: DogStatsD unix domain socket path
+  statsdSocketPath: ""
 
 # Enable cert-manager
 enableCertManager: false

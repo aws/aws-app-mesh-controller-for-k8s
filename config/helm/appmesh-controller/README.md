@@ -94,7 +94,7 @@ Make sure that the Envoy proxies have the following IAM policies attached for th
 
 There are **2 ways** you can attach the above policy to the Envoy Pod  
 #### With IRSA     
-Download the Envoy IAM polocy  
+Download the Envoy IAM policy
 ```
 curl -o envoy-iam-policy.json https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/master/config/iam/envoy-iam-policy.json
 ```
@@ -379,8 +379,9 @@ Parameter | Description | Default
 `init.image.tag` | Route manager image tag | `<VERSION>`
 `stats.tagsEnabled` |  If `true`, Envoy should include app-mesh tags | `false`
 `stats.statsdEnabled` |  If `true`, Envoy should publish stats to statsd endpoint @ 127.0.0.1:8125 | `false`
-`stats.statsdAddress` |  DogStatsD daemon IP address | `127.0.0.1`
-`stats.statsdPort` |  DogStatsD daemon port | `8125`
+`stats.statsdAddress` |  DogStatsD daemon IP address. This will be overridden if `stats.statsdSocketPath` is specified | `127.0.0.1`
+`stats.statsdPort` |  DogStatsD daemon port. This will be overridden if `stats.statsdSocketPath` is specified | `8125`
+`stats.statsdSocketPath` | DogStatsD Unix domain socket path. If statsd is enabled but this value is not specified then we will use combination of <statsAddress:statsPort> as the default | None
 `cloudMapCustomHealthCheck.enabled` |  If `true`, CustomHealthCheck will be enabled for CloudMap Services | `false`
 `cloudMapDNS.ttl` |  Sets CloudMap DNS TTL | `300`
 `tracing.enabled` |  If `true`, Envoy will be configured with tracing | `false`
@@ -388,7 +389,7 @@ Parameter | Description | Default
 `tracing.address` |  Jaeger or Datadog agent server address (ignored for X-Ray) | `appmesh-jaeger.appmesh-system`
 `tracing.port` |  Jaeger or Datadog agent port (ignored for X-Ray) | `9411`
 `enableCertManager` |  Enable Cert-Manager | `false`
-`xray.image.repository` | X-Ray image repository | `amazon/aws-xray-daemon`
+`xray.image.repository` | X-Ray image repository | `public.ecr.aws/xray/aws-xray-daemon`
 `xray.image.tag` | X-Ray image tag | `latest`
 `accountId` | AWS Account ID for the Kubernetes cluster | None
 `env` |  environment variables to be injected into the appmesh-controller pod | `{}`

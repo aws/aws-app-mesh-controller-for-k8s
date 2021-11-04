@@ -40,6 +40,7 @@ const (
 	flagEnableStatsD         = "enable-statsd"
 	flagStatsDAddress        = "statsd-address"
 	flagStatsDPort           = "statsd-port"
+	flagStatsDSocketPath     = "statsd-socket-path"
 	flagXRayImage            = "xray-image"
 )
 
@@ -85,6 +86,7 @@ type Config struct {
 	EnableStatsD         bool
 	StatsDAddress        string
 	StatsDPort           int32
+	StatsDSocketPath     string
 	XRayImage            string
 }
 
@@ -150,17 +152,19 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&cfg.EnableXrayTracing, flagEnableXrayTracing, false,
 		"Enable Envoy X-Ray tracing integration and injects xray-daemon as sidecar")
 	fs.Int32Var(&cfg.XrayDaemonPort, flagXrayDaemonPort, 2000,
-		"Datadog Agent tracing port")
-	fs.StringVar(&cfg.XRayImage, flagXRayImage, "amazon/aws-xray-daemon",
+		"X-Ray Agent tracing port")
+	fs.StringVar(&cfg.XRayImage, flagXRayImage, "public.ecr.aws/xray/aws-xray-daemon",
 		"X-Ray daemon container image")
 	fs.BoolVar(&cfg.EnableStatsTags, flagEnableStatsTags, false,
 		"Enable Envoy to tag stats")
 	fs.BoolVar(&cfg.EnableStatsD, flagEnableStatsD, false,
 		"If enabled, Envoy will send DogStatsD metrics to 127.0.0.1:8125")
 	fs.StringVar(&cfg.StatsDAddress, flagStatsDAddress, "127.0.0.1",
-		"Datadog Agent address")
+		"DogStatsD Agent address")
 	fs.Int32Var(&cfg.StatsDPort, flagStatsDPort, 8125,
-		"Datadog Agent tracing port")
+		"DogStatsD Agent tracing port")
+	fs.StringVar(&cfg.StatsDSocketPath, flagStatsDSocketPath, "",
+		"DogStatsD Agent unix domain socket")
 }
 
 func (cfg *Config) BindEnv() error {

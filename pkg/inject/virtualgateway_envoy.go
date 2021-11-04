@@ -34,6 +34,7 @@ type virtualGatwayEnvoyConfig struct {
 	enableStatsD               bool
 	statsDPort                 int32
 	statsDAddress              string
+	statsDSocketPath           string
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -66,7 +67,9 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 	vg := fmt.Sprintf("mesh/%s/virtualGateway/%s", variables.MeshName, variables.VirtualGatewayOrNodeName)
 
 	envMap := map[string]string{}
-	updateEnvMapForEnvoy(variables, envMap, vg)
+	if err := updateEnvMapForEnvoy(variables, envMap, vg); err != nil {
+		return err
+	}
 
 	//we override the image to latest Envoy so customers do not have to manually manage
 	// envoy versions and let controller handle consistency versions across the mesh
@@ -130,6 +133,7 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Envo
 		EnableStatsD:             m.mutatorConfig.enableStatsD,
 		StatsDPort:               m.mutatorConfig.statsDPort,
 		StatsDAddress:            m.mutatorConfig.statsDAddress,
+		StatsDSocketPath:         m.mutatorConfig.statsDSocketPath,
 	}
 }
 

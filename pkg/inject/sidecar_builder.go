@@ -3,6 +3,7 @@ package inject
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	corev1 "k8s.io/api/core/v1"
@@ -37,9 +38,10 @@ type EnvoyTemplateVariables struct {
 	EnableStatsD             bool
 	StatsDPort               int32
 	StatsDAddress            string
+	StatsDSocketPath         string
 }
 
-func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) {
+func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) error {
 	// add all the controller managed env to the map so
 	// 1) we remove duplicates
 	// 2) we don't allow overriding controller managed env with pod annotations
@@ -103,14 +105,21 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		// as the default daemon endpoint. To enable, set the value to 1
 		env["ENABLE_ENVOY_DOG_STATSD"] = "1"
 
-		// // Specify a port value to override the default DogStatsD daemon port
+		// Specify a port value to override the default DogStatsD daemon port.
+		// This value will be overridden if `STATSD_SOCKET_PATH` is specified.
 		env["STATSD_PORT"] = strconv.Itoa(int(vars.StatsDPort))
 
 		// Specify an IP address value to override the default DogStatsD daemon IP address
 		// Default: 127.0.0.1. This variable can only be used with version 1.15.0 or later
-		// of the Envoy image
+		// of the Envoy image. This value will be overridden if `STATSD_SOCKET_PATH` is specified.
 		env["STATSD_ADDRESS"] = vars.StatsDAddress
 
+		// Specify a unix domain socket for DogStatsD daemon. If not specified and if DogStatsD
+		// is enabled then defaults to DogStatsD daemon IP address port [default: 127.0.0.1:8125].
+		// This variable can only be used with version v1.19.1 or later.
+		if statsDSocketPath := strings.TrimSpace(vars.StatsDSocketPath); statsDSocketPath != "" {
+			env["STATSD_SOCKET_PATH"] = statsDSocketPath
+		}
 	}
 
 	if vars.EnableJaegerTracing {
@@ -118,9 +127,10 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		env["JAEGER_TRACER_PORT"] = vars.JaegerPort
 		env["JAEGER_TRACER_ADDRESS"] = vars.JaegerAddress
 	}
+	return nil
 }
 
-func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) corev1.Container {
+func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (corev1.Container, error) {
 
 	envoy := corev1.Container{
 		Name:  "envoy",
@@ -146,9 +156,11 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) corev
 	}
 
 	vname := fmt.Sprintf("mesh/%s/virtualNode/%s", vars.MeshName, vars.VirtualGatewayOrNodeName)
-	updateEnvMapForEnvoy(vars, env, vname)
+	if err := updateEnvMapForEnvoy(vars, env, vname); err != nil {
+		return envoy, err
+	}
 	envoy.Env = getEnvoyEnv(env)
-	return envoy
+	return envoy, nil
 
 }
 

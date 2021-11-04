@@ -138,6 +138,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				enableStatsD:               m.config.EnableStatsD,
 				statsDPort:                 m.config.StatsDPort,
 				statsDAddress:              m.config.StatsDAddress,
+				statsDSocketPath:           m.config.StatsDSocketPath,
 			}, ms, vn),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,
@@ -181,6 +182,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 			enableStatsD:               m.config.EnableStatsD,
 			statsDPort:                 m.config.StatsDPort,
 			statsDAddress:              m.config.StatsDAddress,
+			statsDSocketPath:           m.config.StatsDSocketPath,
 		}, ms, vg),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,

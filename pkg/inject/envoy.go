@@ -42,6 +42,7 @@ type envoyMutatorConfig struct {
 	enableStatsD               bool
 	statsDPort                 int32
 	statsDAddress              string
+	statsDSocketPath           string
 }
 
 func newEnvoyMutator(mutatorConfig envoyMutatorConfig, ms *appmesh.Mesh, vn *appmesh.VirtualNode) *envoyMutator {
@@ -78,7 +79,10 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 
-	container := buildEnvoySidecar(variables, customEnv)
+	container, err := buildEnvoySidecar(variables, customEnv)
+	if err != nil {
+		return err
+	}
 
 	// add resource requests and limits
 	container.Resources, err = sidecarResources(getSidecarCPURequest(m.mutatorConfig.sidecarCPURequests, pod),
@@ -135,6 +139,7 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		EnableStatsD:             m.mutatorConfig.enableStatsD,
 		StatsDPort:               m.mutatorConfig.statsDPort,
 		StatsDAddress:            m.mutatorConfig.statsDAddress,
+		StatsDSocketPath:         m.mutatorConfig.statsDSocketPath,
 	}
 }
 
