@@ -23,6 +23,7 @@ else
   CLUSTER_INFO=$($GET_CLUSTER_INFO_CMD --endpoint $ENDPOINT)
 fi
 
+VPC_ID=$(echo $CLUSTER_INFO | jq -r '.cluster.resourcesVpcConfig.vpcId')
 ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
 
 NODE_GROUP_NAME=${CLUSTER_NAME}"ng"
