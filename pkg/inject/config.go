@@ -109,7 +109,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	//Set to the SPIRE Agent's default UDS path for now as App Mesh only supports SPIRE as SDS provider for preview.
 	fs.StringVar(&cfg.SdsUdsPath, flagSdsUdsPath, "/run/spire/sockets/agent.sock",
 		"Unix Domain Socket path for SDS provider")
-	fs.StringVar(&cfg.SidecarImage, flagSidecarImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.19.1.0-prod",
+	fs.StringVar(&cfg.SidecarImage, flagSidecarImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.19.1.1-prod",
 		"Envoy sidecar container image.")
 	fs.StringVar(&cfg.SidecarCpuRequests, flagSidecarCpuRequests, "10m",
 		"Sidecar CPU resources requests.")
