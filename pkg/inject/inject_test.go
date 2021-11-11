@@ -158,6 +158,7 @@ func Test_InjectEnvoyContainerVN(t *testing.T) {
 			conf: getConfig(func(cnf Config) Config {
 				cnf.EnableXrayTracing = true
 				cnf.XrayDaemonPort = 2000
+				cnf.XraySamplingRate = "0.05"
 				cnf.XRayImage = "public.ecr.aws/xray/aws-xray-daemon"
 				return cnf
 			}),
@@ -302,6 +303,7 @@ func Test_InjectEnvoyContainerVG(t *testing.T) {
 			conf: getConfig(func(cnf Config) Config {
 				cnf.EnableXrayTracing = true
 				cnf.XrayDaemonPort = 2000
+				cnf.XraySamplingRate = "0.05"
 				cnf.XRayImage = "public.ecr.aws/xray/aws-xray-daemon"
 				return cnf
 			}),
@@ -339,6 +341,7 @@ func Test_InjectEnvoyContainerVG(t *testing.T) {
 			conf: getConfig(func(cnf Config) Config {
 				cnf.EnableXrayTracing = true
 				cnf.XrayDaemonPort = 2000
+				cnf.XraySamplingRate = "0.05"
 				return cnf
 			}),
 			args: args{
