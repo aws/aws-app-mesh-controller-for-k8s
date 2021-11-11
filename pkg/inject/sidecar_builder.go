@@ -95,17 +95,15 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 			// `podAnnotations` doesn't contain the sampling rate so get value from helm configuration
 			samplingRate = vars.XraySamplingRate
 		}
-		if samplingRate != "" {
-			// Process only if this value is set
-			fixedRate, err := strconv.ParseFloat(samplingRate, 32)
-			if err != nil || float64(0) > fixedRate || float64(1) < fixedRate {
-				// The value is not a decimal between 0 and 1.00
-				return errors.Errorf("tracing.samplingRate should be a decimal between 0 & 1.00, "+
-					"but instead got %s %v", samplingRate, err)
-			} else {
-				fixedRate = math.Round(fixedRate*100) / 100
-				env["XRAY_SAMPLING_RATE"] = strconv.FormatFloat(fixedRate, 'f', -1, 32)
-			}
+
+		fixedRate, err := strconv.ParseFloat(samplingRate, 32)
+		if err != nil || float64(0) > fixedRate || float64(1) < fixedRate {
+			// The value is not a decimal between 0 and 1.00
+			return errors.Errorf("tracing.samplingRate should be a decimal between 0 & 1.00, "+
+				"but instead got %s %v", samplingRate, err)
+		} else {
+			fixedRate = math.Round(fixedRate*100) / 100
+			env["XRAY_SAMPLING_RATE"] = strconv.FormatFloat(fixedRate, 'f', -1, 32)
 		}
 	}
 
