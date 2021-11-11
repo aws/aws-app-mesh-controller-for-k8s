@@ -155,7 +155,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"Enable Envoy X-Ray tracing integration and injects xray-daemon as sidecar")
 	fs.Int32Var(&cfg.XrayDaemonPort, flagXrayDaemonPort, 2000,
 		"X-Ray Agent tracing port")
-	fs.StringVar(&cfg.XraySamplingRate, flagXraySamplingRate, "",
+	fs.StringVar(&cfg.XraySamplingRate, flagXraySamplingRate, "0.05",
 		"X-Ray tracer sampling rate")
 	fs.StringVar(&cfg.XRayImage, flagXRayImage, "public.ecr.aws/xray/aws-xray-daemon",
 		"X-Ray daemon container image")
