@@ -2,10 +2,12 @@ package inject
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
@@ -28,6 +30,7 @@ type EnvoyTemplateVariables struct {
 	SidecarImage             string
 	EnableXrayTracing        bool
 	XrayDaemonPort           int32
+	XraySamplingRate         string
 	EnableJaegerTracing      bool
 	JaegerPort               string
 	JaegerAddress            string
@@ -81,6 +84,29 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		// Specify a port value to override the default X-Ray daemon port: 2000
 		env["XRAY_DAEMON_PORT"] = strconv.Itoa(int(vars.XrayDaemonPort))
 
+		// Override the default sampling rate of 0.05 (5%) for AWS X-Ray tracer
+		// The value should be specified as a decimal between 0 and 1.00 (100%)
+		samplingRate, ok := env["XRAY_SAMPLING_RATE"]
+		if ok {
+			// `podAnnotations` contains the sampling rate and gets preference over helm configuration
+			// For now delete this value from env so that we can validate before adding again
+			delete(env, "XRAY_SAMPLING_RATE")
+		} else {
+			// `podAnnotations` doesn't contain the sampling rate so get value from helm configuration
+			samplingRate = vars.XraySamplingRate
+		}
+		if samplingRate != "" {
+			// Process only if this value is set
+			fixedRate, err := strconv.ParseFloat(samplingRate, 32)
+			if err != nil || float64(0) > fixedRate || float64(1) < fixedRate {
+				// The value is not a decimal between 0 and 1.00
+				return errors.Errorf("tracing.samplingRate should be a decimal between 0 & 1.00, "+
+					"but instead got %s %v", samplingRate, err)
+			} else {
+				fixedRate = math.Round(fixedRate*100) / 100
+				env["XRAY_SAMPLING_RATE"] = strconv.FormatFloat(fixedRate, 'f', -1, 32)
+			}
+		}
 	}
 
 	if vars.EnableDatadogTracing {
