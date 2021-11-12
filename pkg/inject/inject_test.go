@@ -24,7 +24,7 @@ func getConfig(fp func(Config) Config) Config {
 		LogLevel:                    "debug",
 		Preview:                     false,
 		SidecarImage:                "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.19.1.1-prod",
-		InitImage:                   "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v3-prod",
+		InitImage:                   "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v4-prod",
 		SidecarMemoryRequests:       "32Mi",
 		SidecarCpuRequests:          "10m",
 		EnableIAMForServiceAccounts: true,
