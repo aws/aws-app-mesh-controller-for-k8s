@@ -354,6 +354,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableXrayTracing:          true,
 					xrayDaemonPort:             2000,
+					xraySamplingRate:           "0.01",
 				},
 			},
 			args: args{
@@ -433,6 +434,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "XRAY_DAEMON_PORT",
 									Value: "2000",
 								},
+								{
+									Name:  "XRAY_SAMPLING_RATE",
+									Value: "0.01",
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -444,6 +449,33 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "xray tracing with bad sampling rate",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    false,
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 3,
+					readinessProbePeriod:       5,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					enableXrayTracing:          true,
+					xrayDaemonPort:             2000,
+					xraySamplingRate:           "5%",
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantErr: errors.New("tracing.samplingRate should be a decimal between 0 & 1.00, " +
+				"but instead got 5% strconv.ParseFloat: parsing \"5%\": invalid syntax"),
 		},
 		{
 			name: "no tracing + enable Jaeger tracing",
