@@ -26,12 +26,10 @@ fi
 VPC_ID=$(echo $CLUSTER_INFO | jq -r '.cluster.resourcesVpcConfig.vpcId')
 ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
 
-NODE_GROUP_NAME=${CLUSTER_NAME}"ng"
+ROLE_SEARCH_STR=$CLUSTER_NAME-.*-NodeInstanceRole
+NODE_ROLE_NAME=$(aws iam list-roles | jq -r '.Roles[] | select(.RoleName|match('\"$ROLE_SEARCH_STR\"')) | .RoleName')
 
-NODE_INSTANCE_ROLE_ARN=$(aws eks describe-nodegroup --cluster-name $CLUSTER_NAME --nodegroup-name $NODE_GROUP_NAME | jq -r '.nodegroup.nodeRole')
-NODE_ROLE_NAME=${NODE_INSTANCE_ROLE_ARN##*/}
-
-echo "Node Instance Role: $NODE_INSTANCE_ROLE_ARN, NODE_ROLE_NAME: $NODE_ROLE_NAME"
+echo "Node Instance Role Name: $NODE_ROLE_NAME"
 
 # Install appmesh CRDs
 echo "Installing appmesh CRDs"
