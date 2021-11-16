@@ -4,6 +4,7 @@
 
 set -e
 
+SECONDS=0
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 echo "Running AppMeshController integration test with the following variables
 KUBE CONFIG: $KUBE_CONFIG_PATH
@@ -15,6 +16,15 @@ if [[ -z "${OS_OVERRIDE}" ]]; then
   OS_OVERRIDE=linux
 fi
 
+function toggle_windows_scheduling(){
+  schedule=$1
+  nodes=$(kubectl get nodes -l kubernetes.io/os=windows | tail -n +2 | cut -d' ' -f1)
+  for n in $nodes
+  do
+    kubectl $schedule $n
+  done
+}
+
 GET_CLUSTER_INFO_CMD="aws eks describe-cluster --name $CLUSTER_NAME --region $REGION"
 
 if [[ -z "${ENDPOINT}" ]]; then
@@ -23,8 +33,13 @@ else
   CLUSTER_INFO=$($GET_CLUSTER_INFO_CMD --endpoint $ENDPOINT)
 fi
 
+echo "Cordon off windows nodes"
+toggle_windows_scheduling "cordon"
+
 VPC_ID=$(echo $CLUSTER_INFO | jq -r '.cluster.resourcesVpcConfig.vpcId')
 ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
+
+echo "VPC ID: $VPC_ID"
 
 ROLE_SEARCH_STR=$CLUSTER_NAME-.*-NodeInstanceRole
 NODE_ROLE_NAME=$(aws iam list-roles | jq -r '.Roles[] | select(.RoleName|match('\"$ROLE_SEARCH_STR\"')) | .RoleName')
@@ -88,16 +103,19 @@ aws iam detach-role-policy \
     --role-name $NODE_ROLE_NAME || true
 
 echo "Delete iamserviceaccount"    
-eksctl delete iamserviceaccount --name appmesh-controller --namespace appmesh-system --cluster $CLUSTER_NAME || true
+eksctl delete iamserviceaccount --name appmesh-controller --namespace appmesh-system --cluster $CLUSTER_NAME --timeout=10m || true
 
 #Delete AppMesh CRDs
 echo "Deleting appmesh CRD's"
-kubectl delete -k "github.com/aws/eks-charts/stable/appmesh-controller//crds?ref=master" 
+kubectl delete -k "github.com/aws/eks-charts/stable/appmesh-controller//crds?ref=master" --timeout=10m || true
 
 echo "Uninstall appmesh-controller"
-helm delete appmesh-controller -n appmesh-system
+helm delete appmesh-controller -n appmesh-system --timeout=10m || true
 
 echo "Delete namespace appmesh-system"
-kubectl delete ns appmesh-system
+kubectl delete ns appmesh-system --timeout=10m || true
 
-echo "Successfully finished the test suite"
+echo "Uncordon windows nodes"
+toggle_windows_scheduling "uncordon"
+
+echo "Successfully finished the test suite $(($SECONDS / 60)) minutes and $(($SECONDS % 60)) seconds"
