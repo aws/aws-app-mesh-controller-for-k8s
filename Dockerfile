@@ -1,7 +1,11 @@
+# syntax=docker/dockerfile:experimental
+
 # Build the controller binary
-FROM golang:1.14 as builder
+FROM --platform=${TARGETPLATFORM} golang:1.16 as builder
 
 WORKDIR /workspace
+
+ENV GOPROXY direct
 
 COPY . ./
 # cache deps before building and copying source so that we don't need to re-download as much
@@ -13,7 +17,7 @@ ENV VERSION_PKG=github.com/aws/aws-app-mesh-controller-for-k8s/pkg/version
 RUN GIT_VERSION=$(git describe --tags --dirty --always) && \
     GIT_COMMIT=$(git rev-parse HEAD) && \
     BUILD_DATE=$(date +%Y-%m-%dT%H:%M:%S%z) && \
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build \
+    CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} GO111MODULE=on go build \
     -ldflags="-X ${VERSION_PKG}.GitVersion=${GIT_VERSION} -X ${VERSION_PKG}.GitCommit=${GIT_COMMIT} -X ${VERSION_PKG}.BuildDate=${BUILD_DATE}" -a -o controller main.go
 
 # Build the container image
