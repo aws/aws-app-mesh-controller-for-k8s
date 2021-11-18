@@ -41,8 +41,8 @@ ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
 
 echo "VPC ID: $VPC_ID"
 
-ROLE_SEARCH_STR=$CLUSTER_NAME-.*-NodeInstanceRole
-NODE_ROLE_NAME=$(aws iam list-roles | jq -r '.Roles[] | select(.RoleName|match('\"$ROLE_SEARCH_STR\"')) | .RoleName')
+ROLE_SEARCH_STR=$CLUSTER_NAME-NodeInstanceRole
+NODE_ROLES=$(aws iam list-roles | jq -r '.Roles[] | select(.RoleName|match('\"$ROLE_SEARCH_STR\"')) | .RoleName')
 
 echo "Node Instance Role Name: $NODE_ROLE_NAME"
 
@@ -79,10 +79,13 @@ eksctl create iamserviceaccount --cluster $CLUSTER_NAME \
     --override-existing-serviceaccounts \
     --approve
 
-echo "Attaching Envoy policy to Node Instance Role"
-aws iam attach-role-policy \
+for n in $NODE_ROLES
+do
+ echo "Attaching Envoy policy to Node Instance Role: $n"
+ aws iam attach-role-policy \
     --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/AWSAppMeshEnvoyIAMPolicy \
-    --role-name "$NODE_ROLE_NAME" || true
+    --role-name "$n" || true
+done
 
 echo "Deploying appmesh-controller"
 helm upgrade -i appmesh-controller eks/appmesh-controller \
@@ -97,10 +100,13 @@ echo "Starting the ginkgo test suite"
 (cd $SCRIPT_DIR && CGO_ENABLED=0 GOOS=$OS_OVERRIDE ginkgo -v -r -- --cluster-kubeconfig=$KUBE_CONFIG_PATH --cluster-name=$CLUSTER_NAME --aws-region=$REGION --aws-vpc-id=$VPC_ID || true)
 
 #Tear down local resources
-echo "Detaching the Envoy IAM Policy from Node Instance Role"
-aws iam detach-role-policy \
-    --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/AWSAppMeshEnvoyIAMPolicy \
-    --role-name $NODE_ROLE_NAME || true
+for n in $NODE_ROLES
+do
+  echo "Detaching the Envoy IAM Policy from Node Instance Role: $n"
+  aws iam detach-role-policy \
+      --policy-arn arn:aws:iam::$ACCOUNT_ID:policy/AWSAppMeshEnvoyIAMPolicy \
+      --role-name $n || true
+done
 
 echo "Delete iamserviceaccount"    
 eksctl delete iamserviceaccount --name appmesh-controller --namespace appmesh-system --cluster $CLUSTER_NAME --timeout=10m || true
