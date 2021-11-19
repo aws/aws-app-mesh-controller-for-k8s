@@ -135,7 +135,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"Number of seconds after Envoy has started before readiness probes are initiated")
 	fs.Int32Var(&cfg.ReadinessProbePeriod, flagReadinessProbePeriod, 10,
 		"How often (in seconds) to perform the readiness probe on Envoy container")
-	fs.StringVar(&cfg.InitImage, flagInitImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v3-prod",
+	fs.StringVar(&cfg.InitImage, flagInitImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v4-prod",
 		"Init container image.")
 	fs.StringVar(&cfg.IgnoredIPs, flagIgnoredIPs, "169.254.169.254",
 		"Init container ignored IPs.")
