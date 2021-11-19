@@ -77,8 +77,10 @@ generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 # Build the docker image
+# Requires buildx to be installed: https://docs.docker.com/buildx/working-with-buildx/
+# By default the TARGETPLATFORM is set to linux/amd64, change the value if you are building for linux/arm64
 docker-build: check-env test
-	docker build . -t $(IMAGE)
+	docker buildx build --platform linux/amd64 -t $(IMAGE) . --load
 
 docker-push: check-env
 	docker push $(IMAGE)
@@ -132,7 +134,7 @@ endif
 check-env:
 	@:$(call check_var, AWS_ACCOUNT, AWS account ID for publishing docker images)
 	@:$(call check_var, AWS_REGION, AWS region for publishing docker images)
-
+	
 check_var = \
     $(strip $(foreach 1,$1, \
         $(call __check_var,$1,$(strip $(value 2)))))
