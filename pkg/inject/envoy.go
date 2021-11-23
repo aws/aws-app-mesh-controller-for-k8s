@@ -44,6 +44,8 @@ type envoyMutatorConfig struct {
 	statsDPort                 int32
 	statsDAddress              string
 	statsDSocketPath           string
+	controllerVersion          string
+	k8sVersion                 string
 }
 
 func newEnvoyMutator(mutatorConfig envoyMutatorConfig, ms *appmesh.Mesh, vn *appmesh.VirtualNode) *envoyMutator {
@@ -142,6 +144,8 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		StatsDPort:               m.mutatorConfig.statsDPort,
 		StatsDAddress:            m.mutatorConfig.statsDAddress,
 		StatsDSocketPath:         m.mutatorConfig.statsDSocketPath,
+		ControllerVersion:        m.mutatorConfig.controllerVersion,
+		K8sVersion:               m.mutatorConfig.k8sVersion,
 	}
 }
 

@@ -290,6 +290,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -330,6 +332,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -363,6 +382,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 3,
 					readinessProbePeriod:       5,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -406,6 +427,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -439,6 +477,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -487,6 +527,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -520,6 +577,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v3",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -564,6 +623,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -597,6 +673,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v3",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -641,6 +719,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -674,6 +769,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -718,6 +815,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -754,6 +868,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					xraySamplingRate:           "0.01",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -805,6 +921,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "XRAY_SAMPLING_RATE",
 									Value: "0.01",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
@@ -872,6 +1005,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					enableStatsD:               false,
 					statsDAddress:              "127.0.0.1",
 					statsDPort:                 8125,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -924,6 +1059,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "ENABLE_ENVOY_JAEGER_TRACING",
 									Value: "1",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -967,6 +1119,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					statsDAddress:              "127.0.0.1",
 					statsDPort:                 8125,
 					statsDSocketPath:           "/var/run/datadog/dsd.socket",
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -1023,6 +1177,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "STATSD_SOCKET_PATH",
 									Value: "/var/run/datadog/dsd.socket",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1065,6 +1236,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					enableStatsD:               false,
 					statsDAddress:              "127.0.0.1",
 					statsDPort:                 8125,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -1117,6 +1290,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "DATADOG_TRACER_ADDRESS",
 									Value: "127.0.0.1",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1150,6 +1340,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -1190,6 +1382,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1225,6 +1434,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -1268,6 +1479,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
@@ -1320,6 +1548,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -1363,6 +1593,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1398,6 +1645,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -1441,6 +1690,23 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{

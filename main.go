@@ -141,6 +141,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	k8sVersion := k8s.ServerVersion(clientSet.Discovery())
+
 	mgr, err := ctrl.NewManager(kubeConfig, ctrl.Options{
 		Scheme:                     scheme,
 		SyncPeriod:                 &syncPeriod,
@@ -238,7 +240,7 @@ func main() {
 	meshMembershipDesignator := mesh.NewMembershipDesignator(mgr.GetClient())
 	vgMembershipDesignator := virtualgateway.NewMembershipDesignator(mgr.GetClient())
 	vnMembershipDesignator := virtualnode.NewMembershipDesignator(mgr.GetClient())
-	sidecarInjector := inject.NewSidecarInjector(injectConfig, cloud.AccountID(), cloud.Region(), mgr.GetClient(), referencesResolver, vnMembershipDesignator, vgMembershipDesignator)
+	sidecarInjector := inject.NewSidecarInjector(injectConfig, cloud.AccountID(), cloud.Region(), version.GitVersion, k8sVersion, mgr.GetClient(), referencesResolver, vnMembershipDesignator, vgMembershipDesignator)
 	appmeshwebhook.NewMeshMutator().SetupWithManager(mgr)
 	appmeshwebhook.NewMeshValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualGatewayMutator(meshMembershipDesignator).SetupWithManager(mgr)

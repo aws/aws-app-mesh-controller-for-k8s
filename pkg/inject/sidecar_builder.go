@@ -42,6 +42,8 @@ type EnvoyTemplateVariables struct {
 	StatsDPort               int32
 	StatsDAddress            string
 	StatsDSocketPath         string
+	K8sVersion               string
+	ControllerVersion        string
 }
 
 func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) error {
@@ -151,6 +153,9 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		env["JAEGER_TRACER_PORT"] = vars.JaegerPort
 		env["JAEGER_TRACER_ADDRESS"] = vars.JaegerAddress
 	}
+
+	env["APPMESH_PLATFORM_K8S_VERSION"] = vars.K8sVersion
+	env["APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION"] = vars.ControllerVersion
 	return nil
 }
 
@@ -205,6 +210,7 @@ func getEnvoyEnv(env map[string]string) []corev1.EnvVar {
 		}
 
 	}
+	ev = append(ev, refPodUid("APPMESH_PLATFORM_K8S_POD_UID"))
 	return ev
 }
 
@@ -322,6 +328,19 @@ func envVar(envName, envVal string) corev1.EnvVar {
 	return corev1.EnvVar{
 		Name:  envName,
 		Value: envVal,
+	}
+}
+
+// refPodUid is to use the k8s downward API and render pod uid
+func refPodUid(envName string) corev1.EnvVar {
+	return corev1.EnvVar{
+		Name:  envName,
+		Value: "",
+		ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
+				FieldPath: "metadata.uid",
+			},
+		},
 	}
 }
 

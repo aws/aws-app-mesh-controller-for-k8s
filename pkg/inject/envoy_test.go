@@ -89,6 +89,60 @@ func Test_envoyMutator_mutate(t *testing.T) {
 		},
 	}
 
+	podDisableSds := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "my-pod",
+			Annotations: map[string]string{
+				"appmesh.k8s.aws/sds": "disabled",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "app",
+					Image: "app/v1",
+				},
+			},
+		},
+	}
+
+	certPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "my-pod",
+			Annotations: map[string]string{
+				"appmesh.k8s.aws/secretMounts": "svc1-cert-chain-key:/certs/svc1, svc1-svc2-ca-bundle:/certs",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "app",
+					Image: "app/v1",
+				},
+			},
+		},
+	}
+
+	podMultipleContainer := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "my-ns",
+			Name:      "my-pod",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "app",
+					Image: "app/v1",
+				},
+				{
+					Name: "envoy",
+				},
+			},
+		},
+	}
+
 	annotationCpuRequest, _ := resource.ParseQuantity("128Mi")
 	annotationMemoryRequest, _ := resource.ParseQuantity("20m")
 	annotationCpuLimit, _ := resource.ParseQuantity("256Mi")
@@ -150,6 +204,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarMemoryRequests:      memoryRequests.String(),
 					sidecarCPULimits:           cpuLimits.String(),
 					sidecarMemoryLimits:        memoryLimits.String(),
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -221,6 +277,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -253,6 +326,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -324,6 +399,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -355,6 +447,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					enableXrayTracing:          true,
 					xrayDaemonPort:             2000,
 					xraySamplingRate:           "0.01",
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -438,6 +532,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "XRAY_SAMPLING_RATE",
 									Value: "0.01",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -496,6 +607,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					enableJaegerTracing:        true,
 					jaegerPort:                 "8000",
 					jaegerAddress:              "localhost",
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -579,6 +692,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -610,6 +740,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					enableDatadogTracing:       true,
 					datadogTracerPort:          8126,
 					datadogTracerAddress:       "127.0.0.1",
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -692,6 +824,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "DATADOG_TRACER_ADDRESS",
 									Value: "127.0.0.1",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -721,6 +870,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableStatsTags:            true,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -796,6 +947,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "ENABLE_ENVOY_STATS_TAGS",
 									Value: "1",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -828,6 +996,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					statsDAddress:              "127.0.0.1",
 					statsDPort:                 8125,
 					statsDSocketPath:           "/var/run/datadog/dsd.socket",
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -915,6 +1085,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "STATSD_SOCKET_PATH",
 									Value: "/var/run/datadog/dsd.socket",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -943,26 +1130,12 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
-				pod: &corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "my-ns",
-						Name:      "my-pod",
-						Annotations: map[string]string{
-							"appmesh.k8s.aws/secretMounts": "svc1-cert-chain-key:/certs/svc1, svc1-svc2-ca-bundle:/certs",
-						},
-					},
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{
-							{
-								Name:  "app",
-								Image: "app/v1",
-							},
-						},
-					},
-				},
+				pod: certPod,
 			},
 			wantPod: &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1033,6 +1206,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -1093,6 +1283,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -1180,6 +1372,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -1227,26 +1436,13 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
-				pod: &corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "my-ns",
-						Name:      "my-pod",
-						Annotations: map[string]string{
-							"appmesh.k8s.aws/sds": "disabled",
-						},
-					},
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{
-							{
-								Name:  "app",
-								Image: "app/v1",
-							},
-						},
-					},
-				}},
+				pod: podDisableSds,
+			},
 			wantPod: &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "my-ns",
@@ -1316,6 +1512,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -1348,6 +1561,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					enableStatsD:               true,
 					statsDPort:                 8125,
 					statsDAddress:              "127.0.0.1",
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -1430,6 +1645,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "STATSD_ADDRESS",
 									Value: "127.0.0.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
 								},
 							},
 							Resources: corev1.ResourceRequirements{
@@ -1466,6 +1698,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					enableStatsD:               true,
 					statsDPort:                 8125,
 					statsDAddress:              "127.0.0.1",
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -1548,6 +1782,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "STATSD_ADDRESS",
 									Value: "127.0.0.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
 								},
 							},
 							Resources: corev1.ResourceRequirements{
@@ -1585,6 +1836,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					enableStatsD:               true,
 					statsDAddress:              "127.0.0.1",
 					statsDPort:                 8125,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -1674,6 +1927,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Name:  "STATSD_ADDRESS",
 									Value: "127.0.0.1",
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -1706,26 +1976,12 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
-				pod: &corev1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "my-ns",
-						Name:      "my-pod",
-					},
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{
-							{
-								Name:  "app",
-								Image: "app/v1",
-							},
-							{
-								Name: "envoy",
-							},
-						},
-					},
-				},
+				pod: podMultipleContainer,
 			},
 			wantPod: &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
@@ -1764,6 +2020,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					enableDatadogTracing:       true,
 					datadogTracerPort:          8126,
 					datadogTracerAddress:       "ref:status.hostIP",
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -1851,6 +2109,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -1882,6 +2157,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					enableStatsD:               true,
 					statsDAddress:              "ref:status.hostIP",
 					statsDPort:                 8125,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -1970,6 +2247,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -2001,6 +2295,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					enableStatsD:               true,
 					statsDAddress:              "ref:status.hostIP",
 					statsDPort:                 8125,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -2104,6 +2400,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -2134,6 +2447,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarMemoryRequests:      memoryRequests.String(),
 					sidecarCPULimits:           cpuLimits.String(),
 					sidecarMemoryLimits:        memoryLimits.String(),
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},
 			},
 			args: args{
@@ -2211,6 +2526,23 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
 								},
 							},
 							Resources: corev1.ResourceRequirements{
