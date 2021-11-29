@@ -332,6 +332,8 @@ func envVar(envName, envVal string) corev1.EnvVar {
 }
 
 // refPodUid is to use the k8s downward API and render pod uid
+// this info will be used to help App Mesh team to identify 
+// the platform Envoy is running on
 func refPodUid(envName string) corev1.EnvVar {
 	return corev1.EnvVar{
 		Name:  envName,
