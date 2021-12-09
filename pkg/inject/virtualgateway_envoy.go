@@ -36,6 +36,8 @@ type virtualGatwayEnvoyConfig struct {
 	statsDPort                 int32
 	statsDAddress              string
 	statsDSocketPath           string
+	controllerVersion          string
+	k8sVersion                 string
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -136,6 +138,8 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Envo
 		StatsDPort:               m.mutatorConfig.statsDPort,
 		StatsDAddress:            m.mutatorConfig.statsDAddress,
 		StatsDSocketPath:         m.mutatorConfig.statsDSocketPath,
+		ControllerVersion:        m.mutatorConfig.controllerVersion,
+		K8sVersion:               m.mutatorConfig.k8sVersion,
 	}
 }
 

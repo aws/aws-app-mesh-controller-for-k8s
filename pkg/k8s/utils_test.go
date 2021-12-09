@@ -5,6 +5,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/version"
+	fakeDiscovery "k8s.io/client-go/discovery/fake"
+	kubeTesting "k8s.io/client-go/testing"
 	"testing"
 )
 
@@ -46,4 +49,14 @@ func TestNamespacedName(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestServerVersion(t *testing.T) {
+	discovery := fakeDiscovery.FakeDiscovery{Fake: &kubeTesting.Fake{}}
+	expectedVersion := "v1.0.0"
+	discovery.FakedServerVersion = &version.Info{
+		GitVersion: expectedVersion,
+	}
+	actualVersion := ServerVersion(&discovery)
+	assert.Equal(t, expectedVersion, actualVersion)
 }

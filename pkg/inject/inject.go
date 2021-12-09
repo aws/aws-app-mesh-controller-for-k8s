@@ -26,13 +26,15 @@ type SidecarInjector struct {
 	config                 Config
 	accountID              string
 	awsRegion              string
+	controllerVersion      string
+	k8sVersion             string
 	k8sClient              client.Client
 	referenceResolver      references.Resolver
 	vgMembershipDesignator virtualgateway.MembershipDesignator
 	vnMembershipDesignator virtualnode.MembershipDesignator
 }
 
-func NewSidecarInjector(cfg Config, accountID string, awsRegion string,
+func NewSidecarInjector(cfg Config, accountID string, awsRegion string, controllerVersion string, k8sVersion string,
 	k8sClient client.Client,
 	referenceResolver references.Resolver,
 	vnMembershipDesignator virtualnode.MembershipDesignator,
@@ -41,6 +43,8 @@ func NewSidecarInjector(cfg Config, accountID string, awsRegion string,
 		config:                 cfg,
 		accountID:              accountID,
 		awsRegion:              awsRegion,
+		controllerVersion:      controllerVersion,
+		k8sVersion:             k8sVersion,
 		k8sClient:              k8sClient,
 		referenceResolver:      referenceResolver,
 		vgMembershipDesignator: vgMembershipDesignator,
@@ -140,6 +144,8 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				statsDPort:                 m.config.StatsDPort,
 				statsDAddress:              m.config.StatsDAddress,
 				statsDSocketPath:           m.config.StatsDSocketPath,
+				controllerVersion:          m.controllerVersion,
+				k8sVersion:                 m.k8sVersion,
 			}, ms, vn),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,
@@ -185,6 +191,8 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 			statsDPort:                 m.config.StatsDPort,
 			statsDAddress:              m.config.StatsDAddress,
 			statsDSocketPath:           m.config.StatsDSocketPath,
+			controllerVersion:          m.controllerVersion,
+			k8sVersion:                 m.k8sVersion,
 		}, ms, vg),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,
