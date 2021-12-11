@@ -12,6 +12,7 @@ const xrayDaemonContainerTemplate = `
 {
   "name": "xray-daemon",
   "image": "{{ .XRayImage }}",
+  "command": "-l {{ .XrayLogLevel }}",
   "securityContext": {
     "runAsUser": 1337
   },
@@ -35,6 +36,7 @@ type XrayTemplateVariables struct {
 	AWSRegion      string
 	XRayImage      string
 	XrayDaemonPort int32
+	XrayLogLevel   string
 }
 
 type xrayMutatorConfig struct {
@@ -45,6 +47,7 @@ type xrayMutatorConfig struct {
 	sidecarMemoryLimits   string
 	xRayImage             string
 	xRayDaemonPort        int32
+	xRayLogLevel          string
 }
 
 func newXrayMutator(mutatorConfig xrayMutatorConfig, enabled bool) *xrayMutator {
@@ -102,6 +105,7 @@ func (m *xrayMutator) buildTemplateVariables(pod *corev1.Pod) XrayTemplateVariab
 		AWSRegion:      m.mutatorConfig.awsRegion,
 		XRayImage:      m.mutatorConfig.xRayImage,
 		XrayDaemonPort: m.mutatorConfig.xRayDaemonPort,
+		XrayLogLevel:   m.mutatorConfig.xRayLogLevel,
 	}
 }
 
@@ -117,6 +121,10 @@ func (m *xrayMutator) checkConfig() error {
 
 	if m.mutatorConfig.xRayDaemonPort == 0 {
 		missingConfig = append(missingConfig, "xRayDaemonPort")
+	}
+
+	if m.mutatorConfig.xRayLogLevel == "" {
+		missingConfig = append(missingConfig, "xRayLogLevel")
 	}
 
 	if len(missingConfig) > 0 {
