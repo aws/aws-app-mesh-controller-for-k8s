@@ -100,7 +100,7 @@ func Test_jaegerMutator_mutate(t *testing.T) {
 					InitContainers: []corev1.Container{
 						{
 							Name:            "inject-jaeger-config",
-							Image:           "busybox",
+							Image:           "public.ecr.aws/docker/library/busybox",
 							ImagePullPolicy: "IfNotPresent",
 							Command: []string{
 								"sh",

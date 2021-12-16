@@ -39,7 +39,7 @@ const jaegerInitContainerTemplate = `
     "-c",
     "cat <<EOF >> /tmp/envoy/envoyconf.yaml{{ .EnvoyConfig }}EOF\n\ncat /tmp/envoy/envoyconf.yaml\n"
   ],
-  "image": "busybox",
+  "image": "public.ecr.aws/docker/library/busybox",
   "imagePullPolicy": "IfNotPresent",
   "name": "inject-jaeger-config",
   "volumeMounts": [
