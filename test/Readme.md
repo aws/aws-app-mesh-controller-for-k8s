@@ -37,8 +37,7 @@ For running e2e test on ARM64 based instances, change following [line](https://g
 ```
 defaultHTTPProxyImage = "ghcr.io/abhinavsingh/proxy.py:v2.4.0b3.dev31.ga062f80-linux.arm64.v8"
 ```
-As of today we do not have mTLS support on arm since the spire agent and spire server images are not compatible with arm. We will update the images once we have arm support from spire.   
-So only e2e tests without mTLS can be run on arm with the above suggested changes.  
+As of today we do not have SDS based mTLS support on ARM since the spire agent and spire server images are not compatible with arm. We will update the images once we have arm support from spire.File based mTLS should work without any issues on ARM instances as well.  
 
 #### integration tests  
 These tests check creation/deletion of different appmesh components such as virtualgateway, virtualnode etc.
