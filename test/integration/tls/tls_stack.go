@@ -31,8 +31,8 @@ import (
 const (
 	//If you're not able to access below images, try to build them based on the app code under "timeout_app"
 	//directory and push it to any accessible ECR repo and update the below values
-	defaultFrontEndImage = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/test_app:feapp-img"
-	defaultBackEndImage  = "928111597794.dkr.ecr.us-west-2.amazonaws.com/amazon/test_app:beapp-img"
+	defaultFrontEndImage = "public.ecr.aws/e6v3k1j4/appmesh-test-feapp:v1"
+	defaultBackEndImage  = "public.ecr.aws/e6v3k1j4/appmesh-test-beapp:v1"
 
 	tlsTest          = "tls-e2e"
 	AppContainerPort = 8080
