@@ -153,7 +153,6 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		env["JAEGER_TRACER_PORT"] = vars.JaegerPort
 		env["JAEGER_TRACER_ADDRESS"] = vars.JaegerAddress
 	}
-
 	env["APPMESH_PLATFORM_K8S_VERSION"] = vars.K8sVersion
 	env["APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION"] = vars.ControllerVersion
 	return nil
@@ -332,7 +331,7 @@ func envVar(envName, envVal string) corev1.EnvVar {
 }
 
 // refPodUid is to use the k8s downward API and render pod uid
-// this info will be used to help App Mesh team to identify 
+// this info will be used to help App Mesh team to identify
 // the platform Envoy is running on
 func refPodUid(envName string) corev1.EnvVar {
 	return corev1.EnvVar{

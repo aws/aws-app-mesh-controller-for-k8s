@@ -168,7 +168,8 @@ type HTTPPathMatch struct {
 // HTTPQueryParameters refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpQueryParameter.html
 type HTTPQueryParameters struct {
 	Name *string `json:"name"`
-	// The QueryMatchMethod object.
+
+	// The QueryMatchMethod object
 	// +optional
 	Match *QueryMatchMethod `json:"match,omitempty"`
 }
