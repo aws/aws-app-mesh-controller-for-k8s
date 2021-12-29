@@ -208,7 +208,7 @@ helm upgrade -i appmesh-controller eks/appmesh-controller \
 
 This section will assist you in upgrading the appmesh-controller from <=v0.5.0 version to >=v1.0.0 version.
 
-You can either build new CRDs from scratch or migrate existing CRDs to the new schema. Please refer to the documentation [here for the new API spec](https://aws.github.io/aws-app-mesh-controller-for-k8s/reference/api_spec/). Also, you can find several examples [here](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs) with v1beta2 spec to help you get started.
+You can either build new CRDs from scratch or migrate existing CRDs to the new schema. Please refer to the documentation [here for the new API spec](https://aws.github.io/aws-app-mesh-controller-for-k8s/reference/api_spec/). Also, you can find several examples [here](https://github.com/aws/aws-app-mesh-examples/tree/main/walkthroughs) with v1beta2 spec to help you get started.
 
 Starting v1.0.0, Mesh resource supports namespaceSelectors, where you can either select namespace based on labels (recommended option) or select all namespaces. To select a namespace in a Mesh, you will need to define `namespaceSelector`:
 
@@ -237,7 +237,7 @@ metadata:
     appmesh.k8s.aws/sidecarInjectorWebhook: enabled
 ```
 
-For more examples, please refer to the walkthroughs [here](https://github.com/aws/aws-app-mesh-examples/tree/master/walkthroughs). If you don't find an example that fits your use-case, please read the API spec [here](https://aws.github.io/aws-app-mesh-controller-for-k8s/reference/api_spec/). If you find an issue in the documentation or the examples, please open an issue and we'll help resolve it.
+For more examples, please refer to the walkthroughs [here](https://github.com/aws/aws-app-mesh-examples/tree/main/walkthroughs). If you don't find an example that fits your use-case, please read the API spec [here](https://aws.github.io/aws-app-mesh-controller-for-k8s/reference/api_spec/). If you find an issue in the documentation or the examples, please open an issue and we'll help resolve it.
 
 ### Upgrade without preserving old App Mesh resources
 
