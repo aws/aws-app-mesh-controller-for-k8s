@@ -42,7 +42,7 @@ const (
 	connectivityCheckUniformDistributionSL = 0.001 // Significance level that traffic to targets are uniform distributed.
 	AppContainerPort                       = 9080
 	HttpProxyContainerPort                 = 8899
-	defaultAppImage                        = "970805265562.dkr.ecr.us-west-2.amazonaws.com/colorteller:latest"
+	defaultAppImage                        = "public.ecr.aws/e6v3k1j4/colorteller:v1"
 	defaultHTTPProxyImage                  = "abhinavsingh/proxy.py:latest"
 	caCertScript                           = "certs/ca_certs.sh"
 	nodeCertScript                         = "certs/node_certs.sh"
