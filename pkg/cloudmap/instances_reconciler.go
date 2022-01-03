@@ -5,9 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"strconv"
-	"time"
-
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
