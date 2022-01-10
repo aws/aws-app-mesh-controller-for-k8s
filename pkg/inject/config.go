@@ -37,6 +37,8 @@ const (
 	flagEnableXrayTracing    = "enable-xray-tracing"
 	flagXrayDaemonPort       = "xray-daemon-port"
 	flagXraySamplingRate     = "xray-sampling-rate"
+	flagXrayLogLevel         = "xray-log-level"
+	flagXrayConfigRoleArn    = "xray-config-roleArn"
 	flagEnableStatsTags      = "enable-stats-tags"
 	flagEnableStatsD         = "enable-statsd"
 	flagStatsDAddress        = "statsd-address"
@@ -84,6 +86,8 @@ type Config struct {
 	EnableXrayTracing    bool
 	XrayDaemonPort       int32
 	XraySamplingRate     string
+	XrayLogLevel         string
+	XrayConfigRoleArn    string
 	EnableStatsTags      bool
 	EnableStatsD         bool
 	StatsDAddress        string
@@ -157,6 +161,10 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"X-Ray Agent tracing port")
 	fs.StringVar(&cfg.XraySamplingRate, flagXraySamplingRate, "0.05",
 		"X-Ray tracer sampling rate")
+	fs.StringVar(&cfg.XrayLogLevel, flagXrayLogLevel, "",
+		"X-Ray Agent log level")
+	fs.StringVar(&cfg.XrayConfigRoleArn, flagXrayConfigRoleArn, "",
+		"X-Ray Agent IAM role to upload segments to a different account")
 	fs.StringVar(&cfg.XRayImage, flagXRayImage, "public.ecr.aws/xray/aws-xray-daemon",
 		"X-Ray daemon container image")
 	fs.BoolVar(&cfg.EnableStatsTags, flagEnableStatsTags, false,

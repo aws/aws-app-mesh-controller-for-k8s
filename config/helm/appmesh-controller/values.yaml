@@ -9,7 +9,7 @@ preview: false
 
 image:
   repository: 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller
-  tag: v1.4.2
+  tag: v1.4.3
   pullPolicy: IfNotPresent
 
 sidecar:
@@ -110,6 +110,10 @@ tracing:
   port: 2000
   # tracing.samplingRate: X-Ray tracer sampling rate
   samplingRate: 0.05
+  # tracing.logLevel: X-Ray agent log level
+  logLevel: ""
+  # tracing.role: X-Ray agent IAM role to upload segments to a different account
+  role: ""
 
 stats:
   # stats.tagsEnabled: `true` if Envoy should include app-mesh tags

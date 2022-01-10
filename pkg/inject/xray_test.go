@@ -68,6 +68,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 		sidecarMemoryLimits:   memoryLimits.String(),
 		xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
 		xRayDaemonPort:        2000,
+		xRayConfigRoleArn:     "",
 	}
 	type fields struct {
 		enabled       bool
@@ -582,6 +583,347 @@ func Test_xrayMutator_mutate(t *testing.T) {
 									"memory": annotationMemoryLimit,
 								},
 							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "xray args contain logLevel and roleArn",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					awsRegion:             "us-west-2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					sidecarCPULimits:      cpuLimits.String(),
+					sidecarMemoryLimits:   memoryLimits.String(),
+					xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
+					xRayDaemonPort:        2000,
+					xRayLogLevel:          "dev",
+					xRayConfigRoleArn:     "arn:aws:iam::123456789012:role/xray-cross-account",
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "xray-daemon",
+							Image: "public.ecr.aws/xray/aws-xray-daemon",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "xray",
+									ContainerPort: 2000,
+									Protocol:      "UDP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							Args: []string{
+								"--log-level",
+								"dev",
+								"--role-arn",
+								"arn:aws:iam::123456789012:role/xray-cross-account",
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+								Limits: corev1.ResourceList{
+									"cpu":    cpuLimits,
+									"memory": memoryLimits,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "xray args contain invalid logLevel",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					awsRegion:             "us-west-2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					sidecarCPULimits:      cpuLimits.String(),
+					sidecarMemoryLimits:   memoryLimits.String(),
+					xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
+					xRayDaemonPort:        2000,
+					xRayLogLevel:          "stage",
+					xRayConfigRoleArn:     "arn:aws:iam::123456789012:role/xray-cross-account",
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantErr: errors.New("tracing.logLevel: \"stage\" is not valid." +
+				" Set one of dev, debug, info, prod, warn, error"),
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "xray args contain invalid roleArn",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					awsRegion:             "us-west-2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					sidecarCPULimits:      cpuLimits.String(),
+					sidecarMemoryLimits:   memoryLimits.String(),
+					xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
+					xRayDaemonPort:        2000,
+					xRayLogLevel:          "dev",
+					xRayConfigRoleArn:     "xray-cross-account arn",
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantErr: errors.New("tracing.role: \"xray-cross-account arn\" is not a valid `--role-arn`." +
+				" Please refer to AWS X-Ray Documentation for more information"),
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "xray daemon config volume mount annotation",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					awsRegion:             "us-west-2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					sidecarCPULimits:      cpuLimits.String(),
+					sidecarMemoryLimits:   memoryLimits.String(),
+					xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
+					xRayDaemonPort:        2000,
+					xRayLogLevel:          "prod",
+					xRayConfigRoleArn:     "arn:aws:iam::123456789012:role/xray-cross-account",
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-ns",
+						Name:      "my-pod",
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/xrayDaemonConfigMount": "xray-daemon-config:/tmp/",
+						},
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "app",
+								Image: "app/v1",
+							},
+						},
+					},
+				},
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+					Annotations: map[string]string{
+						"appmesh.k8s.aws/xrayDaemonConfigMount": "xray-daemon-config:/tmp/",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
+							Name:  "xray-daemon",
+							Image: "public.ecr.aws/xray/aws-xray-daemon",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "xray",
+									ContainerPort: 2000,
+									Protocol:      "UDP",
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+							},
+							Command: []string{
+								"/xray",
+								"--config",
+								"/tmp/xray-daemon.yaml",
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+								Limits: corev1.ResourceList{
+									"cpu":    cpuLimits,
+									"memory": memoryLimits,
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "xray-daemon-config",
+									MountPath: "/tmp/",
+									ReadOnly:  true,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "xray daemon config with more than 1 volume mount annotation",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					awsRegion:             "us-west-2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					sidecarCPULimits:      cpuLimits.String(),
+					sidecarMemoryLimits:   memoryLimits.String(),
+					xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
+					xRayDaemonPort:        2000,
+					xRayLogLevel:          "prod",
+					xRayConfigRoleArn:     "arn:aws:iam::123456789012:role/xray-cross-account",
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-ns",
+						Name:      "my-pod",
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/xrayDaemonConfigMount": "xray-daemon-config1:/tmp/,xray-daemon-config2:/tmp/,",
+						},
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "app",
+								Image: "app/v1",
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("provide only one config mount for annotation " +
+				"\"appmesh.k8s.aws/xrayDaemonConfigMount: xray-daemon-config1:/tmp/,xray-daemon-config2:/tmp/,\""),
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "xray daemon config with malformed annotation",
+			fields: fields{
+				enabled: true,
+				mutatorConfig: xrayMutatorConfig{
+					awsRegion:             "us-west-2",
+					sidecarCPURequests:    cpuRequests.String(),
+					sidecarMemoryRequests: memoryRequests.String(),
+					sidecarCPULimits:      cpuLimits.String(),
+					sidecarMemoryLimits:   memoryLimits.String(),
+					xRayImage:             "public.ecr.aws/xray/aws-xray-daemon",
+					xRayDaemonPort:        2000,
+					xRayLogLevel:          "prod",
+					xRayConfigRoleArn:     "arn:aws:iam::123456789012:role/xray-cross-account",
+				},
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-ns",
+						Name:      "my-pod",
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/xrayDaemonConfigMount": "xray-daemon-config1-/tmp/",
+						},
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Name:  "app",
+								Image: "app/v1",
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.New("malformed annotation \"appmesh.k8s.aws/xrayDaemonConfigMount\"," +
+				" expected format: volumeName:mountPath"),
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
 						},
 					},
 				},
