@@ -752,7 +752,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 						Namespace: "my-ns",
 						Name:      "my-pod",
 						Annotations: map[string]string{
-							"appmesh.k8s.aws/xrayDaemonConfigMount": "xray-daemon-config:/tmp/",
+							"appmesh.k8s.aws/xrayAgentConfigMount": "xray-daemon-config:/tmp/",
 						},
 					},
 					Spec: corev1.PodSpec{
@@ -770,7 +770,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 					Namespace: "my-ns",
 					Name:      "my-pod",
 					Annotations: map[string]string{
-						"appmesh.k8s.aws/xrayDaemonConfigMount": "xray-daemon-config:/tmp/",
+						"appmesh.k8s.aws/xrayAgentConfigMount": "xray-daemon-config:/tmp/",
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -847,7 +847,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 						Namespace: "my-ns",
 						Name:      "my-pod",
 						Annotations: map[string]string{
-							"appmesh.k8s.aws/xrayDaemonConfigMount": "xray-daemon-config1:/tmp/,xray-daemon-config2:/tmp/,",
+							"appmesh.k8s.aws/xrayAgentConfigMount": "xray-daemon-config1:/tmp/,xray-daemon-config2:/tmp/,",
 						},
 					},
 					Spec: corev1.PodSpec{
@@ -861,7 +861,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 				},
 			},
 			wantErr: errors.New("provide only one config mount for annotation " +
-				"\"appmesh.k8s.aws/xrayDaemonConfigMount: xray-daemon-config1:/tmp/,xray-daemon-config2:/tmp/,\""),
+				"\"appmesh.k8s.aws/xrayAgentConfigMount: xray-daemon-config1:/tmp/,xray-daemon-config2:/tmp/,\""),
 			wantPod: &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "my-ns",
@@ -899,7 +899,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 						Namespace: "my-ns",
 						Name:      "my-pod",
 						Annotations: map[string]string{
-							"appmesh.k8s.aws/xrayDaemonConfigMount": "xray-daemon-config1-/tmp/",
+							"appmesh.k8s.aws/xrayAgentConfigMount": "xray-daemon-config1-/tmp/",
 						},
 					},
 					Spec: corev1.PodSpec{
@@ -912,7 +912,7 @@ func Test_xrayMutator_mutate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: errors.New("malformed annotation \"appmesh.k8s.aws/xrayDaemonConfigMount\"," +
+			wantErr: errors.New("malformed annotation \"appmesh.k8s.aws/xrayAgentConfigMount\"," +
 				" expected format: volumeName:mountPath"),
 			wantPod: &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
