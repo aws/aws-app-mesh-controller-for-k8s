@@ -146,8 +146,11 @@ func (m *xrayMutator) buildXrayDaemonArgs(pod *corev1.Pod, xrayDaemonContainer *
 		// We return here since file config will override all other cli arguments
 		return nil
 	}
-	// Check for other arguments such as role-arn or log-level
-	if m.mutatorConfig.xRayLogLevel != "" {
+
+	// Check for other arguments such as role-arn or log-level.
+	//
+	// Ignore if empty or `prod`, since xray agent's loglevel by default is set to `prod`
+	if m.mutatorConfig.xRayLogLevel != "" && m.mutatorConfig.xRayLogLevel != "prod" {
 		switch m.mutatorConfig.xRayLogLevel {
 		case "dev":
 			fallthrough
@@ -158,8 +161,6 @@ func (m *xrayMutator) buildXrayDaemonArgs(pod *corev1.Pod, xrayDaemonContainer *
 		case "warn":
 			fallthrough
 		case "error":
-			fallthrough
-		case "prod":
 			xrayDaemonContainer.Args = append(xrayDaemonContainer.Args, "--log-level", m.mutatorConfig.xRayLogLevel)
 		default:
 			return errors.Errorf("tracing.logLevel: \"%v\" is not valid."+

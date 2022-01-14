@@ -161,7 +161,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"X-Ray Agent tracing port")
 	fs.StringVar(&cfg.XraySamplingRate, flagXraySamplingRate, "0.05",
 		"X-Ray tracer sampling rate")
-	fs.StringVar(&cfg.XrayLogLevel, flagXrayLogLevel, "",
+	fs.StringVar(&cfg.XrayLogLevel, flagXrayLogLevel, "prod",
 		"X-Ray Agent log level")
 	fs.StringVar(&cfg.XrayConfigRoleArn, flagXrayConfigRoleArn, "",
 		"X-Ray Agent IAM role to upload segments to a different account")
