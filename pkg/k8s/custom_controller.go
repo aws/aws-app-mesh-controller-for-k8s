@@ -110,55 +110,42 @@ func (c *CustomController) StartController(stopChanel <-chan struct{}) {
 		RetryOnError:     c.retryOnError,
 		Process: func(obj interface{}) error {
 			// from oldest to newest
-			if deltas, ok := obj.(cache.Deltas); ok {
-				for _, d := range deltas {
-					// Strip down the pod object and keep only the required details
-					convertedObj, err := c.converter.ConvertObject(d.Object)
-					if err != nil {
-						return err
-					}
-					switch d.Type {
-					case cache.Sync, cache.Added, cache.Updated:
-						c.log.V(1).Info("Received Cache event", "event type", d.Type)
-						if old, exists, err := c.dataStore.Get(convertedObj); err == nil && exists {
-							c.log.V(1).Info("Update event", "pod Ip", convertedObj.(*v1.Pod).Status.PodIP)
-							if err := c.dataStore.Update(convertedObj); err != nil {
-								return err
-							}
-							if err := c.notifyChannelOnUpdate(old, convertedObj); err != nil {
-								return err
-							}
-						} else if err == nil && !exists {
-							c.log.V(1).Info("Add/Create event", "pod Ip", convertedObj.(*v1.Pod).Status.PodIP)
-							if err := c.dataStore.Add(convertedObj); err != nil {
-								return err
-							}
-							if err := c.notifyChannelOnCreate(convertedObj); err != nil {
-								return err
-							}
-						} else {
-							return err
-						}
-					case cache.Deleted:
-						c.log.V(1).Info("Delete event", "pod Ip", convertedObj.(*v1.Pod).Status.PodIP)
-						if err := c.handleDelete(convertedObj); err != nil {
-							return err
-						}
-					}
-				}
-			}
-			// Handle DeletedFinalStateUnknown: can happen when an object
-			// was deleted but the watch deletion event was missed while disconnected from
-			// apiserver. In this case we don't know the final "resting" state of the object, so
-			// there's a chance the included `Obj` is stale.
-			if d, ok := obj.(cache.DeletedFinalStateUnknown); ok {
-				convertedObj, err := c.converter.ConvertObject(d.Obj)
+			for _, d := range obj.(cache.Deltas) {
+				// Strip down the pod object and keep only the required details
+				convertedObj, err := c.converter.ConvertObject(d.Object)
 				if err != nil {
 					return err
 				}
-				c.log.V(1).Info("DeleteFinalStateUnknown event", "pod Ip", convertedObj.(*v1.Pod).Status.PodIP)
-				if err := c.handleDelete(convertedObj); err != nil {
-					return err
+				switch d.Type {
+				case cache.Sync, cache.Added, cache.Updated:
+					c.log.V(1).Info("Received Cache event", "event type", d.Type)
+					if old, exists, err := c.dataStore.Get(convertedObj); err == nil && exists {
+						c.log.V(1).Info("Update event", "pod Ip", convertedObj.(*v1.Pod).Status.PodIP)
+						if err := c.dataStore.Update(convertedObj); err != nil {
+							return err
+						}
+						if err := c.notifyChannelOnUpdate(old, convertedObj); err != nil {
+							return err
+						}
+					} else if err == nil && !exists {
+						c.log.V(1).Info("Add/Create event", "pod Ip", convertedObj.(*v1.Pod).Status.PodIP)
+						if err := c.dataStore.Add(convertedObj); err != nil {
+							return err
+						}
+						if err := c.notifyChannelOnCreate(convertedObj); err != nil {
+							return err
+						}
+					} else {
+						return err
+					}
+				case cache.Deleted:
+					c.log.V(1).Info("Delete event", "pod Ip", convertedObj.(*v1.Pod).Status.PodIP)
+					if err := c.dataStore.Delete(convertedObj); err != nil {
+						return err
+					}
+					if err := c.notifyChannelOnDelete(convertedObj); err != nil {
+						return err
+					}
 				}
 			}
 			return nil
@@ -181,16 +168,6 @@ func (c *CustomController) GetDataStore() cache.Indexer {
 		time.Sleep(time.Second * 5)
 	}
 	return c.dataStore
-}
-
-func (c *CustomController) handleDelete(convertedObj interface{}) error {
-	if err := c.dataStore.Delete(convertedObj); err != nil {
-		return err
-	}
-	if err := c.notifyChannelOnDelete(convertedObj); err != nil {
-		return err
-	}
-	return nil
 }
 
 // newListWatcher returns a list watcher with a custom list function that converts the
