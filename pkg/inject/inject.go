@@ -155,6 +155,8 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				sidecarMemoryLimits:   m.config.SidecarMemoryLimits,
 				xRayImage:             m.config.XRayImage,
 				xRayDaemonPort:        m.config.XrayDaemonPort,
+				xRayLogLevel:          m.config.XrayLogLevel,
+				xRayConfigRoleArn:     m.config.XrayConfigRoleArn,
 			}, m.config.EnableXrayTracing),
 			newJaegerMutator(jaegerMutatorConfig{
 				jaegerAddress: m.config.JaegerAddress,
@@ -202,6 +204,8 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				sidecarMemoryLimits:   m.config.SidecarMemoryLimits,
 				xRayImage:             m.config.XRayImage,
 				xRayDaemonPort:        m.config.XrayDaemonPort,
+				xRayLogLevel:          m.config.XrayLogLevel,
+				xRayConfigRoleArn:     m.config.XrayConfigRoleArn,
 			}, m.config.EnableXrayTracing),
 			newJaegerMutator(jaegerMutatorConfig{
 				jaegerAddress: m.config.JaegerAddress,
