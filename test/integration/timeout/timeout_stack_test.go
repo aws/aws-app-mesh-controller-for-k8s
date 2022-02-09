@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/timeout"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	"time"
 )
 

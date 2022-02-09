@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	appsv1 "k8s.io/api/apps/v1"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"go.uber.org/zap"

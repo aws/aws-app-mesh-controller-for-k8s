@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

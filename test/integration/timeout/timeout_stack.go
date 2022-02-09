@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-sdk-go/aws"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
