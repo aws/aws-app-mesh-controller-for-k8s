@@ -19,6 +19,8 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualnode"
 	"github.com/go-logr/logr"
+	core "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -47,16 +49,19 @@ type virtualNodeReconciler struct {
 
 	enqueueRequestsForMeshEvents handler.EventHandler
 	log                          logr.Logger
+	recorder                     record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *virtualNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	return runtime.HandleReconcileError(r.reconcile(ctx, req), r.log)
 }
 
 func (r *virtualNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.recorder = mgr.GetEventRecorderFor("VirtualNode")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appmesh.VirtualNode{}).
 		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
@@ -72,7 +77,12 @@ func (r *virtualNodeReconciler) reconcile(ctx context.Context, req ctrl.Request)
 	if !vn.DeletionTimestamp.IsZero() {
 		return r.cleanupVirtualNode(ctx, vn)
 	}
-	return r.reconcileVirtualNode(ctx, vn)
+	if err := r.reconcileVirtualNode(ctx, vn); err != nil {
+		r.recorder.Event(vn, core.EventTypeWarning, "Error", err.Error())
+		return err
+	}
+	return nil
+	//return r.reconcileVirtualNode(ctx, vn)
 }
 
 func (r *virtualNodeReconciler) reconcileVirtualNode(ctx context.Context, vn *appmesh.VirtualNode) error {
