@@ -82,7 +82,6 @@ func (r *virtualNodeReconciler) reconcile(ctx context.Context, req ctrl.Request)
 		return err
 	}
 	return nil
-	//return r.reconcileVirtualNode(ctx, vn)
 }
 
 func (r *virtualNodeReconciler) reconcileVirtualNode(ctx context.Context, vn *appmesh.VirtualNode) error {
