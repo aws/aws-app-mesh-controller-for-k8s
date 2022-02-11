@@ -214,3 +214,265 @@ func Test_virtualNodeMutator_designateMeshMembership(t *testing.T) {
 		})
 	}
 }
+
+func Test_virtualNodeMutator_defaultingIpPreference_DNS(t *testing.T) {
+	type args struct {
+		vn *appmesh.VirtualNode
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *appmesh.VirtualNode
+		wantErr error
+	}{
+		{
+			name: "VirtualNode DNS ServiceDiscovery didn't specify ipPreference",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							DNS: &appmesh.DNSServiceDiscovery{
+								Hostname: "hostname.internal",
+							},
+						},
+					},
+				},
+			},
+			want: &appmesh.VirtualNode{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "awesome-ns",
+					Name:      "my-vn",
+				},
+				Spec: appmesh.VirtualNodeSpec{
+					AWSName: aws.String("my-vn_awesome-ns"),
+					ServiceDiscovery: &appmesh.ServiceDiscovery{
+						DNS: &appmesh.DNSServiceDiscovery{
+							Hostname:     "hostname.internal",
+							IpPreference: aws.String(appmesh.IpPreferenceIPv4),
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "VirtualNode specified empty ipPreference",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							DNS: &appmesh.DNSServiceDiscovery{
+								Hostname:     "hostname.internal",
+								IpPreference: aws.String(""),
+							},
+						},
+					},
+				},
+			},
+			want: &appmesh.VirtualNode{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "awesome-ns",
+					Name:      "my-vn",
+				},
+				Spec: appmesh.VirtualNodeSpec{
+					AWSName: aws.String("my-vn_awesome-ns"),
+					ServiceDiscovery: &appmesh.ServiceDiscovery{
+						DNS: &appmesh.DNSServiceDiscovery{
+							Hostname:     "hostname.internal",
+							IpPreference: aws.String(appmesh.IpPreferenceIPv4),
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "VirtualNode specified non-empty ipPreference",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns_my-cluster"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							DNS: &appmesh.DNSServiceDiscovery{
+								Hostname:     "hostname.internal",
+								IpPreference: aws.String(appmesh.IpPreferenceIPv6),
+							},
+						},
+					},
+				},
+			},
+			want: &appmesh.VirtualNode{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "awesome-ns",
+					Name:      "my-vn",
+				},
+				Spec: appmesh.VirtualNodeSpec{
+					AWSName: aws.String("my-vn_awesome-ns_my-cluster"),
+					ServiceDiscovery: &appmesh.ServiceDiscovery{
+						DNS: &appmesh.DNSServiceDiscovery{
+							Hostname:     "hostname.internal",
+							IpPreference: aws.String(appmesh.IpPreferenceIPv6),
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &virtualNodeMutator{
+				ipFamily: appmesh.IpPreferenceIPv4,
+			}
+			err := m.defaultingIpPreference(tt.args.vn)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, tt.args.vn)
+			}
+		})
+	}
+}
+
+func Test_virtualNodeMutator_defaultingIpPreference_AWSCloudMap(t *testing.T) {
+	type args struct {
+		vn *appmesh.VirtualNode
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *appmesh.VirtualNode
+		wantErr error
+	}{
+		{
+			name: "VirtualNode DNS ServiceDiscovery didn't specify ipPreference",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "namespace",
+							},
+						},
+					},
+				},
+			},
+			want: &appmesh.VirtualNode{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "awesome-ns",
+					Name:      "my-vn",
+				},
+				Spec: appmesh.VirtualNodeSpec{
+					AWSName: aws.String("my-vn_awesome-ns"),
+					ServiceDiscovery: &appmesh.ServiceDiscovery{
+						AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+							NamespaceName: "namespace",
+							IpPreference:  aws.String(appmesh.IpPreferenceIPv4),
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "VirtualNode specified empty ipPreference",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "namespace",
+								IpPreference:  aws.String(""),
+							},
+						},
+					},
+				},
+			},
+			want: &appmesh.VirtualNode{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "awesome-ns",
+					Name:      "my-vn",
+				},
+				Spec: appmesh.VirtualNodeSpec{
+					AWSName: aws.String("my-vn_awesome-ns"),
+					ServiceDiscovery: &appmesh.ServiceDiscovery{
+						AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+							NamespaceName: "namespace",
+							IpPreference:  aws.String(appmesh.IpPreferenceIPv4),
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "VirtualNode specified non-empty ipPreference",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns_my-cluster"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "namespace",
+								IpPreference:  aws.String(appmesh.IpPreferenceIPv6),
+							},
+						},
+					},
+				},
+			},
+			want: &appmesh.VirtualNode{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "awesome-ns",
+					Name:      "my-vn",
+				},
+				Spec: appmesh.VirtualNodeSpec{
+					AWSName: aws.String("my-vn_awesome-ns_my-cluster"),
+					ServiceDiscovery: &appmesh.ServiceDiscovery{
+						AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+							NamespaceName: "namespace",
+							IpPreference:  aws.String(appmesh.IpPreferenceIPv6),
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &virtualNodeMutator{
+				ipFamily: appmesh.IpPreferenceIPv4,
+			}
+			err := m.defaultingIpPreference(tt.args.vn)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, tt.args.vn)
+			}
+		})
+	}
+}

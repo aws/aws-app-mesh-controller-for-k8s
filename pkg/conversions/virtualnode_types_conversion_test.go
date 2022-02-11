@@ -2532,6 +2532,21 @@ func TestConvert_CRD_DNSServiceDiscovery_To_SDK_DNSServiceDiscovery(t *testing.T
 				ResponseType: aws.String("ENDPOINTS"),
 			},
 		},
+		{
+			name: "ipPreference given for virtual node",
+			args: args{
+				crdObj: &appmesh.DNSServiceDiscovery{
+					Hostname:     "www.example.com",
+					IpPreference: aws.String(appmesh.IpPreferenceIPv6),
+				},
+				sdkObj: &appmeshsdk.DnsServiceDiscovery{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.DnsServiceDiscovery{
+				Hostname:     aws.String("www.example.com"),
+				IpPreference: aws.String(appmesh.IpPreferenceIPv6),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

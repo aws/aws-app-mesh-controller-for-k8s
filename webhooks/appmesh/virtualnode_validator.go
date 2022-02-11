@@ -162,6 +162,28 @@ func (v *virtualNodeValidator) checkListenerMultipleConnectionPools(ln appmesh.L
 	return nil
 }
 
+func checkIfValid(ipPreference *string) error {
+	if ipPreference == nil || *ipPreference == appmesh.IpPreferenceIPv4 ||
+		*ipPreference == appmesh.IpPreferenceIPv6 || len(*ipPreference) == 0 {
+		return nil
+	} else {
+		return errors.Errorf("Only Values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6)
+	}
+}
+
+// value is one of the two IPv4_Only or IPv6_Only
+func (v *virtualNodeValidator) checkIpPreference(vn *appmesh.VirtualNode) error {
+	if vn.Spec.ServiceDiscovery.DNS != nil {
+		ipPreference := vn.Spec.ServiceDiscovery.DNS.IpPreference
+		return checkIfValid(ipPreference)
+	}
+	if vn.Spec.ServiceDiscovery.AWSCloudMap != nil {
+		ipPreference := vn.Spec.ServiceDiscovery.AWSCloudMap.IpPreference
+		return checkIfValid(ipPreference)
+	}
+	return nil
+}
+
 // +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-virtualnode,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualnodes,verbs=create;update,versions=v1beta2,name=vvirtualnode.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
 
 func (v *virtualNodeValidator) SetupWithManager(mgr ctrl.Manager) {

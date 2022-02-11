@@ -81,6 +81,13 @@ type MeshSpec struct {
 	// Required if the account ID is not your own.
 	// +optional
 	MeshOwner *string `json:"meshOwner,omitempty"`
+
+	MeshServiceDiscovery *MeshServiceDiscovery `json:"meshServiceDiscovery,omitempty"`
+}
+
+type MeshServiceDiscovery struct {
+	// +optional
+	IpPreference *string `json:"ipPreference,omitempty"`
 }
 
 // MeshStatus defines the observed state of Mesh

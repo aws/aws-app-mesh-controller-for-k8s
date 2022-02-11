@@ -25,7 +25,6 @@ func Test_meshMutator_defaultingAWSName(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "my-mesh",
 					},
-					Spec: appmesh.MeshSpec{},
 				},
 			},
 			want: &appmesh.Mesh{
@@ -84,6 +83,113 @@ func Test_meshMutator_defaultingAWSName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &meshMutator{}
 			err := m.defaultingAWSName(tt.args.mesh)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, tt.args.mesh)
+			}
+		})
+	}
+}
+
+func Test_meshMutator_defaultingIpPreference(t *testing.T) {
+	type args struct {
+		mesh *appmesh.Mesh
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *appmesh.Mesh
+		wantErr error
+	}{
+		{
+			name: "Mesh didn't specify ipPreference",
+			args: args{
+				mesh: &appmesh.Mesh{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "my-mesh",
+					},
+					Spec: appmesh.MeshSpec{
+						AWSName:              aws.String("my-mesh"),
+						MeshServiceDiscovery: &appmesh.MeshServiceDiscovery{},
+					},
+				},
+			},
+			want: &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh"),
+					MeshServiceDiscovery: &appmesh.MeshServiceDiscovery{
+						IpPreference: aws.String(appmesh.IpPreferenceIPv4),
+					},
+				},
+			},
+		},
+		{
+			name: "Mesh specified empty ipPreference",
+			args: args{
+				mesh: &appmesh.Mesh{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "my-mesh",
+					},
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+						MeshServiceDiscovery: &appmesh.MeshServiceDiscovery{
+							IpPreference: aws.String(""),
+						},
+					},
+				},
+			},
+			want: &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh"),
+					MeshServiceDiscovery: &appmesh.MeshServiceDiscovery{
+						IpPreference: aws.String(appmesh.IpPreferenceIPv4),
+					},
+				},
+			},
+		},
+		{
+			name: "Mesh specified non-empty ipPreference",
+			args: args{
+				mesh: &appmesh.Mesh{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "my-mesh",
+					},
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh-for-my-cluster"),
+						MeshServiceDiscovery: &appmesh.MeshServiceDiscovery{
+							IpPreference: aws.String(appmesh.IpPreferenceIPv4),
+						},
+					},
+				},
+			},
+			want: &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-mesh",
+				},
+				Spec: appmesh.MeshSpec{
+					AWSName: aws.String("my-mesh-for-my-cluster"),
+					MeshServiceDiscovery: &appmesh.MeshServiceDiscovery{
+						IpPreference: aws.String(appmesh.IpPreferenceIPv4),
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &meshMutator{
+				ipFamily: appmesh.IpPreferenceIPv4,
+			}
+			err := m.defaultingIpPreference(tt.args.mesh)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {

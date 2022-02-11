@@ -890,3 +890,179 @@ func Test_virtualNodeValidator_checkForConnectionPoolProtocols(t *testing.T) {
 		})
 	}
 }
+
+func Test_virtualNodeValidator_checkForIpPreference_AWSCloudMap(t *testing.T) {
+	type args struct {
+		vn *appmesh.VirtualNode
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "VirtualNode AWSCloudMap ServiceDiscovery is valid",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+								IpPreference:  aws.String(appmesh.IpPreferenceIPv4),
+							},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "VirtualNode AWSCloudMap ServiceDiscovery is empty",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+								IpPreference:  aws.String(""),
+							},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "VirtualNode AWSCloudMap ServiceDiscovery is invalid",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								NamespaceName: "cloudmap-ns",
+								ServiceName:   "cloudmap-svc",
+								IpPreference:  aws.String("Test"),
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.Errorf("Only Values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := &virtualNodeValidator{}
+			err := v.checkIpPreference(tt.args.vn)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test_virtualNodeValidator_checkForIpPreference_DNS(t *testing.T) {
+	type args struct {
+		vn *appmesh.VirtualNode
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "VirtualNode DNS ServiceDiscovery is valid",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							DNS: &appmesh.DNSServiceDiscovery{
+								Hostname:     "hostname.internal",
+								IpPreference: aws.String(appmesh.IpPreferenceIPv4),
+							},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "VirtualNode DNS ServiceDiscovery is empty",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							DNS: &appmesh.DNSServiceDiscovery{
+								Hostname: "hostname.internal",
+							},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "VirtualNode DNS ServiceDiscovery is invalid",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "awesome-ns",
+						Name:      "my-vn",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn_awesome-ns"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							DNS: &appmesh.DNSServiceDiscovery{
+								Hostname:     "hostname.internal",
+								IpPreference: aws.String("Test"),
+							},
+						},
+					},
+				},
+			},
+			wantErr: errors.Errorf("Only Values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := &virtualNodeValidator{}
+			err := v.checkIpPreference(tt.args.vn)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

@@ -21,5 +21,20 @@ func Convert_CRD_MeshSpec_To_SDK_MeshSpec(crdObj *appmesh.MeshSpec, sdkObj *appm
 	} else {
 		sdkObj.EgressFilter = nil
 	}
+
+	if crdObj.MeshServiceDiscovery != nil {
+		sdkObj.ServiceDiscovery = &appmeshsdk.MeshServiceDiscovery{}
+		if err := Convert_CRD_MeshDiscovery_To_SDK_MeshDiscovery(crdObj.MeshServiceDiscovery, sdkObj.ServiceDiscovery, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.ServiceDiscovery = nil
+	}
+	return nil
+}
+
+func Convert_CRD_MeshDiscovery_To_SDK_MeshDiscovery(crdObj *appmesh.MeshServiceDiscovery,
+	sdkObj *appmeshsdk.MeshServiceDiscovery, scope conversion.Scope) error {
+	sdkObj.IpPreference = crdObj.IpPreference
 	return nil
 }

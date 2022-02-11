@@ -545,6 +545,7 @@ func Convert_CRD_AWSCloudMapInstanceAttribute_To_SDK_AWSCloudMapInstanceAttribut
 func Convert_CRD_AWSCloudMapServiceDiscovery_To_SDK_AWSCloudMapServiceDiscovery(crdObj *appmesh.AWSCloudMapServiceDiscovery, sdkObj *appmeshsdk.AwsCloudMapServiceDiscovery, scope conversion.Scope) error {
 	sdkObj.NamespaceName = aws.String(crdObj.NamespaceName)
 	sdkObj.ServiceName = aws.String(crdObj.ServiceName)
+	sdkObj.IpPreference = crdObj.IpPreference
 
 	var sdkAttributes []*appmeshsdk.AwsCloudMapInstanceAttribute
 	if len(crdObj.Attributes) != 0 {
@@ -564,6 +565,7 @@ func Convert_CRD_AWSCloudMapServiceDiscovery_To_SDK_AWSCloudMapServiceDiscovery(
 func Convert_CRD_DNSServiceDiscovery_To_SDK_DNSServiceDiscovery(crdObj *appmesh.DNSServiceDiscovery, sdkObj *appmeshsdk.DnsServiceDiscovery, scope conversion.Scope) error {
 	sdkObj.Hostname = aws.String(crdObj.Hostname)
 	sdkObj.ResponseType = crdObj.ResponseType
+	sdkObj.IpPreference = crdObj.IpPreference
 	return nil
 }
 

@@ -103,10 +103,92 @@ func TestConvert_CRD_MeshSpec_To_SDK_MeshSpec(t *testing.T) {
 				EgressFilter: nil,
 			},
 		},
+		{
+			name: "non-nil ip preference",
+			args: args{
+				crdObj: &appmesh.MeshSpec{
+					MeshServiceDiscovery: &appmesh.MeshServiceDiscovery{
+						IpPreference: aws.String(appmesh.IpPreferenceIPv6),
+					},
+				},
+				sdkObj: &appmeshsdk.MeshSpec{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.MeshSpec{
+				ServiceDiscovery: &appmeshsdk.MeshServiceDiscovery{
+					IpPreference: aws.String("IPv6_only"),
+				},
+			},
+		},
+		{
+			name: "nil ip preference",
+			args: args{
+				crdObj: &appmesh.MeshSpec{
+					MeshServiceDiscovery: &appmesh.MeshServiceDiscovery{},
+				},
+				sdkObj: &appmeshsdk.MeshSpec{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.MeshSpec{
+				ServiceDiscovery: &appmeshsdk.MeshServiceDiscovery{},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := Convert_CRD_MeshSpec_To_SDK_MeshSpec(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
+			}
+		})
+	}
+}
+
+func TestConvert_CRD_MeshServiceDiscovery_To_SDK_ServiceDiscovery(t *testing.T) {
+	type args struct {
+		crdObj *appmesh.MeshServiceDiscovery
+		sdkObj *appmeshsdk.MeshServiceDiscovery
+		scope  conversion.Scope
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.MeshServiceDiscovery
+		wantErr    error
+	}{
+		{
+			name: "ipv4 as ipPreference",
+			args: args{
+				crdObj: &appmesh.MeshServiceDiscovery{
+					IpPreference: aws.String(appmesh.IpPreferenceIPv4),
+				},
+				sdkObj: &appmeshsdk.MeshServiceDiscovery{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.MeshServiceDiscovery{
+				IpPreference: aws.String("IPv4_only"),
+			},
+		},
+		{
+			name: "ipv6 as ipPreference",
+			args: args{
+				crdObj: &appmesh.MeshServiceDiscovery{
+					IpPreference: aws.String(appmesh.IpPreferenceIPv6),
+				},
+				sdkObj: &appmeshsdk.MeshServiceDiscovery{},
+				scope:  nil,
+			},
+			wantSDKObj: &appmeshsdk.MeshServiceDiscovery{
+				IpPreference: aws.String("IPv6_only"),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Convert_CRD_MeshDiscovery_To_SDK_MeshDiscovery(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {

@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go/service/eks"
 	"os"
 	"strconv"
 	"time"
@@ -28,6 +29,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/version"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualrouter"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
+	sdkgoaws "github.com/aws/aws-sdk-go/aws"
 	"github.com/spf13/pflag"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
@@ -175,6 +177,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	clusterName := kubeConfig.ExecProvider.Args[5] //TODO: Check for nil
+	input := &eks.DescribeClusterInput{
+		Name: sdkgoaws.String(clusterName),
+	}
+
+	result, err := cloud.EKS().DescribeCluster(input)
+	if err != nil {
+		setupLog.Error(err, "unable to get cluster info")
+		os.Exit(1)
+	}
+
+	ipFamily := result.Cluster.KubernetesNetworkConfig.IpFamily
+
 	podsRepository := k8s.NewPodsRepository(customController)
 
 	ctx := ctrl.SetupSignalHandler()
@@ -241,13 +256,13 @@ func main() {
 	vgMembershipDesignator := virtualgateway.NewMembershipDesignator(mgr.GetClient())
 	vnMembershipDesignator := virtualnode.NewMembershipDesignator(mgr.GetClient())
 	sidecarInjector := inject.NewSidecarInjector(injectConfig, cloud.AccountID(), cloud.Region(), version.GitVersion, k8sVersion, mgr.GetClient(), referencesResolver, vnMembershipDesignator, vgMembershipDesignator)
-	appmeshwebhook.NewMeshMutator().SetupWithManager(mgr)
+	appmeshwebhook.NewMeshMutator(*ipFamily).SetupWithManager(mgr)
 	appmeshwebhook.NewMeshValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualGatewayMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualGatewayValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewGatewayRouteMutator(meshMembershipDesignator, vgMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewGatewayRouteValidator().SetupWithManager(mgr)
-	appmeshwebhook.NewVirtualNodeMutator(meshMembershipDesignator).SetupWithManager(mgr)
+	appmeshwebhook.NewVirtualNodeMutator(meshMembershipDesignator, *ipFamily).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualNodeValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualServiceMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualServiceValidator().SetupWithManager(mgr)

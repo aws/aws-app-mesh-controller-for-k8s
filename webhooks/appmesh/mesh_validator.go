@@ -57,6 +57,16 @@ func (v *meshValidator) enforceFieldsImmutability(mesh *appmesh.Mesh, oldMesh *a
 	return nil
 }
 
+func (v *meshValidator) checkIpPreference(mesh *appmesh.Mesh) error {
+	ipPreference := mesh.Spec.MeshServiceDiscovery.IpPreference
+	if ipPreference == nil || *ipPreference == appmesh.IpPreferenceIPv4 ||
+		*ipPreference == appmesh.IpPreferenceIPv6 || len(*ipPreference) == 0 {
+		return nil
+	} else {
+		return errors.Errorf("Only non-empty values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6)
+	}
+}
+
 // +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-mesh,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=meshes,verbs=create;update,versions=v1beta2,name=vmesh.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
 
 func (v *meshValidator) SetupWithManager(mgr ctrl.Manager) {
