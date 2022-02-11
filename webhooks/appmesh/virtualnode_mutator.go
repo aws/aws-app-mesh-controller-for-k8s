@@ -6,6 +6,7 @@ import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/webhook"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -15,9 +16,10 @@ import (
 const apiPathMutateAppMeshVirtualNode = "/mutate-appmesh-k8s-aws-v1beta2-virtualnode"
 
 // NewVirtualNodeMutator returns a mutator for VirtualNode.
-func NewVirtualNodeMutator(meshMembershipDesignator mesh.MembershipDesignator) *virtualNodeMutator {
+func NewVirtualNodeMutator(meshMembershipDesignator mesh.MembershipDesignator, ipFamily string) *virtualNodeMutator {
 	return &virtualNodeMutator{
 		meshMembershipDesignator: meshMembershipDesignator,
+		ipFamily:                 ipFamily,
 	}
 }
 
@@ -25,6 +27,7 @@ var _ webhook.Mutator = &virtualNodeMutator{}
 
 type virtualNodeMutator struct {
 	meshMembershipDesignator mesh.MembershipDesignator
+	ipFamily                 string
 }
 
 func (m *virtualNodeMutator) Prototype(req admission.Request) (runtime.Object, error) {
@@ -39,11 +42,18 @@ func (m *virtualNodeMutator) MutateCreate(ctx context.Context, obj runtime.Objec
 	if err := m.defaultingAWSName(vn); err != nil {
 		return nil, err
 	}
+	if err := m.defaultingIpPreference(vn); err != nil {
+		return nil, err
+	}
 
 	return vn, nil
 }
 
 func (m *virtualNodeMutator) MutateUpdate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) (runtime.Object, error) {
+	vn := obj.(*appmesh.VirtualNode)
+	if err := m.defaultingIpPreference(vn); err != nil {
+		return nil, err
+	}
 	return obj, nil
 }
 
@@ -66,6 +76,30 @@ func (m *virtualNodeMutator) designateMeshMembership(ctx context.Context, vn *ap
 	vn.Spec.MeshRef = &appmesh.MeshReference{
 		Name: mesh.Name,
 		UID:  mesh.UID,
+	}
+	return nil
+}
+
+func setDefaultIpPreference(ipPreference string) *string {
+	if ipPreference == IPv6 {
+		return aws.String(appmesh.IpPreferenceIPv6)
+	} else {
+		return aws.String(appmesh.IpPreferenceIPv4)
+	}
+}
+
+func (m *virtualNodeMutator) defaultingIpPreference(vn *appmesh.VirtualNode) error {
+	if vn.Spec.ServiceDiscovery.DNS != nil {
+		ipPreferenceGiven := vn.Spec.ServiceDiscovery.DNS.IpPreference
+		if ipPreferenceGiven == nil {
+			vn.Spec.ServiceDiscovery.DNS.IpPreference = setDefaultIpPreference(m.ipFamily)
+		}
+	}
+	if vn.Spec.ServiceDiscovery.AWSCloudMap != nil {
+		ipPreferenceGiven := vn.Spec.ServiceDiscovery.AWSCloudMap.IpPreference
+		if ipPreferenceGiven == nil {
+			vn.Spec.ServiceDiscovery.AWSCloudMap.IpPreference = setDefaultIpPreference(m.ipFamily)
+		}
 	}
 	return nil
 }

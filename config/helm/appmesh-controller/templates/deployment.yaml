@@ -71,6 +71,7 @@ spec:
         - --preview={{ .Values.preview }}
         - --enable-sds={{ .Values.sds.enabled }}
         - --sds-uds-path={{ .Values.sds.udsPath }}
+        - --cluster-name={{ .Values.clusterName}}
         {{- if .Values.cloudMapCustomHealthCheck.enabled }}
         - --enable-custom-health-check=true
         {{- end }}

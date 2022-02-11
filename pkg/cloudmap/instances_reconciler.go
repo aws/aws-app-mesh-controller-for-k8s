@@ -20,6 +20,10 @@ const (
 	// See https://github.com/aws/aws-sdk-go/blob/fd304fe4cb2ea1027e7fc7e21062beb768915fcc/service/servicediscovery/api.go#L5161
 	AttrAWSInstanceIPV4 = "AWS_INSTANCE_IPV4"
 
+	// AttrAWSInstanceIPV6 is a special attribute expected by CloudMap.
+	// See https://github.com/aws/aws-sdk-go/blob/fd304fe4cb2ea1027e7fc7e21062beb768915fcc/service/servicediscovery/api.go#L5170
+	AttrAWSInstanceIPV6 = "AWS_INSTANCE_IPV6"
+
 	// AttrAWSInstancePort is a special attribute expected by CloudMap.
 	// See https://github.com/aws/aws-sdk-go/blob/fd304fe4cb2ea1027e7fc7e21062beb768915fcc/service/servicediscovery/api.go#L5161
 	AttrAWSInstancePort = "AWS_INSTANCE_PORT"
@@ -41,6 +45,9 @@ const (
 	// how long to requeue a instances reconcile operation
 	defaultInstancesReconcileRequeueDuration = 10 * time.Second
 	defaultInstancesHealthProbeTimeout       = 30 * time.Minute
+
+	IPv6 = "ipv6"
+	IPv4 = "ipv4"
 )
 
 type InstancesReconciler interface {
@@ -48,7 +55,7 @@ type InstancesReconciler interface {
 		readyPods []*corev1.Pod, notReadyPods []*corev1.Pod, nodeInfoByName map[string]nodeAttributes) error
 }
 
-func NewDefaultInstancesReconciler(k8sClient client.Client, cloudMapSDK services.CloudMap, log logr.Logger, stopChan <-chan struct{}) *defaultInstancesReconciler {
+func NewDefaultInstancesReconciler(k8sClient client.Client, cloudMapSDK services.CloudMap, log logr.Logger, stopChan <-chan struct{}, ipFamily string) *defaultInstancesReconciler {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		select {
@@ -64,6 +71,7 @@ func NewDefaultInstancesReconciler(k8sClient client.Client, cloudMapSDK services
 		instancesReconcileReactor: instancesReconcileReactor,
 		instancesHealthProber:     instancesHealthProber,
 		log:                       log,
+		ipFamily:                  ipFamily,
 	}
 }
 
@@ -74,6 +82,7 @@ type defaultInstancesReconciler struct {
 	instancesReconcileReactor instancesReconcileReactor
 	instancesHealthProber     instancesHealthProber
 	log                       logr.Logger
+	ipFamily                  string
 }
 
 func (r *defaultInstancesReconciler) Reconcile(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, service serviceSummary,
@@ -156,7 +165,11 @@ func (r *defaultInstancesReconciler) buildInstanceAttributes(ms *appmesh.Mesh, v
 		attr[cmAttr.Key] = cmAttr.Value
 	}
 	podsNodeName := pod.Spec.NodeName
-	attr[AttrAWSInstanceIPV4] = pod.Status.PodIP
+	if vn.Spec.ServiceDiscovery.AWSCloudMap.IpPreference != nil && *vn.Spec.ServiceDiscovery.AWSCloudMap.IpPreference == appmesh.IpPreferenceIPv6 || r.ipFamily == IPv6 {
+		attr[AttrAWSInstanceIPV6] = pod.Status.PodIP
+	} else {
+		attr[AttrAWSInstanceIPV4] = pod.Status.PodIP
+	}
 
 	/* VirtualNode currently supports only one listener. In future even if support for multiple listeners is introduced,
 	we will always derive the port value from the first listener config. */

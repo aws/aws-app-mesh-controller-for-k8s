@@ -14,6 +14,8 @@ type AppMesh interface {
 func NewAppMesh(session *session.Session) AppMesh {
 	return &defaultAppMesh{
 		AppMeshAPI: appmesh.New(session),
+		// for testing
+		// AppMeshAPI: appmesh.New(session, &aws.Config{Endpoint: aws.String("https://replace.with.appropriate.endpoint/")}),
 	}
 }
 

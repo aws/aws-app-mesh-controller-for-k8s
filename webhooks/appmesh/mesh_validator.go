@@ -29,6 +29,10 @@ func (v *meshValidator) Prototype(req admission.Request) (runtime.Object, error)
 }
 
 func (v *meshValidator) ValidateCreate(ctx context.Context, obj runtime.Object) error {
+	mesh := obj.(*appmesh.Mesh)
+	if err := v.checkIpPreference(mesh); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -36,6 +40,9 @@ func (v *meshValidator) ValidateUpdate(ctx context.Context, obj runtime.Object, 
 	mesh := obj.(*appmesh.Mesh)
 	oldMesh := oldObj.(*appmesh.Mesh)
 	if err := v.enforceFieldsImmutability(mesh, oldMesh); err != nil {
+		return err
+	}
+	if err := v.checkIpPreference(mesh); err != nil {
 		return err
 	}
 	return nil
@@ -53,6 +60,19 @@ func (v *meshValidator) enforceFieldsImmutability(mesh *appmesh.Mesh, oldMesh *a
 	}
 	if len(changedImmutableFields) != 0 {
 		return errors.Errorf("%s update may not change these fields: %s", "Mesh", strings.Join(changedImmutableFields, ","))
+	}
+	return nil
+}
+
+func (v *meshValidator) checkIpPreference(mesh *appmesh.Mesh) error {
+	if mesh.Spec.MeshServiceDiscovery != nil {
+		ipPreference := mesh.Spec.MeshServiceDiscovery.IpPreference
+		if ipPreference == nil || *ipPreference == appmesh.IpPreferenceIPv4 ||
+			*ipPreference == appmesh.IpPreferenceIPv6 {
+			return nil
+		} else {
+			return errors.Errorf("Only non-empty values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6)
+		}
 	}
 	return nil
 }

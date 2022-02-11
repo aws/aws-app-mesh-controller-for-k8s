@@ -18,6 +18,7 @@ const (
 type VNBuilder struct {
 	Namespace            string
 	ServiceDiscoveryType ServiceDiscoveryType
+	IpPreference         string
 
 	// required when serviceDiscoveryType == CloudMapServiceDiscovery
 	CloudMapNamespace string

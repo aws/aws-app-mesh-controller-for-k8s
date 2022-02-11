@@ -3,7 +3,7 @@ module github.com/aws/aws-app-mesh-controller-for-k8s
 go 1.16
 
 require (
-	github.com/aws/aws-sdk-go v1.40.7
+	github.com/aws/aws-sdk-go v1.43.3
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/go-logr/logr v0.4.0
 	github.com/golang/mock v1.6.0

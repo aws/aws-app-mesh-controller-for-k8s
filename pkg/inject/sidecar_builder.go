@@ -53,6 +53,9 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 	env["APPMESH_VIRTUAL_NODE_NAME"] = vname
 	env["AWS_REGION"] = vars.AWSRegion
 
+	// for testing
+	// env["APPMESH_XDS_ENDPOINT"] = "replace.with.appropriate.endpoint.and.port"
+
 	// Set the value to 1 to connect to the App Mesh Preview Channel endpoint.
 	// See https://docs.aws.amazon.com/app-mesh/latest/userguide/preview.html
 	env["APPMESH_PREVIEW"] = vars.Preview

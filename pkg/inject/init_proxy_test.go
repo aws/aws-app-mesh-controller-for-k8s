@@ -96,6 +96,10 @@ func Test_initProxyMutator_mutate(t *testing.T) {
 									Name:  "APPMESH_EGRESS_IGNORED_PORTS",
 									Value: "22",
 								},
+								{
+									Name:  "APPMESH_ENABLE_IPV6",
+									Value: "1",
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -177,6 +181,10 @@ func Test_initProxyMutator_mutate(t *testing.T) {
 								{
 									Name:  "APPMESH_EGRESS_IGNORED_PORTS",
 									Value: "22",
+								},
+								{
+									Name:  "APPMESH_ENABLE_IPV6",
+									Value: "1",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
@@ -264,6 +272,10 @@ func Test_initProxyMutator_mutate(t *testing.T) {
 								{
 									Name:  "APPMESH_EGRESS_IGNORED_PORTS",
 									Value: "22",
+								},
+								{
+									Name:  "APPMESH_ENABLE_IPV6",
+									Value: "1",
 								},
 							},
 							Resources: corev1.ResourceRequirements{

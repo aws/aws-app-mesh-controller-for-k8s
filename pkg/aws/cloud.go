@@ -17,6 +17,8 @@ type Cloud interface {
 	AppMesh() services.AppMesh
 	// CloudMap provides API to AWS CloudMap
 	CloudMap() services.CloudMap
+	//EKS provides API to AWS EKS
+	EKS() services.EKS
 
 	// AccountID provides AccountID for the kubernetes cluster
 	AccountID() string
@@ -64,6 +66,7 @@ func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, 
 		cfg:      cfg,
 		appMesh:  services.NewAppMesh(sess),
 		cloudMap: services.NewCloudMap(sess),
+		eks:      services.NewEKS(sess),
 	}, nil
 }
 
@@ -74,6 +77,7 @@ type defaultCloud struct {
 
 	appMesh  services.AppMesh
 	cloudMap services.CloudMap
+	eks      services.EKS
 }
 
 func (c *defaultCloud) AppMesh() services.AppMesh {
@@ -82,6 +86,10 @@ func (c *defaultCloud) AppMesh() services.AppMesh {
 
 func (c *defaultCloud) CloudMap() services.CloudMap {
 	return c.cloudMap
+}
+
+func (c *defaultCloud) EKS() services.EKS {
+	return c.eks
 }
 
 func (c *defaultCloud) AccountID() string {

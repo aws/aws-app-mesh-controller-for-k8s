@@ -74,6 +74,7 @@ var _ = Describe("VirtualNode", func() {
 
 		vnBuilder := &manifest.VNBuilder{
 			ServiceDiscoveryType: manifest.DNSServiceDiscovery,
+			IpPreference:         appmesh.IpPreferenceIPv4,
 		}
 
 		AfterEach(func() {
@@ -206,6 +207,7 @@ var _ = Describe("VirtualNode", func() {
 
 			vnBuilder := &manifest.VNBuilder{
 				ServiceDiscoveryType: manifest.CloudMapServiceDiscovery,
+				IpPreference:         appmesh.IpPreferenceIPv4,
 				CloudMapNamespace:    cmNamespace,
 			}
 

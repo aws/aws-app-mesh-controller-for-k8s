@@ -138,7 +138,11 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 	for i := range podsList.Items {
 		pod := &podsList.Items[i]
 		instanceAttributeMap := make(map[string]string)
-		instanceAttributeMap[cloudmap.AttrAWSInstanceIPV4] = pod.Status.PodIP
+		if *vn.Spec.ServiceDiscovery.AWSCloudMap.IpPreference == appmesh.IpPreferenceIPv6 {
+			instanceAttributeMap[cloudmap.AttrAWSInstanceIPV6] = pod.Status.PodIP
+		} else {
+			instanceAttributeMap[cloudmap.AttrAWSInstanceIPV4] = pod.Status.PodIP
+		}
 		instanceAttributeMap[cloudmap.AttrK8sPod] = pod.Name
 		instanceAttributeMap[cloudmap.AttrK8sNamespace] = pod.Namespace
 		instanceAttributeMap[cloudmap.AttrAppMeshMesh] = awssdk.StringValue(ms.Spec.AWSName)
@@ -199,7 +203,11 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 		func(listInstancesOutput *servicediscovery.ListInstancesOutput, lastPage bool) bool {
 			for _, instance := range listInstancesOutput.Instances {
 				cloudMapInstanceAttributes := make(map[string]string)
-				cloudMapInstanceAttributes[cloudmap.AttrAWSInstanceIPV4] = *instance.Attributes[cloudmap.AttrAWSInstanceIPV4]
+				if *vn.Spec.ServiceDiscovery.AWSCloudMap.IpPreference == appmesh.IpPreferenceIPv6 {
+					cloudMapInstanceAttributes[cloudmap.AttrAWSInstanceIPV6] = *instance.Attributes[cloudmap.AttrAWSInstanceIPV6]
+				} else {
+					cloudMapInstanceAttributes[cloudmap.AttrAWSInstanceIPV4] = *instance.Attributes[cloudmap.AttrAWSInstanceIPV4]
+				}
 				cloudMapInstanceAttributes[cloudmap.AttrK8sPod] = *instance.Attributes[cloudmap.AttrK8sPod]
 				cloudMapInstanceAttributes[cloudmap.AttrK8sNamespace] = *instance.Attributes[cloudmap.AttrK8sNamespace]
 				cloudMapInstanceAttributes[cloudmap.AttrAppMeshMesh] = *instance.Attributes[cloudmap.AttrAppMeshMesh]
@@ -226,7 +234,8 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 func compareInstances(cloudMapInstanceInfo map[string]map[string]string, localInstanceInfo map[string]map[string]string) error {
 	for cloudMapInstanceId, cloudMapInstanceAttr := range cloudMapInstanceInfo {
 		localInstanceAttributes := localInstanceInfo[cloudMapInstanceId]
-		if cloudMapInstanceAttr[cloudmap.AttrAWSInstanceIPV4] != localInstanceAttributes[cloudmap.AttrAWSInstanceIPV4] ||
+		if cloudMapInstanceAttr[cloudmap.AttrAWSInstanceIPV6] != localInstanceAttributes[cloudmap.AttrAWSInstanceIPV6] ||
+			cloudMapInstanceAttr[cloudmap.AttrAWSInstanceIPV4] != localInstanceAttributes[cloudmap.AttrAWSInstanceIPV4] ||
 			cloudMapInstanceAttr[cloudmap.AttrK8sPod] != localInstanceAttributes[cloudmap.AttrK8sPod] ||
 			cloudMapInstanceAttr[cloudmap.AttrK8sNamespace] != localInstanceAttributes[cloudmap.AttrK8sNamespace] ||
 			cloudMapInstanceAttr[cloudmap.AttrAppMeshMesh] != localInstanceAttributes[cloudmap.AttrAppMeshMesh] ||

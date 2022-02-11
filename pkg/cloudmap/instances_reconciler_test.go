@@ -247,7 +247,9 @@ func Test_defaultInstancesReconciler_buildInstanceAttributes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &defaultInstancesReconciler{}
+			r := &defaultInstancesReconciler{
+				ipFamily: IPv4,
+			}
 			got := r.buildInstanceAttributes(tt.args.ms, tt.args.vn, tt.args.pod, nil)
 			assert.Equal(t, tt.want, got)
 		})
@@ -457,8 +459,129 @@ func Test_defaultInstancesReconciler_buildInstanceInfoByID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &defaultInstancesReconciler{}
+			r := &defaultInstancesReconciler{
+				ipFamily: IPv4,
+			}
 			got := r.buildInstanceInfoByID(tt.args.ms, tt.args.vn, tt.args.pods, nil)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_defaultInstancesReconciler_buildInstanceAttributes_withServiceDiscoveryIpPreference(t *testing.T) {
+	type args struct {
+		ms  *appmesh.Mesh
+		vn  *appmesh.VirtualNode
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name string
+		args args
+		want instanceAttributes
+	}{
+		{
+			name: "IpPreference for service discovery is IPv6",
+			args: args{
+				ms: &appmesh.Mesh{
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+					},
+				},
+				vn: &appmesh.VirtualNode{
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								IpPreference: aws.String(appmesh.IpPreferenceIPv6),
+							},
+						},
+						Listeners: []appmesh.Listener{{
+							PortMapping: appmesh.PortMapping{
+								Port: appmesh.PortNumber(8080),
+							}},
+						},
+					},
+				},
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "pod-ns",
+						Name:      "pod-name",
+						Labels: map[string]string{
+							"podLabelA": "valueA",
+							"podLabelB": "valueB",
+						},
+					},
+					Spec: corev1.PodSpec{},
+					Status: corev1.PodStatus{
+						PodIP: "2001:4860:4860::8888",
+					},
+				},
+			},
+			want: instanceAttributes{
+				"podLabelA":                   "valueA",
+				"podLabelB":                   "valueB",
+				"AWS_INSTANCE_IPV6":           "2001:4860:4860::8888",
+				"AWS_INSTANCE_PORT":           "8080",
+				"k8s.io/pod":                  "pod-name",
+				"k8s.io/namespace":            "pod-ns",
+				"appmesh.k8s.aws/mesh":        "my-mesh",
+				"appmesh.k8s.aws/virtualNode": "my-vn",
+			},
+		},
+		{
+			name: "IpPreference for service discovery is IPv4",
+			args: args{
+				ms: &appmesh.Mesh{
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+					},
+				},
+				vn: &appmesh.VirtualNode{
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("my-vn"),
+						ServiceDiscovery: &appmesh.ServiceDiscovery{
+							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+								IpPreference: aws.String(appmesh.IpPreferenceIPv4),
+							},
+						},
+						Listeners: []appmesh.Listener{{
+							PortMapping: appmesh.PortMapping{
+								Port: appmesh.PortNumber(8080),
+							}},
+						},
+					},
+				},
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "pod-ns",
+						Name:      "pod-name",
+						Labels: map[string]string{
+							"podLabelA": "valueA",
+							"podLabelB": "valueB",
+						},
+					},
+					Spec: corev1.PodSpec{},
+					Status: corev1.PodStatus{
+						PodIP: "192.168.1.42",
+					},
+				},
+			},
+			want: instanceAttributes{
+				"podLabelA":                   "valueA",
+				"podLabelB":                   "valueB",
+				"AWS_INSTANCE_IPV4":           "192.168.1.42",
+				"AWS_INSTANCE_PORT":           "8080",
+				"k8s.io/pod":                  "pod-name",
+				"k8s.io/namespace":            "pod-ns",
+				"appmesh.k8s.aws/mesh":        "my-mesh",
+				"appmesh.k8s.aws/virtualNode": "my-vn",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &defaultInstancesReconciler{}
+			got := r.buildInstanceAttributes(tt.args.ms, tt.args.vn, tt.args.pod, nil)
 			assert.Equal(t, tt.want, got)
 		})
 	}

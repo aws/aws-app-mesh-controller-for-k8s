@@ -325,6 +325,10 @@ type AWSCloudMapServiceDiscovery struct {
 	// A string map that contains attributes with values that you can use to filter instances by any custom attribute that you specified when you registered the instance
 	// +optional
 	Attributes []AWSCloudMapInstanceAttribute `json:"attributes,omitempty"`
+	// The ipPreference for the virtual node.
+	// +kubebuilder:validation:Enum=IPv6_ONLY;IPv4_ONLY
+	// +optional
+	IpPreference *string `json:"ipPreference,omitempty"`
 }
 
 // DNSServiceDiscovery refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_DnsServiceDiscovery.html
@@ -335,6 +339,10 @@ type DNSServiceDiscovery struct {
 	// +kubebuilder:validation:Enum=ENDPOINTS;LOADBALANCER
 	// +optional
 	ResponseType *string `json:"responseType,omitempty"`
+	// The ipPreference for the virtual node.
+	// +kubebuilder:validation:Enum=IPv6_ONLY;IPv4_ONLY
+	// +optional
+	IpPreference *string `json:"ipPreference,omitempty"`
 }
 
 // ServiceDiscovery refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_ServiceDiscovery.html

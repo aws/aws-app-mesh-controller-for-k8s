@@ -244,3 +244,8 @@ type SubjectAlternativeNames struct {
 	// Match is a required field
 	Match *SubjectAlternativeNameMatchers `json:"match"`
 }
+
+const (
+	IpPreferenceIPv4 string = "IPv4_ONLY"
+	IpPreferenceIPv6 string = "IPv6_ONLY"
+)

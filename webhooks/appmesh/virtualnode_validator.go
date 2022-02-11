@@ -40,6 +40,9 @@ func (v *virtualNodeValidator) ValidateCreate(ctx context.Context, obj runtime.O
 	if err := v.checkForConnectionPoolProtocols(vn); err != nil {
 		return err
 	}
+	if err := v.checkIpPreference(vn); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -56,6 +59,9 @@ func (v *virtualNodeValidator) ValidateUpdate(ctx context.Context, obj runtime.O
 		return err
 	}
 	if err := v.checkForConnectionPoolProtocols(vn); err != nil {
+		return err
+	}
+	if err := v.checkIpPreference(vn); err != nil {
 		return err
 	}
 	return nil
@@ -159,6 +165,27 @@ func (v *virtualNodeValidator) checkListenerMultipleConnectionPools(ln appmesh.L
 		return errors.Errorf("Only one type of Virtual Node Connection Pool is allowed")
 	}
 
+	return nil
+}
+
+func checkIfValid(ipPreference *string) error {
+	if ipPreference == nil || *ipPreference == appmesh.IpPreferenceIPv4 || *ipPreference == appmesh.IpPreferenceIPv6 {
+		return nil
+	} else {
+		return errors.Errorf("Only Values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6)
+	}
+}
+
+// value is one of the two IPv4_ONLY or IPv6_ONLY
+func (v *virtualNodeValidator) checkIpPreference(vn *appmesh.VirtualNode) error {
+	if vn.Spec.ServiceDiscovery.DNS != nil {
+		ipPreference := vn.Spec.ServiceDiscovery.DNS.IpPreference
+		return checkIfValid(ipPreference)
+	}
+	if vn.Spec.ServiceDiscovery.AWSCloudMap != nil {
+		ipPreference := vn.Spec.ServiceDiscovery.AWSCloudMap.IpPreference
+		return checkIfValid(ipPreference)
+	}
 	return nil
 }
 

@@ -979,6 +979,12 @@ spec:
                           - value
                           type: object
                         type: array
+                      ipPreference:
+                        description: The ipPreference for the virtual node.
+                        enum:
+                        - IPv6_ONLY
+                        - IPv4_ONLY
+                        type: string
                       namespaceName:
                         description: The name of the AWS Cloud Map namespace to use.
                         maxLength: 1024
@@ -999,6 +1005,12 @@ spec:
                       hostname:
                         description: Specifies the DNS service discovery hostname
                           for the virtual node.
+                        type: string
+                      ipPreference:
+                        description: The ipPreference for the virtual node.
+                        enum:
+                        - IPv6_ONLY
+                        - IPv4_ONLY
                         type: string
                       responseType:
                         description: Choose between ENDPOINTS (strict DNS) and LOADBALANCER
