@@ -23,6 +23,8 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/go-logr/logr"
+	core "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -57,16 +59,19 @@ type gatewayRouteReconciler struct {
 	enqueueRequestsForMeshEvents           handler.EventHandler
 	enqueueRequestsForVirtualGatewayEvents handler.EventHandler
 	log                                    logr.Logger
+	recorder                               record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=gatewayroutes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=gatewayroutes/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *gatewayRouteReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	return runtime.HandleReconcileError(r.reconcile(ctx, req), r.log)
 }
 
 func (r *gatewayRouteReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.recorder = mgr.GetEventRecorderFor("GatewayRoute")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appmesh.GatewayRoute{}).
 		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
@@ -83,7 +88,11 @@ func (r *gatewayRouteReconciler) reconcile(ctx context.Context, req ctrl.Request
 	if !gr.DeletionTimestamp.IsZero() {
 		return r.cleanupGatewayRoute(ctx, gr)
 	}
-	return r.reconcileGatewayRoute(ctx, gr)
+	if err := r.reconcileGatewayRoute(ctx, gr); err != nil {
+		r.recorder.Event(gr, core.EventTypeWarning, "ReconcileError", err.Error())
+		return err
+	}
+	return nil
 }
 
 func (r *gatewayRouteReconciler) reconcileGatewayRoute(ctx context.Context, gr *appmesh.GatewayRoute) error {

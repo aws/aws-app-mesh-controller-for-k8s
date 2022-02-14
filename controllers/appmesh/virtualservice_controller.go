@@ -23,13 +23,14 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
+	"github.com/go-logr/logr"
+	core "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/record"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	"github.com/go-logr/logr"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 )
@@ -59,10 +60,12 @@ type virtualServiceReconciler struct {
 	enqueueRequestsForVirtualNodeEvents   handler.EventHandler
 	enqueueRequestsForVirtualRouterEvents handler.EventHandler
 	log                                   logr.Logger
+	recorder                              record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualservices,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualservices/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *virtualServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	return runtime.HandleReconcileError(r.reconcile(ctx, req), r.log)
@@ -75,6 +78,7 @@ func (r *virtualServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}); err != nil {
 		return err
 	}
+	r.recorder = mgr.GetEventRecorderFor("VirtualService")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appmesh.VirtualService{}).
 		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
@@ -92,7 +96,11 @@ func (r *virtualServiceReconciler) reconcile(ctx context.Context, req ctrl.Reque
 	if !vs.DeletionTimestamp.IsZero() {
 		return r.cleanupVirtualService(ctx, vs)
 	}
-	return r.reconcileVirtualService(ctx, vs)
+	if err := r.reconcileVirtualService(ctx, vs); err != nil {
+		r.recorder.Event(vs, core.EventTypeWarning, "ReconcileError", err.Error())
+		return err
+	}
+	return nil
 }
 
 func (r *virtualServiceReconciler) reconcileVirtualService(ctx context.Context, vs *appmesh.VirtualService) error {

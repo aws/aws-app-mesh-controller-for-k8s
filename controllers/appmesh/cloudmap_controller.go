@@ -22,6 +22,8 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/go-logr/logr"
+	core "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -35,6 +37,7 @@ type cloudMapReconciler struct {
 	finalizerManager            k8s.FinalizerManager
 	cloudMapResourceManager     cloudmap.ResourceManager
 	enqueueRequestsForPodEvents handler.EventHandler
+	recorder                    record.EventRecorder
 	podEventNotificationChan    <-chan k8s.GenericEvent
 }
 
@@ -60,12 +63,14 @@ func NewCloudMapReconciler(
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=pods/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *cloudMapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	return runtime.HandleReconcileError(r.reconcile(ctx, req), r.log)
 }
 
 func (r *cloudMapReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.recorder = mgr.GetEventRecorderFor("CloudMap")
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("cloudMap").
 		For(&appmesh.VirtualNode{}).
@@ -83,7 +88,11 @@ func (r *cloudMapReconciler) reconcile(ctx context.Context, req ctrl.Request) er
 	if !vNode.DeletionTimestamp.IsZero() {
 		return r.cleanupCloudMapResources(ctx, vNode)
 	}
-	return r.reconcileVirtualNodeWithCloudMap(ctx, vNode)
+	if err := r.reconcileVirtualNodeWithCloudMap(ctx, vNode); err != nil {
+		r.recorder.Event(vNode, core.EventTypeWarning, "ReconcileError", err.Error())
+		return err
+	}
+	return nil
 }
 
 func (r *cloudMapReconciler) reconcileVirtualNodeWithCloudMap(ctx context.Context, vNode *appmesh.VirtualNode) error {

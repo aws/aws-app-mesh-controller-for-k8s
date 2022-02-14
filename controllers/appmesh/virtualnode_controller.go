@@ -78,7 +78,7 @@ func (r *virtualNodeReconciler) reconcile(ctx context.Context, req ctrl.Request)
 		return r.cleanupVirtualNode(ctx, vn)
 	}
 	if err := r.reconcileVirtualNode(ctx, vn); err != nil {
-		r.recorder.Event(vn, core.EventTypeWarning, "Error", err.Error())
+		r.recorder.Event(vn, core.EventTypeWarning, "ReconcileError", err.Error())
 		return err
 	}
 	return nil
