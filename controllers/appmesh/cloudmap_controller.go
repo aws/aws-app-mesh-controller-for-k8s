@@ -22,7 +22,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/go-logr/logr"
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,13 +47,15 @@ func NewCloudMapReconciler(
 	finalizerManager k8s.FinalizerManager,
 	cloudMapResourceManager cloudmap.ResourceManager,
 	podEventNotificationChan <-chan k8s.GenericEvent,
-	log logr.Logger) *cloudMapReconciler {
+	log logr.Logger,
+	recorder record.EventRecorder) *cloudMapReconciler {
 	return &cloudMapReconciler{
 		k8sClient:                   k8sClient,
 		log:                         log,
 		finalizerManager:            finalizerManager,
 		cloudMapResourceManager:     cloudMapResourceManager,
 		enqueueRequestsForPodEvents: cloudmap.NewEnqueueRequestsForPodEvents(k8sClient, log),
+		recorder:                    recorder,
 		podEventNotificationChan:    podEventNotificationChan,
 	}
 }
@@ -70,7 +72,6 @@ func (r *cloudMapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 }
 
 func (r *cloudMapReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.recorder = mgr.GetEventRecorderFor("CloudMap")
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("cloudMap").
 		For(&appmesh.VirtualNode{}).
@@ -89,7 +90,7 @@ func (r *cloudMapReconciler) reconcile(ctx context.Context, req ctrl.Request) er
 		return r.cleanupCloudMapResources(ctx, vNode)
 	}
 	if err := r.reconcileVirtualNodeWithCloudMap(ctx, vNode); err != nil {
-		r.recorder.Event(vNode, core.EventTypeWarning, "ReconcileError", err.Error())
+		r.recorder.Event(vNode, corev1.EventTypeWarning, "ReconcileError", err.Error())
 		return err
 	}
 	return nil

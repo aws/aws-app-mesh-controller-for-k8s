@@ -23,7 +23,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualgateway"
 	"github.com/go-logr/logr"
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,7 +40,8 @@ func NewVirtualGatewayReconciler(
 	finalizerManager k8s.FinalizerManager,
 	vgMembersFinalizer virtualgateway.MembersFinalizer,
 	vgResManager virtualgateway.ResourceManager,
-	log logr.Logger) *virtualGatewayReconciler {
+	log logr.Logger,
+	recorder record.EventRecorder) *virtualGatewayReconciler {
 	return &virtualGatewayReconciler{
 		k8sClient:                    k8sClient,
 		finalizerManager:             finalizerManager,
@@ -48,6 +49,7 @@ func NewVirtualGatewayReconciler(
 		vgResManager:                 vgResManager,
 		enqueueRequestsForMeshEvents: virtualgateway.NewEnqueueRequestsForMeshEvents(k8sClient, log),
 		log:                          log,
+		recorder:                     recorder,
 	}
 }
 
@@ -72,7 +74,6 @@ func (r *virtualGatewayReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 }
 
 func (r *virtualGatewayReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.recorder = mgr.GetEventRecorderFor("VirtualGateway")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appmesh.VirtualGateway{}).
 		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
@@ -89,7 +90,7 @@ func (r *virtualGatewayReconciler) reconcile(ctx context.Context, req ctrl.Reque
 		return r.cleanupVirtualGateway(ctx, vg)
 	}
 	if err := r.reconcileVirtualGateway(ctx, vg); err != nil {
-		r.recorder.Event(vg, core.EventTypeWarning, "ReconcileError", err.Error())
+		r.recorder.Event(vg, corev1.EventTypeWarning, "ReconcileError", err.Error())
 		return err
 	}
 	return nil

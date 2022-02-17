@@ -24,7 +24,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
 	"github.com/go-logr/logr"
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,7 +36,13 @@ import (
 )
 
 // NewVirtualServiceReconciler constructs new virtualServiceReconciler
-func NewVirtualServiceReconciler(k8sClient client.Client, finalizerManager k8s.FinalizerManager, referencesIndexer references.ObjectReferenceIndexer, vsResManager virtualservice.ResourceManager, log logr.Logger) *virtualServiceReconciler {
+func NewVirtualServiceReconciler(
+	k8sClient client.Client,
+	finalizerManager k8s.FinalizerManager,
+	referencesIndexer references.ObjectReferenceIndexer,
+	vsResManager virtualservice.ResourceManager,
+	log logr.Logger,
+	recorder record.EventRecorder) *virtualServiceReconciler {
 	return &virtualServiceReconciler{
 		k8sClient:                             k8sClient,
 		finalizerManager:                      finalizerManager,
@@ -46,6 +52,7 @@ func NewVirtualServiceReconciler(k8sClient client.Client, finalizerManager k8s.F
 		enqueueRequestsForVirtualNodeEvents:   virtualservice.NewEnqueueRequestsForVirtualNodeEvents(referencesIndexer, log),
 		enqueueRequestsForVirtualRouterEvents: virtualservice.NewEnqueueRequestsForVirtualRouterEvents(referencesIndexer, log),
 		log:                                   log,
+		recorder:                              recorder,
 	}
 }
 
@@ -78,7 +85,6 @@ func (r *virtualServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}); err != nil {
 		return err
 	}
-	r.recorder = mgr.GetEventRecorderFor("VirtualService")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appmesh.VirtualService{}).
 		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
@@ -97,7 +103,7 @@ func (r *virtualServiceReconciler) reconcile(ctx context.Context, req ctrl.Reque
 		return r.cleanupVirtualService(ctx, vs)
 	}
 	if err := r.reconcileVirtualService(ctx, vs); err != nil {
-		r.recorder.Event(vs, core.EventTypeWarning, "ReconcileError", err.Error())
+		r.recorder.Event(vs, corev1.EventTypeWarning, "ReconcileError", err.Error())
 		return err
 	}
 	return nil

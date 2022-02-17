@@ -23,7 +23,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/go-logr/logr"
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,7 +39,8 @@ func NewGatewayRouteReconciler(
 	k8sClient client.Client,
 	finalizerManager k8s.FinalizerManager,
 	grResManager gatewayroute.ResourceManager,
-	log logr.Logger) *gatewayRouteReconciler {
+	log logr.Logger,
+	recorder record.EventRecorder) *gatewayRouteReconciler {
 	return &gatewayRouteReconciler{
 		k8sClient:                              k8sClient,
 		finalizerManager:                       finalizerManager,
@@ -47,6 +48,7 @@ func NewGatewayRouteReconciler(
 		enqueueRequestsForMeshEvents:           gatewayroute.NewEnqueueRequestsForMeshEvents(k8sClient, log),
 		enqueueRequestsForVirtualGatewayEvents: gatewayroute.NewEnqueueRequestsForVirtualGatewayEvents(k8sClient, log),
 		log:                                    log,
+		recorder:                               recorder,
 	}
 }
 
@@ -71,7 +73,6 @@ func (r *gatewayRouteReconciler) Reconcile(ctx context.Context, req ctrl.Request
 }
 
 func (r *gatewayRouteReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.recorder = mgr.GetEventRecorderFor("GatewayRoute")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appmesh.GatewayRoute{}).
 		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
@@ -89,7 +90,7 @@ func (r *gatewayRouteReconciler) reconcile(ctx context.Context, req ctrl.Request
 		return r.cleanupGatewayRoute(ctx, gr)
 	}
 	if err := r.reconcileGatewayRoute(ctx, gr); err != nil {
-		r.recorder.Event(gr, core.EventTypeWarning, "ReconcileError", err.Error())
+		r.recorder.Event(gr, corev1.EventTypeWarning, "ReconcileError", err.Error())
 		return err
 	}
 	return nil

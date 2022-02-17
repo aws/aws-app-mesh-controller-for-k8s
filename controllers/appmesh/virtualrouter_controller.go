@@ -23,7 +23,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualrouter"
-	core "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -37,7 +37,13 @@ import (
 )
 
 // NewVirtualRouterReconciler constructs new virtualRouterReconciler
-func NewVirtualRouterReconciler(k8sClient client.Client, finalizerManager k8s.FinalizerManager, referencesIndexer references.ObjectReferenceIndexer, vrResManager virtualrouter.ResourceManager, log logr.Logger) *virtualRouterReconciler {
+func NewVirtualRouterReconciler(
+	k8sClient client.Client,
+	finalizerManager k8s.FinalizerManager,
+	referencesIndexer references.ObjectReferenceIndexer,
+	vrResManager virtualrouter.ResourceManager,
+	log logr.Logger,
+	recorder record.EventRecorder) *virtualRouterReconciler {
 	return &virtualRouterReconciler{
 		k8sClient:                           k8sClient,
 		finalizerManager:                    finalizerManager,
@@ -46,6 +52,7 @@ func NewVirtualRouterReconciler(k8sClient client.Client, finalizerManager k8s.Fi
 		enqueueRequestsForMeshEvents:        virtualrouter.NewEnqueueRequestsForMeshEvents(k8sClient, log),
 		enqueueRequestsForVirtualNodeEvents: virtualrouter.NewEnqueueRequestsForVirtualNodeEvents(referencesIndexer, log),
 		log:                                 log,
+		recorder:                            recorder,
 	}
 }
 
@@ -76,7 +83,6 @@ func (r *virtualRouterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}); err != nil {
 		return err
 	}
-	r.recorder = mgr.GetEventRecorderFor("VirtualRouter")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appmesh.VirtualRouter{}).
 		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
@@ -94,7 +100,7 @@ func (r *virtualRouterReconciler) reconcile(ctx context.Context, req ctrl.Reques
 		return r.cleanupVirtualRouter(ctx, vr)
 	}
 	if err := r.reconcileVirtualRouter(ctx, vr); err != nil {
-		r.recorder.Event(vr, core.EventTypeWarning, "ReconcileError", err.Error())
+		r.recorder.Event(vr, corev1.EventTypeWarning, "ReconcileError", err.Error())
 		return err
 	}
 	return nil

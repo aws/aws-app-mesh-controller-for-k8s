@@ -23,6 +23,8 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -34,13 +36,15 @@ func NewMeshReconciler(
 	finalizerManager k8s.FinalizerManager,
 	meshMembersFinalizer mesh.MembersFinalizer,
 	meshResManager mesh.ResourceManager,
-	log logr.Logger) *meshReconciler {
+	log logr.Logger,
+	recorder record.EventRecorder) *meshReconciler {
 	return &meshReconciler{
 		k8sClient:            k8sClient,
 		finalizerManager:     finalizerManager,
 		meshMembersFinalizer: meshMembersFinalizer,
 		meshResManager:       meshResManager,
 		log:                  log,
+		recorder:             recorder,
 	}
 }
 
@@ -51,6 +55,7 @@ type meshReconciler struct {
 	meshMembersFinalizer mesh.MembersFinalizer
 	meshResManager       mesh.ResourceManager
 	log                  logr.Logger
+	recorder             record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=meshes,verbs=get;list;watch;create;update;patch;delete
@@ -75,7 +80,11 @@ func (r *meshReconciler) reconcile(ctx context.Context, req ctrl.Request) error 
 	if !ms.DeletionTimestamp.IsZero() {
 		return r.cleanupMesh(ctx, ms)
 	}
-	return r.reconcileMesh(ctx, ms)
+	if err := r.reconcileMesh(ctx, ms); err != nil {
+		r.recorder.Event(ms, corev1.EventTypeWarning, "ReconcileError", err.Error())
+		return err
+	}
+	return nil
 }
 
 func (r *meshReconciler) reconcileMesh(ctx context.Context, ms *appmesh.Mesh) error {
