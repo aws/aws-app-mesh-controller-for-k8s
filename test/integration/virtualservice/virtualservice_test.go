@@ -23,6 +23,7 @@ import (
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -219,6 +220,35 @@ var _ = Describe("VirtualService", func() {
 				err := vsTest.CheckInAWS(ctx, f, mesh, vs)
 				Expect(err).NotTo(HaveOccurred())
 
+			})
+
+			vsName = fmt.Sprintf("vs-%s", utils.RandomDNS1123Label(8))
+			vs = vsBuilder.BuildVirtualServiceNoBackend(vsName)
+			vs.Spec.AWSName = aws.String(fmt.Sprintf("vs-%s", utils.RandomDNS1123Label(256)))
+
+			By("Creating a virtual service resource in k8s with a name exceeding the character limit", func() {
+				// Not using vsTest.Create as it hangs
+				err := f.K8sClient.Create(ctx, vs)
+				vsTest.VirtualServices[vs.Name] = vs
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Check virtual service in AWS - it should not exist", func() {
+				err := vsTest.CheckInAWS(ctx, f, mesh, vs)
+				Expect(err).To(HaveOccurred())
+			})
+
+			By("checking events for the BadRequestException", func() {
+				clientset, err := kubernetes.NewForConfig(f.RestCfg)
+				Expect(err).NotTo(HaveOccurred())
+				events, err := clientset.CoreV1().Events(vsTest.Namespace.Name).List(ctx, metav1.ListOptions{
+					FieldSelector: fmt.Sprintf("involvedObject.name=%s", vs.Name),
+					TypeMeta: metav1.TypeMeta{
+						Kind: "Pod",
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(events.Items).NotTo(BeEmpty())
 			})
 
 			By("Set incorrect labels on namespace", func() {

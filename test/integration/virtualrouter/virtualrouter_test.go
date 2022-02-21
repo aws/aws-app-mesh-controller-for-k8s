@@ -8,6 +8,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/aws/aws-sdk-go/aws"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
 	appmeshk8s "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
@@ -22,6 +24,7 @@ import (
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -167,6 +170,37 @@ var _ = Describe("VirtualRouter", func() {
 				err := vrTest.CheckInAWS(ctx, f, mesh, vr)
 				Expect(err).NotTo(HaveOccurred())
 
+			})
+
+			routes = vrBuilder.BuildRoutes(routeCfgs)
+			vrBuilder.Listeners = []appmesh.VirtualRouterListener{vrBuilder.BuildVirtualRouterListener("http", 8080)}
+			vrName = fmt.Sprintf("vr-%s", utils.RandomDNS1123Label(8))
+			vr = vrBuilder.BuildVirtualRouter(vrName, routes)
+			vr.Spec.AWSName = aws.String(fmt.Sprintf("vr-%s", utils.RandomDNS1123Label(256)))
+
+			By("Creating a virtual router resource in k8s with a name exceeding the character limit", func() {
+				// Not using vrTest.Create as it hangs
+				err := f.K8sClient.Create(ctx, vr)
+				vrTest.VirtualRouters[vr.Name] = vr
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Check virtual router in AWS - it should not exist", func() {
+				err := vrTest.CheckInAWS(ctx, f, mesh, vr)
+				Expect(err).To(HaveOccurred())
+			})
+
+			By("checking events for the BadRequestException", func() {
+				clientset, err := kubernetes.NewForConfig(f.RestCfg)
+				Expect(err).NotTo(HaveOccurred())
+				events, err := clientset.CoreV1().Events(vnTest.Namespace.Name).List(ctx, metav1.ListOptions{
+					FieldSelector: fmt.Sprintf("involvedObject.name=%s", vr.Name),
+					TypeMeta: metav1.TypeMeta{
+						Kind: "Pod",
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(events.Items).NotTo(BeEmpty())
 			})
 
 			By("Set incorrect labels on namespace", func() {

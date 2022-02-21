@@ -22,6 +22,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -174,6 +175,35 @@ var _ = Describe("GatewayRoute", func() {
 				err := grTest.CheckInAWS(ctx, f, mesh, vg, gr)
 				Expect(err).NotTo(HaveOccurred())
 
+			})
+
+			grName = fmt.Sprintf("gr-%s", utils.RandomDNS1123Label(8))
+			gr = grBuilder.BuildGatewayRouteWithHTTP(grName, vsName, "failPrefix")
+			gr.Spec.AWSName = aws.String(fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(256)))
+
+			By("Creating a gateway route resource in k8s with a name exceeding the character limit", func() {
+				// Not using grTest.Create as it hangs
+				err := f.K8sClient.Create(ctx, gr)
+				grTest.GatewayRoutes[gr.Name] = gr
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Check gateway route in AWS - it should not exist", func() {
+				err := grTest.CheckInAWS(ctx, f, mesh, vg, gr)
+				Expect(err).To(HaveOccurred())
+			})
+
+			By("checking events for the BadRequestException", func() {
+				clientset, err := kubernetes.NewForConfig(f.RestCfg)
+				Expect(err).NotTo(HaveOccurred())
+				events, err := clientset.CoreV1().Events(grTest.Namespace.Name).List(ctx, metav1.ListOptions{
+					FieldSelector: fmt.Sprintf("involvedObject.name=%s", gr.Name),
+					TypeMeta: metav1.TypeMeta{
+						Kind: "Pod",
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(events.Items).NotTo(BeEmpty())
 			})
 
 			By("Set incorrect labels on namespace", func() {
