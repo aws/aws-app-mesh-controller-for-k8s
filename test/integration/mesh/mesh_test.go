@@ -11,10 +11,13 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/mesh"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 
 	"github.com/aws/aws-sdk-go/aws"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"time"
 )
 
 var _ = Describe("Mesh", func() {
@@ -101,6 +104,16 @@ var _ = Describe("Mesh", func() {
 			By("Creating a mesh resource in k8s with a name exceeding the character limit", func() {
 				// Not using meshTest.Create as it hangs
 				err := f.K8sClient.Create(ctx, mesh)
+		        // sometimes there's a delay in the resource showing up
+		        observedMesh := &appmesh.Mesh{}
+        		for i := 0; i < 5; i++ {
+        			if err := f.K8sClient.Get(ctx, k8s.NamespacedName(mesh), observedMesh); err != nil {
+        				if i >= 5 {
+        					Expect(err).NotTo(HaveOccurred())
+        				}
+        			}
+        			time.Sleep(100 * time.Millisecond)
+        		}
 				meshTest.Meshes[mesh.Name] = mesh
 				Expect(err).NotTo(HaveOccurred())
 			})

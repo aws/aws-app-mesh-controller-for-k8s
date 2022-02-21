@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -181,6 +182,15 @@ var _ = Describe("VirtualRouter", func() {
 			By("Creating a virtual router resource in k8s with a name exceeding the character limit", func() {
 				// Not using vrTest.Create as it hangs
 				err := f.K8sClient.Create(ctx, vr)
+                observedVr := &appmesh.VirtualRouter{}
+        		for i := 0; i < 5; i++ {
+        			if err := f.K8sClient.Get(ctx, k8s.NamespacedName(vr), observedVr); err != nil {
+        				if i >= 5 {
+        					Expect(err).NotTo(HaveOccurred())
+        				}
+        			}
+        			time.Sleep(100 * time.Millisecond)
+        		}
 				vrTest.VirtualRouters[vr.Name] = vr
 				Expect(err).NotTo(HaveOccurred())
 			})

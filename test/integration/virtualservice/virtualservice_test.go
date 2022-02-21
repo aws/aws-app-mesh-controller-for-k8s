@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sync"
+	"time"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
@@ -230,6 +231,15 @@ var _ = Describe("VirtualService", func() {
 				// Not using vsTest.Create as it hangs
 				err := f.K8sClient.Create(ctx, vs)
 				vsTest.VirtualServices[vs.Name] = vs
+                observedVs := &appmesh.VirtualService{}
+        		for i := 0; i < 5; i++ {
+        			if err := f.K8sClient.Get(ctx, k8s.NamespacedName(vs), observedVs); err != nil {
+        				if i >= 5 {
+        					Expect(err).NotTo(HaveOccurred())
+        				}
+        			}
+        			time.Sleep(100 * time.Millisecond)
+        		}
 				Expect(err).NotTo(HaveOccurred())
 			})
 
