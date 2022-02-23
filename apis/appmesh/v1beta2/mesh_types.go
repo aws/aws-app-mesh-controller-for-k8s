@@ -102,6 +102,7 @@ type MeshStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="ARN",type="string",JSONPath=".status.meshARN",description="The AppMesh Mesh object's Amazon Resource Name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:pruning:PreserveUnknownFields
 // Mesh is the Schema for the meshes API
 type Mesh struct {
 	metav1.TypeMeta   `json:",inline"`
