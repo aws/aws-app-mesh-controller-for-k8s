@@ -35,19 +35,18 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 
-	zapraw "go.uber.org/zap"
-	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/metrics"
-
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
+	zapraw "go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/gatewayroute"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
@@ -177,7 +176,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	clusterName := kubeConfig.ExecProvider.Args[5] //TODO: Check for nil
+	kubeConfigArgs := kubeConfig.ExecProvider.Args
+
+	var clusterName string
+
+	for i, s := range kubeConfigArgs {
+		if s == "--cluster-name" && i+1 < len(kubeConfigArgs) {
+			clusterName = kubeConfigArgs[i+1]
+		}
+	}
+
 	input := &eks.DescribeClusterInput{
 		Name: sdkgoaws.String(clusterName),
 	}

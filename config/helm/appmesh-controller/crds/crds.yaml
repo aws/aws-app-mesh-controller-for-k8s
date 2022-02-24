@@ -826,6 +826,7 @@ spec:
             meshServiceDiscovery:
               properties:
                 ipPreference:
+                  description: The ipPreference for the mesh.
                   type: string
               type: object
             namespaceSelector:
@@ -2576,6 +2577,7 @@ spec:
                         type: object
                       type: array
                     ipPreference:
+                      description: The ipPreference for the virtual node.
                       type: string
                     namespaceName:
                       description: The name of the AWS Cloud Map namespace to use.
@@ -2599,6 +2601,7 @@ spec:
                         the virtual node.
                       type: string
                     ipPreference:
+                      description: The ipPreference for the virtual node.
                       type: string
                     responseType:
                       description: Choose between ENDPOINTS (strict DNS) and LOADBALANCER

@@ -81,11 +81,12 @@ type MeshSpec struct {
 	// Required if the account ID is not your own.
 	// +optional
 	MeshOwner *string `json:"meshOwner,omitempty"`
-
+	// +optional
 	MeshServiceDiscovery *MeshServiceDiscovery `json:"meshServiceDiscovery,omitempty"`
 }
 
 type MeshServiceDiscovery struct {
+	// The ipPreference for the mesh.
 	// +optional
 	IpPreference *string `json:"ipPreference,omitempty"`
 }

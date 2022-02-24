@@ -77,7 +77,7 @@ func (m *virtualNodeMutator) designateMeshMembership(ctx context.Context, vn *ap
 }
 
 func setDefaultIpPreference(ipPreference string) *string {
-	if ipPreference == "ipv6" {
+	if ipPreference == IPv6 {
 		return aws.String(appmesh.IpPreferenceIPv6)
 	} else {
 		return aws.String(appmesh.IpPreferenceIPv4)

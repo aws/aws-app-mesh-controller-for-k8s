@@ -69,6 +69,7 @@ spec:
             meshServiceDiscovery:
               properties:
                 ipPreference:
+                  description: The ipPreference for the mesh.
                   type: string
               type: object
             namespaceSelector:
