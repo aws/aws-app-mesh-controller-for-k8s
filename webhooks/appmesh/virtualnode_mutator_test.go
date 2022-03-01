@@ -260,41 +260,6 @@ func Test_virtualNodeMutator_defaultingIpPreference_DNS(t *testing.T) {
 			},
 		},
 		{
-			name: "VirtualNode specified empty ipPreference",
-			args: args{
-				vn: &appmesh.VirtualNode{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "awesome-ns",
-						Name:      "my-vn",
-					},
-					Spec: appmesh.VirtualNodeSpec{
-						AWSName: aws.String("my-vn_awesome-ns"),
-						ServiceDiscovery: &appmesh.ServiceDiscovery{
-							DNS: &appmesh.DNSServiceDiscovery{
-								Hostname:     "hostname.internal",
-								IpPreference: aws.String(""),
-							},
-						},
-					},
-				},
-			},
-			want: &appmesh.VirtualNode{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "awesome-ns",
-					Name:      "my-vn",
-				},
-				Spec: appmesh.VirtualNodeSpec{
-					AWSName: aws.String("my-vn_awesome-ns"),
-					ServiceDiscovery: &appmesh.ServiceDiscovery{
-						DNS: &appmesh.DNSServiceDiscovery{
-							Hostname:     "hostname.internal",
-							IpPreference: aws.String(appmesh.IpPreferenceIPv4),
-						},
-					},
-				},
-			},
-		},
-		{
 			name: "VirtualNode specified non-empty ipPreference",
 			args: args{
 				vn: &appmesh.VirtualNode{
@@ -369,41 +334,6 @@ func Test_virtualNodeMutator_defaultingIpPreference_AWSCloudMap(t *testing.T) {
 						ServiceDiscovery: &appmesh.ServiceDiscovery{
 							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
 								NamespaceName: "namespace",
-							},
-						},
-					},
-				},
-			},
-			want: &appmesh.VirtualNode{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "awesome-ns",
-					Name:      "my-vn",
-				},
-				Spec: appmesh.VirtualNodeSpec{
-					AWSName: aws.String("my-vn_awesome-ns"),
-					ServiceDiscovery: &appmesh.ServiceDiscovery{
-						AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
-							NamespaceName: "namespace",
-							IpPreference:  aws.String(appmesh.IpPreferenceIPv4),
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "VirtualNode specified empty ipPreference",
-			args: args{
-				vn: &appmesh.VirtualNode{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "awesome-ns",
-						Name:      "my-vn",
-					},
-					Spec: appmesh.VirtualNodeSpec{
-						AWSName: aws.String("my-vn_awesome-ns"),
-						ServiceDiscovery: &appmesh.ServiceDiscovery{
-							AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
-								NamespaceName: "namespace",
-								IpPreference:  aws.String(""),
 							},
 						},
 					},

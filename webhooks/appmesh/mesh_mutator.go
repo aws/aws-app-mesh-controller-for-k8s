@@ -57,7 +57,7 @@ func (m *meshMutator) defaultingAWSName(mesh *appmesh.Mesh) error {
 }
 
 func (m *meshMutator) defaultingIpPreference(mesh *appmesh.Mesh) error {
-	if mesh.Spec.MeshServiceDiscovery.IpPreference == nil || len(*mesh.Spec.MeshServiceDiscovery.IpPreference) == 0 {
+	if mesh.Spec.MeshServiceDiscovery.IpPreference == nil {
 		ipPreference := m.ipFamily
 		if ipPreference == IPv6 {
 			mesh.Spec.MeshServiceDiscovery.IpPreference = aws.String(appmesh.IpPreferenceIPv6)

@@ -60,7 +60,7 @@ func (v *meshValidator) enforceFieldsImmutability(mesh *appmesh.Mesh, oldMesh *a
 func (v *meshValidator) checkIpPreference(mesh *appmesh.Mesh) error {
 	ipPreference := mesh.Spec.MeshServiceDiscovery.IpPreference
 	if ipPreference == nil || *ipPreference == appmesh.IpPreferenceIPv4 ||
-		*ipPreference == appmesh.IpPreferenceIPv6 || len(*ipPreference) == 0 {
+		*ipPreference == appmesh.IpPreferenceIPv6 {
 		return nil
 	} else {
 		return errors.Errorf("Only non-empty values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6)

@@ -163,8 +163,7 @@ func (v *virtualNodeValidator) checkListenerMultipleConnectionPools(ln appmesh.L
 }
 
 func checkIfValid(ipPreference *string) error {
-	if ipPreference == nil || *ipPreference == appmesh.IpPreferenceIPv4 ||
-		*ipPreference == appmesh.IpPreferenceIPv6 || len(*ipPreference) == 0 {
+	if ipPreference == nil || *ipPreference == appmesh.IpPreferenceIPv4 || *ipPreference == appmesh.IpPreferenceIPv6 {
 		return nil
 	} else {
 		return errors.Errorf("Only Values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6)

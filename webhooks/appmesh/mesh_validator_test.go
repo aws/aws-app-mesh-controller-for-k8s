@@ -103,7 +103,7 @@ func Test_meshValidator_checkIpPreferenceValues(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "IpPreference can be empty",
+			name: "IpPreference not specified",
 			args: args{
 				mesh: &appmesh.Mesh{
 					ObjectMeta: metav1.ObjectMeta{
@@ -128,6 +128,23 @@ func Test_meshValidator_checkIpPreferenceValues(t *testing.T) {
 						AWSName: aws.String("my-mesh"),
 						MeshServiceDiscovery: &appmesh.MeshServiceDiscovery{
 							IpPreference: aws.String("Test"),
+						},
+					},
+				},
+			},
+			wantErr: errors.Errorf("Only non-empty values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6),
+		},
+		{
+			name: "IpPreference field is an empty string",
+			args: args{
+				mesh: &appmesh.Mesh{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "my-mesh",
+					},
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+						MeshServiceDiscovery: &appmesh.MeshServiceDiscovery{
+							IpPreference: aws.String(""),
 						},
 					},
 				},

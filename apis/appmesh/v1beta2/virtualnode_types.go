@@ -326,6 +326,7 @@ type AWSCloudMapServiceDiscovery struct {
 	// +optional
 	Attributes []AWSCloudMapInstanceAttribute `json:"attributes,omitempty"`
 	// The ipPreference for the virtual node.
+	// +kubebuilder:validation:Enum=IPv6_only;IPv4_only
 	// +optional
 	IpPreference *string `json:"ipPreference,omitempty"`
 }
@@ -339,6 +340,7 @@ type DNSServiceDiscovery struct {
 	// +optional
 	ResponseType *string `json:"responseType,omitempty"`
 	// The ipPreference for the virtual node.
+	// +kubebuilder:validation:Enum=IPv6_only;IPv4_only
 	// +optional
 	IpPreference *string `json:"ipPreference,omitempty"`
 }

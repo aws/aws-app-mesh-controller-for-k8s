@@ -969,6 +969,9 @@ spec:
                       type: array
                     ipPreference:
                       description: The ipPreference for the virtual node.
+                      enum:
+                      - IPv6_only
+                      - IPv4_only
                       type: string
                     namespaceName:
                       description: The name of the AWS Cloud Map namespace to use.
@@ -993,6 +996,9 @@ spec:
                       type: string
                     ipPreference:
                       description: The ipPreference for the virtual node.
+                      enum:
+                      - IPv6_only
+                      - IPv4_only
                       type: string
                     responseType:
                       description: Choose between ENDPOINTS (strict DNS) and LOADBALANCER

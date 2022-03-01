@@ -129,33 +129,6 @@ func Test_meshMutator_defaultingIpPreference(t *testing.T) {
 			},
 		},
 		{
-			name: "Mesh specified empty ipPreference",
-			args: args{
-				mesh: &appmesh.Mesh{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "my-mesh",
-					},
-					Spec: appmesh.MeshSpec{
-						AWSName: aws.String("my-mesh"),
-						MeshServiceDiscovery: &appmesh.MeshServiceDiscovery{
-							IpPreference: aws.String(""),
-						},
-					},
-				},
-			},
-			want: &appmesh.Mesh{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "my-mesh",
-				},
-				Spec: appmesh.MeshSpec{
-					AWSName: aws.String("my-mesh"),
-					MeshServiceDiscovery: &appmesh.MeshServiceDiscovery{
-						IpPreference: aws.String(appmesh.IpPreferenceIPv4),
-					},
-				},
-			},
-		},
-		{
 			name: "Mesh specified non-empty ipPreference",
 			args: args{
 				mesh: &appmesh.Mesh{

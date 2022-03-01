@@ -87,6 +87,7 @@ type MeshSpec struct {
 
 type MeshServiceDiscovery struct {
 	// The ipPreference for the mesh.
+	// +kubebuilder:validation:Enum=IPv6_only;IPv4_only
 	// +optional
 	IpPreference *string `json:"ipPreference,omitempty"`
 }

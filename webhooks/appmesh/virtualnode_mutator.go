@@ -87,13 +87,13 @@ func setDefaultIpPreference(ipPreference string) *string {
 func (m *virtualNodeMutator) defaultingIpPreference(vn *appmesh.VirtualNode) error {
 	if vn.Spec.ServiceDiscovery.DNS != nil {
 		ipPreferenceGiven := vn.Spec.ServiceDiscovery.DNS.IpPreference
-		if ipPreferenceGiven == nil || len(*ipPreferenceGiven) == 0 {
+		if ipPreferenceGiven == nil {
 			vn.Spec.ServiceDiscovery.DNS.IpPreference = setDefaultIpPreference(m.ipFamily)
 		}
 	}
 	if vn.Spec.ServiceDiscovery.AWSCloudMap != nil {
 		ipPreferenceGiven := vn.Spec.ServiceDiscovery.AWSCloudMap.IpPreference
-		if ipPreferenceGiven == nil || len(*ipPreferenceGiven) == 0 {
+		if ipPreferenceGiven == nil {
 			vn.Spec.ServiceDiscovery.AWSCloudMap.IpPreference = setDefaultIpPreference(m.ipFamily)
 		}
 	}
