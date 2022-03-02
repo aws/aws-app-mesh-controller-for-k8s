@@ -42,6 +42,8 @@ type EnvoyTemplateVariables struct {
 	StatsDPort               int32
 	StatsDAddress            string
 	StatsDSocketPath         string
+	K8sVersion               string
+	ControllerVersion        string
 }
 
 func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) error {
@@ -95,17 +97,15 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 			// `podAnnotations` doesn't contain the sampling rate so get value from helm configuration
 			samplingRate = vars.XraySamplingRate
 		}
-		if samplingRate != "" {
-			// Process only if this value is set
-			fixedRate, err := strconv.ParseFloat(samplingRate, 32)
-			if err != nil || float64(0) > fixedRate || float64(1) < fixedRate {
-				// The value is not a decimal between 0 and 1.00
-				return errors.Errorf("tracing.samplingRate should be a decimal between 0 & 1.00, "+
-					"but instead got %s %v", samplingRate, err)
-			} else {
-				fixedRate = math.Round(fixedRate*100) / 100
-				env["XRAY_SAMPLING_RATE"] = strconv.FormatFloat(fixedRate, 'f', -1, 32)
-			}
+
+		fixedRate, err := strconv.ParseFloat(samplingRate, 32)
+		if err != nil || float64(0) > fixedRate || float64(1) < fixedRate {
+			// The value is not a decimal between 0 and 1.00
+			return errors.Errorf("tracing.samplingRate should be a decimal between 0 & 1.00, "+
+				"but instead got %s %v", samplingRate, err)
+		} else {
+			fixedRate = math.Round(fixedRate*100) / 100
+			env["XRAY_SAMPLING_RATE"] = strconv.FormatFloat(fixedRate, 'f', -1, 32)
 		}
 	}
 
@@ -153,6 +153,9 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		env["JAEGER_TRACER_PORT"] = vars.JaegerPort
 		env["JAEGER_TRACER_ADDRESS"] = vars.JaegerAddress
 	}
+
+	env["APPMESH_PLATFORM_K8S_VERSION"] = vars.K8sVersion
+	env["APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION"] = vars.ControllerVersion
 	return nil
 }
 
@@ -207,6 +210,7 @@ func getEnvoyEnv(env map[string]string) []corev1.EnvVar {
 		}
 
 	}
+	ev = append(ev, refPodUid("APPMESH_PLATFORM_K8S_POD_UID"))
 	return ev
 }
 
@@ -324,6 +328,21 @@ func envVar(envName, envVal string) corev1.EnvVar {
 	return corev1.EnvVar{
 		Name:  envName,
 		Value: envVal,
+	}
+}
+
+// refPodUid is to use the k8s downward API and render pod uid
+// this info will be used to help App Mesh team to identify
+// the platform Envoy is running on
+func refPodUid(envName string) corev1.EnvVar {
+	return corev1.EnvVar{
+		Name:  envName,
+		Value: "",
+		ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
+				FieldPath: "metadata.uid",
+			},
+		},
 	}
 }
 

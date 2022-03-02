@@ -45,7 +45,7 @@ const (
 	//for a particular VirtualNode.
 	AppMeshSDSAnnotation = "appmesh.k8s.aws/sds"
 
-	// AppMeshEnvAnnotation specifies the list of enviornment variables that need to be programmed on Envoy sidecars
+	// AppMeshEnvAnnotation specifies the list of environment variables that need to be programmed on Envoy sidecars
 	// This allow passing tags like DataDog environment `DD_ENV` to Envoy to help correlate observability data
 	// Here's how a sample annotations will be like
 	//
@@ -53,6 +53,17 @@ const (
 	//        e.g. appmesh.k8s.aws/sidecarEnv: "DD_ENV=prod"
 	//
 	AppMeshEnvAnnotation = "appmesh.k8s.aws/sidecarEnv"
+
+	// === begin xray daemon annotations ===
+
+	// AppMeshXrayAgentConfigAnnotation specifies the mount path for the Xray daemon's configuration file.
+	// For more info on this YAML file refer AWS X-Ray's documentation at
+	// https://docs.aws.amazon.com/xray/latest/devguide/xray-daemon-configuration.html#xray-daemon-configuration-configfile
+	// Make sure ConfigMap's data filename is set to `xray-daemon.yaml` and only one volume mounted ConfigMap is specified.
+	//
+	//        e.g. appmesh.k8s.aws/xrayAgentConfigMount: xray-config:/tmp/
+	//
+	AppMeshXrayAgentConfigAnnotation = "appmesh.k8s.aws/xrayAgentConfigMount"
 
 	//Pod Labels
 

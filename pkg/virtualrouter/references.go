@@ -3,8 +3,8 @@ package virtualrouter
 import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -47,7 +47,7 @@ func ExtractVirtualNodeReferences(vr *appmesh.VirtualRouter) []appmesh.VirtualNo
 	return vnRefs
 }
 
-func VirtualNodeReferenceIndexFunc(obj runtime.Object) []types.NamespacedName {
+func VirtualNodeReferenceIndexFunc(obj client.Object) []types.NamespacedName {
 	vr := obj.(*appmesh.VirtualRouter)
 	vnRefs := ExtractVirtualNodeReferences(vr)
 	var vnKeys []types.NamespacedName

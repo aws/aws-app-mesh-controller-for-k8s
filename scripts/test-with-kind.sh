@@ -4,7 +4,7 @@
 # Kubernetes cluster, installs appmesh CRDs and controller into that
 # Kubernetes cluster and runs a set of tests
 
-set -Eo pipefail
+set -eo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")" || exit 1; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."

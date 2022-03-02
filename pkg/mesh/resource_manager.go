@@ -2,6 +2,7 @@ package mesh
 
 import (
 	"context"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
@@ -220,7 +221,7 @@ func BuildSDKMeshSpec(ctx context.Context, ms *appmesh.Mesh) (*appmeshsdk.MeshSp
 		return conversions.Convert_CRD_MeshSpec_To_SDK_MeshSpec(a.(*appmesh.MeshSpec), b.(*appmeshsdk.MeshSpec), scope)
 	})
 	sdkMSSpec := &appmeshsdk.MeshSpec{}
-	if err := converter.Convert(&ms.Spec, sdkMSSpec, conversion.DestFromSource, nil); err != nil {
+	if err := converter.Convert(&ms.Spec, sdkMSSpec, nil); err != nil {
 		return nil, err
 	}
 	return sdkMSSpec, nil

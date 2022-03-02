@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"os"
 	"strconv"
 	"time"
@@ -42,6 +43,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -134,15 +136,22 @@ func main() {
 	kubeConfig := ctrl.GetConfigOrDie()
 
 	clientSet, err := kubernetes.NewForConfig(kubeConfig)
+	if err != nil {
+		setupLog.Error(err, "unable to generate clientSet from the kubeConfig")
+		os.Exit(1)
+	}
+
+	k8sVersion := k8s.ServerVersion(clientSet.Discovery())
 
 	mgr, err := ctrl.NewManager(kubeConfig, ctrl.Options{
-		Scheme:                 scheme,
-		SyncPeriod:             &syncPeriod,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "appmesh-controller-leader-election",
-		HealthProbeBindAddress: healthProbeBindAddress,
+		Scheme:                     scheme,
+		SyncPeriod:                 &syncPeriod,
+		MetricsBindAddress:         metricsAddr,
+		Port:                       9443,
+		LeaderElection:             enableLeaderElection,
+		LeaderElectionID:           "appmesh-controller-leader-election",
+		LeaderElectionResourceLock: resourcelock.ConfigMapsResourceLock,
+		HealthProbeBindAddress:     healthProbeBindAddress,
 	})
 
 	customController := k8s.NewCustomController(
@@ -168,14 +177,14 @@ func main() {
 
 	podsRepository := k8s.NewPodsRepository(customController)
 
-	stopChan := ctrl.SetupSignalHandler()
+	ctx := ctrl.SetupSignalHandler()
 	referencesIndexer := references.NewDefaultObjectReferenceIndexer(mgr.GetCache(), mgr.GetFieldIndexer())
 	finalizerManager := k8s.NewDefaultFinalizerManager(mgr.GetClient(), ctrl.Log)
 	meshMembersFinalizer := mesh.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("mesh-members"), ctrl.Log)
 	vgMembersFinalizer := virtualgateway.NewPendingMembersFinalizer(mgr.GetClient(), mgr.GetEventRecorderFor("virtualgateway-members"), ctrl.Log)
 	referencesResolver := references.NewDefaultResolver(mgr.GetClient(), ctrl.Log)
 	virtualNodeEndpointResolver := cloudmap.NewDefaultVirtualNodeEndpointResolver(podsRepository, ctrl.Log)
-	cloudMapInstancesReconciler := cloudmap.NewDefaultInstancesReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log, stopChan)
+	cloudMapInstancesReconciler := cloudmap.NewDefaultInstancesReconciler(mgr.GetClient(), cloud.CloudMap(), ctrl.Log, ctx.Done())
 	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
 	vgResManager := virtualgateway.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	grResManager := gatewayroute.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
@@ -231,7 +240,7 @@ func main() {
 	meshMembershipDesignator := mesh.NewMembershipDesignator(mgr.GetClient())
 	vgMembershipDesignator := virtualgateway.NewMembershipDesignator(mgr.GetClient())
 	vnMembershipDesignator := virtualnode.NewMembershipDesignator(mgr.GetClient())
-	sidecarInjector := inject.NewSidecarInjector(injectConfig, cloud.AccountID(), cloud.Region(), mgr.GetClient(), referencesResolver, vnMembershipDesignator, vgMembershipDesignator)
+	sidecarInjector := inject.NewSidecarInjector(injectConfig, cloud.AccountID(), cloud.Region(), version.GitVersion, k8sVersion, mgr.GetClient(), referencesResolver, vnMembershipDesignator, vgMembershipDesignator)
 	appmeshwebhook.NewMeshMutator().SetupWithManager(mgr)
 	appmeshwebhook.NewMeshValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualGatewayMutator(meshMembershipDesignator).SetupWithManager(mgr)
@@ -255,13 +264,13 @@ func main() {
 	}
 
 	// Only start the controller when the leader election is won
-	mgr.Add(manager.RunnableFunc(func(stop <-chan struct{}) error {
+	mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
 		setupLog.Info("starting custom controller")
 
 		// Start the custom controller
-		customController.StartController(stop)
+		customController.StartController(ctx.Done())
 		// If the manager is stopped, signal the controller to stop as well.
-		<-stop
+		<-ctx.Done()
 
 		setupLog.Info("stopping the controller")
 
@@ -271,7 +280,7 @@ func main() {
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting controller")
-	if err := mgr.Start(stopChan); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running controller")
 		os.Exit(1)
 	}
