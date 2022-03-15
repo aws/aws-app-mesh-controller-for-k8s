@@ -14,17 +14,30 @@ check_kube_connection() {
 
 }
 
-check_installations() {
+check_kube_installation() {
 
     kube_err=$(kubectl version --client 2>&1 >/dev/null)
-    jq_err=$(jq --version 2>&1 >/dev/null)
-    if [[ -z $kube_err && -z $jq_err ]]; then
-        echo "kubectl and jq installation check: PASSED!"
+    if [[ -z $kube_err ]]; then
+        echo "kubectl installation check: PASSED!"
         return 0
     else
-        echo "kubectl and jq installation check: FAILED -- kubectl or jq not installed"
+        echo "kubectl installation check: FAILED -- kubectl not installed"
         return 1
     fi
+
+}
+
+check_jq_installation() {
+
+    jq_err=$(jq --version 2>&1 >/dev/null)
+    if [[ -z $jq_err ]]; then
+        echo "jq installation check: PASSED!"
+        return 0
+    else
+        echo "jq installation check: FAILED -- jq not installed"
+        return 1
+    fi
+
 }
 
 check_old_crds() {
@@ -77,8 +90,9 @@ check_injector() {
 main() {
 
     exitcode=0
+    check_kube_installation || exitcode=1
+    check_jq_installation || exitcode=1
     check_kube_connection || exitcode=1
-    check_installations || exitcode=1
     if [ ${exitcode} = 0 ]; then
         check_old_crds || exitcode=1
         check_controller_version || exitcode=1
