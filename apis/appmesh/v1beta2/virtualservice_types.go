@@ -114,6 +114,7 @@ type VirtualServiceStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="ARN",type="string",JSONPath=".status.virtualServiceARN",description="The AppMesh VirtualService object's Amazon Resource Name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:pruning:PreserveUnknownFields
 // VirtualService is the Schema for the virtualservices API
 type VirtualService struct {
 	metav1.TypeMeta   `json:",inline"`
