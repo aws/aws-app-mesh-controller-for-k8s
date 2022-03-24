@@ -19,7 +19,7 @@ func NamespacedName(obj metav1.Object) types.NamespacedName {
 }
 
 // ServerVersion returns the version for k8s server
-// the server version will be used to help App Mesh team to identify 
+// the server version will be used to help App Mesh team to identify
 // the platform Envoy is running on to provide better user experience
 func ServerVersion(client discovery.ServerVersionInterface) string {
 	versionInfo, err := client.ServerVersion()

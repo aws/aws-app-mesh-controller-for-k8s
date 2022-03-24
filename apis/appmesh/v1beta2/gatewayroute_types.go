@@ -278,6 +278,7 @@ type GatewayRouteStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="ARN",type="string",JSONPath=".status.gatewayRouteARN",description="The AppMesh GatewayRoute object's Amazon Resource Name"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:pruning:PreserveUnknownFields
 // GatewayRoute is the Schema for the gatewayroutes API
 type GatewayRoute struct {
 	metav1.TypeMeta   `json:",inline"`
