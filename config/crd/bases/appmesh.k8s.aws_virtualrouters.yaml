@@ -516,6 +516,8 @@ spec:
                                     description: The QueryMatchMethod object.
                                     properties:
                                       exact:
+                                        maxLength: 255
+                                        minLength: 1
                                         type: string
                                     type: object
                                   name:
@@ -796,6 +798,8 @@ spec:
                                     description: The QueryMatchMethod object.
                                     properties:
                                       exact:
+                                        maxLength: 255
+                                        minLength: 1
                                         type: string
                                     type: object
                                   name:
