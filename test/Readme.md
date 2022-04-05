@@ -3,6 +3,14 @@
 The test folder consists of integration and e2e tests which can be run using the Ginkgo framework
 
 ### Types of Tests  
+#### Install ginkgo
+
+```
+go install github.com/onsi/ginkgo/ginkgo@v1.16.4
+```
+
+NOTE: tests do not support ginkgo v2 executable yet
+
 #### e2e tests  
 These tests deploy a sample test app within appmesh and tests for end to end connectivity using following modes.  
 1. DNS Service Discovery type 
