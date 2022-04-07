@@ -3,18 +3,21 @@ package cloudmap
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	"github.com/go-logr/logr"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/cache"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	services "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
@@ -105,6 +108,11 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 		if err != nil {
 			return err
 		}
+	} else {
+		svcSummary, err = m.updateCloudMapService(ctx, svcSummary, vn, nsSummary, cloudMapConfig.ServiceName, m.config.CloudMapServiceTTL)
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := m.updateCRDVirtualNode(ctx, vn, svcSummary); err != nil {
@@ -125,7 +133,6 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -230,6 +237,7 @@ func (m *defaultResourceManager) findCloudMapService(ctx context.Context, nsSumm
 			serviceID:               awssdk.StringValue(sdkSVCSummary.Id),
 			serviceARN:              sdkSVCSummary.Arn,
 			healthCheckCustomConfig: sdkSVCSummary.HealthCheckCustomConfig,
+			DnsConfig:               sdkSVCSummary.DnsConfig,
 		}
 		m.serviceSummaryCache.Add(cacheKey, svcSummary, defaultServiceCacheTTL)
 		return svcSummary, nil
@@ -286,6 +294,49 @@ func (m *defaultResourceManager) createCloudMapService(ctx context.Context, vn *
 			[]string{servicediscovery.NamespaceTypeDnsPrivate, servicediscovery.NamespaceTypeHttp},
 		)
 	}
+}
+
+func (m *defaultResourceManager) updateCloudMapService(ctx context.Context, svcSummary *serviceSummary, vn *appmesh.VirtualNode, nsSummary *servicediscovery.NamespaceSummary, serviceName string,
+	cloudMapTTL int64) (*serviceSummary, error) {
+	if awssdk.StringValue(nsSummary.Type) == servicediscovery.NamespaceTypeDnsPrivate {
+		actualsvcSummary := *svcSummary
+		desiredsvcSummary := BuildCloudMapServiceSummary(ctx, svcSummary, cloudMapTTL)
+		opts := cmp.Options{
+			cmpopts.EquateEmpty(),
+			cmp.AllowUnexported(serviceSummary{}),
+		}
+		// return if no change to service summary
+		if cmp.Equal(*desiredsvcSummary, actualsvcSummary, opts) {
+			return svcSummary, nil
+		}
+		diff := cmp.Diff(*desiredsvcSummary, actualsvcSummary, opts)
+		m.log.V(1).Info("cloudMap service changed",
+			"actualDnsConfig", actualsvcSummary,
+			"desiredDnsConfig", *desiredsvcSummary,
+			"diff", diff,
+		)
+		m.log.V(1).Info("Sending cloudMap service update request")
+		operationId, err := m.updateCloudMapServiceUnderPrivateDNSNamespace(ctx, vn, nsSummary, serviceName, cloudMapTTL, svcSummary)
+		if err != nil {
+			return nil, err
+		}
+		// wait for update to succeed or timeout and udpate on next reconcile loop
+		operationInput := &servicediscovery.GetOperationInput{
+			OperationId: operationId,
+		}
+		status := AwaitOperationSuccess(30, 1, func() string {
+			operationOutput, _ := m.cloudMapSDK.GetOperation(operationInput)
+			return *operationOutput.Operation.Status
+		})
+		switch status {
+		case SUCCESS:
+			return m.updateCloudMapServiceInServiceSummaryCache(nsSummary, desiredsvcSummary, serviceName), nil
+		default:
+			return nil, fmt.Errorf("CloudMap Service Update Request status: %v", status)
+		}
+	}
+	// if namespace type is not set to DnsPrivate then return without updates
+	return svcSummary, nil
 }
 
 func (m *defaultResourceManager) deleteCloudMapService(ctx context.Context, vn *appmesh.VirtualNode, nsSummary *servicediscovery.NamespaceSummary, svcSummary *serviceSummary) error {
@@ -362,6 +413,33 @@ func (m *defaultResourceManager) createCloudMapServiceUnderPrivateDNSNamespace(c
 	return resp.Service, nil
 }
 
+func (m *defaultResourceManager) updateCloudMapServiceUnderPrivateDNSNamespace(ctx context.Context, vn *appmesh.VirtualNode,
+	nsSummary *servicediscovery.NamespaceSummary, serviceName string, cloudMapTTL int64, svcSummary *serviceSummary) (*string, error) {
+	updateServiceInput := &servicediscovery.UpdateServiceInput{
+		Id: awssdk.String(svcSummary.serviceID),
+		Service: &servicediscovery.ServiceChange{
+			DnsConfig: &servicediscovery.DnsConfigChange{
+				DnsRecords: []*servicediscovery.DnsRecord{
+					{
+						Type: awssdk.String(servicediscovery.RecordTypeA),
+						TTL:  awssdk.Int64(cloudMapTTL),
+					},
+				},
+			},
+		},
+	}
+	if m.enableCustomHealthCheck {
+		updateServiceInput.Service.HealthCheckConfig = &servicediscovery.HealthCheckConfig{
+			FailureThreshold: awssdk.Int64(defaultServiceCustomHCFailureThreshold),
+		}
+	}
+	UpdateServiceOutput, err := m.cloudMapSDK.UpdateServiceWithContext(ctx, updateServiceInput)
+	if err != nil {
+		return nil, err
+	}
+	return UpdateServiceOutput.OperationId, nil
+}
+
 func (m *defaultResourceManager) createCloudMapServiceUnderHTTPNamespace(ctx context.Context, vn *appmesh.VirtualNode,
 	nsSummary *servicediscovery.NamespaceSummary, serviceName string) (*servicediscovery.Service, error) {
 	creatorRequestID := string(vn.UID)
@@ -388,9 +466,17 @@ func (m *defaultResourceManager) addCloudMapServiceToServiceSummaryCache(nsSumma
 		serviceID:               awssdk.StringValue(service.Id),
 		serviceARN:              service.Arn,
 		healthCheckCustomConfig: service.HealthCheckCustomConfig,
+		DnsConfig:               service.DnsConfig,
 	}
 	m.serviceSummaryCache.Add(cacheKey, svcSummary, defaultServiceCacheTTL)
 	return svcSummary
+}
+
+func (m *defaultResourceManager) updateCloudMapServiceInServiceSummaryCache(nsSummary *servicediscovery.NamespaceSummary, desiredsvcSummary *serviceSummary, serviceName string) *serviceSummary {
+	cacheKey := m.buildCloudMapServiceSummaryCacheKey(nsSummary, serviceName)
+	m.serviceSummaryCache.Remove(cacheKey)
+	m.serviceSummaryCache.Add(cacheKey, desiredsvcSummary, defaultServiceCacheTTL)
+	return desiredsvcSummary
 }
 
 func (m *defaultResourceManager) removeCloudMapServiceFromServiceSummaryCache(nsSummary *servicediscovery.NamespaceSummary, service *servicediscovery.Service) {
@@ -406,6 +492,24 @@ func (m *defaultResourceManager) isCloudMapServiceOwnedByVirtualNode(ctx context
 
 func (m *defaultResourceManager) buildCloudMapServiceSummaryCacheKey(nsSummary *servicediscovery.NamespaceSummary, serviceName string) string {
 	return fmt.Sprintf("%s/%s", awssdk.StringValue(nsSummary.Id), serviceName)
+}
+
+func BuildCloudMapServiceSummary(ctx context.Context, svcSummary *serviceSummary, cloudMapTTL int64) *serviceSummary {
+	return &serviceSummary{
+		serviceID:               awssdk.StringValue(&svcSummary.serviceID),
+		serviceARN:              svcSummary.serviceARN,
+		healthCheckCustomConfig: svcSummary.healthCheckCustomConfig,
+		DnsConfig: &servicediscovery.DnsConfig{
+			DnsRecords: []*servicediscovery.DnsRecord{
+				{
+					Type: awssdk.String(servicediscovery.RecordTypeA),
+					TTL:  awssdk.Int64(cloudMapTTL),
+				},
+			},
+			NamespaceId:   svcSummary.DnsConfig.NamespaceId,
+			RoutingPolicy: svcSummary.DnsConfig.RoutingPolicy,
+		},
+	}
 }
 
 func (m *defaultResourceManager) getClusterNodeInfo(ctx context.Context) map[string]nodeAttributes {
@@ -466,3 +570,4 @@ func (m *defaultResourceManager) updateCRDVirtualNode(ctx context.Context, vn *a
 	vn.Annotations[cloudMapServiceAnnotation] = *svcSummary.serviceARN
 	return m.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN))
 }
+

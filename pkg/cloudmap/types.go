@@ -2,6 +2,7 @@ package cloudmap
 
 import (
 	"fmt"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
@@ -13,6 +14,7 @@ type serviceSummary struct {
 	serviceID               string
 	serviceARN              *string
 	healthCheckCustomConfig *servicediscovery.HealthCheckCustomConfig
+	DnsConfig               *servicediscovery.DnsConfig
 }
 
 // serviceSubset represents a subset of cloudMap service
@@ -61,3 +63,4 @@ func (s *virtualNodeServiceSubset) SubsetID() string {
 func (s *virtualNodeServiceSubset) Contains(instanceID string, attrs instanceAttributes) bool {
 	return attrs[AttrAppMeshMesh] == aws.StringValue(s.ms.Spec.AWSName) && attrs[AttrAppMeshVirtualNode] == aws.StringValue(s.vn.Spec.AWSName)
 }
+
