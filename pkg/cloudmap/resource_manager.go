@@ -570,4 +570,3 @@ func (m *defaultResourceManager) updateCRDVirtualNode(ctx context.Context, vn *a
 	vn.Annotations[cloudMapServiceAnnotation] = *svcSummary.serviceARN
 	return m.k8sClient.Patch(ctx, vn, client.MergeFrom(oldVN))
 }
-

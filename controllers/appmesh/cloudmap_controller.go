@@ -112,4 +112,3 @@ func (r *cloudMapReconciler) cleanupCloudMapResources(ctx context.Context, vNode
 	}
 	return nil
 }
-
