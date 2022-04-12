@@ -39,15 +39,21 @@ func ShouldPodBeInEndpoints(pod *corev1.Pod) bool {
 }
 
 func AwaitOperationSuccess(timeoutSeconds time.Duration, tickerSeconds time.Duration, f func() string) string {
+	operationStatus := make(chan string, 1)
 	timeout := time.After(timeoutSeconds * time.Second)
 	ticker := time.Tick(tickerSeconds * time.Second)
-	operationStatus := make(chan string, 1)
+
+	go func() {
+		select {
+		case <-timeout:
+			operationStatus <- TIMEOUT
+			return
+		}
+	}()
+
 	go func() {
 		for {
 			select {
-			case <-timeout:
-				operationStatus <- TIMEOUT
-				return
 			case <-ticker:
 				status := f()
 				if status == SUCCESS {
@@ -57,11 +63,13 @@ func AwaitOperationSuccess(timeoutSeconds time.Duration, tickerSeconds time.Dura
 			}
 		}
 	}()
+
 	return <-operationStatus
 }
 
-func GetCloudMapDnsTTL(ctx context.Context, svc services.CloudMap, output *servicediscovery.ListServicesOutput) int64 {
+func GetCloudMapDnsTTL(ctx context.Context, svc services.CloudMap, listServicesInput *servicediscovery.ListServicesInput) int64 {
 	var defaultCloudMapDnsTTL int64 = 300
+	output, _ := svc.ListServicesWithContext(ctx, listServicesInput)
 	for _, svc := range output.Services {
 		DnsConfig := *svc.DnsConfig
 		DnsRecords := *DnsConfig.DnsRecords[len(DnsConfig.DnsRecords)-1]
