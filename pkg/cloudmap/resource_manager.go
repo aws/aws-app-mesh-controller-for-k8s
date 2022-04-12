@@ -338,7 +338,7 @@ func (m *defaultResourceManager) createCloudMapServiceUnderPrivateDNSNamespace(c
 	nsSummary *servicediscovery.NamespaceSummary, serviceName string, cloudMapTTL int64) (*servicediscovery.Service, error) {
 	creatorRequestID := string(vn.UID)
 	var dnsRecordType string
-	if *vn.Spec.ServiceDiscovery.AWSCloudMap.IpPreference == IPv6 || m.ipFamily == IPv6 {
+	if *vn.Spec.ServiceDiscovery.AWSCloudMap.IpPreference == appmesh.IpPreferenceIPv6 || m.ipFamily == IPv6 {
 		dnsRecordType = servicediscovery.RecordTypeAaaa
 	} else {
 		dnsRecordType = servicediscovery.RecordTypeA
