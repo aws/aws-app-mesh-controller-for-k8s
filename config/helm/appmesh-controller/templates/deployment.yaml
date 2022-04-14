@@ -68,6 +68,8 @@ spec:
         - --readiness-probe-period={{ .Values.sidecar.probes.readinessProbePeriod }}
         - --envoy-admin-access-port={{ .Values.sidecar.envoyAdminAccessPort }}
         - --envoy-admin-access-log-file={{ .Values.sidecar.envoyAdminAccessLogFile }}
+        - --envoy-admin-access-enable-ipv6={{ .Values.sidecar.envoyAdminAccessEnableIPv6 }}
+        - --dual-stack-endpoint={{ .Values.sidecar.useDualStackEndpoint }}
         - --preview={{ .Values.preview }}
         - --enable-sds={{ .Values.sds.enabled }}
         - --sds-uds-path={{ .Values.sds.udsPath }}

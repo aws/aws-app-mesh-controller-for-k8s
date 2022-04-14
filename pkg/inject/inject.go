@@ -146,6 +146,8 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				statsDSocketPath:           m.config.StatsDSocketPath,
 				controllerVersion:          m.controllerVersion,
 				k8sVersion:                 m.k8sVersion,
+				useDualStackEndpoint:       m.config.DualStackEndpoint,
+				enableAdminAccessIPv6:      m.config.EnvoyAdminAccessEnableIPv6,
 			}, ms, vn),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,
@@ -195,6 +197,8 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 			statsDSocketPath:           m.config.StatsDSocketPath,
 			controllerVersion:          m.controllerVersion,
 			k8sVersion:                 m.k8sVersion,
+			useDualStackEndpoint:       m.config.DualStackEndpoint,
+			enableAdminAccessIPv6:      m.config.EnvoyAdminAccessEnableIPv6,
 		}, ms, vg),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,
