@@ -1,0 +1,62 @@
+name: beta-release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The tag for this release (must already be pushed).'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: integration-test
+    runs-on: [ self-hosted, aws-app-mesh-controller-for-k8s ]
+    steps:
+      - name: clean work dir from previous runs
+        run: |
+          rm -rf *
+      - name: setup go 1.16
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.16.*'
+        id: go
+      - name: setup environment
+        run: |
+          source ~/.bashrc
+      - name: checkout code
+        uses: actions/checkout@v2
+        with:
+          if: "${{ github.event.inputs.tag != ''}}"
+          ref: refs/tags/${{ github.event.inputs.tag }}
+      - name: setup kind and run integration tests
+        run: VERSION=${{ github.event.inputs.tag }} make integration-test
+      - name: cleanup all the kind clusters
+        run: VERSION=${{ github.event.inputs.tag }} make delete-all-kind-clusters
+  beta-release:
+    needs: build
+    name: beta-release
+    runs-on: ubuntu-18.04
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS Credentials (build)
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.CI_AWS_ROLE }}
+          role-session-name: ControllerBetaRelease
+      - name: Pull docker image
+        run: |
+          docker pull ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}
+      - name: Configure AWS Credentials (beta)
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.BETA_AWS_ROLE }}
+          role-session-name: ControllerBetaRelease
+      - name: Push docker image
+        run: |
+          docker push ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}

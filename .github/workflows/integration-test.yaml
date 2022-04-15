@@ -3,9 +3,10 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
+  workflow_dispatch:
+    tag:
+      description: 'Build and run tests on a specific tag.'
+      required: false
 
 permissions:
   contents: read
@@ -28,7 +29,10 @@ jobs:
         source ~/.bashrc
     - name: checkout code
       uses: actions/checkout@v2
+      with:
+        if: "${{ github.event.inputs.tag != ''}}"
+        ref: refs/tags/${{ github.event.inputs.tag }}
     - name: setup kind and run integration tests
-      run: make integration-test
+      run: VERSION=${{ github.event.inputs.tag }} make integration-test
     - name: cleanup all the kind clusters
-      run: make delete-all-kind-clusters
+      run: VERSION=${{ github.event.inputs.tag }} make delete-all-kind-clusters
