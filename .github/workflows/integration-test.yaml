@@ -3,32 +3,33 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
-
-permissions:
-  contents: read
+  workflow_dispatch:
+    tag:
+      description: 'Build and run tests on a specific tag.'
+      required: false
 
 jobs:
   build:
     name: integration-test
     runs-on: [self-hosted, aws-app-mesh-controller-for-k8s]
     steps:
-    - name: clean work dir from previous runs
-      run: |
-        rm -rf *
-    - name: setup go 1.16
-      uses: actions/setup-go@v3
-      with:
-        go-version: '1.16.*'
-      id: go
-    - name: setup environment
-      run: |
-        source ~/.bashrc
-    - name: checkout code
-      uses: actions/checkout@v2
-    - name: setup kind and run integration tests
-      run: make integration-test
-    - name: cleanup all the kind clusters
-      run: make delete-all-kind-clusters
+      - name: clean work dir from previous runs
+        run: |
+          rm -rf *
+      - name: setup go 1.16
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.*
+        id: go
+      - name: setup environment
+        run: |
+          source ~/.bashrc
+      - name: checkout code
+        uses: actions/checkout@v2
+        with:
+          if: "${{ github.event.inputs.tag != ''}}"
+          ref: refs/tags/${{ github.event.inputs.tag }}
+      - name: setup kind and run integration tests
+        run: VERSION=${{ github.event.inputs.tag }} make integration-test
+      - name: cleanup all the kind clusters
+        run: VERSION=${{ github.event.inputs.tag }} make delete-all-kind-clusters
