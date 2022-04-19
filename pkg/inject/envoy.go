@@ -107,7 +107,9 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 	if m.mutatorConfig.enableSDS && !isSDSDisabled(pod) {
 		mutateSDSMounts(pod, &container, m.mutatorConfig.sdsUdsPath)
 	}
-	pod.Spec.Containers = append(pod.Spec.Containers, container)
+
+	// move envoy container first since K8 starts up containers sequentially
+	pod.Spec.Containers = append([]corev1.Container{container}, pod.Spec.Containers...)
 	return nil
 }
 

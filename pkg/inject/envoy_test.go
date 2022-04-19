@@ -219,10 +219,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  "app",
-							Image: "app/v1",
-						},
-						{
 							Name:  "envoy",
 							Image: "envoy:v2",
 							SecurityContext: &corev1.SecurityContext{
@@ -314,6 +310,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -348,10 +348,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -440,6 +436,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -477,10 +477,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -581,6 +577,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -645,10 +645,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -749,6 +745,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -786,10 +786,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -889,6 +885,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -924,10 +924,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1020,6 +1016,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -1058,10 +1058,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1166,6 +1162,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -1203,10 +1203,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1307,6 +1303,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 					Volumes: []corev1.Volume{
 						{
@@ -1373,10 +1373,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1475,6 +1471,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 					Volumes: []corev1.Volume{
 						{
@@ -1525,10 +1525,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1617,6 +1613,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -1655,10 +1655,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1762,6 +1758,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -1800,10 +1800,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1907,6 +1903,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -1952,10 +1952,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -2060,6 +2056,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -2138,10 +2138,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -2246,6 +2242,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -2283,10 +2283,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -2392,6 +2388,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -2432,10 +2432,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -2553,6 +2549,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 					},
 				},
 			},
@@ -2592,10 +2592,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -2691,6 +2687,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									"memory": memoryLimits,
 								},
 							},
+						},
+						{
+							Name:  "app",
+							Image: "app/v1",
 						},
 					},
 				},
