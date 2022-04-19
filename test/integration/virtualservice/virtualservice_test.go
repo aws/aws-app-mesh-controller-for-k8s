@@ -231,15 +231,15 @@ var _ = Describe("VirtualService", func() {
 				// Not using vsTest.Create as it hangs
 				err := f.K8sClient.Create(ctx, vs)
 				vsTest.VirtualServices[vs.Name] = vs
-                observedVs := &appmesh.VirtualService{}
-        		for i := 0; i < 5; i++ {
-        			if err := f.K8sClient.Get(ctx, k8s.NamespacedName(vs), observedVs); err != nil {
-        				if i >= 5 {
-        					Expect(err).NotTo(HaveOccurred())
-        				}
-        			}
-        			time.Sleep(100 * time.Millisecond)
-        		}
+				observedVs := &appmesh.VirtualService{}
+				for i := 0; i < 5; i++ {
+					if err := f.K8sClient.Get(ctx, k8s.NamespacedName(vs), observedVs); err != nil {
+						if i >= 5 {
+							Expect(err).NotTo(HaveOccurred())
+						}
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
 				Expect(err).NotTo(HaveOccurred())
 			})
 

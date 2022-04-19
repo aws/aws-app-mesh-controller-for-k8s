@@ -76,3 +76,183 @@ func Test_meshValidator_enforceFieldsImmutability(t *testing.T) {
 		})
 	}
 }
+
+func Test_meshValidator_checkIpPreferenceValues_IPv6(t *testing.T) {
+	type args struct {
+		mesh *appmesh.Mesh
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "IpPreference is either IPv4_ONLY or IPv6_ONLY",
+			args: args{
+				mesh: &appmesh.Mesh{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "my-mesh",
+					},
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+						ServiceDiscovery: &appmesh.MeshServiceDiscovery{
+							IpPreference: aws.String(appmesh.IpPreferenceIPv6),
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "IpPreference not specified",
+			args: args{
+				mesh: &appmesh.Mesh{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "my-mesh",
+					},
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "IpPreference is either IPv4_ONLY or IPv6_ONLY if field is non-empty",
+			args: args{
+				mesh: &appmesh.Mesh{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "my-mesh",
+					},
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+						ServiceDiscovery: &appmesh.MeshServiceDiscovery{
+							IpPreference: aws.String("Test"),
+						},
+					},
+				},
+			},
+			wantErr: errors.Errorf("Only non-empty values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6),
+		},
+		{
+			name: "IpPreference field is an empty string",
+			args: args{
+				mesh: &appmesh.Mesh{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "my-mesh",
+					},
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+						ServiceDiscovery: &appmesh.MeshServiceDiscovery{
+							IpPreference: aws.String(""),
+						},
+					},
+				},
+			},
+			wantErr: errors.Errorf("Only non-empty values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := &meshValidator{
+				ipFamily: IPv6,
+			}
+			err := v.checkIpPreference(tt.args.mesh)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test_meshValidator_checkIpPreferenceValues_IPv4(t *testing.T) {
+	type args struct {
+		mesh *appmesh.Mesh
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "IpPreference is either IPv4_ONLY or IPv6_ONLY",
+			args: args{
+				mesh: &appmesh.Mesh{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "my-mesh",
+					},
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+						ServiceDiscovery: &appmesh.MeshServiceDiscovery{
+							IpPreference: aws.String(appmesh.IpPreferenceIPv6),
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "IpPreference not specified",
+			args: args{
+				mesh: &appmesh.Mesh{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "my-mesh",
+					},
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "IpPreference is either IPv4_ONLY or IPv6_ONLY if field is non-empty",
+			args: args{
+				mesh: &appmesh.Mesh{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "my-mesh",
+					},
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+						ServiceDiscovery: &appmesh.MeshServiceDiscovery{
+							IpPreference: aws.String("Test"),
+						},
+					},
+				},
+			},
+			wantErr: errors.Errorf("Only non-empty values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6),
+		},
+		{
+			name: "IpPreference field is an empty string",
+			args: args{
+				mesh: &appmesh.Mesh{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "my-mesh",
+					},
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+						ServiceDiscovery: &appmesh.MeshServiceDiscovery{
+							IpPreference: aws.String(""),
+						},
+					},
+				},
+			},
+			wantErr: errors.Errorf("Only non-empty values allowed are %s or %s", appmesh.IpPreferenceIPv4, appmesh.IpPreferenceIPv6),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := &meshValidator{
+				ipFamily: IPv4,
+			}
+			err := v.checkIpPreference(tt.args.mesh)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

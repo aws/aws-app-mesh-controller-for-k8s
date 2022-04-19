@@ -45,6 +45,8 @@ const (
 	flagStatsDPort           = "statsd-port"
 	flagStatsDSocketPath     = "statsd-socket-path"
 	flagXRayImage            = "xray-image"
+
+	flagClusterName = "cluster-name"
 )
 
 type Config struct {
@@ -94,6 +96,8 @@ type Config struct {
 	StatsDPort           int32
 	StatsDSocketPath     string
 	XRayImage            string
+
+	ClusterName string
 }
 
 // MultipleTracer checks if more than one tracer is configured.
@@ -177,6 +181,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"DogStatsD Agent tracing port")
 	fs.StringVar(&cfg.StatsDSocketPath, flagStatsDSocketPath, "",
 		"DogStatsD Agent unix domain socket")
+	fs.StringVar(&cfg.ClusterName, flagClusterName, "", "ClusterName in context")
 }
 
 func (cfg *Config) BindEnv() error {

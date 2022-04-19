@@ -45,6 +45,10 @@ const proxyInitContainerTemplate = `
     {
       "name": "APPMESH_EGRESS_IGNORED_PORTS",
       "value": "{{ .EgressIgnoredPorts }}"
+    },
+    {
+      "name": "APPMESH_ENABLE_IPV6",
+      "value": "1"
     }
   ]
 }
