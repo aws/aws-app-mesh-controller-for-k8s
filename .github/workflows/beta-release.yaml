@@ -55,6 +55,7 @@ jobs:
       - name: build for arm64
         run: |
           docker buildx build --platform linux/arm64 -t ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64 . --load
+          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com
           docker push ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
   beta-release:
     name: beta-release
