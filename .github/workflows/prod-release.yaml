@@ -17,7 +17,7 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Configure AWS Credentials (build)
+      - name: Configure AWS Credentials (beta)
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-west-2
@@ -28,7 +28,7 @@ jobs:
           aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com
           docker pull ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}
           docker pull ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
-      - name: Configure AWS Credentials (beta)
+      - name: Configure AWS Credentials (prod)
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-west-2
