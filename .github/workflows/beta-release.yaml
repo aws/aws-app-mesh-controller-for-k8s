@@ -12,7 +12,7 @@ permissions:
 jobs:
   build:
     name: integration-test
-    runs-on: [ self-hosted, aws-app-mesh-controller-for-k8s ]
+    runs-on: [ self-hosted, aws-app-mesh-controller-for-k8s, AMD64 ]
     steps:
       - name: clean work dir from previous runs
         run: |
@@ -35,7 +35,7 @@ jobs:
         run: VERSION=${{ github.event.inputs.tag }} make delete-all-kind-clusters
   build-arm64:
     name: build-arm64
-    runs-on: [ self-hosted, aws-app-mesh-controller-for-k8s, arm64 ]
+    runs-on: [ self-hosted, aws-app-mesh-controller-for-k8s, ARM64 ]
     steps:
       - name: clean work dir from previous runs
         run: |

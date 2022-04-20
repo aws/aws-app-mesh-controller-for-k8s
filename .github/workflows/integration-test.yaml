@@ -13,7 +13,7 @@ permissions:
 jobs:
   build:
     name: integration-test
-    runs-on: [self-hosted, aws-app-mesh-controller-for-k8s]
+    runs-on: [self-hosted, aws-app-mesh-controller-for-k8s, AMD64 ]
     steps:
       - name: clean work dir from previous runs
         run: |
