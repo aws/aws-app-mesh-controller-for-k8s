@@ -3,7 +3,6 @@ package cloudmap
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	awsretry "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/retry"
@@ -86,10 +85,9 @@ type defaultResourceManager struct {
 	instancesReconciler         InstancesReconciler
 	enableCustomHealthCheck     bool
 
-	namespaceSummaryCache    *cache.LRUExpireCache
-	serviceSummaryCache      *cache.LRUExpireCache
-	serviceSummaryCacheMutex sync.Mutex
-	log                      logr.Logger
+	namespaceSummaryCache *cache.LRUExpireCache
+	serviceSummaryCache   *cache.LRUExpireCache
+	log                   logr.Logger
 }
 
 func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.VirtualNode) error {
@@ -457,7 +455,7 @@ func (m *defaultResourceManager) updateCloudMapServiceUnderPrivateDNSNamespace(c
 		Jitter:   0.1,
 		Cap:      60 * time.Second,
 	}
-	if err := retry.OnError(updateServiceBackoff, func(err error) bool {
+	err := retry.OnError(updateServiceBackoff, func(err error) bool {
 		// If error is duplicate request then retry
 		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == servicediscovery.ErrCodeDuplicateRequest {
 			return true
@@ -474,7 +472,8 @@ func (m *defaultResourceManager) updateCloudMapServiceUnderPrivateDNSNamespace(c
 			return err
 		}
 		return nil
-	}); err != nil {
+	})
+	if err != nil {
 		return err
 	}
 	return nil
