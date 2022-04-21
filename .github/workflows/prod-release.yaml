@@ -1,0 +1,43 @@
+name: prod-release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The tag for this release (must already be pushed).'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  prod-release:
+    name: prod-release
+    runs-on: ubuntu-18.04
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS Credentials (beta)
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.BETA_AWS_ROLE }}
+          role-session-name: ControllerProdRelease
+      - name: Pull docker image
+        run: |
+          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com
+          docker pull ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}
+          docker pull ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
+      - name: Configure AWS Credentials (prod)
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.PROD_AWS_ROLE }}
+          role-session-name: ControllerProdRelease
+      - name: Push docker image
+        run: |
+          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${{ secrets.PROD_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com
+          docker tag ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }} ${{ secrets.PROD_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}
+          docker tag ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64 ${{ secrets.PROD_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
+          docker push ${{ secrets.PROD_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}
+          docker push ${{ secrets.PROD_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64

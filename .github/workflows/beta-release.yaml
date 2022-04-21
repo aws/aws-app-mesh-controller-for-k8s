@@ -12,7 +12,7 @@ permissions:
 jobs:
   build:
     name: integration-test
-    runs-on: [ self-hosted, aws-app-mesh-controller-for-k8s ]
+    runs-on: [ self-hosted, aws-app-mesh-controller-for-k8s, X64 ]
     steps:
       - name: clean work dir from previous runs
         run: |
@@ -28,20 +28,39 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v2
         with:
-          if: "${{ github.event.inputs.tag != ''}}"
           ref: refs/tags/${{ github.event.inputs.tag }}
       - name: setup kind and run integration tests
         run: VERSION=${{ github.event.inputs.tag }} make integration-test
       - name: cleanup all the kind clusters
         run: VERSION=${{ github.event.inputs.tag }} make delete-all-kind-clusters
+  build-arm64:
+    name: build-arm64
+    runs-on: [ self-hosted, aws-app-mesh-controller-for-k8s, ARM64 ]
+    steps:
+      - name: clean work dir from previous runs
+        run: |
+          rm -rf *
+      - name: setup go 1.16
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.16.*'
+        id: go
+      - name: setup environment
+        run: |
+          source ~/.bashrc
+      - name: checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: refs/tags/${{ github.event.inputs.tag }}
       - name: build for arm64
         run: |
           docker buildx build --platform linux/arm64 -t ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64 . --load
+          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com
           docker push ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
   beta-release:
     name: beta-release
     runs-on: ubuntu-18.04
-    needs: build
+    needs: [ build, build-arm64 ]
     permissions:
       id-token: write
       contents: read
