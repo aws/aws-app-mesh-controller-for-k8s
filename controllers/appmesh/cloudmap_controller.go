@@ -70,7 +70,7 @@ func (r *cloudMapReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Named("cloudMap").
 		For(&appmesh.VirtualNode{}).
 		Watches(&k8s.NotificationChannel{Source: r.podEventNotificationChan}, r.enqueueRequestsForPodEvents).
-		WithOptions(controller.Options{MaxConcurrentReconciles: 1}).
+		WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
 		Complete(r)
 }
 

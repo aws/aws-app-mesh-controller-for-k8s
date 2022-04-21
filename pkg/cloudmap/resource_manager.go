@@ -3,8 +3,10 @@ package cloudmap
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
+	awsretry "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/retry"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -37,6 +39,9 @@ const (
 	nodeAvailabilityZoneLabelKey2 = "topology.kubernetes.io/zone"
 
 	cloudMapServiceAnnotation = "cloudMapServiceARN"
+
+	pollInterval = 3 * time.Second
+	pollRetry    = 10
 )
 
 type ResourceManager interface {
@@ -81,9 +86,10 @@ type defaultResourceManager struct {
 	instancesReconciler         InstancesReconciler
 	enableCustomHealthCheck     bool
 
-	namespaceSummaryCache *cache.LRUExpireCache
-	serviceSummaryCache   *cache.LRUExpireCache
-	log                   logr.Logger
+	namespaceSummaryCache    *cache.LRUExpireCache
+	serviceSummaryCache      *cache.LRUExpireCache
+	serviceSummaryCacheMutex sync.Mutex
+	log                      logr.Logger
 }
 
 func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.VirtualNode) error {
@@ -316,27 +322,36 @@ func (m *defaultResourceManager) updateCloudMapService(ctx context.Context, svcS
 			"diff", diff,
 		)
 		m.log.V(1).Info("Sending cloudMap service update request")
-		operationId, err := m.updateCloudMapServiceUnderPrivateDNSNamespace(ctx, vn, nsSummary, serviceName, cloudMapTTL, svcSummary)
-		if err != nil {
+		if err := m.updateCloudMapServiceUnderPrivateDNSNamespace(ctx, vn, nsSummary, serviceName, cloudMapTTL, svcSummary, desiredsvcSummary); err != nil {
 			return nil, err
 		}
-		// wait for update to succeed or timeout and udpate on next reconcile loop
-		operationInput := &servicediscovery.GetOperationInput{
-			OperationId: operationId,
-		}
-		status := AwaitOperationSuccess(30, 1, func() string {
-			operationOutput, _ := m.cloudMapSDK.GetOperation(operationInput)
-			return *operationOutput.Operation.Status
-		})
-		switch status {
-		case SUCCESS:
-			return m.updateCloudMapServiceInServiceSummaryCache(nsSummary, desiredsvcSummary, serviceName), nil
-		default:
-			return nil, fmt.Errorf("CloudMap Service Update Request status: %v", status)
-		}
+		return desiredsvcSummary, nil
 	}
 	// if namespace type is not set to DnsPrivate then return without updates
 	return svcSummary, nil
+}
+
+// Update the service summary cache with updated service summary only if update operation status is success
+// PollUntil will retry GetOperationWithContext up to 10 times every 3 sec until error or success
+func (m *defaultResourceManager) updateSvcSummaryCacheOnSuccess(ctx context.Context, OperationId *string, nsSummary *servicediscovery.NamespaceSummary, svcSummary *serviceSummary, serviceName string) error {
+	return wait.PollUntil(pollInterval, func() (done bool, err error) {
+		getOptResp, err := m.cloudMapSDK.GetOperationWithContext(ctx, &servicediscovery.GetOperationInput{
+			OperationId: OperationId,
+		}, awsretry.WithMaxRetries(pollRetry))
+		if err != nil {
+			return false, err
+		}
+		switch awssdk.StringValue(getOptResp.Operation.Status) {
+		case servicediscovery.OperationStatusSuccess:
+			m.updateCloudMapServiceInServiceSummaryCache(nsSummary, svcSummary, serviceName)
+			return true, nil
+		case servicediscovery.OperationStatusFail:
+			return true, errors.New(awssdk.StringValue(getOptResp.Operation.ErrorMessage))
+		// Pending or Submitted
+		default:
+			return false, nil
+		}
+	}, ctx.Done())
 }
 
 func (m *defaultResourceManager) deleteCloudMapService(ctx context.Context, vn *appmesh.VirtualNode, nsSummary *servicediscovery.NamespaceSummary, svcSummary *serviceSummary) error {
@@ -414,7 +429,8 @@ func (m *defaultResourceManager) createCloudMapServiceUnderPrivateDNSNamespace(c
 }
 
 func (m *defaultResourceManager) updateCloudMapServiceUnderPrivateDNSNamespace(ctx context.Context, vn *appmesh.VirtualNode,
-	nsSummary *servicediscovery.NamespaceSummary, serviceName string, cloudMapTTL int64, svcSummary *serviceSummary) (*string, error) {
+	nsSummary *servicediscovery.NamespaceSummary, serviceName string, cloudMapTTL int64, svcSummary *serviceSummary, desiredsvcSummary *serviceSummary) error {
+	// Create update request
 	updateServiceInput := &servicediscovery.UpdateServiceInput{
 		Id: awssdk.String(svcSummary.serviceID),
 		Service: &servicediscovery.ServiceChange{
@@ -433,11 +449,35 @@ func (m *defaultResourceManager) updateCloudMapServiceUnderPrivateDNSNamespace(c
 			FailureThreshold: awssdk.Int64(defaultServiceCustomHCFailureThreshold),
 		}
 	}
-	UpdateServiceOutput, err := m.cloudMapSDK.UpdateServiceWithContext(ctx, updateServiceInput)
-	if err != nil {
-		return nil, err
+	// Update service and retry on duplicate request error
+	updateServiceBackoff := wait.Backoff{
+		Steps:    4,
+		Duration: 15 * time.Second,
+		Factor:   1.0,
+		Jitter:   0.1,
+		Cap:      60 * time.Second,
 	}
-	return UpdateServiceOutput.OperationId, nil
+	if err := retry.OnError(updateServiceBackoff, func(err error) bool {
+		// If error is duplicate request then retry
+		if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == servicediscovery.ErrCodeDuplicateRequest {
+			return true
+		}
+		return false
+	}, func() error {
+		UpdateServiceOutput, err := m.cloudMapSDK.UpdateServiceWithContext(ctx, updateServiceInput)
+		if err != nil {
+			return err
+		}
+		ctxwithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+		if err := m.updateSvcSummaryCacheOnSuccess(ctxwithTimeout, UpdateServiceOutput.OperationId, nsSummary, desiredsvcSummary, serviceName); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *defaultResourceManager) createCloudMapServiceUnderHTTPNamespace(ctx context.Context, vn *appmesh.VirtualNode,
@@ -472,11 +512,10 @@ func (m *defaultResourceManager) addCloudMapServiceToServiceSummaryCache(nsSumma
 	return svcSummary
 }
 
-func (m *defaultResourceManager) updateCloudMapServiceInServiceSummaryCache(nsSummary *servicediscovery.NamespaceSummary, desiredsvcSummary *serviceSummary, serviceName string) *serviceSummary {
+func (m *defaultResourceManager) updateCloudMapServiceInServiceSummaryCache(nsSummary *servicediscovery.NamespaceSummary, desiredsvcSummary *serviceSummary, serviceName string) {
 	cacheKey := m.buildCloudMapServiceSummaryCacheKey(nsSummary, serviceName)
 	m.serviceSummaryCache.Remove(cacheKey)
 	m.serviceSummaryCache.Add(cacheKey, desiredsvcSummary, defaultServiceCacheTTL)
-	return desiredsvcSummary
 }
 
 func (m *defaultResourceManager) removeCloudMapServiceFromServiceSummaryCache(nsSummary *servicediscovery.NamespaceSummary, service *servicediscovery.Service) {
