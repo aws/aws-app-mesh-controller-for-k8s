@@ -400,7 +400,7 @@ Parameter | Description | Default
 `stats.statsdPort` |  DogStatsD daemon port. This will be overridden if `stats.statsdSocketPath` is specified | `8125`
 `stats.statsdSocketPath` | DogStatsD Unix domain socket path. If statsd is enabled but this value is not specified then we will use combination of <statsAddress:statsPort> as the default | None
 `cloudMapCustomHealthCheck.enabled` |  If `true`, CustomHealthCheck will be enabled for CloudMap Services | `false`
-`cloudMapDNS.ttl` |  Sets CloudMap DNS TTL | `300`
+`cloudMapDNS.ttl` |  Sets CloudMap DNS TTL. Will set value for new CloudMap services, but will not update existing CloudMap services. Existing CloudMap services can be updated using the [AWS CloudMap API](https://docs.aws.amazon.com/cloud-map/latest/api/API_UpdateService.html) | `300`
 `tracing.enabled` |  If `true`, Envoy will be configured with tracing | `false`
 `tracing.provider` |  The tracing provider can be x-ray, jaeger or datadog | `x-ray`
 `tracing.address` |  Jaeger or Datadog agent server address (ignored for X-Ray) | `appmesh-jaeger.appmesh-system`
