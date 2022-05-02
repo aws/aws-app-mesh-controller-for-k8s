@@ -111,6 +111,11 @@ func (m *defaultResourceManager) createSDKMesh(ctx context.Context, ms *appmesh.
 	if err != nil {
 		return nil, err
 	}
+
+	if err = m.tagSDKMesh(ctx, ms, resp.Mesh); err != nil {
+		return nil, err
+	}
+
 	return resp.Mesh, nil
 }
 
@@ -120,6 +125,12 @@ func (m *defaultResourceManager) updateSDKMesh(ctx context.Context, sdkMS *appme
 	if err != nil {
 		return nil, err
 	}
+
+	// Update tags before checking spec
+	if err = m.tagSDKMesh(ctx, ms, sdkMS); err != nil {
+		return nil, err
+	}
+
 	opts := cmpopts.EquateEmpty()
 	if cmp.Equal(desiredSDKMSSpec, actualSDKMSSpec, opts) {
 		return sdkMS, nil
@@ -147,6 +158,51 @@ func (m *defaultResourceManager) updateSDKMesh(ctx context.Context, sdkMS *appme
 		return nil, err
 	}
 	return resp.Mesh, nil
+}
+
+func (m *defaultResourceManager) tagSDKMesh(ctx context.Context, ms *appmesh.Mesh, sdkMS *appmeshsdk.MeshData) error {
+	resp, err := m.appMeshSDK.ListTagsForResource(&appmeshsdk.ListTagsForResourceInput{
+		ResourceArn: sdkMS.Metadata.Arn,
+	})
+	if err != nil {
+		return err
+	}
+
+	changeset, err := conversions.Convert_CRD_Labls_To_SDK_TagChangeSet(ms.Labels, resp.Tags)
+	if err != nil {
+		return err
+	}
+
+	// Nothing to do, up to date
+	if len(changeset["add"]) == 0 && len(changeset["remove"]) == 0 {
+		return nil
+	}
+
+	// Add missing tags
+	if len(changeset["add"]) > 0 {
+		if _, err = m.appMeshSDK.TagResource(&appmeshsdk.TagResourceInput{
+			ResourceArn: sdkMS.Metadata.Arn,
+			Tags:        changeset["add"],
+		}); err != nil {
+			return err
+		}
+	}
+
+	// Remove tags that are no longer labels
+	if len(changeset["remove"]) > 0 {
+		tagkeys := []*string{}
+		for _, tag := range changeset["remove"] {
+			tagkeys = append(tagkeys, tag.Key)
+		}
+		if _, err = m.appMeshSDK.UntagResource(&appmeshsdk.UntagResourceInput{
+			ResourceArn: sdkMS.Metadata.Arn,
+			TagKeys:     tagkeys,
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (m *defaultResourceManager) deleteSDKMesh(ctx context.Context, sdkMS *appmeshsdk.MeshData, ms *appmesh.Mesh) error {
