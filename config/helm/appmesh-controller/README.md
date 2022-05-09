@@ -1,5 +1,7 @@
 # App Mesh Controller
 
+> :warning: **This controller is published in multiple repos**: Contributions to this Helm chart must be written to [aws/aws-app-mesh-controller-for-k8s Github repo.](https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/master/config/helm/appmesh-controller) PRs to other repos like **aws/eks-charts** may be closed or overwritten upon next controller release.
+
 App Mesh controller Helm chart for Kubernetes
 
 **Note**: If you wish to use [App Mesh preview](https://docs.aws.amazon.com/app-mesh/latest/userguide/preview.html) features, please refer to our [preview version](https://github.com/aws/eks-charts/blob/preview/stable/appmesh-controller/README.md) instructions.
@@ -127,13 +129,28 @@ https://github.com/aws/aws-app-mesh-examples/blob/5a2d04227593d292d52e5e2ca638d8
 ``` 
 
 #### Without IRSA   
-If not setting up IAM role for service account, apply the IAM policies manually to your worker nodes:
+Find the Node Instance IAM Role from your worker nodes and attach below policies to it.
+**Note** If you created service account for the controller as indicated above then you can skip attaching the Controller IAM policy to worker nodes. Instead attach only the Envoy IAM policy.
 
 Controller IAM policy
 - https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/master/config/iam/controller-iam-policy.json
+Use below command to download the policy if not already
+```sh
+curl -o controller-iam-policy.json https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/master/config/iam/controller-iam-policy.json
+```
 
 Envoy IAM policy
+Attach the below envoy policy to your Worker Nodes (Node Instance IAM Role)
 - https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/master/config/iam/envoy-iam-policy.json  
+Use below command to download the policy if not already
+```sh
+curl -o envoy-iam-policy.json https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/master/config/iam/envoy-iam-policy.json
+```
+
+Apply the IAM policy directly to the worker nodes by replacing the `<NODE_INSTANCE_IAM_ROLE_NAME>`, `<policy-name>`, and `<policy-filename>` in below command:
+```sh
+aws iam put-role-policy --role-name <NODE_INSTANCE_IAM_ROLE_NAME> --policy-name <policy-name> --policy-document file://<policy-filename>
+```
 
 Deploy appmesh-controller
 ```sh
@@ -362,7 +379,7 @@ Parameter | Description | Default
 `tolerations` | list of node taints to tolerate | `[]`
 `rbac.create` | if `true`, create and use RBAC resources | `true`
 `rbac.pspEnabled` | If `true`, create and use a restricted pod security policy | `false`
-`serviceAccount.annotations` | optional annotations to add to service account | None
+`serviceAccount.annotations` | optional annotations to add to service account | `{}`
 `serviceAccount.create` | If `true`, create a new service account | `true`
 `serviceAccount.name` | Service account to be used | None
 `sidecar.image.repository` | Envoy image repository. If you override with non-Amazon built Envoy image, you will need to test/ensure it works with the App Mesh | `840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy`
@@ -383,7 +400,7 @@ Parameter | Description | Default
 `stats.statsdPort` |  DogStatsD daemon port. This will be overridden if `stats.statsdSocketPath` is specified | `8125`
 `stats.statsdSocketPath` | DogStatsD Unix domain socket path. If statsd is enabled but this value is not specified then we will use combination of <statsAddress:statsPort> as the default | None
 `cloudMapCustomHealthCheck.enabled` |  If `true`, CustomHealthCheck will be enabled for CloudMap Services | `false`
-`cloudMapDNS.ttl` |  Sets CloudMap DNS TTL | `300`
+`cloudMapDNS.ttl` |  Sets CloudMap DNS TTL. Will set value for new CloudMap services, but will not update existing CloudMap services. Existing CloudMap services can be updated using the [AWS CloudMap API](https://docs.aws.amazon.com/cloud-map/latest/api/API_UpdateService.html) | `300`
 `tracing.enabled` |  If `true`, Envoy will be configured with tracing | `false`
 `tracing.provider` |  The tracing provider can be x-ray, jaeger or datadog | `x-ray`
 `tracing.address` |  Jaeger or Datadog agent server address (ignored for X-Ray) | `appmesh-jaeger.appmesh-system`
