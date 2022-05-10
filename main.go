@@ -22,13 +22,14 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/spf13/pflag"
+
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/version"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualrouter"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
-	"github.com/spf13/pflag"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
@@ -38,7 +39,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -46,6 +46,8 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/gatewayroute"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
@@ -76,6 +78,7 @@ func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
 	_ = appmeshv1beta2.AddToScheme(scheme)
+	// utilruntime.Must(appmeshv1beta2.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -277,6 +280,14 @@ func main() {
 		return nil
 	}))
 
+	if err = (&appmeshcontroller.SidecarReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Sidecar"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Sidecar")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting controller")

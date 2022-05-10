@@ -1,0 +1,7 @@
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: Sidecar
+metadata:
+  name: sidecar-sample
+spec:
+  virtualnodes:
+  virtualrouters:

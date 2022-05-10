@@ -20,4 +20,7 @@ resources:
 - group: appmesh
   kind: GatewayRoute
   version: v1beta2
+- group: appmesh
+  kind: Sidecar
+  version: v1beta2
 version: "2"
