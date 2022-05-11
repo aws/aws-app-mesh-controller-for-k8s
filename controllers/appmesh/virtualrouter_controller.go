@@ -23,6 +23,8 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualrouter"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -35,7 +37,13 @@ import (
 )
 
 // NewVirtualRouterReconciler constructs new virtualRouterReconciler
-func NewVirtualRouterReconciler(k8sClient client.Client, finalizerManager k8s.FinalizerManager, referencesIndexer references.ObjectReferenceIndexer, vrResManager virtualrouter.ResourceManager, log logr.Logger) *virtualRouterReconciler {
+func NewVirtualRouterReconciler(
+	k8sClient client.Client,
+	finalizerManager k8s.FinalizerManager,
+	referencesIndexer references.ObjectReferenceIndexer,
+	vrResManager virtualrouter.ResourceManager,
+	log logr.Logger,
+	recorder record.EventRecorder) *virtualRouterReconciler {
 	return &virtualRouterReconciler{
 		k8sClient:                           k8sClient,
 		finalizerManager:                    finalizerManager,
@@ -44,6 +52,7 @@ func NewVirtualRouterReconciler(k8sClient client.Client, finalizerManager k8s.Fi
 		enqueueRequestsForMeshEvents:        virtualrouter.NewEnqueueRequestsForMeshEvents(k8sClient, log),
 		enqueueRequestsForVirtualNodeEvents: virtualrouter.NewEnqueueRequestsForVirtualNodeEvents(referencesIndexer, log),
 		log:                                 log,
+		recorder:                            recorder,
 	}
 }
 
@@ -57,10 +66,12 @@ type virtualRouterReconciler struct {
 	enqueueRequestsForMeshEvents        handler.EventHandler
 	enqueueRequestsForVirtualNodeEvents handler.EventHandler
 	log                                 logr.Logger
+	recorder                            record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualrouters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualrouters/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *virtualRouterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	return runtime.HandleReconcileError(r.reconcile(ctx, req), r.log)
@@ -88,7 +99,11 @@ func (r *virtualRouterReconciler) reconcile(ctx context.Context, req ctrl.Reques
 	if !vr.DeletionTimestamp.IsZero() {
 		return r.cleanupVirtualRouter(ctx, vr)
 	}
-	return r.reconcileVirtualRouter(ctx, vr)
+	if err := r.reconcileVirtualRouter(ctx, vr); err != nil {
+		r.recorder.Event(vr, corev1.EventTypeWarning, "ReconcileError", err.Error())
+		return err
+	}
+	return nil
 }
 
 func (r *virtualRouterReconciler) reconcileVirtualRouter(ctx context.Context, vr *appmesh.VirtualRouter) error {

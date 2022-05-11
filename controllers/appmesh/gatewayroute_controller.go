@@ -23,6 +23,8 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/runtime"
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -37,7 +39,8 @@ func NewGatewayRouteReconciler(
 	k8sClient client.Client,
 	finalizerManager k8s.FinalizerManager,
 	grResManager gatewayroute.ResourceManager,
-	log logr.Logger) *gatewayRouteReconciler {
+	log logr.Logger,
+	recorder record.EventRecorder) *gatewayRouteReconciler {
 	return &gatewayRouteReconciler{
 		k8sClient:                              k8sClient,
 		finalizerManager:                       finalizerManager,
@@ -45,6 +48,7 @@ func NewGatewayRouteReconciler(
 		enqueueRequestsForMeshEvents:           gatewayroute.NewEnqueueRequestsForMeshEvents(k8sClient, log),
 		enqueueRequestsForVirtualGatewayEvents: gatewayroute.NewEnqueueRequestsForVirtualGatewayEvents(k8sClient, log),
 		log:                                    log,
+		recorder:                               recorder,
 	}
 }
 
@@ -57,10 +61,12 @@ type gatewayRouteReconciler struct {
 	enqueueRequestsForMeshEvents           handler.EventHandler
 	enqueueRequestsForVirtualGatewayEvents handler.EventHandler
 	log                                    logr.Logger
+	recorder                               record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=gatewayroutes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=gatewayroutes/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *gatewayRouteReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	return runtime.HandleReconcileError(r.reconcile(ctx, req), r.log)
@@ -83,7 +89,11 @@ func (r *gatewayRouteReconciler) reconcile(ctx context.Context, req ctrl.Request
 	if !gr.DeletionTimestamp.IsZero() {
 		return r.cleanupGatewayRoute(ctx, gr)
 	}
-	return r.reconcileGatewayRoute(ctx, gr)
+	if err := r.reconcileGatewayRoute(ctx, gr); err != nil {
+		r.recorder.Event(gr, corev1.EventTypeWarning, "ReconcileError", err.Error())
+		return err
+	}
+	return nil
 }
 
 func (r *gatewayRouteReconciler) reconcileGatewayRoute(ctx context.Context, gr *appmesh.GatewayRoute) error {
