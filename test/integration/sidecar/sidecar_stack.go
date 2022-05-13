@@ -3,6 +3,7 @@ package sidecar
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
@@ -90,7 +91,7 @@ func (s *SidecarStack) CheckSidecarBehavior(ctx context.Context, f *framework.Fr
 		for _, pod := range pods.Items {
 			errCh, readyCh := make(chan error), make(chan struct{})
 
-			portForwarder, err := k8s.NewPortForwarder(ctx, f.RestCfg, &pod, []string{fmt.Sprintf("%d:%d", AppContainerPort, AppContainerPort)}, readyCh)
+			portForwarder, err := k8s.NewPortForwarder(ctx, f.RestCfg, &pod, []string{fmt.Sprintf("%d:%d", 9901, 9901), fmt.Sprintf("%d:%d", AppContainerPort, AppContainerPort)}, readyCh)
 			if err != nil {
 				f.Logger.Error("failed to initialize port forwarder", zap.Error(err))
 			}
@@ -99,10 +100,19 @@ func (s *SidecarStack) CheckSidecarBehavior(ctx context.Context, f *framework.Fr
 				errCh <- portForwarder.ForwardPorts()
 			}()
 
-			podURL := fmt.Sprintf("http://localhost:%d/color", AppContainerPort)
 			<-readyCh
 
-			res, err := http.Get(podURL)
+			res, err := http.Get("http://localhost:9901/server_info")
+			if err != nil {
+				f.Logger.Error("GET request failed", zap.Error(err))
+			}
+
+			defer res.Body.Close()
+			body, _ := io.ReadAll(res.Body)
+
+			fmt.Printf("%v\n", string(body))
+
+			res, err = http.Get(fmt.Sprintf("http://localhost:%d/color", AppContainerPort))
 			if err != nil {
 				f.Logger.Error("GET request failed", zap.Error(err))
 			}
