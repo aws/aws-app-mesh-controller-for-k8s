@@ -165,7 +165,7 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 	return nil
 }
 
-func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (corev1.Container, error) {
+func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string, adminAccessPort int32) (corev1.Container, error) {
 
 	envoy := corev1.Container{
 		Name:  "envoy",
@@ -181,7 +181,11 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (core
 			},
 		},
 		Lifecycle: &corev1.Lifecycle{
-			PostStart: nil,
+			PostStart: &corev1.Handler{
+				Exec: &corev1.ExecAction{Command: []string{
+					"sh", "-c", fmt.Sprintf("until curl -s http://localhost:%d/server_info | grep state | grep -q LIVE; do sleep 1; done", adminAccessPort),
+				}},
+			},
 			PreStop: &corev1.Handler{
 				Exec: &corev1.ExecAction{Command: []string{
 					"sh", "-c", fmt.Sprintf("sleep %s", vars.PreStopDelay),

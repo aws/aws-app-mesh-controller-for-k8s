@@ -84,7 +84,7 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 
-	container, err := buildEnvoySidecar(variables, customEnv)
+	container, err := buildEnvoySidecar(variables, customEnv, m.mutatorConfig.adminAccessPort)
 	if err != nil {
 		return err
 	}
