@@ -13,9 +13,9 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
 	appmeshk8s "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/virtualgateway"
 
@@ -137,15 +137,15 @@ var _ = Describe("VirtualGateway", func() {
 			By("Creating a virtual gateway resource in k8s with a name exceeding the character limit", func() {
 				// Not using vgTest.Create as it will hang
 				err := f.K8sClient.Create(ctx, vg)
-                observedVg := &appmesh.VirtualGateway{}
-        		for i := 0; i < 5; i++ {
-        			if err := f.K8sClient.Get(ctx, k8s.NamespacedName(vg), observedVg); err != nil {
-        				if i >= 5 {
-        					Expect(err).NotTo(HaveOccurred())
-        				}
-        			}
-        			time.Sleep(100 * time.Millisecond)
-        		}
+				observedVg := &appmesh.VirtualGateway{}
+				for i := 0; i < 5; i++ {
+					if err := f.K8sClient.Get(ctx, k8s.NamespacedName(vg), observedVg); err != nil {
+						if i >= 5 {
+							Expect(err).NotTo(HaveOccurred())
+						}
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
 				vgTest.VirtualGateways[vg.Name] = vg
 				Expect(err).NotTo(HaveOccurred())
 			})

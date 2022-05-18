@@ -19,9 +19,9 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
 	appmeshk8s "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/virtualnode"
 
@@ -149,15 +149,15 @@ var _ = Describe("VirtualNode", func() {
 			By("Creating a virtual node resource in k8s with a name exceeding the character limit", func() {
 				// Not using vnTest.Create as it hangs
 				err := f.K8sClient.Create(ctx, vn)
-                observedVn := &appmesh.VirtualNode{}
-        		for i := 0; i < 5; i++ {
-        			if err := f.K8sClient.Get(ctx, k8s.NamespacedName(vn), observedVn); err != nil {
-        				if i >= 5 {
-        					Expect(err).NotTo(HaveOccurred())
-        				}
-        			}
-        			time.Sleep(100 * time.Millisecond)
-        		}
+				observedVn := &appmesh.VirtualNode{}
+				for i := 0; i < 5; i++ {
+					if err := f.K8sClient.Get(ctx, k8s.NamespacedName(vn), observedVn); err != nil {
+						if i >= 5 {
+							Expect(err).NotTo(HaveOccurred())
+						}
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
 				vnTest.VirtualNodes[vn.Name] = vn
 				Expect(err).NotTo(HaveOccurred())
 			})
