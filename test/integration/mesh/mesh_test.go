@@ -135,13 +135,6 @@ var _ = Describe("Mesh", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(events.Items).NotTo(BeEmpty())
 			})
-			for _, mesh := range meshTest.Meshes {
-				By("validating the resources in AWS", func() {
-					err := meshTest.CheckInAWS(ctx, f, mesh)
-					Expect(err).NotTo(HaveOccurred())
-
-				})
-			}
 		})
 
 		It("should create a mesh with MeshDiscoverySpec", func() {
@@ -172,7 +165,6 @@ var _ = Describe("Mesh", func() {
 				By("validating the resources in AWS", func() {
 					err := meshTest.CheckInAWS(ctx, f, mesh)
 					Expect(err).NotTo(HaveOccurred())
-
 				})
 			}
 		})
