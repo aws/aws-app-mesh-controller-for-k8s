@@ -44,7 +44,7 @@ jobs:
       - name: Configure AWS Credentials (prod-BAH)
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-region: me-south-1
+          aws-region: us-west-2
           role-to-assume: ${{ secrets.PROD_BAH_AWS_ROLE }}
           role-session-name: ControllerProdRelease
       - name: Push docker images (BAH)
@@ -57,7 +57,7 @@ jobs:
       - name: Configure AWS Credentials (prod-CPT)
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-region: af-south-1
+          aws-region: us-west-2
           role-to-assume: ${{ secrets.PROD_CPT_AWS_ROLE }}
           role-session-name: ControllerProdRelease
       - name: Push docker images (CPT)
@@ -70,7 +70,7 @@ jobs:
       - name: Configure AWS Credentials (prod-HKG)
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-region: ap-east-1
+          aws-region: us-west-2
           role-to-assume: ${{ secrets.PROD_HKG_AWS_ROLE }}
           role-session-name: ControllerProdRelease
       - name: Push docker images (HKG)
@@ -83,7 +83,7 @@ jobs:
       - name: Configure AWS Credentials (prod-MXP)
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-region: eu-south-1
+          aws-region: us-west-2
           role-to-assume: ${{ secrets.PROD_MXP_AWS_ROLE }}
           role-session-name: ControllerProdRelease
       - name: Push docker images (MXP)
@@ -99,6 +99,12 @@ jobs:
           aws-region: cn-north-1
           role-to-assume: ${{ secrets.PROD_BJS_AWS_ROLE }}
           role-session-name: ControllerProdRelease
+        env:
+          AWS_DEFAULT_REGION: ""
+          AWS_REGION: ""
+          AWS_ACCESS_KEY_ID: ""
+          AWS_SECRET_ACCESS_KEY: ""
+          AWS_SESSION_TOKEN: ""
       - name: Push docker images (BJS)
         run: |
           aws ecr get-login-password --region cn-north-1 | docker login --username AWS --password-stdin ${{ secrets.PROD_BJS_AWS_ACCOUNT }}.dkr.ecr.cn-north-1.amazonaws.com.cn
