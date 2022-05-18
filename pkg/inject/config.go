@@ -24,6 +24,8 @@ const (
 	flagReadinessProbePeriod       = "readiness-probe-period"
 	flagEnvoyAdminAccessPort       = "envoy-admin-access-port"
 	flagEnvoyAdminAccessLogFile    = "envoy-admin-access-log-file"
+	flagEnvoyAdminAccessEnableIpv6 = "envoy-admin-access-enable-ipv6"
+	flagDualStackEndpoint          = "dual-stack-endpoint"
 
 	flagInitImage  = "init-image"
 	flagIgnoredIPs = "ignored-ips"
@@ -73,6 +75,8 @@ type Config struct {
 	ReadinessProbePeriod       int32
 	EnvoyAdminAcessPort        int32
 	EnvoyAdminAccessLogFile    string
+	DualStackEndpoint          bool
+	EnvoyAdminAccessEnableIPv6 bool
 
 	// Init container settings
 	InitImage  string
@@ -181,6 +185,8 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"DogStatsD Agent tracing port")
 	fs.StringVar(&cfg.StatsDSocketPath, flagStatsDSocketPath, "",
 		"DogStatsD Agent unix domain socket")
+	fs.BoolVar(&cfg.DualStackEndpoint, flagDualStackEndpoint, false, "Use DualStack Endpoint")
+	fs.BoolVar(&cfg.DualStackEndpoint, flagEnvoyAdminAccessEnableIpv6, false, "Enable Admin access when using IPv6")
 	fs.StringVar(&cfg.ClusterName, flagClusterName, "", "ClusterName in context")
 }
 

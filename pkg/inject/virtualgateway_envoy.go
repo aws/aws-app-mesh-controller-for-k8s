@@ -38,6 +38,8 @@ type virtualGatwayEnvoyConfig struct {
 	statsDSocketPath           string
 	controllerVersion          string
 	k8sVersion                 string
+	useDualStackEndpoint       bool
+	enableAdminAccessIPv6      bool
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -109,6 +111,7 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Envo
 	meshName := m.getAugmentedMeshName()
 	virtualGatewayName := aws.StringValue(m.vg.Spec.AWSName)
 	preview := m.getPreview(pod)
+	useDualStackEndpoint := m.getUseDualStackEndpoint(m.mutatorConfig.useDualStackEndpoint)
 	sdsEnabled := m.mutatorConfig.enableSDS
 	if m.mutatorConfig.enableSDS && isSDSDisabled(pod) {
 		sdsEnabled = false
@@ -140,6 +143,8 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Envo
 		StatsDSocketPath:         m.mutatorConfig.statsDSocketPath,
 		ControllerVersion:        m.mutatorConfig.controllerVersion,
 		K8sVersion:               m.mutatorConfig.k8sVersion,
+		UseDualStackEndpoint:     useDualStackEndpoint,
+		EnableAdminAccessForIpv6: m.mutatorConfig.enableAdminAccessIPv6,
 	}
 }
 
@@ -183,5 +188,13 @@ func (m *virtualGatewayEnvoyConfig) virtualGatewayImageOverride(pod *corev1.Pod)
 		return true
 	default:
 		return true
+	}
+}
+
+func (m *virtualGatewayEnvoyConfig) getUseDualStackEndpoint(useDualStackEndpoint bool) string {
+	if useDualStackEndpoint {
+		return "1"
+	} else {
+		return "0"
 	}
 }

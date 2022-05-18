@@ -21,6 +21,8 @@ sidecar:
   logLevel: info
   envoyAdminAccessPort: 9901
   envoyAdminAccessLogFile: /tmp/envoy_admin_access.log
+  envoyAdminAccessEnableIPv6: false
+  useDualStackEndpoint: false
   resources:
     # sidecar.resources.requests: Envoy CPU and memory requests
     requests:
