@@ -1,45 +1,54 @@
-package sidecar_test
+package sidecar
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
-	sidecar "github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/sidecar"
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ = Describe("sidecar feature test", func() {
-	var (
-		ctx context.Context
-		f   *framework.Framework
-	)
+var _ = Describe("sidecar features", func() {
+	ctx, f := context.Background(), framework.New(framework.GlobalOptions)
+	var stack *SidecarStack
 
 	BeforeEach(func() {
-		ctx = context.Background()
-		f = framework.New(framework.GlobalOptions)
+		stack = newSidecarStack("sidecar-test")
 	})
 
-	Context("sidecar default test dimensions", func() {
-		var stacksPendingCleanUp []*sidecar.SidecarStack
+	AfterEach(func() {
+		stack.cleanup(ctx, f)
+	})
 
-		AfterEach(func() {
-			for _, stack := range stacksPendingCleanUp {
-				stack.CleanupSidecarStack(ctx, f)
+	Context("wait for sidecar to initialize", func() {
+		It("should have the color annotation", func() {
+			stack.createMeshAndNamespace(ctx, f)
+			stack.createBackendResources(ctx, f)
+			stack.createFrontendResources(ctx, f)
+
+			// on startup frontend will annotate pod with color
+			pods := &corev1.PodList{}
+
+			if err := f.K8sClient.List(
+				ctx,
+				pods,
+				client.InNamespace(stack.frontendDP.Namespace),
+				client.MatchingLabelsSelector{
+					Selector: labels.Set(stack.frontendDP.Spec.Selector.MatchLabels).AsSelector(),
+				},
+			); err != nil {
+				Expect(err).NotTo(HaveOccurred())
 			}
-		})
 
-		It(fmt.Sprintf("Should wait for sidecar to initialize"), func() {
-			stackDefault := sidecar.SidecarStack{}
+			for _, pod := range pods.Items {
+				ann := pod.ObjectMeta.Annotations
+				_, ok := ann["color"]
 
-			By("deploy sidecar stack", func() {
-				stacksPendingCleanUp = append(stacksPendingCleanUp, &stackDefault)
-				stackDefault.DeploySidecarStack(ctx, f)
-			})
-
-			By("check sidecar behavior", func() {
-				stackDefault.CheckSidecarBehavior(ctx, f)
-			})
+				Expect(ok).To(Equal(true))
+			}
 		})
 	})
 })
