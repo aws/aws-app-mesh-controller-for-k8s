@@ -13,14 +13,15 @@ import (
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
-	defaultFrontendImage = "public.ecr.aws/b7m0w2t6/color-fe-app:2.0.0"
-	defaultBackendImage  = "public.ecr.aws/b7m0w2t6/color-be-app:2.0.0"
+	defaultFrontendImage = "public.ecr.aws/b7m0w2t6/color-fe-app:2.0.3"
+	defaultBackendImage  = "public.ecr.aws/b7m0w2t6/color-be-app:2.0.2"
 	AppContainerPort     = 8080
 )
 
@@ -68,6 +69,9 @@ func (s *SidecarStack) createMeshAndNamespace(ctx context.Context, f *framework.
 						"mesh": s.testName,
 					},
 				},
+				EgressFilter: &appmesh.EgressFilter{
+					Type: appmesh.EgressFilterTypeAllowAll,
+				},
 			},
 		}
 
@@ -95,6 +99,49 @@ func (s *SidecarStack) createMeshAndNamespace(ctx context.Context, f *framework.
 		Expect(err).NotTo(HaveOccurred())
 
 		s.namespace = namespace
+	})
+
+	By("create Role", func() {
+		role := &rbacv1.Role{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "default",
+				Namespace: s.testName,
+			},
+			Rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"pods"},
+					Verbs:     []string{"list", "update"},
+				},
+			},
+		}
+
+		_, err := f.Clientset.RbacV1().Roles(s.testName).Create(ctx, role, metav1.CreateOptions{})
+		Expect(err).NotTo(HaveOccurred())
+	})
+
+	By("create RoleBinding", func() {
+		roleB := &rbacv1.RoleBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "default",
+				Namespace: s.testName,
+			},
+			Subjects: []rbacv1.Subject{
+				{
+					Kind:      "ServiceAccount",
+					Name:      "default",
+					Namespace: s.testName,
+				},
+			},
+			RoleRef: rbacv1.RoleRef{
+				APIGroup: "rbac.authorization.k8s.io",
+				Kind:     "Role",
+				Name:     "default",
+			},
+		}
+
+		_, err := f.Clientset.RbacV1().RoleBindings(s.testName).Create(ctx, roleB, metav1.CreateOptions{})
+		Expect(err).NotTo(HaveOccurred())
 	})
 }
 

@@ -12,24 +12,30 @@ import (
 )
 
 var _ = Describe("sidecar features", func() {
-	ctx, f := context.Background(), framework.New(framework.GlobalOptions)
-	var stack *SidecarStack
+	var ctx context.Context
+	var f *framework.Framework
 
 	BeforeEach(func() {
-		stack = newSidecarStack("sidecar-test")
-	})
-
-	AfterEach(func() {
-		stack.cleanup(ctx, f)
+		ctx = context.Background()
+		f = framework.New(framework.GlobalOptions)
 	})
 
 	Context("wait for sidecar to initialize", func() {
+		var stack *SidecarStack
+
+		BeforeEach(func() {
+			stack = newSidecarStack("sidecar-test")
+		})
+
+		AfterEach(func() {
+			stack.cleanup(ctx, f)
+		})
+
 		It("should have the color annotation", func() {
 			stack.createMeshAndNamespace(ctx, f)
 			stack.createBackendResources(ctx, f)
 			stack.createFrontendResources(ctx, f)
 
-			// on startup frontend will annotate pod with color
 			pods := &corev1.PodList{}
 
 			if err := f.K8sClient.List(
