@@ -200,6 +200,7 @@ func (s *SidecarStack) createFrontendResources(ctx context.Context, f *framework
 				Namespace: s.testName,
 			},
 			Spec: batchv1.JobSpec{
+				BackoffLimit:   newIntPtr(int32(1)),
 				ManualSelector: newBoolPtr(true),
 				Selector: &metav1.LabelSelector{MatchLabels: map[string]string{
 					"app": "front",
@@ -445,4 +446,8 @@ func newStringPtr(s string) *string {
 
 func newBoolPtr(b bool) *bool {
 	return &b
+}
+
+func newIntPtr(i int32) *int32 {
+	return &i
 }
