@@ -150,7 +150,7 @@ func (s *SidecarStack) createFrontendResources(ctx context.Context, f *framework
 			Spec: appmesh.VirtualNodeSpec{
 				Backends: []appmesh.Backend{
 					{
-						appmesh.VirtualServiceBackend{
+						VirtualService: appmesh.VirtualServiceBackend{
 							VirtualServiceRef: &appmesh.VirtualServiceReference{
 								Name: "color",
 							},
