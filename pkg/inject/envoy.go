@@ -85,7 +85,7 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 
-	container, err := buildEnvoySidecar(variables, customEnv, m.mutatorConfig.adminAccessPort, m.mutatorConfig.waitUntilProxyStarts)
+	container, err := buildEnvoySidecar(variables, customEnv)
 	if err != nil {
 		return err
 	}
@@ -158,6 +158,7 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		K8sVersion:               m.mutatorConfig.k8sVersion,
 		UseDualStackEndpoint:     useDualStackEndpoint,
 		EnableAdminAccessForIpv6: m.mutatorConfig.enableAdminAccessIPv6,
+		WaitUntilProxyStarts:     m.mutatorConfig.waitUntilProxyStarts,
 	}
 }
 

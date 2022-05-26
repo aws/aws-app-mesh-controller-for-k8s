@@ -46,6 +46,7 @@ type EnvoyTemplateVariables struct {
 	ControllerVersion        string
 	EnableAdminAccessForIpv6 bool
 	UseDualStackEndpoint     string
+	WaitUntilProxyStarts     bool
 }
 
 func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) error {
@@ -165,7 +166,7 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 	return nil
 }
 
-func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string, adminAccessPort int32, flagWaitUntilProxyStarts bool) (corev1.Container, error) {
+func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (corev1.Container, error) {
 
 	envoy := corev1.Container{
 		Name:  "envoy",
@@ -190,10 +191,10 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string, admin
 		},
 	}
 
-	if flagWaitUntilProxyStarts {
+	if vars.WaitUntilProxyStarts {
 		envoy.Lifecycle.PostStart = &corev1.Handler{
 			Exec: &corev1.ExecAction{Command: []string{
-				"sh", "-c", fmt.Sprintf("until curl -s http://localhost:%d/server_info | grep state | grep -q LIVE; do sleep 1; done", adminAccessPort),
+				"sh", "-c", fmt.Sprintf("until curl -s http://localhost:%d/server_info | grep state | grep -q LIVE; do sleep 1; done", vars.AdminAccessPort),
 			}},
 		}
 	}
