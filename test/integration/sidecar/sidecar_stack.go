@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -193,12 +194,13 @@ func (s *SidecarStack) createFrontendResources(ctx context.Context, f *framework
 	})
 
 	By("create frontend Deployment", func() {
-		dp := &appsv1.Deployment{
+		dp := &batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "front",
 				Namespace: s.testName,
 			},
-			Spec: appsv1.DeploymentSpec{
+			Spec: batchv1.JobSpec{
+				ManualSelector: newBoolPtr(true),
 				Selector: &metav1.LabelSelector{MatchLabels: map[string]string{
 					"app": "front",
 				}},
@@ -234,6 +236,7 @@ func (s *SidecarStack) createFrontendResources(ctx context.Context, f *framework
 								},
 							},
 						},
+						RestartPolicy: corev1.RestartPolicyNever,
 					},
 				},
 			},
@@ -420,7 +423,7 @@ func (s *SidecarStack) cleanup(ctx context.Context, f *framework.Framework) {
 }
 
 func (s *SidecarStack) pollPodUntilCondition(ctx context.Context, podName string, condition corev1.PodPhase) error {
-	return wait.Poll(5*time.Second, 45*time.Second, func() (done bool, err error) {
+	return wait.Poll(1*time.Second, 180*time.Second, func() (done bool, err error) {
 		pods, err := s.k8client.CoreV1().Pods(s.testName).List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return false, err
@@ -438,4 +441,8 @@ func (s *SidecarStack) pollPodUntilCondition(ctx context.Context, podName string
 
 func newStringPtr(s string) *string {
 	return &s
+}
+
+func newBoolPtr(b bool) *bool {
+	return &b
 }
