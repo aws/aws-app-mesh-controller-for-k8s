@@ -2795,6 +2795,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "v1.20.1-eks-fdsedv",
 								},
 								{
+									Name:  "APPMESH_DUALSTACK_ENDPOINT",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
+									Value: "false",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
