@@ -6,9 +6,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("sidecar features", func() {
@@ -21,36 +19,31 @@ var _ = Describe("sidecar features", func() {
 	})
 
 	Context("wait for sidecar to initialize", func() {
+		var stack *SidecarStack
+		var err error
+
+		BeforeEach(func() {
+			stack, err = newSidecarStack("sidecar-test", framework.GlobalOptions.KubeConfig)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
 		AfterEach(func() {
-			// stack.cleanup(ctx, f)
+			stack.cleanup(ctx, f)
 		})
 
 		It("should have the color annotation", func() {
-			expColor := "blue"
-			stack := newSidecarStack("sidecar-test", 8080, expColor)
-
 			stack.createMeshAndNamespace(ctx, f)
 			stack.createBackendResources(ctx, f)
 			stack.createFrontendResources(ctx, f)
 
-			pods := &corev1.PodList{}
-
-			if err := f.K8sClient.List(
-				ctx,
-				pods,
-				client.InNamespace(stack.frontendDP.Namespace),
-				client.MatchingLabelsSelector{
-					Selector: labels.Set(stack.frontendDP.Spec.Selector.MatchLabels).AsSelector(),
-				},
-			); err != nil {
-				Expect(err).NotTo(HaveOccurred())
-			}
+			pods, err := stack.k8client.CoreV1().Pods(stack.testName).List(ctx, metav1.ListOptions{})
+			Expect(err).NotTo(HaveOccurred())
 
 			for _, pod := range pods.Items {
 				ann := pod.ObjectMeta.Annotations
 				color := ann["color"]
 
-				Expect(color).To(Equal(expColor))
+				Expect(color).To(Equal(stack.color))
 			}
 		})
 	})

@@ -3,18 +3,20 @@ package sidecar
 import (
 	"context"
 	"fmt"
-
-	"github.com/aws/aws-sdk-go/aws"
+	"time"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
+	"github.com/aws/aws-sdk-go/aws"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -25,24 +27,30 @@ const (
 type SidecarStack struct {
 	appContainerPort int
 	color            string
+	k8client         *kubernetes.Clientset
 	testName         string
 
-	mesh       *appmesh.Mesh
-	namespace  *corev1.Namespace
-	frontendVN *appmesh.VirtualNode
-	frontendDP *appsv1.Deployment
-	backendVN  *appmesh.VirtualNode
-	backendVS  *appmesh.VirtualService
-	backendDP  *appsv1.Deployment
-	backendSVC *corev1.Service
+	mesh      *appmesh.Mesh
+	namespace *corev1.Namespace
 }
 
-func newSidecarStack(name string, appContainerPort int, color string) *SidecarStack {
-	return &SidecarStack{
-		appContainerPort: appContainerPort,
-		color:            color,
-		testName:         name,
+func newSidecarStack(name string, kubecfg string) (*SidecarStack, error) {
+	cfg, err := clientcmd.BuildConfigFromFlags("", kubecfg)
+	if err != nil {
+		return nil, err
 	}
+
+	k8client, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SidecarStack{
+		appContainerPort: 8080,
+		color:            "blue",
+		testName:         name,
+		k8client:         k8client,
+	}, nil
 }
 
 func (s *SidecarStack) createMeshAndNamespace(ctx context.Context, f *framework.Framework) {
@@ -102,7 +110,7 @@ func (s *SidecarStack) createMeshAndNamespace(ctx context.Context, f *framework.
 			},
 		}
 
-		_, err := f.Clientset.RbacV1().Roles(s.testName).Create(ctx, role, metav1.CreateOptions{})
+		_, err := s.k8client.RbacV1().Roles(s.testName).Create(ctx, role, metav1.CreateOptions{})
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -126,7 +134,7 @@ func (s *SidecarStack) createMeshAndNamespace(ctx context.Context, f *framework.
 			},
 		}
 
-		_, err := f.Clientset.RbacV1().RoleBindings(s.testName).Create(ctx, roleB, metav1.CreateOptions{})
+		_, err := s.k8client.RbacV1().RoleBindings(s.testName).Create(ctx, roleB, metav1.CreateOptions{})
 		Expect(err).NotTo(HaveOccurred())
 	})
 }
@@ -182,8 +190,6 @@ func (s *SidecarStack) createFrontendResources(ctx context.Context, f *framework
 
 		_, err = f.VNManager.WaitUntilVirtualNodeActive(ctx, vn)
 		Expect(err).NotTo(HaveOccurred())
-
-		s.frontendVN = vn
 	})
 
 	By("create frontend Deployment", func() {
@@ -235,12 +241,10 @@ func (s *SidecarStack) createFrontendResources(ctx context.Context, f *framework
 
 		err := f.K8sClient.Create(ctx, dp)
 		Expect(err).NotTo(HaveOccurred())
-
-		_, err = f.DPManager.WaitUntilDeploymentReady(ctx, dp)
-		Expect(err).NotTo(HaveOccurred())
-
-		s.frontendDP = dp
 	})
+
+	err := s.pollPodUntilCondition(ctx, "front", corev1.PodRunning)
+	Expect(err).NotTo(HaveOccurred())
 }
 
 func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.Framework) {
@@ -286,8 +290,6 @@ func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.
 
 		_, err = f.VNManager.WaitUntilVirtualNodeActive(ctx, vn)
 		Expect(err).NotTo(HaveOccurred())
-
-		s.backendVN = vn
 	})
 
 	By("create backend VirtualService", func() {
@@ -310,11 +312,6 @@ func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.
 
 		err := f.K8sClient.Create(ctx, vs)
 		Expect(err).NotTo(HaveOccurred())
-
-		_, err = f.VSManager.WaitUntilVirtualServiceActive(ctx, vs)
-		Expect(err).NotTo(HaveOccurred())
-
-		s.backendVS = vs
 	})
 
 	By("create backend Deployment", func() {
@@ -364,11 +361,6 @@ func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.
 
 		err := f.K8sClient.Create(ctx, dp)
 		Expect(err).NotTo(HaveOccurred())
-
-		_, err = f.DPManager.WaitUntilDeploymentReady(ctx, dp)
-		Expect(err).NotTo(HaveOccurred())
-
-		s.backendDP = dp
 	})
 
 	By("create color Service", func() {
@@ -388,8 +380,6 @@ func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.
 
 		err := f.K8sClient.Create(ctx, svc)
 		Expect(err).NotTo(HaveOccurred())
-
-		s.backendSVC = svc
 	})
 
 	By("create color-blue Service", func() {
@@ -414,24 +404,36 @@ func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.
 		err := f.K8sClient.Create(ctx, svc)
 		Expect(err).NotTo(HaveOccurred())
 	})
+
+	err := s.pollPodUntilCondition(ctx, "color", corev1.PodRunning)
+	Expect(err).NotTo(HaveOccurred())
 }
 
 func (s *SidecarStack) cleanup(ctx context.Context, f *framework.Framework) {
-	if err := f.K8sClient.Delete(
-		ctx,
-		s.namespace,
-		client.PropagationPolicy(metav1.DeletePropagationForeground), client.GracePeriodSeconds(0),
-	); err != nil {
+	if err := f.K8sClient.Delete(ctx, s.namespace); err != nil {
 		f.Logger.Error("failed to delete namespace")
 	}
 
-	if err := f.K8sClient.Delete(
-		ctx,
-		s.mesh,
-		client.PropagationPolicy(metav1.DeletePropagationForeground), client.GracePeriodSeconds(0),
-	); err != nil {
+	if err := f.K8sClient.Delete(ctx, s.mesh); err != nil {
 		f.Logger.Error("failed to delete mesh")
 	}
+}
+
+func (s *SidecarStack) pollPodUntilCondition(ctx context.Context, podName string, condition corev1.PodPhase) error {
+	return wait.Poll(5*time.Second, 45*time.Second, func() (done bool, err error) {
+		pods, err := s.k8client.CoreV1().Pods(s.testName).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return false, err
+		}
+
+		for _, pod := range pods.Items {
+			if name, ok := pod.ObjectMeta.Labels["app"]; ok && name == podName && pod.Status.Phase == condition {
+				return true, nil
+			}
+		}
+
+		return false, nil
+	})
 }
 
 func newStringPtr(s string) *string {

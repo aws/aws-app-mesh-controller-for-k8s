@@ -19,7 +19,6 @@ import (
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -32,7 +31,6 @@ type Framework struct {
 	Options   Options
 	RestCfg   *rest.Config
 	K8sClient client.Client
-	Clientset *kubernetes.Clientset
 
 	NSManager   namespace.Manager
 	DPManager   deployment.Manager
@@ -82,14 +80,10 @@ func New(options Options) *Framework {
 	}, nil)
 	Expect(err).NotTo(HaveOccurred())
 
-	clientset, err := kubernetes.NewForConfig(restCfg)
-	Expect(err).NotTo(HaveOccurred())
-
 	f := &Framework{
 		Options:   options,
 		RestCfg:   restCfg,
 		K8sClient: k8sClient,
-		Clientset: clientset,
 
 		HelmManager:    helm.NewManager(options.KubeConfig),
 		NSManager:      namespace.NewManager(k8sClient),
