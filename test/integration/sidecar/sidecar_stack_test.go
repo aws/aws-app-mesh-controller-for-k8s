@@ -21,17 +21,14 @@ var _ = Describe("sidecar features", func() {
 	})
 
 	Context("wait for sidecar to initialize", func() {
-		var stack *SidecarStack
-
-		BeforeEach(func() {
-			stack = newSidecarStack("sidecar-test")
-		})
-
 		AfterEach(func() {
-			stack.cleanup(ctx, f)
+			// stack.cleanup(ctx, f)
 		})
 
 		It("should have the color annotation", func() {
+			expColor := "blue"
+			stack := newSidecarStack("sidecar-test", 8080, expColor)
+
 			stack.createMeshAndNamespace(ctx, f)
 			stack.createBackendResources(ctx, f)
 			stack.createFrontendResources(ctx, f)
@@ -51,9 +48,9 @@ var _ = Describe("sidecar features", func() {
 
 			for _, pod := range pods.Items {
 				ann := pod.ObjectMeta.Annotations
-				_, ok := ann["color"]
+				color := ann["color"]
 
-				Expect(ok).To(Equal(true))
+				Expect(color).To(Equal(expColor))
 			}
 		})
 	})
