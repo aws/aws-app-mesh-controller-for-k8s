@@ -219,6 +219,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
+							Name:  "app",
+							Image: "app/v1",
+						},
+						{
 							Name:  "envoy",
 							Image: "envoy:v2",
 							SecurityContext: &corev1.SecurityContext{
@@ -310,10 +314,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -348,6 +348,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -436,10 +440,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -477,6 +477,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -577,10 +581,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -645,6 +645,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -745,10 +749,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -786,6 +786,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -885,10 +889,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -924,6 +924,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1016,10 +1020,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -1058,6 +1058,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1162,10 +1166,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -1203,6 +1203,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1303,10 +1307,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 					Volumes: []corev1.Volume{
 						{
@@ -1373,6 +1373,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1471,10 +1475,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 					Volumes: []corev1.Volume{
 						{
@@ -1525,6 +1525,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1613,10 +1617,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -1655,6 +1655,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1758,10 +1762,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -1800,6 +1800,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -1903,10 +1907,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -1952,6 +1952,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -2056,10 +2060,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -2138,6 +2138,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -2242,10 +2246,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -2283,6 +2283,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -2388,10 +2392,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -2432,6 +2432,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -2549,10 +2553,6 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 						},
-						{
-							Name:  "app",
-							Image: "app/v1",
-						},
 					},
 				},
 			},
@@ -2592,6 +2592,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
+						{
+							Name:  "app",
+							Image: "app/v1",
+						},
 						{
 							Name:  "envoy",
 							Image: "envoy:v2",
@@ -2685,6 +2689,125 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								Limits: corev1.ResourceList{
 									"cpu":    cpuLimits,
 									"memory": memoryLimits,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "enabled waitUntilProxyStarts",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    true,
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					preStopDelay:               "20",
+					readinessProbeInitialDelay: 10,
+					readinessProbePeriod:       2,
+					sidecarImage:               "envoy:v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					waitUntilProxyStarts:       true,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "until curl -s http://localhost:9901/server_info | grep state | grep -q LIVE; do sleep 1; done",
+									}},
+								},
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 10,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       2,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "1",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
 								},
 							},
 						},
