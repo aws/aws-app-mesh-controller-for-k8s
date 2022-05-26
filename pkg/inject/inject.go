@@ -144,6 +144,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				statsDPort:                 m.config.StatsDPort,
 				statsDAddress:              m.config.StatsDAddress,
 				statsDSocketPath:           m.config.StatsDSocketPath,
+				waitUntilProxyStarts:       m.config.WaitUntilProxyStarts,
 				controllerVersion:          m.controllerVersion,
 				k8sVersion:                 m.k8sVersion,
 				useDualStackEndpoint:       m.config.DualStackEndpoint,

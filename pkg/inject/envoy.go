@@ -44,6 +44,7 @@ type envoyMutatorConfig struct {
 	statsDPort                 int32
 	statsDAddress              string
 	statsDSocketPath           string
+	waitUntilProxyStarts       bool
 	controllerVersion          string
 	k8sVersion                 string
 	useDualStackEndpoint       bool
@@ -84,7 +85,7 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 
-	container, err := buildEnvoySidecar(variables, customEnv, m.mutatorConfig.adminAccessPort)
+	container, err := buildEnvoySidecar(variables, customEnv, m.mutatorConfig.adminAccessPort, m.mutatorConfig.waitUntilProxyStarts)
 	if err != nil {
 		return err
 	}
@@ -108,8 +109,12 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		mutateSDSMounts(pod, &container, m.mutatorConfig.sdsUdsPath)
 	}
 
-	// move envoy container first since K8 starts up containers sequentially
-	pod.Spec.Containers = append([]corev1.Container{container}, pod.Spec.Containers...)
+	if m.mutatorConfig.waitUntilProxyStarts {
+		pod.Spec.Containers = append([]corev1.Container{container}, pod.Spec.Containers...)
+	} else {
+		pod.Spec.Containers = append(pod.Spec.Containers, container)
+	}
+
 	return nil
 }
 

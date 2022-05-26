@@ -27,6 +27,7 @@ const (
 	flagEnvoyAdminAccessLogFile    = "envoy-admin-access-log-file"
 	flagEnvoyAdminAccessEnableIpv6 = "envoy-admin-access-enable-ipv6"
 	flagDualStackEndpoint          = "dual-stack-endpoint"
+	flagWaitUntilProxyStarts       = "wait-until-proxy-starts"
 
 	flagInitImage  = "init-image"
 	flagIgnoredIPs = "ignored-ips"
@@ -80,6 +81,7 @@ type Config struct {
 	EnvoyAdminAccessLogFile    string
 	DualStackEndpoint          bool
 	EnvoyAdminAccessEnableIPv6 bool
+	WaitUntilProxyStarts       bool
 
 	// Init container settings
 	InitImage  string
@@ -192,6 +194,8 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&cfg.DualStackEndpoint, flagDualStackEndpoint, false, "Use DualStack Endpoint")
 	fs.BoolVar(&cfg.DualStackEndpoint, flagEnvoyAdminAccessEnableIpv6, false, "Enable Admin access when using IPv6")
 	fs.StringVar(&cfg.ClusterName, flagClusterName, "", "ClusterName in context")
+	fs.BoolVar(&cfg.WaitUntilProxyStarts, flagWaitUntilProxyStarts, false,
+		"Enable pod postStart hook to delay application startup until proxy is ready to accept traffic")
 }
 
 func (cfg *Config) BindEnv() error {

@@ -165,7 +165,7 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 	return nil
 }
 
-func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string, adminAccessPort int32) (corev1.Container, error) {
+func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string, adminAccessPort int32, flagWaitUntilProxyStarts bool) (corev1.Container, error) {
 
 	envoy := corev1.Container{
 		Name:  "envoy",
@@ -181,17 +181,21 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string, admin
 			},
 		},
 		Lifecycle: &corev1.Lifecycle{
-			PostStart: &corev1.Handler{
-				Exec: &corev1.ExecAction{Command: []string{
-					"sh", "-c", fmt.Sprintf("until curl -s http://localhost:%d/server_info | grep state | grep -q LIVE; do sleep 1; done", adminAccessPort),
-				}},
-			},
+			PostStart: nil,
 			PreStop: &corev1.Handler{
 				Exec: &corev1.ExecAction{Command: []string{
 					"sh", "-c", fmt.Sprintf("sleep %s", vars.PreStopDelay),
 				}},
 			},
 		},
+	}
+
+	if flagWaitUntilProxyStarts {
+		envoy.Lifecycle.PostStart = &corev1.Handler{
+			Exec: &corev1.ExecAction{Command: []string{
+				"sh", "-c", fmt.Sprintf("until curl -s http://localhost:%d/server_info | grep state | grep -q LIVE; do sleep 1; done", adminAccessPort),
+			}},
+		}
 	}
 
 	vname := fmt.Sprintf("mesh/%s/virtualNode/%s", vars.MeshName, vars.VirtualGatewayOrNodeName)
