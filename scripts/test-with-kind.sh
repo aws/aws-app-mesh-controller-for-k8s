@@ -72,12 +72,11 @@ function install_controller {
 }
 
 function run_integration_tests {
-  # local __type=$1
   local __vpc_id=$( vpc_id )
 
   for __type in ${INT_TEST_DIR}/*
   do
-    if [[ `basename $__type` == "test_app" ]]; then
+    if [[ `basename $__type` == "test_app" ]]; then # /test_app contains test app images
       continue
     fi
 
