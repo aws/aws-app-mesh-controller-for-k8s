@@ -77,6 +77,10 @@ function run_integration_tests {
 
   for __type in ${INT_TEST_DIR}/*
   do
+    if [[ `basename $__type` == "test_app" ]]; then
+      continue
+    fi
+
     echo -n "running integration test type $__type ... "
     ginkgo -v -r $__type -- --cluster-kubeconfig=${KUBECONFIG} \
             --cluster-name=${CLUSTER_NAME} --aws-region=${AWS_REGION} \
