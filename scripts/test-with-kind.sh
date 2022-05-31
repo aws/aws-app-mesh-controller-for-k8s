@@ -76,9 +76,11 @@ function run_integration_tests {
 
   for __type in ${INT_TEST_DIR}/*
   do
-    if [[ `basename $__type` == "test_app" ]]; then # /test_app contains test app images
-      continue
-    fi
+    case `basename $__type` in
+      test_app) # /test_app contains test app images
+        continue
+        ;;
+    esac
 
     echo -n "running integration test type $__type ... "
     ginkgo -v -r $__type -- --cluster-kubeconfig=${KUBECONFIG} \
@@ -125,11 +127,4 @@ kubectl get crds
 # check later
 sleep 15
 
-# Run integration tests
 run_integration_tests
-# run_integration_test mesh
-# run_integration_test virtualnode
-# run_integration_test virtualservice
-# run_integration_test virtualrouter
-# run_integration_test virtualgateway
-# run_integration_test gatewayroute
