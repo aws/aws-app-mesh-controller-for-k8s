@@ -80,6 +80,9 @@ function run_integration_tests {
       test_app) # /test_app contains test app images
         continue
         ;;
+      sidecar)
+       APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION WAIT_UNTIL_PROXY_READY=true make helm-deploy
+        ;;
     esac
 
     echo -n "running integration test type $__type ... "
