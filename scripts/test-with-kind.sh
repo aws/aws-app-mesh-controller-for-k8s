@@ -82,6 +82,8 @@ function run_integration_tests {
         ;;
       sidecar)
        APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make helm-deploy WAIT_PROXY_READY=true
+       check_deployment_rollout appmesh-controller appmesh-system
+       kubectl get pod -n appmesh-system
         ;;
     esac
 
