@@ -81,7 +81,7 @@ function run_integration_tests {
         continue
         ;;
       sidecar)
-       APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION WAIT_PROXY_READY=true make helm-deploy
+       APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make helm-deploy WAIT_PROXY_READY=true
         ;;
     esac
 
