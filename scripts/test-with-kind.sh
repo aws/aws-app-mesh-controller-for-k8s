@@ -71,14 +71,23 @@ function install_controller {
 
 }
 
-function run_integration_test {
-       local __type=$1
-       local __vpc_id=$( vpc_id )
-       echo -n "running integration test type $__type ... "
-       ginkgo -v -r test/integration/$__type -- --cluster-kubeconfig=${KUBECONFIG} \
-               --cluster-name=${CLUSTER_NAME} --aws-region=${AWS_REGION} \
-               --aws-vpc-id=$__vpc_id
-       echo "ok."
+function run_integration_tests {
+  local __vpc_id=$( vpc_id )
+
+  for __type in ${INT_TEST_DIR}/*
+  do
+    case `basename $__type` in
+      test_app) # /test_app contains test app images
+        continue
+        ;;
+    esac
+
+    echo -n "running integration test type $__type ... "
+    ginkgo -v -r $__type -- --cluster-kubeconfig=${KUBECONFIG} \
+            --cluster-name=${CLUSTER_NAME} --aws-region=${AWS_REGION} \
+            --aws-vpc-id=$__vpc_id
+    echo "ok."
+  done
 }
 
 function clean_up {
@@ -118,10 +127,4 @@ kubectl get crds
 # check later
 sleep 15
 
-# Run integration tests
-run_integration_test mesh
-run_integration_test virtualnode
-run_integration_test virtualservice
-run_integration_test virtualrouter
-run_integration_test virtualgateway
-run_integration_test gatewayroute
+run_integration_tests
