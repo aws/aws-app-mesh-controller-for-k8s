@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/util/workqueue"
+	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -41,11 +42,19 @@ func (h *enqueueRequestsForPodEvents) Update(e event.UpdateEvent, queue workqueu
 	oldPod := e.ObjectOld.(*corev1.Pod)
 	newPod := e.ObjectNew.(*corev1.Pod)
 
-	oldPodIsReady := ArePodContainersReady(oldPod)
-	newPodIsReady := ArePodContainersReady(newPod)
-	if oldPodIsReady != newPodIsReady || newPod.DeletionTimestamp != nil {
-		h.enqueueVirtualNodesForPods(context.Background(), queue, e.ObjectNew.(*corev1.Pod))
+	labelsChanged := !reflect.DeepEqual(oldPod.Labels, newPod.Labels)
+
+	if newPod.DeletionTimestamp != nil || ReadyStatusChanged(oldPod, newPod) || labelsChanged {
+		if labelsChanged {
+			h.enqueueVirtualNodesForPods(context.Background(), queue, oldPod)
+		}
+
+		h.enqueueVirtualNodesForPods(context.Background(), queue, newPod)
 	}
+}
+
+func ReadyStatusChanged(pod1 *corev1.Pod, pod2 *corev1.Pod) bool {
+	return ArePodContainersReady(pod1) != ArePodContainersReady(pod2)
 }
 
 // Delete is called in response to a delete event
