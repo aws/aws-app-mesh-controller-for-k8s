@@ -28,6 +28,12 @@ type ContainerInfo struct {
 	Args          []string
 }
 
+type PodGroupInfo struct {
+	GroupLabel  string
+	MatchLabels map[string]string
+	Pods        []*corev1.Pod
+}
+
 func (b *ManifestBuilder) BuildContainerSpec(containersInfo []ContainerInfo) []corev1.Container {
 
 	var containers []corev1.Container
@@ -72,6 +78,35 @@ func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, c
 		},
 	}
 	return dp
+}
+
+func (b *ManifestBuilder) BuildPodGroup(containers []corev1.Container, podGroupName string, podCount int) PodGroupInfo {
+	podGroupLabel := utils.RandomDNS1123LabelWithPrefix(podGroupName)
+	podGroupMatchLabels := map[string]string{"app": podGroupLabel}
+	podGroup := make([]*corev1.Pod, podCount)
+	for i := 0; i < podCount; i++ {
+		podGroup[i] = b.BuildPod(containers, podGroupMatchLabels)
+	}
+
+	return PodGroupInfo{
+		GroupLabel:  podGroupLabel,
+		MatchLabels: podGroupMatchLabels,
+		Pods:        podGroup,
+	}
+}
+
+func (b *ManifestBuilder) BuildPod(containers []corev1.Container, labels map[string]string) *corev1.Pod {
+	name := utils.RandomDNS1123LabelWithPrefix("pod")
+	return &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: b.Namespace,
+			Name:      name,
+			Labels:    labels,
+		},
+		Spec: corev1.PodSpec{
+			Containers: containers,
+		},
+	}
 }
 
 func (b *ManifestBuilder) BuildServiceWithSelector(instanceName string, containerPort int32, targetPort int) *corev1.Service {
