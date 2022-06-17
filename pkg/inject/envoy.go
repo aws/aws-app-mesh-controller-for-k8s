@@ -23,6 +23,8 @@ type envoyMutatorConfig struct {
 	adminAccessPort            int32
 	adminAccessLogFile         string
 	preStopDelay               string
+	postStartTimeout           int32
+	postStartInterval          int32
 	readinessProbeInitialDelay int32
 	readinessProbePeriod       int32
 	sidecarImage               string
@@ -139,6 +141,8 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		AdminAccessPort:          m.mutatorConfig.adminAccessPort,
 		AdminAccessLogFile:       m.mutatorConfig.adminAccessLogFile,
 		PreStopDelay:             m.mutatorConfig.preStopDelay,
+		PostStartTimeout:         m.mutatorConfig.postStartTimeout,
+		PostStartInterval:        m.mutatorConfig.postStartInterval,
 		SidecarImage:             m.mutatorConfig.sidecarImage,
 		EnableXrayTracing:        m.mutatorConfig.enableXrayTracing,
 		XrayDaemonPort:           m.mutatorConfig.xrayDaemonPort,

@@ -35,6 +35,8 @@ sidecar:
   lifecycleHooks:
     # sidecar.lifecycleHooks: Envoy PreStop Hook Delay
     preStopDelay: 20
+    postStartTimeout: 180
+    postStartInterval: 5
   probes:
     # sidecar.probes: Envoy Readiness Probe
     readinessProbeInitialDelay: 1

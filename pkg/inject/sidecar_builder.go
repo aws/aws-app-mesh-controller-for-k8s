@@ -27,6 +27,8 @@ type EnvoyTemplateVariables struct {
 	AdminAccessPort          int32
 	AdminAccessLogFile       string
 	PreStopDelay             string
+	PostStartTimeout         int32
+	PostStartInterval        int32
 	SidecarImage             string
 	EnableXrayTracing        bool
 	XrayDaemonPort           int32
@@ -194,7 +196,9 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (core
 	if vars.WaitUntilProxyStarts {
 		envoy.Lifecycle.PostStart = &corev1.Handler{
 			Exec: &corev1.ExecAction{Command: []string{
-				"sh", "-c", fmt.Sprintf("until curl -s http://localhost:%d/server_info | grep state | grep -q LIVE; do sleep 1; done", vars.AdminAccessPort),
+				"sh", "-c", fmt.Sprintf("[ -e /tmp/agent.sock ] && APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=%d"+
+					"APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=%d /usr/bin/agent -envoyReadiness",
+					vars.PostStartTimeout, vars.PostStartInterval),
 			}},
 		}
 	}

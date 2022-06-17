@@ -21,6 +21,8 @@ const (
 	flagPreview                    = "preview"
 	flagLogLevel                   = "sidecar-log-level"
 	flagPreStopDelay               = "prestop-delay"
+	flagPostStartTimeout           = "poststart-timeout"
+	flagPostStartInterval          = "poststart-interval"
 	flagReadinessProbeInitialDelay = "readiness-probe-initial-delay"
 	flagReadinessProbePeriod       = "readiness-probe-period"
 	flagEnvoyAdminAccessPort       = "envoy-admin-access-port"
@@ -75,6 +77,8 @@ type Config struct {
 	Preview                    bool
 	LogLevel                   string
 	PreStopDelay               string
+	PostStartTimeout           int32
+	PostStartInterval          int32
 	ReadinessProbeInitialDelay int32
 	ReadinessProbePeriod       int32
 	EnvoyAdminAcessPort        int32
@@ -149,6 +153,10 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"AWS App Mesh envoy access log path")
 	fs.StringVar(&cfg.PreStopDelay, flagPreStopDelay, "20",
 		"AWS App Mesh envoy preStop hook sleep duration")
+	fs.Int32Var(&cfg.PostStartTimeout, flagPostStartTimeout, 180,
+		"AWS App Mesh envoy postStart hook timeout duration")
+	fs.Int32Var(&cfg.PostStartInterval, flagPostStartInterval, 5,
+		"AWS App Mesh envoy postStart hook interval duration")
 	fs.Int32Var(&cfg.ReadinessProbeInitialDelay, flagReadinessProbeInitialDelay, 1,
 		"Number of seconds after Envoy has started before readiness probes are initiated")
 	fs.Int32Var(&cfg.ReadinessProbePeriod, flagReadinessProbePeriod, 10,
