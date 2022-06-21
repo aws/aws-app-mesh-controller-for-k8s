@@ -48,7 +48,7 @@ type EnvoyTemplateVariables struct {
 	ControllerVersion        string
 	EnableAdminAccessForIpv6 bool
 	UseDualStackEndpoint     string
-	WaitUntilProxyStarts     bool
+	WaitUntilProxyReady      bool
 }
 
 func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) error {
@@ -193,7 +193,7 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (core
 		},
 	}
 
-	if vars.WaitUntilProxyStarts {
+	if vars.WaitUntilProxyReady {
 		envoy.Lifecycle.PostStart = &corev1.Handler{
 			Exec: &corev1.ExecAction{Command: []string{
 				"sh", "-c", fmt.Sprintf("[ -e /tmp/agent.sock ] && APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=%d"+

@@ -116,7 +116,7 @@ spec:
         - --sidecar-log-level={{ .Values.sidecar.logLevel }}
         # this must be same as livenessProbe port which can be configured 
         - --health-probe-port={{ .Values.livenessProbe.httpGet.port }}
-        - --wait-until-proxy-starts={{ .Values.sidecar.waitUntilProxyStarts }}
+        - --wait-until-proxy-ready={{ .Values.sidecar.waitUntilProxyReady }}
         {{- if .Values.env }}
         env:
           {{- range $key, $value := .Values.env }}

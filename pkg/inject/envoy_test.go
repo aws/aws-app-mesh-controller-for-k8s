@@ -2697,7 +2697,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 			},
 		},
 		{
-			name: "enabled waitUntilProxyStarts",
+			name: "enabled waitUntilProxyReady",
 			fields: fields{
 				vn: vn,
 				ms: ms,
@@ -2712,7 +2712,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					sidecarImage:               "envoy:v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
-					waitUntilProxyStarts:       true,
+					waitUntilProxyReady:        true,
 					controllerVersion:          "v1.4.1",
 					k8sVersion:                 "v1.20.1-eks-fdsedv",
 				},

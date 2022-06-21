@@ -46,7 +46,7 @@ type envoyMutatorConfig struct {
 	statsDPort                 int32
 	statsDAddress              string
 	statsDSocketPath           string
-	waitUntilProxyStarts       bool
+	waitUntilProxyReady        bool
 	controllerVersion          string
 	k8sVersion                 string
 	useDualStackEndpoint       bool
@@ -111,7 +111,7 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		mutateSDSMounts(pod, &container, m.mutatorConfig.sdsUdsPath)
 	}
 
-	if m.mutatorConfig.waitUntilProxyStarts {
+	if m.mutatorConfig.waitUntilProxyReady {
 		pod.Spec.Containers = append([]corev1.Container{container}, pod.Spec.Containers...)
 	} else {
 		pod.Spec.Containers = append(pod.Spec.Containers, container)
@@ -162,7 +162,7 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		K8sVersion:               m.mutatorConfig.k8sVersion,
 		UseDualStackEndpoint:     useDualStackEndpoint,
 		EnableAdminAccessForIpv6: m.mutatorConfig.enableAdminAccessIPv6,
-		WaitUntilProxyStarts:     m.mutatorConfig.waitUntilProxyStarts,
+		WaitUntilProxyReady:      m.mutatorConfig.waitUntilProxyReady,
 	}
 }
 
