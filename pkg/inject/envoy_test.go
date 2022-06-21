@@ -2707,6 +2707,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					preStopDelay:               "20",
+					postStartInterval:          5,
+					postStartTimeout:           60,
 					readinessProbeInitialDelay: 10,
 					readinessProbePeriod:       2,
 					sidecarImage:               "envoy:v2",
@@ -2743,7 +2745,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: &corev1.Handler{
 									Exec: &corev1.ExecAction{Command: []string{
-										"sh", "-c", "until curl -s http://localhost:9901/server_info | grep state | grep -q LIVE; do sleep 1; done",
+										"sh", "-c", "[ -e /tmp/agent.sock ] && APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=60" +
+											"APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=5 /usr/bin/agent -envoyReadiness",
 									}},
 								},
 								PreStop: &corev1.Handler{
