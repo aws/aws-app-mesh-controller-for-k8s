@@ -15,6 +15,9 @@ jobs:
     name: integration-test
     runs-on: [self-hosted, aws-app-mesh-controller-for-k8s, X64 ]
     steps:
+      - name: intentionally break
+        run: |
+          lkasdf
       - name: clean work dir from previous runs
         run: |
           rm -rf *
