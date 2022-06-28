@@ -59,7 +59,7 @@ helm-lint:
 
 
 helm-deploy: check-env manifests
-	helm upgrade -i appmesh-controller config/helm/appmesh-controller --namespace appmesh-system --set image.repository=$(REPO) --set image.tag=$(VERSION) --set preview=$(PREVIEW) --set enableBackendGroups=$(ENABLE_BACKEND_GROUPS) --set sidecar.waitUntilProxyStarts=${WAIT_PROXY_READY} --set sidecar.image.tag=${SIDECAR_IMAGE_TAG}
+	helm upgrade -i appmesh-controller config/helm/appmesh-controller --namespace appmesh-system --set image.repository=$(REPO) --set image.tag=$(VERSION) --set preview=$(PREVIEW) --set enableBackendGroups=$(ENABLE_BACKEND_GROUPS) --set sidecar.waitUntilProxyReady=${WAIT_PROXY_READY} --set sidecar.image.tag=${SIDECAR_IMAGE_TAG}
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
