@@ -2745,8 +2745,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: &corev1.Handler{
 									Exec: &corev1.ExecAction{Command: []string{
-										"sh", "-c", "[ -e /tmp/agent.sock ] && APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=60" +
-											"APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=5 /usr/bin/agent -envoyReadiness",
+										"sh", "-c", "if [ -f /tmp/agent.sock ]; then APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=60 " +
+											"APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=5 /usr/bin/agent -envoyReadiness; fi",
 									}},
 								},
 								PreStop: &corev1.Handler{
