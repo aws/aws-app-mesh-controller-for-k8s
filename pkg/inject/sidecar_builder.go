@@ -196,8 +196,8 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (core
 	if vars.WaitUntilProxyReady {
 		envoy.Lifecycle.PostStart = &corev1.Handler{
 			Exec: &corev1.ExecAction{Command: []string{
-				"sh", "-c", fmt.Sprintf("[ -e /tmp/agent.sock ] && APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=%d"+
-					"APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=%d /usr/bin/agent -envoyReadiness",
+				"sh", "-c", fmt.Sprintf("if [ -f /tmp/agent.sock ]; then APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=%d "+
+					"APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=%d /usr/bin/agent -envoyReadiness; fi",
 					vars.PostStartTimeout, vars.PostStartInterval),
 			}},
 		}

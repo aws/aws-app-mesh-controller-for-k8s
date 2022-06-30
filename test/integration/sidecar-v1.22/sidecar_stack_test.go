@@ -7,7 +7,6 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -45,7 +44,16 @@ var _ = Describe("sidecar features", func() {
 				}
 
 				for _, pod := range pods.Items {
-					if name, ok := pod.ObjectMeta.Labels["app"]; ok && name == "front" && pod.Status.Phase == corev1.PodRunning {
+					allReady := true
+
+					for _, status := range pod.Status.ContainerStatuses {
+						if !status.Ready {
+							allReady = false
+							break
+						}
+					}
+
+					if allReady {
 						return true, nil
 					}
 				}
