@@ -3069,6 +3069,13 @@ func (in *VirtualNodeSpec) DeepCopyInto(out *VirtualNodeSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.BackendSelectors != nil {
+		in, out := &in.BackendSelectors, &out.BackendSelectors
+		*out = make([]v1.LabelSelector, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.BackendDefaults != nil {
 		in, out := &in.BackendDefaults, &out.BackendDefaults
 		*out = new(BackendDefaults)

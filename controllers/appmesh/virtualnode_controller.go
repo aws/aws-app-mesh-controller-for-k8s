@@ -38,12 +38,13 @@ func NewVirtualNodeReconciler(
 	log logr.Logger,
 	recorder record.EventRecorder) *virtualNodeReconciler {
 	return &virtualNodeReconciler{
-		k8sClient:                    k8sClient,
-		finalizerManager:             finalizerManager,
-		vnResManager:                 vnResManager,
-		enqueueRequestsForMeshEvents: virtualnode.NewEnqueueRequestsForMeshEvents(k8sClient, log),
-		log:                          log,
-		recorder:                     recorder,
+		k8sClient:                              k8sClient,
+		finalizerManager:                       finalizerManager,
+		vnResManager:                           vnResManager,
+		enqueueRequestsForMeshEvents:           virtualnode.NewEnqueueRequestsForMeshEvents(k8sClient, log),
+		enqueueRequestsForVirtualServiceEvents: virtualnode.NewEnqueueRequestsForVirtualServiceEvents(k8sClient, log),
+		log:                                    log,
+		recorder:                               recorder,
 	}
 }
 
@@ -53,9 +54,10 @@ type virtualNodeReconciler struct {
 	finalizerManager k8s.FinalizerManager
 	vnResManager     virtualnode.ResourceManager
 
-	enqueueRequestsForMeshEvents handler.EventHandler
-	log                          logr.Logger
-	recorder                     record.EventRecorder
+	enqueueRequestsForMeshEvents           handler.EventHandler
+	enqueueRequestsForVirtualServiceEvents handler.EventHandler
+	log                                    logr.Logger
+	recorder                               record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes,verbs=get;list;watch;create;update;patch;delete
@@ -70,6 +72,7 @@ func (r *virtualNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appmesh.VirtualNode{}).
 		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
+		Watches(&source.Kind{Type: &appmesh.VirtualService{}}, r.enqueueRequestsForVirtualServiceEvents).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
 		Complete(r)
 }

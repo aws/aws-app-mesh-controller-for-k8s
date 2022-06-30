@@ -2,6 +2,7 @@ package virtualnode
 
 import (
 	"context"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
@@ -133,8 +134,32 @@ func (m *defaultResourceManager) validateMeshDependencies(ctx context.Context, m
 
 // findVirtualServiceDependencies find the VirtualService dependencies for this virtualNode.
 func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Context, vn *appmesh.VirtualNode) (map[types.NamespacedName]*appmesh.VirtualService, error) {
-	vsByKey := make(map[types.NamespacedName]*appmesh.VirtualService, len(vn.Spec.Backends))
+	vsByKey := make(map[types.NamespacedName]*appmesh.VirtualService)
 	vsRefs := ExtractVirtualServiceReferences(vn)
+	for _, selector := range vn.Spec.BackendSelectors {
+		vsList := &appmesh.VirtualServiceList{}
+		labelSelector, err := metav1.LabelSelectorAsSelector(&selector)
+		if err != nil {
+			m.log.Error(err, "error")
+			continue
+		}
+		if err := m.k8sClient.List(context.Background(), vsList, client.MatchingLabelsSelector{Selector: labelSelector}); err != nil {
+			m.log.Error(err, "failed to get virtualservices")
+			continue
+		}
+		for _, vs := range vsList.Items {
+			m.log.Info("adding implied backend " + vs.Name)
+			vsKey := references.ObjectKeyForVirtualServiceReference(vn, appmesh.VirtualServiceReference{
+				Namespace: aws.String(vs.Namespace),
+				Name:      vs.Name,
+			})
+			if _, ok := vsByKey[vsKey]; ok {
+				m.log.Info(vn.Name + ": Skipping " + vs.Name)
+				continue
+			}
+			vsByKey[vsKey] = &vs
+		}
+	}
 	for _, vsRef := range vsRefs {
 		vsKey := references.ObjectKeyForVirtualServiceReference(vn, vsRef)
 		if _, ok := vsByKey[vsKey]; ok {
@@ -196,10 +221,14 @@ func (m *defaultResourceManager) createSDKVirtualNode(ctx context.Context, ms *a
 
 func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN *appmeshsdk.VirtualNodeData, ms *appmesh.Mesh, vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeData, error) {
 	actualSDKVNSpec := sdkVN.Spec
+	for i, j := range vsByKey {
+		m.log.Info(vn.Name + "> " + i.String() + ", " + j.Name)
+	}
 	desiredSDKVNSpec, err := BuildSDKVirtualNodeSpec(vn, vsByKey)
 	if err != nil {
 		return nil, err
 	}
+	m.log.Info(vn.Name + "> SDK spec built")
 
 	opts := equality.CompareOptionForVirtualNodeSpec()
 	if cmp.Equal(desiredSDKVNSpec, actualSDKVNSpec, opts) {
@@ -220,6 +249,8 @@ func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN
 		"desiredSDKVNSpec", desiredSDKVNSpec,
 		"diff", diff,
 	)
+	m.log.Info("diff:")
+	m.log.Info(diff)
 	resp, err := m.appMeshSDK.UpdateVirtualNodeWithContext(ctx, &appmeshsdk.UpdateVirtualNodeInput{
 		MeshName:        ms.Spec.AWSName,
 		MeshOwner:       ms.Spec.MeshOwner,
@@ -311,7 +342,19 @@ func BuildSDKVirtualNodeSpec(vn *appmesh.VirtualNode, vsByKey map[types.Namespac
 		return sdkVSRefConvertFunc(a.(*appmesh.VirtualServiceReference), b.(*string), scope)
 	})
 	sdkVNSpec := &appmeshsdk.VirtualNodeSpec{}
-	if err := converter.Convert(&vn.Spec, sdkVNSpec, nil); err != nil {
+	newSpec := vn.Spec.DeepCopy()
+	newSpec.Backends = []appmesh.Backend{}
+	for _, vs := range vsByKey {
+		newSpec.Backends = append(newSpec.Backends, appmesh.Backend{
+			VirtualService: appmesh.VirtualServiceBackend{
+				VirtualServiceRef: &appmesh.VirtualServiceReference{
+					Namespace: aws.String(vs.Namespace),
+					Name:      vs.Name,
+				},
+			},
+		})
+	}
+	if err := converter.Convert(newSpec, sdkVNSpec, nil); err != nil {
 		return nil, err
 	}
 	return sdkVNSpec, nil
