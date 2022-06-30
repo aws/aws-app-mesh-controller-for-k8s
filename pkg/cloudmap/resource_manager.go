@@ -114,8 +114,10 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 		return err
 	}
 
+	var readyPods []*corev1.Pod
+	var notReadyPods []*corev1.Pod
 	if vn.Spec.PodSelector != nil {
-		readyPods, notReadyPods, _, err := m.virtualNodeEndpointResolver.Resolve(ctx, vn)
+		readyPods, notReadyPods, _, err = m.virtualNodeEndpointResolver.Resolve(ctx, vn)
 		if err != nil {
 			return err
 		}
@@ -123,10 +125,13 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 			"readyPods", len(readyPods),
 			"notReadyPods", len(notReadyPods),
 		)
-		nodeInfoByName := m.getClusterNodeInfo(ctx)
-		if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, readyPods, notReadyPods, nodeInfoByName); err != nil {
-			return err
-		}
+	} else {
+		m.log.V(1).Info("VirtualNode does not have a pod selector, no endpoints")
+	}
+
+	nodeInfoByName := m.getClusterNodeInfo(ctx)
+	if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, readyPods, notReadyPods, nodeInfoByName); err != nil {
+		return err
 	}
 
 	return nil
@@ -156,11 +161,10 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vn *appmesh.Virtua
 		return nil
 	}
 
-	if vn.Spec.PodSelector != nil {
-		if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, nil, nil, nil); err != nil {
-			return err
-		}
+	if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, nil, nil, nil); err != nil {
+		return err
 	}
+
 	if err := m.deleteCloudMapService(ctx, vn, nsSummary, svcSummary); err != nil {
 		return err
 	}

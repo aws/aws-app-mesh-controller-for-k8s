@@ -27,10 +27,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Converter for converting k8s object and object list used in watches and list operation
+// Converter for converting objects on provided Deltas to stripped down pod objects
 type Converter interface {
-	// ConvertObject takes an object and returns the modified object which will be
-	// stored in the data store
+	// ConvertObject takes an object or delete tombstone and returns
+	// the modified object which will be stored in the data store
 	ConvertObject(originalObj interface{}) (convertedObj interface{}, err error)
 	// ConvertList takes an object and returns the modified list of objects which
 	// will be returned to the Simple Pager function to aggregate the list pagination

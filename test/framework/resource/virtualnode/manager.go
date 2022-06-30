@@ -32,6 +32,7 @@ type Manager interface {
 	WaitUntilVirtualNodeDeleted(ctx context.Context, vn *appmesh.VirtualNode) error
 	CheckVirtualNodeInAWS(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode) error
 	CheckVirtualNodeInCloudMap(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, ipFamily string) error
+	CheckVirtualNodeInCloudMapWithExpectedRegisteredPods(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedRegisteredPods []*corev1.Pod) error
 }
 
 func NewManager(k8sClient client.Client, appMeshSDK services.AppMesh, cloudMapSDK services.CloudMap, ipFamily string) Manager {
@@ -152,6 +153,20 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 		instanceAttributeMap[cloudmap.AttrAWSInstancePort] = strconv.Itoa(int(vn.Spec.Listeners[0].PortMapping.Port))
 		localInstanceInfoMap[pod.Status.PodIP] = instanceAttributeMap
 	}
+
+	return m.checkVirtualNodeInCloudMapWithExpectedRegistrations(ctx, vn, localInstanceInfoMap, ipFamily)
+}
+
+func (m *defaultManager) CheckVirtualNodeInCloudMapWithExpectedRegisteredPods(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedRegisteredPods []*corev1.Pod) error {
+	expectedRegistrationInfo, err := m.loadExpectedRegistrationInfo(ctx, ms, vn, expectedRegisteredPods)
+	if err != nil {
+		return err
+	}
+
+	return m.checkVirtualNodeInCloudMapWithExpectedRegistrations(ctx, vn, expectedRegistrationInfo, m.ipFamily)
+}
+
+func (m *defaultManager) checkVirtualNodeInCloudMapWithExpectedRegistrations(ctx context.Context, vn *appmesh.VirtualNode, localInstanceInfoMap map[string]map[string]string, ipFamily string) error {
 	cloudMapConfig := vn.Spec.ServiceDiscovery.AWSCloudMap
 
 	//Get CloudMap Namespace Info
@@ -199,8 +214,9 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 		ServiceId: sdkSVCSummary.Id,
 	}
 
+	expectedInstanceCount := len(localInstanceInfoMap)
 	//Get Instance info
-	cloudMapInstanceInfoMap := make(map[string]map[string]string, instanceCount)
+	cloudMapInstanceInfoMap := make(map[string]map[string]string, expectedInstanceCount)
 	if err := m.cloudMapSDK.ListInstancesPagesWithContext(ctx, listInstancesInput,
 		func(listInstancesOutput *servicediscovery.ListInstancesOutput, lastPage bool) bool {
 			for _, instance := range listInstancesOutput.Instances {
@@ -224,12 +240,55 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 		return err
 	}
 
-	if len(cloudMapInstanceInfoMap) != len(localInstanceInfoMap) {
-		return fmt.Errorf("instance count mismatch")
+	if len(cloudMapInstanceInfoMap) != expectedInstanceCount {
+		return fmt.Errorf("instance count mismatch, expected %d found %d", expectedInstanceCount, len(cloudMapInstanceInfoMap))
 	}
 	if err := compareInstances(cloudMapInstanceInfoMap, localInstanceInfoMap); err != nil {
 		return fmt.Errorf("instance info mismatch")
 	}
+	return nil
+}
+
+func (m *defaultManager) loadExpectedRegistrationInfo(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedRegisteredPods []*corev1.Pod) (map[string]map[string]string, error) {
+	//Get Pods that the VirtualNode selects on
+	var podsList corev1.PodList
+	var listOptions client.ListOptions
+	listOptions.Namespace = vn.Namespace
+
+	if err := m.k8sClient.List(ctx, &podsList, &listOptions); err != nil {
+		return nil, err
+	}
+
+	expectedCount := len(expectedRegisteredPods)
+	localInstanceInfoMap := make(map[string]map[string]string, expectedCount)
+	for i := range podsList.Items {
+		pod := &podsList.Items[i]
+		if m.findPodByName(pod.Name, expectedRegisteredPods) != nil {
+			instanceAttributeMap := make(map[string]string)
+			instanceAttributeMap[cloudmap.AttrAWSInstanceIPV4] = pod.Status.PodIP
+			instanceAttributeMap[cloudmap.AttrK8sPod] = pod.Name
+			instanceAttributeMap[cloudmap.AttrK8sNamespace] = pod.Namespace
+			instanceAttributeMap[cloudmap.AttrAppMeshMesh] = awssdk.StringValue(ms.Spec.AWSName)
+			instanceAttributeMap[cloudmap.AttrAppMeshVirtualNode] = awssdk.StringValue(vn.Spec.AWSName)
+			instanceAttributeMap[cloudmap.AttrAWSInstancePort] = strconv.Itoa(int(vn.Spec.Listeners[0].PortMapping.Port))
+			localInstanceInfoMap[pod.Status.PodIP] = instanceAttributeMap
+		}
+	}
+
+	if len(localInstanceInfoMap) != expectedCount {
+		return nil, fmt.Errorf("could not match expected pods with pods present in the cluster. expected %d, found %d", expectedCount, len(localInstanceInfoMap))
+	}
+
+	return localInstanceInfoMap, nil
+}
+
+func (m *defaultManager) findPodByName(name string, podsToSearch []*corev1.Pod) *corev1.Pod {
+	for _, p := range podsToSearch {
+		if p.Name == name {
+			return p
+		}
+	}
+
 	return nil
 }
 
