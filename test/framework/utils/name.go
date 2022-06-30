@@ -19,5 +19,5 @@ func RandomDNS1123Label(length int) string {
 }
 
 func RandomDNS1123LabelWithPrefix(prefix string) string {
-	return fmt.Sprintf("vn-%s", RandomDNS1123Label(8))
+	return fmt.Sprintf("%s-%s", prefix, RandomDNS1123Label(8))
 }
