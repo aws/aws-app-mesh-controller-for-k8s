@@ -17,6 +17,7 @@ type Options struct {
 	ClusterName string
 	AWSRegion   string
 	AWSVPCID    string
+	IpFamily    string
 
 	// appMesh controller image. leave empty to use default one from helm chart.
 	ControllerImage string
@@ -30,6 +31,7 @@ func (options *Options) BindFlags() {
 	flag.StringVar(&options.ClusterName, "cluster-name", "", `Kubernetes cluster name (required)`)
 	flag.StringVar(&options.AWSRegion, "aws-region", "", `AWS Region for the kubernetes cluster`)
 	flag.StringVar(&options.AWSVPCID, "aws-vpc-id", "", `AWS VPC ID for the kubernetes cluster`)
+	flag.StringVar(&options.IpFamily, "ip-family", "", `IP Family for the kubernetes cluster`)
 
 	flag.StringVar(&options.ControllerImage, "controller-image", "", `appMesh controller image. leave empty to use default one from helm chart`)
 	flag.StringVar(&options.InjectorImage, "injector-image", "", `appMesh injector image, leave empty to use default one from helm chart`)

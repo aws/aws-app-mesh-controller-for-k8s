@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
 	appmeshk8s "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/mesh"
@@ -27,6 +28,7 @@ import (
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -138,6 +140,44 @@ var _ = Describe("VirtualNode", func() {
 				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
 				Expect(err).NotTo(HaveOccurred())
 
+			})
+
+			vnName = fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			vn = vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+			vn.Spec.AWSName = aws.String(fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(256)))
+
+			By("Creating a virtual node resource in k8s with a name exceeding the character limit", func() {
+				// Not using vnTest.Create as it hangs
+				err := f.K8sClient.Create(ctx, vn)
+				observedVn := &appmesh.VirtualNode{}
+				for i := 0; i < 5; i++ {
+					if err := f.K8sClient.Get(ctx, k8s.NamespacedName(vn), observedVn); err != nil {
+						if i >= 5 {
+							Expect(err).NotTo(HaveOccurred())
+						}
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
+				vnTest.VirtualNodes[vn.Name] = vn
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Check virtual node in AWS - it should not exist", func() {
+				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
+				Expect(err).To(HaveOccurred())
+			})
+
+			By("checking events for the BadRequestException", func() {
+				clientset, err := kubernetes.NewForConfig(f.RestCfg)
+				Expect(err).NotTo(HaveOccurred())
+				events, err := clientset.CoreV1().Events(vnTest.Namespace.Name).List(ctx, metav1.ListOptions{
+					FieldSelector: fmt.Sprintf("involvedObject.name=%s", vn.Name),
+					TypeMeta: metav1.TypeMeta{
+						Kind: "Pod",
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(events.Items).NotTo(BeEmpty())
 			})
 
 			By("Set incorrect labels on namespace", func() {

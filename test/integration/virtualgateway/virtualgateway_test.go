@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,6 +13,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
 	appmeshk8s "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/mesh"
@@ -20,6 +22,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -124,6 +127,45 @@ var _ = Describe("VirtualGateway", func() {
 				err := vgTest.CheckInAWS(ctx, f, mesh, vg)
 				Expect(err).NotTo(HaveOccurred())
 
+			})
+
+			vgName = fmt.Sprintf("vg-%s", utils.RandomDNS1123Label(8))
+			listeners = []appmesh.VirtualGatewayListener{vgBuilder.BuildVGListener("http", 8080, "/")}
+			vg = vgBuilder.BuildVirtualGateway(vgName, listeners, nsSelector)
+			vg.Spec.AWSName = aws.String(fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(256)))
+
+			By("Creating a virtual gateway resource in k8s with a name exceeding the character limit", func() {
+				// Not using vgTest.Create as it will hang
+				err := f.K8sClient.Create(ctx, vg)
+				observedVg := &appmesh.VirtualGateway{}
+				for i := 0; i < 5; i++ {
+					if err := f.K8sClient.Get(ctx, k8s.NamespacedName(vg), observedVg); err != nil {
+						if i >= 5 {
+							Expect(err).NotTo(HaveOccurred())
+						}
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
+				vgTest.VirtualGateways[vg.Name] = vg
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Check virtual gateway in AWS - it should not exist", func() {
+				err := vgTest.CheckInAWS(ctx, f, mesh, vg)
+				Expect(err).To(HaveOccurred())
+			})
+
+			By("checking events for the BadRequestException", func() {
+				clientset, err := kubernetes.NewForConfig(f.RestCfg)
+				Expect(err).NotTo(HaveOccurred())
+				events, err := clientset.CoreV1().Events(vgTest.Namespace.Name).List(ctx, metav1.ListOptions{
+					FieldSelector: fmt.Sprintf("involvedObject.name=%s", vg.Name),
+					TypeMeta: metav1.TypeMeta{
+						Kind: "Pod",
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(events.Items).NotTo(BeEmpty())
 			})
 
 			By("Create a virtual gateway resource with invalid listener protocol -  it should fail", func() {

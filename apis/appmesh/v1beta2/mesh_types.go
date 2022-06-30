@@ -81,6 +81,15 @@ type MeshSpec struct {
 	// Required if the account ID is not your own.
 	// +optional
 	MeshOwner *string `json:"meshOwner,omitempty"`
+	// +optional
+	ServiceDiscovery *MeshServiceDiscovery `json:"meshServiceDiscovery,omitempty"`
+}
+
+type MeshServiceDiscovery struct {
+	// The ipPreference for the mesh.
+	// +kubebuilder:validation:Enum=IPv6_ONLY;IPv4_ONLY
+	// +optional
+	IpPreference *string `json:"ipPreference,omitempty"`
 }
 
 // MeshStatus defines the observed state of Mesh

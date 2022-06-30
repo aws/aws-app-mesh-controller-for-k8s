@@ -46,6 +46,8 @@ type envoyMutatorConfig struct {
 	statsDSocketPath           string
 	controllerVersion          string
 	k8sVersion                 string
+	useDualStackEndpoint       bool
+	enableAdminAccessIPv6      bool
 }
 
 func newEnvoyMutator(mutatorConfig envoyMutatorConfig, ms *appmesh.Mesh, vn *appmesh.VirtualNode) *envoyMutator {
@@ -113,6 +115,7 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 	meshName := m.getAugmentedMeshName()
 	virtualNodeName := aws.StringValue(m.vn.Spec.AWSName)
 	preview := m.getPreview(pod)
+	useDualStackEndpoint := m.getUseDualStackEndpoint(m.mutatorConfig.useDualStackEndpoint)
 	sdsEnabled := m.mutatorConfig.enableSDS
 	if m.mutatorConfig.enableSDS && isSDSDisabled(pod) {
 		sdsEnabled = false
@@ -146,6 +149,8 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		StatsDSocketPath:         m.mutatorConfig.statsDSocketPath,
 		ControllerVersion:        m.mutatorConfig.controllerVersion,
 		K8sVersion:               m.mutatorConfig.k8sVersion,
+		UseDualStackEndpoint:     useDualStackEndpoint,
+		EnableAdminAccessForIpv6: m.mutatorConfig.enableAdminAccessIPv6,
 	}
 }
 
@@ -245,4 +250,12 @@ func (m *envoyMutator) getVolumeMounts(pod *corev1.Pod) (map[string]string, erro
 		}
 	}
 	return volumeMounts, nil
+}
+
+func (m *envoyMutator) getUseDualStackEndpoint(useDualStackEndpoint bool) string {
+	if useDualStackEndpoint {
+		return "1"
+	} else {
+		return "0"
+	}
 }
