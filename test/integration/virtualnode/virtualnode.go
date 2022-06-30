@@ -3,6 +3,7 @@ package virtualnode
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	appsv1 "k8s.io/api/apps/v1"
@@ -22,6 +23,7 @@ type VirtualNodeTest struct {
 	Namespace         *corev1.Namespace
 	VirtualNodes      map[string]*appmesh.VirtualNode
 	Deployments       map[string]*appsv1.Deployment
+	Pods              map[string]*corev1.Pod
 	CloudMapNameSpace string
 }
 
@@ -51,8 +53,39 @@ func (m *VirtualNodeTest) Update(ctx context.Context, f *framework.Framework, ne
 	return nil
 }
 
+func (m *VirtualNodeTest) CreatePodGroup(ctx context.Context, f *framework.Framework, group manifest.PodGroupInfo) {
+	By(fmt.Sprintf("create pod group %s", group.GroupLabel), func() {
+		for _, pod := range group.Pods {
+			err := f.K8sClient.Create(ctx, pod)
+			Expect(err).NotTo(HaveOccurred())
+			m.Pods[pod.Name] = pod
+		}
+	})
+}
+
 func (m *VirtualNodeTest) Cleanup(ctx context.Context, f *framework.Framework) {
 	var deletionErrors []error
+
+	for _, pod := range m.Pods {
+		if pod == nil {
+			continue
+		}
+		By(fmt.Sprintf("delete Pod %s", pod.Name), func() {
+			if err := f.K8sClient.Delete(ctx, pod,
+				client.PropagationPolicy(metav1.DeletePropagationForeground), client.GracePeriodSeconds(0)); err != nil {
+				if apierrs.IsNotFound(err) {
+					f.Logger.Info("Pod already deleted",
+						zap.String("Pod", pod.Name))
+					return
+				}
+				f.Logger.Error("failed to delete pod",
+					zap.String("deployment", pod.Name),
+					zap.Error(err))
+				deletionErrors = append(deletionErrors, err)
+				return
+			}
+		})
+	}
 
 	for _, dp := range m.Deployments {
 		if dp == nil {
@@ -173,4 +206,8 @@ func (m *VirtualNodeTest) Cleanup(ctx context.Context, f *framework.Framework) {
 
 func (m *VirtualNodeTest) CheckInAWS(ctx context.Context, f *framework.Framework, ms *appmesh.Mesh, vn *appmesh.VirtualNode) error {
 	return f.VNManager.CheckVirtualNodeInAWS(ctx, ms, vn)
+}
+
+func (m *VirtualNodeTest) CheckInAWSWithExpectedPods(ctx context.Context, f *framework.Framework, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedRegisteredPods []*corev1.Pod) error {
+	return f.VNManager.CheckVirtualNodeInCloudMapWithExpectedRegisteredPods(ctx, ms, vn, expectedRegisteredPods)
 }

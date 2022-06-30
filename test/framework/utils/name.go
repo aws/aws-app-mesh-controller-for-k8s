@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"io"
 )
 
@@ -15,4 +16,8 @@ func RandomDNS1123Label(length int) string {
 	labelBuf := make([]byte, seedLen*2)
 	hex.Encode(labelBuf, seedBuf)
 	return string(labelBuf[:length])
+}
+
+func RandomDNS1123LabelWithPrefix(prefix string) string {
+	return fmt.Sprintf("%s-%s", prefix, RandomDNS1123Label(8))
 }
