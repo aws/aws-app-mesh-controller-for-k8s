@@ -2,8 +2,8 @@
 
 ## Common Errors
 
-### Exceeded pod count per VirtualNode limit
-AppMesh limits pod count per virtualNode. By default the limit is 10.
+### Exceeded pod count per VirtualNode/VirtualGateway limit
+AppMesh limits pod count per virtualNode and virtualGateway. By default the limit is 50.
 
 Your can adjust this limit by adjust the "Connected Envoy processes per virtual node" [service quota](https://docs.aws.amazon.com/app-mesh/latest/userguide/service-quotas.html).
 
