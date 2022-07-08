@@ -48,6 +48,26 @@ rules:
 - apiGroups:
   - appmesh.k8s.aws
   resources:
+  - backendgroups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
+  - backendgroups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - appmesh.k8s.aws
+  resources:
   - gatewayroutes
   verbs:
   - create

@@ -417,9 +417,9 @@ type VirtualNodeSpec struct {
 	// The backends that the virtual node is expected to send outbound traffic to.
 	// +optional
 	Backends []Backend `json:"backends,omitempty"`
-	// LabelSelectors that define a set of backends the virtual node is expected to send outbound traffic to.
+	// BackendGroups that define a set of backends the virtual node is expected to send outbound traffic to.
 	// +optional
-	BackendSelectors []metav1.LabelSelector `json:"backendSelectors,omitempty"`
+	BackendGroups []BackendGroupReference `json:"backendGroups,omitempty"`
 	// A reference to an object that represents the defaults for backends.
 	// +optional
 	BackendDefaults *BackendDefaults `json:"backendDefaults,omitempty"`

@@ -13,44 +13,46 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
-func NewEnqueueRequestsForVirtualServiceEvents(client client.Client, log logr.Logger) *enqueueRequestsForVirtualServiceEvents {
-	return &enqueueRequestsForVirtualServiceEvents{
+func NewEnqueueRequestsForBackendGroupEvents(client client.Client, log logr.Logger) *enqueueRequestsForBackendGroupEvents {
+	return &enqueueRequestsForBackendGroupEvents{
 		k8sClient: client,
 		log:       log,
 	}
 }
 
-var _ handler.EventHandler = (*enqueueRequestsForVirtualServiceEvents)(nil)
+var _ handler.EventHandler = (*enqueueRequestsForBackendGroupEvents)(nil)
 
-type enqueueRequestsForVirtualServiceEvents struct {
+type enqueueRequestsForBackendGroupEvents struct {
 	k8sClient client.Client
 	log       logr.Logger
 }
 
 // Create is called in response to a create event
-func (h *enqueueRequestsForVirtualServiceEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForBackendGroupEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
 	h.enqueueVirtualNodeReconciles(context.Background(), queue)
 }
 
 // Update is called in response to an update event
-func (h *enqueueRequestsForVirtualServiceEvents) Update(e event.UpdateEvent, queue workqueue.RateLimitingInterface) {
-	if reflect.DeepEqual(e.ObjectOld.GetLabels(), e.ObjectNew.GetLabels()) {
+func (h *enqueueRequestsForBackendGroupEvents) Update(e event.UpdateEvent, queue workqueue.RateLimitingInterface) {
+	bgOld := e.ObjectOld.(*appmesh.BackendGroup)
+	bgNew := e.ObjectNew.(*appmesh.BackendGroup)
+	if !reflect.DeepEqual(bgOld.Spec.VirtualServices, bgNew.Spec.VirtualServices) {
 		h.enqueueVirtualNodeReconciles(context.Background(), queue)
 	}
 }
 
 // Delete is called in response to a delete event
-func (h *enqueueRequestsForVirtualServiceEvents) Delete(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForBackendGroupEvents) Delete(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
 	// no-op
 }
 
 // Generic is called in response to an event of an unknown type or a synthetic event triggered as a cron or
 // external trigger request
-func (h *enqueueRequestsForVirtualServiceEvents) Generic(e event.GenericEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForBackendGroupEvents) Generic(e event.GenericEvent, queue workqueue.RateLimitingInterface) {
 	// no-op
 }
 
-func (h *enqueueRequestsForVirtualServiceEvents) enqueueVirtualNodeReconciles(ctx context.Context, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForBackendGroupEvents) enqueueVirtualNodeReconciles(ctx context.Context, queue workqueue.RateLimitingInterface) {
 	vnList := &appmesh.VirtualNodeList{}
 	if err := h.k8sClient.List(ctx, vnList); err != nil {
 		h.log.Error(err, "failed to enqueue virtual node reconciles")

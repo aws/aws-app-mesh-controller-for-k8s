@@ -272,6 +272,8 @@ func main() {
 	appmeshwebhook.NewVirtualServiceValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualRouterMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualRouterValidator().SetupWithManager(mgr)
+	appmeshwebhook.NewBackendGroupMutator(meshMembershipDesignator).SetupWithManager(mgr)
+	appmeshwebhook.NewBackendGroupValidator().SetupWithManager(mgr)
 	corewebhook.NewPodMutator(sidecarInjector).SetupWithManager(mgr)
 
 	// Add liveness probe
