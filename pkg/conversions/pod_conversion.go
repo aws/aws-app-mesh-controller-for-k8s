@@ -15,10 +15,10 @@ package conversions
 
 import (
 	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/cache"
 )
 
 // PodConverter implements the interface to convert k8s pod object to a stripped down
@@ -39,10 +39,19 @@ func NewPodConverter() *podConverter {
 // ConvertObject converts original pod object to stripped down pod object
 func (c *podConverter) ConvertObject(originalObj interface{}) (convertedObj interface{}, err error) {
 	pod, ok := originalObj.(*corev1.Pod)
-	if !ok {
-		return nil, fmt.Errorf("failed to convert object to pod")
+	if ok {
+		return c.stripDownPod(pod), nil
 	}
-	return c.stripDownPod(pod), nil
+
+	if deleteTombstone, ok := originalObj.(cache.DeletedFinalStateUnknown); ok {
+		pod, ok = deleteTombstone.Obj.(*corev1.Pod)
+		if ok {
+			//the object on a DeletedFinalStateUnknown will be from the cache we don't need to strip it again
+			return pod, nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed to convert object to pod")
 }
 
 // ConvertList converts the original pod list to stripped down list of pod objects

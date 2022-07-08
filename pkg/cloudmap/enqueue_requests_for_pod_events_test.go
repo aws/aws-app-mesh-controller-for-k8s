@@ -140,6 +140,25 @@ func Test_enqueueRequestsForPodEvents_Update(t *testing.T) {
 			},
 		},
 	}
+	vn2 := &appmesh.VirtualNode{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "global",
+			Name:      "vn-2",
+		},
+		Spec: appmesh.VirtualNodeSpec{
+			PodSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "othertestapp",
+				},
+			},
+			ServiceDiscovery: &appmesh.ServiceDiscovery{
+				AWSCloudMap: &appmesh.AWSCloudMapServiceDiscovery{
+					NamespaceName: "my-ns",
+					ServiceName:   "my-svc",
+				},
+			},
+		},
+	}
 
 	type env struct {
 		virtualNodes []*appmesh.VirtualNode
@@ -157,7 +176,7 @@ func Test_enqueueRequestsForPodEvents_Update(t *testing.T) {
 		{
 			name: "Pod status changed",
 			env: env{
-				virtualNodes: []*appmesh.VirtualNode{vn1},
+				virtualNodes: []*appmesh.VirtualNode{vn1, vn2},
 			},
 			args: args{
 				e: event.UpdateEvent{
@@ -195,7 +214,7 @@ func Test_enqueueRequestsForPodEvents_Update(t *testing.T) {
 		{
 			name: "Pod is Ready",
 			env: env{
-				virtualNodes: []*appmesh.VirtualNode{vn1},
+				virtualNodes: []*appmesh.VirtualNode{vn1, vn2},
 			},
 			args: args{
 				e: event.UpdateEvent{
@@ -231,6 +250,51 @@ func Test_enqueueRequestsForPodEvents_Update(t *testing.T) {
 			wantRequests: []reconcile.Request{
 				{
 					NamespacedName: k8s.NamespacedName(vn1),
+				},
+			},
+		},
+		{
+			name: "Pod labels changed",
+			env: env{
+				virtualNodes: []*appmesh.VirtualNode{vn1, vn2},
+			},
+			args: args{
+				e: event.UpdateEvent{
+					ObjectOld: &corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "test_pod1",
+							UID:  "b387048d-aba8-6235-9a11-5343764c8ab",
+							Labels: map[string]string{
+								"app": "testapp",
+							},
+						},
+					},
+					ObjectNew: &corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "test_pod1",
+							UID:  "b387048d-aba8-6235-9a11-5343764c8ab",
+							Labels: map[string]string{
+								"app": "othertestapp",
+							},
+						},
+						Status: corev1.PodStatus{
+							Phase: corev1.PodRunning,
+							Conditions: []corev1.PodCondition{
+								{
+									Type:   corev1.ContainersReady,
+									Status: corev1.ConditionTrue,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantRequests: []reconcile.Request{
+				{
+					NamespacedName: k8s.NamespacedName(vn1),
+				},
+				{
+					NamespacedName: k8s.NamespacedName(vn2),
 				},
 			},
 		},
