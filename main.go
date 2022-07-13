@@ -18,10 +18,11 @@ package main
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/service/eks"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/aws/aws-sdk-go/service/eks"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
@@ -216,6 +217,7 @@ func main() {
 	vgReconciler := appmeshcontroller.NewVirtualGatewayReconciler(mgr.GetClient(), finalizerManager, vgMembersFinalizer, vgResManager, ctrl.Log.WithName("controllers").WithName("VirtualGateway"), mgr.GetEventRecorderFor("VirtualGateway"))
 	grReconciler := appmeshcontroller.NewGatewayRouteReconciler(mgr.GetClient(), finalizerManager, grResManager, ctrl.Log.WithName("controllers").WithName("GatewayRoute"), mgr.GetEventRecorderFor("GatewayRoute"))
 	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"), mgr.GetEventRecorderFor("VirtualNode"), injectConfig.EnableBackendGroups)
+	jobReconciler := appmeshcontroller.NewJobReconciler(mgr.GetClient(), ctrl.Log)
 
 	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(
 		mgr.GetClient(),
@@ -255,6 +257,10 @@ func main() {
 	}
 	if err = cloudMapReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CloudMap")
+		os.Exit(1)
+	}
+	if err = jobReconciler.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Job")
 		os.Exit(1)
 	}
 
