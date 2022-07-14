@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/helm"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/backendgroup"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/deployment"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/gatewayroute"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/mesh"
@@ -39,6 +40,7 @@ type Framework struct {
 	VRManager   virtualrouter.Manager
 	VGManager   virtualgateway.Manager
 	GRManager   gatewayroute.Manager
+	BGManager   backendgroup.Manager
 	HelmManager helm.Manager
 
 	CloudMapClient services.CloudMap
@@ -92,6 +94,7 @@ func New(options Options) *Framework {
 		VRManager:      virtualrouter.NewManager(k8sClient, cloud.AppMesh()),
 		VGManager:      virtualgateway.NewManager(k8sClient, cloud.AppMesh()),
 		GRManager:      gatewayroute.NewManager(k8sClient, cloud.AppMesh()),
+		BGManager:      backendgroup.NewManager(k8sClient, cloud.AppMesh()),
 		CloudMapClient: cloud.CloudMap(),
 		Logger:         utils.NewGinkgoLogger(),
 		StopChan:       currContext.Done(),
