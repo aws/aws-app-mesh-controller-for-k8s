@@ -349,12 +349,14 @@ type ServiceDiscovery struct {
 
 // Format specifies the structure of the access log output
 type Format struct {
-	// Specified access log command operators output as a json object
+	// Output specified fields as a JSON object
 	// +optional
-	Json *map[string]string `json:"json"`
+	// +nullable
+	Json *map[string]string `json:"json,omitempty"`
 	// Custom format string
 	// +optional
-	Text *string `json:"text"`
+	// +nullable
+	Text *string `json:"text,omitempty"`
 }
 
 // FileAccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_FileAccessLog.html

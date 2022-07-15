@@ -896,11 +896,12 @@ spec:
                               json:
                                 additionalProperties:
                                   type: string
-                                description: Specified access log command operators
-                                  output as a json object
+                                description: Output specified fields as a JSON object
+                                nullable: true
                                 type: object
                               text:
                                 description: Custom format string
+                                nullable: true
                                 type: string
                             type: object
                           path:
