@@ -514,6 +514,19 @@ spec:
                         description: The file object to send virtual gateway access
                           logs to.
                         properties:
+                          format:
+                            description: Structured access log output format
+                            properties:
+                              json:
+                                additionalProperties:
+                                  type: string
+                                description: Specified access log command operators
+                                  output as a json object
+                                type: object
+                              text:
+                                description: Custom format string
+                                type: string
+                            type: object
                           path:
                             description: The file path to write access logs to.
                             maxLength: 255

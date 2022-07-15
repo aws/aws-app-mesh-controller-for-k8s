@@ -184,12 +184,25 @@ type VirtualGatewayListenerTLS struct {
 	Mode VirtualGatewayListenerTLSMode `json:"mode"`
 }
 
+// VirtualGatewayFormat specifies the structure of the access log output
+type VirtualGatewayFormat struct {
+	// Specified access log command operators output as a json object
+	// +optional
+	Json *map[string]string `json:"json"`
+	// Custom format string
+	// +optional
+	Text *string `json:"text"`
+}
+
 // VirtualGatewayFileAccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
 type VirtualGatewayFileAccessLog struct {
 	// The file path to write access logs to.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=255
 	Path string `json:"path"`
+	// Structured access log output format
+	// +optional
+	Format *VirtualGatewayFormat `json:"format,omitempty"`
 }
 
 // VirtualGatewayAccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
