@@ -1317,14 +1317,27 @@ spec:
                             description: Structured access log output format
                             properties:
                               json:
-                                additionalProperties:
-                                  type: string
                                 description: Output specified fields as a JSON object
-                                nullable: true
-                                type: object
+                                items:
+                                  properties:
+                                    key:
+                                      description: The name of the field in the JSON
+                                        object
+                                      maxLength: 255
+                                      minLength: 1
+                                      type: string
+                                    value:
+                                      description: The format string
+                                      maxLength: 1024
+                                      minLength: 1
+                                      type: string
+                                  required:
+                                  - key
+                                  - value
+                                  type: object
+                                type: array
                               text:
                                 description: Custom format string
-                                nullable: true
                                 type: string
                             type: object
                           path:
@@ -2224,14 +2237,27 @@ spec:
                             description: Structured access log output format
                             properties:
                               json:
-                                additionalProperties:
-                                  type: string
                                 description: Output specified fields as a JSON object
-                                nullable: true
-                                type: object
+                                items:
+                                  properties:
+                                    key:
+                                      description: The name of the field in the JSON
+                                        object
+                                      maxLength: 255
+                                      minLength: 1
+                                      type: string
+                                    value:
+                                      description: The format string
+                                      maxLength: 1024
+                                      minLength: 1
+                                      type: string
+                                  required:
+                                  - key
+                                  - value
+                                  type: object
+                                type: array
                               text:
                                 description: Custom format string
-                                nullable: true
                                 type: string
                             type: object
                           path:

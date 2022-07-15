@@ -347,15 +347,24 @@ type ServiceDiscovery struct {
 	DNS *DNSServiceDiscovery `json:"dns,omitempty"`
 }
 
+type FormatJsonAttribute struct {
+	// The name of the field in the JSON object
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	Key string `json:"key"`
+	// The format string
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=1024
+	Value string `json:"value"`
+}
+
 // Format specifies the structure of the access log output
 type Format struct {
 	// Output specified fields as a JSON object
 	// +optional
-	// +nullable
-	Json *map[string]string `json:"json,omitempty"`
+	Json []FormatJsonAttribute `json:"json,omitempty"`
 	// Custom format string
 	// +optional
-	// +nullable
 	Text *string `json:"text,omitempty"`
 }
 

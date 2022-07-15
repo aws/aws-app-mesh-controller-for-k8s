@@ -184,15 +184,24 @@ type VirtualGatewayListenerTLS struct {
 	Mode VirtualGatewayListenerTLSMode `json:"mode"`
 }
 
+type VirtualGatewayFormatJsonAttribute struct {
+	// The name of the field in the JSON object
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	Key string `json:"key"`
+	// The format string
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=1024
+	Value string `json:"value"`
+}
+
 // VirtualGatewayFormat specifies the structure of the access log output
 type VirtualGatewayFormat struct {
 	// Output specified fields as a JSON object
 	// +optional
-	// +nullable
-	Json *map[string]string `json:"json,omitempty"`
+	Json []VirtualGatewayFormatJsonAttribute `json:"json,omitempty"`
 	// Custom format string
 	// +optional
-	// +nullable
 	Text *string `json:"text,omitempty"`
 }
 
