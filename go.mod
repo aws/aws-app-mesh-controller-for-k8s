@@ -44,3 +44,5 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
 
 replace github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
+
+replace github.com/aws/aws-sdk-go => ./vendor/github.com/aws/aws-sdk-go

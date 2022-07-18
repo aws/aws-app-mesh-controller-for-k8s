@@ -280,6 +280,15 @@ func Convert_CRD_VirtualGatewayListenerTLS_To_SDK_VirtualGatewayListenerTLS(crdO
 
 func Convert_CRD_VirtualGatewayFileAccessLog_To_SDK_VirtualGatewayFileAccessLog(crdObj *appmesh.VirtualGatewayFileAccessLog, sdkObj *appmeshsdk.VirtualGatewayFileAccessLog, scope conversion.Scope) error {
 	sdkObj.Path = aws.String(crdObj.Path)
+
+	if crdObj.Format != nil {
+		sdkObj.Format = &appmeshsdk.LoggingFormat{}
+		if err := Convert_CRD_LoggingFormat_To_SDK_LoggingFormat(crdObj.Format, sdkObj.Format); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Format = nil
+	}
 	return nil
 }
 
