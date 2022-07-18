@@ -900,12 +900,10 @@ spec:
                                     key:
                                       description: The name of the field in the JSON
                                         object
-                                      maxLength: 255
                                       minLength: 1
                                       type: string
                                     value:
                                       description: The format string
-                                      maxLength: 1024
                                       minLength: 1
                                       type: string
                                   required:
