@@ -2,6 +2,7 @@ package virtualnode
 
 import (
 	"context"
+	"fmt"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
@@ -136,18 +137,31 @@ func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Cont
 	vsByKey := make(map[types.NamespacedName]*appmesh.VirtualService)
 	vsRefs := ExtractVirtualServiceReferences(vn)
 	for _, backendGroupRef := range vn.Spec.BackendGroups {
-		backendGroup := &appmesh.BackendGroup{}
-		ns := vn.GetNamespace()
-		if backendGroupRef.Namespace != nil && len(*backendGroupRef.Namespace) != 0 {
-			ns = *backendGroupRef.Namespace
-		}
-		if err := m.k8sClient.Get(context.Background(),
-			types.NamespacedName{Namespace: ns, Name: backendGroupRef.Name},
-			backendGroup); err != nil {
-			m.log.Error(err, "failed to get backendgroup "+backendGroupRef.Name)
+		// Wildcard special case
+		bgKey := references.ObjectKeyForBackendGroupReference(vn, backendGroupRef)
+		if bgKey.Name == "*" {
+			m.log.Info("Wildcard spotted!")
+			// TODO get all virtual services in bgKey.Namespace
+			var listOptions client.ListOptions
+			listOptions.Namespace = bgKey.Namespace
+			vsList := &appmesh.VirtualServiceList{}
+			if err := m.k8sClient.List(ctx, vsList, &listOptions); err != nil {
+				return nil, fmt.Errorf("could not list virtualservices for namespace: %s", bgKey.Namespace)
+			}
+			for _, vs := range vsList.Items {
+				vsRef := appmesh.VirtualServiceReference{
+					Namespace: aws.String(vs.Namespace),
+					Name:      vs.Name,
+				}
+				vsRefs = append(vsRefs, vsRef)
+			}
 			continue
 		}
-		vsRefs = append(vsRefs, backendGroup.Spec.VirtualServices...)
+		bg, err := m.referencesResolver.ResolveBackendGroupReference(ctx, vn, backendGroupRef)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to resolve backendGroupRef")
+		}
+		vsRefs = append(vsRefs, bg.Spec.VirtualServices...)
 	}
 	for _, vsRef := range vsRefs {
 		vsKey := references.ObjectKeyForVirtualServiceReference(vn, vsRef)
@@ -238,8 +252,6 @@ func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN
 		"desiredSDKVNSpec", desiredSDKVNSpec,
 		"diff", diff,
 	)
-	m.log.Info("diff:")
-	m.log.Info(diff)
 	resp, err := m.appMeshSDK.UpdateVirtualNodeWithContext(ctx, &appmeshsdk.UpdateVirtualNodeInput{
 		MeshName:        ms.Spec.AWSName,
 		MeshOwner:       ms.Spec.MeshOwner,

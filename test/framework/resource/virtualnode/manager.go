@@ -19,7 +19,6 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
 	"github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -113,7 +112,9 @@ func (m *defaultManager) CheckVirtualNodeInAWS(ctx context.Context, ms *appmesh.
 	}
 	opts := equality.CompareOptionForVirtualNodeSpec()
 	if !cmp.Equal(desiredSDKVNSpec, resp.VirtualNode.Spec, opts) {
-		return errors.New(cmp.Diff(desiredSDKVNSpec, resp.VirtualNode.Spec, opts))
+		return fmt.Errorf("Observed:\n%v\n\nExpected:\n%v\nvsRefs:\n%v\nExpected VN:\n%v",
+			resp.VirtualNode.Spec.Backends, desiredSDKVNSpec.Backends, vsRefs, vn.Spec.Backends)
+		//return errors.New(cmp.Diff(desiredSDKVNSpec, resp.VirtualNode.Spec, opts))
 	}
 
 	if vn.Spec.ServiceDiscovery.AWSCloudMap != nil {

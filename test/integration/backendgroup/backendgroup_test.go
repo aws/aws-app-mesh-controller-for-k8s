@@ -186,9 +186,6 @@ var _ = Describe("BackendGroup", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			// Reset vsTest to original namespace
-			// vsTest.Namespace = bgTest.Namespace
-
 			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
 			listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
 			backends := []types.NamespacedName{}
@@ -212,21 +209,15 @@ var _ = Describe("BackendGroup", func() {
 			}
 			expectedVN := vnBuilder.BuildVirtualNode(vnName, expectedBackends, listeners, &appmesh.BackendDefaults{})
 
-			By("Creating a virtual node resource in k8s", func() {
-				err := vnTest.Create(ctx, f, vn)
-				Expect(err).NotTo(HaveOccurred())
-			})
-
-			By("validating the virtual node in AWS", func() {
-				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
-				Expect(err).NotTo(HaveOccurred())
-
-			})
-
 			bg := bgBuilder.BuildBackendGroup(bgName, expectedBackends)
 
 			By("Creating a backend group resource in k8s", func() {
 				err := bgTest.Create(ctx, f, bg)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Creating a virtual node resource in k8s", func() {
+				err := vnTest.Create(ctx, f, vn)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -314,6 +305,109 @@ var _ = Describe("BackendGroup", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
+		})
+
+		It("Wildcard backend group scenarios", func() {
+			meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
+			mesh := &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: meshName,
+				},
+				Spec: appmesh.MeshSpec{
+					NamespaceSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"mesh": meshName,
+						},
+					},
+				},
+			}
+
+			By("creating a mesh resource in k8s", func() {
+				err := meshTest.Create(ctx, f, mesh)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validating the resources in AWS", func() {
+				err := meshTest.CheckInAWS(ctx, f, mesh)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			By("Create a namespace and add labels", func() {
+				namespace, err := f.NSManager.AllocateNamespace(ctx, "appmeshtest")
+				Expect(err).NotTo(HaveOccurred())
+				vnBuilder.Namespace = namespace.Name
+				vrBuilder.Namespace = namespace.Name
+				vsBuilder.Namespace = namespace.Name
+				bgBuilder.Namespace = namespace.Name
+				vnTest.Namespace = namespace
+				vrTest.Namespace = namespace
+				vsTest.Namespace = namespace
+				bgTest.Namespace = namespace
+
+				oldNS := namespace.DeepCopy()
+				namespace.Labels = algorithm.MergeStringMap(map[string]string{
+					"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
+					"mesh":                                   meshName,
+				}, namespace.Labels)
+
+				err = f.K8sClient.Patch(ctx, namespace, client.MergeFrom(oldNS))
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			vsName := fmt.Sprintf("vs-%s", utils.RandomDNS1123Label(8))
+			vs := vsBuilder.BuildVirtualServiceNoBackend(vsName)
+
+			By("Creating a virtual service (with no backend) resource in k8s", func() {
+				err := vsTest.Create(ctx, f, vs)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Validating the virtual service (with no backend) in AWS", func() {
+				err := vsTest.CheckInAWS(ctx, f, mesh, vs)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
+			backends := []types.NamespacedName{}
+			expectedBackends := []types.NamespacedName{
+				{
+					Namespace: vs.Namespace,
+					Name:      vs.Name,
+				},
+			}
+			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+			vn.Spec.BackendGroups = []appmesh.BackendGroupReference{
+				{
+					Namespace: aws.String(vn.Namespace),
+					Name:      "*",
+				},
+			}
+			expectedVN := vnBuilder.BuildVirtualNode(vnName, expectedBackends, listeners, &appmesh.BackendDefaults{})
+
+			By("Creating a virtualnode with a wildcard backend group", func() {
+				err := vnTest.Create(ctx, f, vn)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validating the virtual node backends", func() {
+				expectedVN.Spec.AWSName = vn.Spec.AWSName
+				retryCount := 0
+				err := wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
+					// Expected VN contains the backends in the group
+					err := vnTest.CheckInAWS(ctx, f, mesh, expectedVN)
+					if err != nil {
+						if retryCount >= utils.PollRetries {
+							return false, err
+						}
+						retryCount++
+						return false, nil
+					}
+					return true, nil
+				}, ctx.Done())
+				Expect(err).NotTo(HaveOccurred())
+			})
 		})
 
 		It("Update backend group scenarios", func() {
@@ -467,159 +561,5 @@ var _ = Describe("BackendGroup", func() {
 			})
 
 		})
-		/*
-			It("Delete virtual service scenarios", func() {
-
-				meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
-				mesh := &appmesh.Mesh{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: meshName,
-					},
-					Spec: appmesh.MeshSpec{
-						NamespaceSelector: &metav1.LabelSelector{
-							MatchLabels: map[string]string{
-								"mesh": meshName,
-							},
-						},
-					},
-				}
-
-				By("creating a mesh resource in k8s", func() {
-					err := meshTest.Create(ctx, f, mesh)
-					Expect(err).NotTo(HaveOccurred())
-				})
-
-				By("validating the resources in AWS", func() {
-					err := meshTest.CheckInAWS(ctx, f, mesh)
-					Expect(err).NotTo(HaveOccurred())
-
-				})
-
-				By("Create a namespace and add labels", func() {
-					namespace, err := f.NSManager.AllocateNamespace(ctx, "appmeshtest")
-					Expect(err).NotTo(HaveOccurred())
-					vnBuilder.Namespace = namespace.Name
-					vrBuilder.Namespace = namespace.Name
-					vsBuilder.Namespace = namespace.Name
-					vnTest.Namespace = namespace
-					vrTest.Namespace = namespace
-					vsTest.Namespace = namespace
-
-					oldNS := namespace.DeepCopy()
-					namespace.Labels = algorithm.MergeStringMap(map[string]string{
-						"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
-						"mesh":                                   meshName,
-					}, namespace.Labels)
-
-					err = f.K8sClient.Patch(ctx, namespace, client.MergeFrom(oldNS))
-					Expect(err).NotTo(HaveOccurred())
-				})
-
-				vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
-				listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
-				backends := []types.NamespacedName{}
-				vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
-
-				By("Creating a virtual node resource in k8s", func() {
-					err := vnTest.Create(ctx, f, vn)
-					Expect(err).NotTo(HaveOccurred())
-				})
-
-				By("validating the virtual node in AWS", func() {
-					err := vnTest.CheckInAWS(ctx, f, mesh, vn)
-					Expect(err).NotTo(HaveOccurred())
-
-				})
-
-				weightedTargets := []manifest.WeightedVirtualNode{{
-					VirtualNode: k8s.NamespacedName(vn),
-					Weight:      1,
-				}}
-
-				routeCfgs := []manifest.RouteToWeightedVirtualNodes{{
-					Path:            "/route-1",
-					WeightedTargets: weightedTargets,
-				},
-				}
-
-				routes := vrBuilder.BuildRoutes(routeCfgs)
-
-				vrName := fmt.Sprintf("vr-%s", utils.RandomDNS1123Label(8))
-				vrBuilder.Listeners = []appmesh.VirtualRouterListener{vrBuilder.BuildVirtualRouterListener("http", 8080)}
-
-				vr := vrBuilder.BuildVirtualRouter(vrName, routes)
-
-				By("Creating a virtual router resource in k8s", func() {
-					err := vrTest.Create(ctx, f, vr)
-					Expect(err).NotTo(HaveOccurred())
-				})
-
-				By("Validating the virtual router in AWS", func() {
-					err := vrTest.CheckInAWS(ctx, f, mesh, vr)
-					Expect(err).NotTo(HaveOccurred())
-
-				})
-
-				vsName := fmt.Sprintf("vs-%s", utils.RandomDNS1123Label(8))
-				vs := vsBuilder.BuildVirtualServiceWithRouterBackend(vsName, vr.Name)
-
-				By("Creating a virtual service resource in k8s", func() {
-					err := vsTest.Create(ctx, f, vs)
-					Expect(err).NotTo(HaveOccurred())
-				})
-
-				By("Validating the virtual service in AWS", func() {
-					err := vsTest.CheckInAWS(ctx, f, mesh, vs)
-					Expect(err).NotTo(HaveOccurred())
-
-				})
-
-				By("Check mesh finalizers", func() {
-					var wg sync.WaitGroup
-					wg.Add(1)
-
-					go func() {
-						meshTest.Cleanup(ctx, f)
-						wg.Done()
-					}()
-
-					By("Wait for deletion timestamp to appear on mesh before we check virtual service", func() {
-						res := meshTest.WaitForDeletionTimestamp(ctx, f, mesh)
-						Expect(res).To(Equal(true))
-					})
-
-					By("Check virtual service in AWS after mesh deletion - it should exist", func() {
-						err := vsTest.CheckInAWS(ctx, f, mesh, vs)
-						Expect(err).NotTo(HaveOccurred())
-					})
-
-					By("Check the mesh as the virtual service is not deleted - the mesh should exist", func() {
-						ms, err := meshTest.Get(ctx, f, mesh)
-						Expect(err).NotTo(HaveOccurred())
-
-						hasFin := appmeshk8s.HasFinalizer(ms, appmeshk8s.FinalizerAWSAppMeshResources)
-						Expect(hasFin).To(Equal(true))
-					})
-
-					By("Delete virtual service in k8s", func() {
-						vsTest.Cleanup(ctx, f)
-					})
-
-					By("Check virtual service in AWS after delete in k8s - it should not exist", func() {
-						err := vsTest.CheckInAWS(ctx, f, mesh, vs)
-						Expect(err).To(HaveOccurred())
-					})
-
-					wg.Wait()
-
-					By("Check the mesh as the virtual service has been deleted - mesh should not exist", func() {
-						_, err := meshTest.Get(ctx, f, mesh)
-						Expect(apierrs.IsNotFound(err)).To(Equal(true))
-					})
-
-				})
-
-			})
-		*/
 	})
 })

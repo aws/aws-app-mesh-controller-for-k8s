@@ -74,7 +74,7 @@ func (r *virtualNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appmesh.VirtualNode{}).
 		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
-		Watches(&source.Kind{Type: &appmesh.BackendGroup{}}, r.enqueueRequestsForBackendGroupEvents).
+		//Watches(&source.Kind{Type: &appmesh.BackendGroup{}}, r.enqueueRequestsForBackendGroupEvents).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
 		Complete(r)
 }
