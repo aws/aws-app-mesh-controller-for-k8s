@@ -283,9 +283,7 @@ func Convert_CRD_VirtualGatewayFileAccessLog_To_SDK_VirtualGatewayFileAccessLog(
 
 	if crdObj.Format != nil {
 		sdkObj.Format = &appmeshsdk.LoggingFormat{}
-		if err := Convert_CRD_LoggingFormat_To_SDK_LoggingFormat(crdObj.Format, sdkObj.Format); err != nil {
-			return err
-		}
+		Convert_CRD_LoggingFormat_To_SDK_LoggingFormat(crdObj.Format, sdkObj.Format)
 	} else {
 		sdkObj.Format = nil
 	}
