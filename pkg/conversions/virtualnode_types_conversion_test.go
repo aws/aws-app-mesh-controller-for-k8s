@@ -3791,10 +3791,6 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 	}
 }
 
-func newStringPtr(s string) *string {
-	return &s
-}
-
 func TestConvert_CRD_LoggingFormat_To_SDK_LoggingFormat(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -3804,10 +3800,10 @@ func TestConvert_CRD_LoggingFormat_To_SDK_LoggingFormat(t *testing.T) {
 		{
 			name: "text",
 			crdObj: &appmesh.LoggingFormat{
-				Text: newStringPtr("custom text"),
+				Text: aws.String("custom text"),
 			},
 			wantSDKObj: &appmeshsdk.LoggingFormat{
-				Text: newStringPtr("custom text"),
+				Text: aws.String("custom text"),
 			},
 		},
 		{
@@ -3827,12 +3823,12 @@ func TestConvert_CRD_LoggingFormat_To_SDK_LoggingFormat(t *testing.T) {
 			wantSDKObj: &appmeshsdk.LoggingFormat{
 				Json: []*appmeshsdk.JsonFormatRef{
 					{
-						Key:   newStringPtr("key"),
-						Value: newStringPtr("value"),
+						Key:   aws.String("key"),
+						Value: aws.String("value"),
 					},
 					{
-						Key:   newStringPtr("key1"),
-						Value: newStringPtr("value1"),
+						Key:   aws.String("key1"),
+						Value: aws.String("value1"),
 					},
 				},
 			},
