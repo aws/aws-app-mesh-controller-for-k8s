@@ -10,7 +10,6 @@ import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/backendgroup"
@@ -411,7 +410,6 @@ var _ = Describe("BackendGroup", func() {
 		})
 
 		It("Update backend group scenarios", func() {
-
 			meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
 			mesh := &appmesh.Mesh{
 				ObjectMeta: metav1.ObjectMeta{
@@ -443,6 +441,7 @@ var _ = Describe("BackendGroup", func() {
 				vnBuilder.Namespace = namespace.Name
 				vrBuilder.Namespace = namespace.Name
 				vsBuilder.Namespace = namespace.Name
+				bgBuilder.Namespace = namespace.Name
 				vnTest.Namespace = namespace
 				vrTest.Namespace = namespace
 				vsTest.Namespace = namespace
@@ -458,106 +457,113 @@ var _ = Describe("BackendGroup", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
+			vsName := fmt.Sprintf("vs-%s", utils.RandomDNS1123Label(8))
+			vs := vsBuilder.BuildVirtualServiceNoBackend(vsName)
+
+			By("Creating a virtual service (with no backend) resource in k8s", func() {
+				err := vsTest.Create(ctx, f, vs)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Validating the virtual service (with no backend) in AWS", func() {
+				err := vsTest.CheckInAWS(ctx, f, mesh, vs)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			vs2Name := fmt.Sprintf("vs-%s", utils.RandomDNS1123Label(8))
+			vs2 := vsBuilder.BuildVirtualServiceNoBackend(vs2Name)
+
+			By("Creating a second virtual service", func() {
+				err := vsTest.Create(ctx, f, vs2)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Validating the second virtual service in AWS", func() {
+				err := vsTest.CheckInAWS(ctx, f, mesh, vs2)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
 			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
 			listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
 			backends := []types.NamespacedName{}
+			// todo start with one backend and add the second
+			expectedBackends := []types.NamespacedName{
+				{
+					Namespace: vs.Namespace,
+					Name:      vs.Name,
+				},
+			}
 			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+			bgName := fmt.Sprintf("bg-%s", utils.RandomDNS1123Label(8))
+			vn.Spec.BackendGroups = []appmesh.BackendGroupReference{
+				{
+					Namespace: aws.String(vs.Namespace),
+					Name:      bgName,
+				},
+			}
+			expectedVN := vnBuilder.BuildVirtualNode(vnName, expectedBackends, listeners, &appmesh.BackendDefaults{})
+
+			bg := bgBuilder.BuildBackendGroup(bgName, expectedBackends)
+
+			By("Creating a backend group resource in k8s", func() {
+				err := bgTest.Create(ctx, f, bg)
+				Expect(err).NotTo(HaveOccurred())
+			})
 
 			By("Creating a virtual node resource in k8s", func() {
 				err := vnTest.Create(ctx, f, vn)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			By("validating the virtual node in AWS", func() {
-				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
+			By("validating the virtual node backends", func() {
+				expectedVN.Spec.AWSName = vn.Spec.AWSName
+				retryCount := 0
+				err := wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
+					// Expected VN contains the backends in the group
+					err := vnTest.CheckInAWS(ctx, f, mesh, expectedVN)
+					if err != nil {
+						if retryCount >= utils.PollRetries {
+							return false, err
+						}
+						retryCount++
+						return false, nil
+					}
+					return true, nil
+				}, ctx.Done())
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			weightedTargets := []manifest.WeightedVirtualNode{{
-				VirtualNode: k8s.NamespacedName(vn),
-				Weight:      1,
-			}}
+			expectedBackends = append(expectedBackends, types.NamespacedName{
+				Namespace: vs2.Namespace,
+				Name:      vs2.Name,
+			})
 
-			routeCfgs := []manifest.RouteToWeightedVirtualNodes{{
-				Path:            "/route-1",
-				WeightedTargets: weightedTargets,
-			},
-			}
+			bgName = fmt.Sprintf("bg-%s", utils.RandomDNS1123Label(8))
+			newBG := bgBuilder.BuildBackendGroup(bgName, expectedBackends)
 
-			routes := vrBuilder.BuildRoutes(routeCfgs)
-
-			vrName := fmt.Sprintf("vr-%s", utils.RandomDNS1123Label(8))
-			vrBuilder.Listeners = []appmesh.VirtualRouterListener{vrBuilder.BuildVirtualRouterListener("http", 8080)}
-
-			vr := vrBuilder.BuildVirtualRouter(vrName, routes)
-
-			By("Creating a virtual router resource in k8s", func() {
-				err := vrTest.Create(ctx, f, vr)
+			By("Updating the backend group", func() {
+				err := bgTest.Update(ctx, f, newBG, bg)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			By("Validating the virtual router in AWS", func() {
-				err := vrTest.CheckInAWS(ctx, f, mesh, vr)
+			expectedVN = vnBuilder.BuildVirtualNode(vnName, expectedBackends, listeners, &appmesh.BackendDefaults{})
+
+			By("validating the virtual node backends", func() {
+				expectedVN.Spec.AWSName = vn.Spec.AWSName
+				retryCount := 0
+				err := wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
+					// Expected VN contains the backends in the group
+					err := vnTest.CheckInAWS(ctx, f, mesh, expectedVN)
+					if err != nil {
+						if retryCount >= utils.PollRetries {
+							return false, err
+						}
+						retryCount++
+						return false, nil
+					}
+					return true, nil
+				}, ctx.Done())
 				Expect(err).NotTo(HaveOccurred())
-
-			})
-
-			vsName := fmt.Sprintf("vs-%s", utils.RandomDNS1123Label(8))
-			vs := vsBuilder.BuildVirtualServiceWithRouterBackend(vsName, vr.Name)
-
-			By("Creating a virtual service (with virtual router backend) resource in k8s", func() {
-				err := vsTest.Create(ctx, f, vs)
-				Expect(err).NotTo(HaveOccurred())
-			})
-
-			By("Validating the virtual service (with virtual router backend) in AWS", func() {
-				err := vsTest.CheckInAWS(ctx, f, mesh, vs)
-				Expect(err).NotTo(HaveOccurred())
-
-			})
-
-			By("Update AWSName for virtual service and validate it cannot be updated", func() {
-				oldVS := vsTest.VirtualServices[vs.Name].DeepCopy()
-				vsTest.VirtualServices[vs.Name].Spec.AWSName = aws.String("newVirtualServiceAWSName")
-
-				err := vsTest.Update(ctx, f, vsTest.VirtualServices[vs.Name], oldVS)
-				Expect(err).To(HaveOccurred())
-			})
-
-			By("Update backend from virtualrouter to virtualnode for virtual router and validate", func() {
-				oldVS := vsTest.VirtualServices[vs.Name].DeepCopy()
-				vsTest.VirtualServices[vs.Name].Spec.Provider = &appmesh.VirtualServiceProvider{
-					VirtualNode: &appmesh.VirtualNodeServiceProvider{
-						VirtualNodeRef: &appmesh.VirtualNodeReference{
-							Namespace: aws.String(vsTest.Namespace.Name),
-							Name:      vn.Name,
-						},
-					},
-					VirtualRouter: nil,
-				}
-
-				err := vsTest.Update(ctx, f, vsTest.VirtualServices[vs.Name], oldVS)
-				Expect(err).NotTo(HaveOccurred())
-			})
-
-			By("Validating the virtual service (with updated virtual node backend) in AWS", func() {
-				err := vsTest.CheckInAWS(ctx, f, mesh, vsTest.VirtualServices[vs.Name])
-				Expect(err).NotTo(HaveOccurred())
-
-			})
-
-			By("Update backend from virtualnode to no backend for virtual router and validate", func() {
-				oldVS := vsTest.VirtualServices[vs.Name].DeepCopy()
-				vsTest.VirtualServices[vs.Name].Spec.Provider = nil
-
-				err := vsTest.Update(ctx, f, vsTest.VirtualServices[vs.Name], oldVS)
-				Expect(err).NotTo(HaveOccurred())
-			})
-
-			By("Validating the virtual service (with updated no backend) in AWS", func() {
-				err := vsTest.CheckInAWS(ctx, f, mesh, vsTest.VirtualServices[vs.Name])
-				Expect(err).NotTo(HaveOccurred())
-
 			})
 
 		})
