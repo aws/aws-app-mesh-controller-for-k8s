@@ -3790,3 +3790,68 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 		})
 	}
 }
+
+func newStringPtr(s string) *string {
+	return &s
+}
+
+func TestConvert_CRD_LoggingFormat_To_SDK_LoggingFormat(t *testing.T) {
+	tests := []struct {
+		name       string
+		crdObj     *appmesh.LoggingFormat
+		wantSDKObj *appmeshsdk.LoggingFormat
+	}{
+		{
+			name: "text",
+			crdObj: &appmesh.LoggingFormat{
+				Text: newStringPtr("custom text"),
+			},
+			wantSDKObj: &appmeshsdk.LoggingFormat{
+				Text: newStringPtr("custom text"),
+			},
+		},
+		{
+			name: "json",
+			crdObj: &appmesh.LoggingFormat{
+				Json: []*appmesh.JsonFormatRef{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+					{
+						Key:   "key1",
+						Value: "value1",
+					},
+				},
+			},
+			wantSDKObj: &appmeshsdk.LoggingFormat{
+				Json: []*appmeshsdk.JsonFormatRef{
+					{
+						Key:   newStringPtr("key"),
+						Value: newStringPtr("value"),
+					},
+					{
+						Key:   newStringPtr("key1"),
+						Value: newStringPtr("value1"),
+					},
+				},
+			},
+		},
+		{
+			name: "empty json",
+			crdObj: &appmesh.LoggingFormat{
+				Json: []*appmesh.JsonFormatRef{},
+			},
+			wantSDKObj: &appmeshsdk.LoggingFormat{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sdkObj := &appmeshsdk.LoggingFormat{}
+			Convert_CRD_LoggingFormat_To_SDK_LoggingFormat(tt.crdObj, sdkObj)
+
+			assert.Equal(t, tt.wantSDKObj, sdkObj)
+		})
+	}
+}

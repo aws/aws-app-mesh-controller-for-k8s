@@ -599,15 +599,17 @@ func Convert_CRD_LoggingFormat_To_SDK_LoggingFormat(crdObj *appmesh.LoggingForma
 		sdkObj.Text = aws.String(*crdObj.Text)
 	}
 
-	sdkAttributes := make([]*appmeshsdk.JsonFormatRef, 0, len(crdObj.Json))
 	if len(crdObj.Json) != 0 {
+		sdkAttributes := make([]*appmeshsdk.JsonFormatRef, 0, len(crdObj.Json))
+
 		for _, crdAttribute := range crdObj.Json {
 			sdkAttribute := &appmeshsdk.JsonFormatRef{}
 			Convert_CRD_JsonFormatRef_To_SDK_JsonFormatRef(crdAttribute, sdkAttribute)
 			sdkAttributes = append(sdkAttributes, sdkAttribute)
 		}
+
+		sdkObj.Json = sdkAttributes
 	}
-	sdkObj.Json = sdkAttributes
 }
 
 func Convert_CRD_FileAccessLog_To_SDK_FileAccessLog(crdObj *appmesh.FileAccessLog, sdkObj *appmeshsdk.FileAccessLog, scope conversion.Scope) error {
