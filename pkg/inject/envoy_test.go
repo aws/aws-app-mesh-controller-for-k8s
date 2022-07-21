@@ -2745,8 +2745,9 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: &corev1.Handler{
 									Exec: &corev1.ExecAction{Command: []string{
-										"sh", "-c", "if [ -f /tmp/agent.sock ]; then APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=60 " +
-											"APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=5 /usr/bin/agent -envoyReadiness; fi",
+										"sh", "-c", "if [[ $(/usr/bin/envoy --version) =~ ([0-9]+\\.([0-9]+) && ${BASH_REMATCH[1]} -gt 2 || ${BASH_REMATCH[2]} -gt 23 ]];" +
+											"then APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=60 APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=5 /usr/bin/agent -envoyReadiness;" +
+											"else echo 'WaitUntilProxyReady is not supported in Envoy < 1.23'; fi",
 									}},
 								},
 								PreStop: &corev1.Handler{
