@@ -29,7 +29,7 @@ type enqueueRequestsForBackendGroupEvents struct {
 
 // Create is called in response to a create event
 func (h *enqueueRequestsForBackendGroupEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
-	h.enqueueVirtualNodeReconciles(context.Background(), queue)
+	h.enqueueVirtualNodesForMesh(context.Background(), queue, e.Object.(*appmesh.BackendGroup).Spec.MeshRef)
 }
 
 // Update is called in response to an update event
@@ -37,7 +37,7 @@ func (h *enqueueRequestsForBackendGroupEvents) Update(e event.UpdateEvent, queue
 	bgOld := e.ObjectOld.(*appmesh.BackendGroup)
 	bgNew := e.ObjectNew.(*appmesh.BackendGroup)
 	if !reflect.DeepEqual(bgOld.Spec.VirtualServices, bgNew.Spec.VirtualServices) {
-		h.enqueueVirtualNodeReconciles(context.Background(), queue)
+		h.enqueueVirtualNodesForMesh(context.Background(), queue, bgNew.Spec.MeshRef)
 	}
 }
 
@@ -52,13 +52,17 @@ func (h *enqueueRequestsForBackendGroupEvents) Generic(e event.GenericEvent, que
 	// no-op
 }
 
-func (h *enqueueRequestsForBackendGroupEvents) enqueueVirtualNodeReconciles(ctx context.Context, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForBackendGroupEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.RateLimitingInterface, meshRef *appmesh.MeshReference) {
 	vnList := &appmesh.VirtualNodeList{}
 	if err := h.k8sClient.List(ctx, vnList); err != nil {
-		h.log.Error(err, "failed to enqueue virtual node reconciles")
+		h.log.Error(err, "failed to enqueue virtualNodes for mesh events",
+			"mesh", meshRef.Name)
 		return
 	}
 	for _, vn := range vnList.Items {
+		if vn.Spec.MeshRef == nil || *meshRef != *vn.Spec.MeshRef {
+			continue
+		}
 		queue.Add(ctrl.Request{NamespacedName: k8s.NamespacedName(&vn)})
 	}
 }

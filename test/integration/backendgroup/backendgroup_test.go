@@ -5,7 +5,6 @@ import (
 	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
@@ -206,7 +205,6 @@ var _ = Describe("BackendGroup", func() {
 					Name:      bgName,
 				},
 			}
-			expectedVN := vnBuilder.BuildVirtualNode(vnName, expectedBackends, listeners, &appmesh.BackendDefaults{})
 
 			bg := bgBuilder.BuildBackendGroup(bgName, expectedBackends)
 
@@ -221,20 +219,7 @@ var _ = Describe("BackendGroup", func() {
 			})
 
 			By("validating the virtual node backends", func() {
-				expectedVN.Spec.AWSName = vn.Spec.AWSName
-				retryCount := 0
-				err := wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-					// Expected VN contains the backends in the group
-					err := vnTest.CheckInAWS(ctx, f, mesh, expectedVN)
-					if err != nil {
-						if retryCount >= utils.PollRetries {
-							return false, err
-						}
-						retryCount++
-						return false, nil
-					}
-					return true, nil
-				}, ctx.Done())
+				err := vnTest.ValidateBackends(ctx, f, mesh, vn, expectedBackends)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -267,8 +252,6 @@ var _ = Describe("BackendGroup", func() {
 				},
 			}
 
-			expectedVN = vnBuilder.BuildVirtualNode(vnName, expectedBackends, listeners, &appmesh.BackendDefaults{})
-
 			By("Creating a virtual node resource in k8s", func() {
 				err := f.K8sClient.Create(ctx, vn)
 				vnTest.VirtualNodes[vn.Name] = vn
@@ -285,22 +268,8 @@ var _ = Describe("BackendGroup", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			// TODO move into helper function, probably in virtualnode manager
 			By("validating the virtual node backends", func() {
-				expectedVN.Spec.AWSName = vn.Spec.AWSName
-				retryCount := 0
-				err := wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-					// Expected VN contains the backends in the group
-					err := vnTest.CheckInAWS(ctx, f, mesh, expectedVN)
-					if err != nil {
-						if retryCount >= utils.PollRetries {
-							return false, err
-						}
-						retryCount++
-						return false, nil
-					}
-					return true, nil
-				}, ctx.Done())
+				err := vnTest.ValidateBackends(ctx, f, mesh, vn, expectedBackends)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -383,7 +352,6 @@ var _ = Describe("BackendGroup", func() {
 					Name:      "*",
 				},
 			}
-			expectedVN := vnBuilder.BuildVirtualNode(vnName, expectedBackends, listeners, &appmesh.BackendDefaults{})
 
 			By("Creating a virtualnode with a wildcard backend group", func() {
 				err := vnTest.Create(ctx, f, vn)
@@ -391,20 +359,7 @@ var _ = Describe("BackendGroup", func() {
 			})
 
 			By("validating the virtual node backends", func() {
-				expectedVN.Spec.AWSName = vn.Spec.AWSName
-				retryCount := 0
-				err := wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-					// Expected VN contains the backends in the group
-					err := vnTest.CheckInAWS(ctx, f, mesh, expectedVN)
-					if err != nil {
-						if retryCount >= utils.PollRetries {
-							return false, err
-						}
-						retryCount++
-						return false, nil
-					}
-					return true, nil
-				}, ctx.Done())
+				err := vnTest.ValidateBackends(ctx, f, mesh, vn, expectedBackends)
 				Expect(err).NotTo(HaveOccurred())
 			})
 		})
@@ -486,7 +441,8 @@ var _ = Describe("BackendGroup", func() {
 			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
 			listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
 			backends := []types.NamespacedName{}
-			// todo start with one backend and add the second
+
+			// start with one backend in the group, then update the group to include a second one
 			expectedBackends := []types.NamespacedName{
 				{
 					Namespace: vs.Namespace,
@@ -501,7 +457,6 @@ var _ = Describe("BackendGroup", func() {
 					Name:      bgName,
 				},
 			}
-			expectedVN := vnBuilder.BuildVirtualNode(vnName, expectedBackends, listeners, &appmesh.BackendDefaults{})
 
 			bg := bgBuilder.BuildBackendGroup(bgName, expectedBackends)
 
@@ -516,20 +471,7 @@ var _ = Describe("BackendGroup", func() {
 			})
 
 			By("validating the virtual node backends", func() {
-				expectedVN.Spec.AWSName = vn.Spec.AWSName
-				retryCount := 0
-				err := wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-					// Expected VN contains the backends in the group
-					err := vnTest.CheckInAWS(ctx, f, mesh, expectedVN)
-					if err != nil {
-						if retryCount >= utils.PollRetries {
-							return false, err
-						}
-						retryCount++
-						return false, nil
-					}
-					return true, nil
-				}, ctx.Done())
+				err := vnTest.ValidateBackends(ctx, f, mesh, vn, expectedBackends)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -538,31 +480,21 @@ var _ = Describe("BackendGroup", func() {
 				Name:      vs2.Name,
 			})
 
-			bgName = fmt.Sprintf("bg-%s", utils.RandomDNS1123Label(8))
-			newBG := bgBuilder.BuildBackendGroup(bgName, expectedBackends)
+			oldBG := bgTest.BackendGroups[bg.Name].DeepCopy()
+			bgTest.BackendGroups[bg.Name].Spec.VirtualServices = append(
+				bgTest.BackendGroups[bg.Name].Spec.VirtualServices,
+				appmesh.VirtualServiceReference{
+					Namespace: &vs2.Namespace,
+					Name:      vs2.Name,
+				})
 
 			By("Updating the backend group", func() {
-				err := bgTest.Update(ctx, f, newBG, bg)
+				err := bgTest.Update(ctx, f, bgTest.BackendGroups[bg.Name], oldBG)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			expectedVN = vnBuilder.BuildVirtualNode(vnName, expectedBackends, listeners, &appmesh.BackendDefaults{})
-
 			By("validating the virtual node backends", func() {
-				expectedVN.Spec.AWSName = vn.Spec.AWSName
-				retryCount := 0
-				err := wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
-					// Expected VN contains the backends in the group
-					err := vnTest.CheckInAWS(ctx, f, mesh, expectedVN)
-					if err != nil {
-						if retryCount >= utils.PollRetries {
-							return false, err
-						}
-						retryCount++
-						return false, nil
-					}
-					return true, nil
-				}, ctx.Done())
+				err := vnTest.ValidateBackends(ctx, f, mesh, vn, expectedBackends)
 				Expect(err).NotTo(HaveOccurred())
 			})
 

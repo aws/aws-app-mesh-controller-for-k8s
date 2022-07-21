@@ -2,6 +2,7 @@ package virtualnode
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
@@ -19,6 +20,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,6 +34,7 @@ type Manager interface {
 	CheckVirtualNodeInAWS(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode) error
 	CheckVirtualNodeInCloudMap(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, ipFamily string) error
 	CheckVirtualNodeInCloudMapWithExpectedRegisteredPods(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedRegisteredPods []*corev1.Pod) error
+	ValidateVirtualNodeBackends(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedBackends []types.NamespacedName) error
 }
 
 func NewManager(k8sClient client.Client, appMeshSDK services.AppMesh, cloudMapSDK services.CloudMap, ipFamily string) Manager {
@@ -124,6 +127,58 @@ func (m *defaultManager) CheckVirtualNodeInAWS(ctx context.Context, ms *appmesh.
 	}
 
 	return nil
+}
+
+func (m *defaultManager) ValidateVirtualNodeBackends(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedBackends []types.NamespacedName) error {
+	retryCount := 0
+	err := wait.PollImmediateUntil(utils.PollIntervalShort, func() (bool, error) {
+		err := m.checkVirtualNodeBackends(ctx, ms, vn, expectedBackends)
+		if err != nil {
+			if retryCount >= utils.PollRetries {
+				return false, err
+			}
+			retryCount++
+			return false, nil
+		}
+		return true, nil
+	}, ctx.Done())
+	return err
+}
+
+func (m *defaultManager) checkVirtualNodeBackends(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedBackends []types.NamespacedName) error {
+	vsByKey := make(map[types.NamespacedName]*appmesh.VirtualService)
+	for _, backend := range expectedBackends {
+		vsRef := appmesh.VirtualServiceReference{
+			Namespace: &backend.Namespace,
+			Name:      backend.Name,
+		}
+		vs := &appmesh.VirtualService{}
+		if err := m.k8sClient.Get(ctx, references.ObjectKeyForVirtualServiceReference(vn, vsRef), vs); err != nil {
+			return err
+		}
+		vsByKey[k8s.NamespacedName(vs)] = vs
+	}
+	desiredSDKVNSpec, err := virtualnode.BuildSDKVirtualNodeSpec(vn, vsByKey)
+	if err != nil {
+		return err
+	}
+	resp, err := m.appMeshSDK.DescribeVirtualNodeWithContext(ctx, &appmeshsdk.DescribeVirtualNodeInput{
+		MeshName:        ms.Spec.AWSName,
+		MeshOwner:       ms.Spec.MeshOwner,
+		VirtualNodeName: vn.Spec.AWSName,
+	})
+	if err != nil {
+		return err
+	}
+
+	less := func(a, b appmeshsdk.Backend) bool {
+		return *a.VirtualService.VirtualServiceName < *b.VirtualService.VirtualServiceName
+	}
+	if cmp.Equal(desiredSDKVNSpec.Backends, resp.VirtualNode.Spec.Backends, cmpopts.SortSlices(less)) {
+		return nil
+	}
+
+	return errors.New(cmp.Diff(desiredSDKVNSpec.Backends, resp.VirtualNode.Spec.Backends, cmpopts.SortSlices(less)))
 }
 
 func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, ipFamily string) error {
