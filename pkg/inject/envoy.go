@@ -111,6 +111,7 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		mutateSDSMounts(pod, &container, m.mutatorConfig.sdsUdsPath)
 	}
 
+	// waitUntilProxyReady requires starting sidecar container first
 	if m.mutatorConfig.waitUntilProxyReady {
 		pod.Spec.Containers = append([]corev1.Container{container}, pod.Spec.Containers...)
 	} else {
