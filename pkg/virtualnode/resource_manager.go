@@ -140,8 +140,6 @@ func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Cont
 		// Wildcard special case
 		bgKey := references.ObjectKeyForBackendGroupReference(vn, backendGroupRef)
 		if bgKey.Name == "*" {
-			m.log.Info("Wildcard spotted!")
-			// TODO get all virtual services in bgKey.Namespace
 			var listOptions client.ListOptions
 			listOptions.Namespace = bgKey.Namespace
 			vsList := &appmesh.VirtualServiceList{}

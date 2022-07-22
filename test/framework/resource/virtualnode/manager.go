@@ -115,9 +115,7 @@ func (m *defaultManager) CheckVirtualNodeInAWS(ctx context.Context, ms *appmesh.
 	}
 	opts := equality.CompareOptionForVirtualNodeSpec()
 	if !cmp.Equal(desiredSDKVNSpec, resp.VirtualNode.Spec, opts) {
-		return fmt.Errorf("Observed:\n%v\n\nExpected:\n%v\nvsRefs:\n%v\nExpected VN:\n%v",
-			resp.VirtualNode.Spec.Backends, desiredSDKVNSpec.Backends, vsRefs, vn.Spec.Backends)
-		//return errors.New(cmp.Diff(desiredSDKVNSpec, resp.VirtualNode.Spec, opts))
+		return errors.New(cmp.Diff(desiredSDKVNSpec, resp.VirtualNode.Spec, opts))
 	}
 
 	if vn.Spec.ServiceDiscovery.AWSCloudMap != nil {
