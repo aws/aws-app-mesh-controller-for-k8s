@@ -39,3 +39,5 @@ replace k8s.io/apimachinery => k8s.io/apimachinery v0.21.2
 replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.21.2
 
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.5.13
+
+replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
