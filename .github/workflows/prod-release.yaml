@@ -93,6 +93,19 @@ jobs:
           docker tag ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64 ${{ secrets.PROD_MXP_AWS_ACCOUNT }}.dkr.ecr.eu-south-1.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
           docker push ${{ secrets.PROD_MXP_AWS_ACCOUNT }}.dkr.ecr.eu-south-1.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}
           docker push ${{ secrets.PROD_MXP_AWS_ACCOUNT }}.dkr.ecr.eu-south-1.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
+      - name: Configure AWS Credentials (prod-CGK)
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.PROD_CGK_AWS_ROLE }}
+          role-session-name: ControllerProdRelease
+      - name: Push docker images (CGK)
+        run: |
+          aws ecr get-login-password --region ap-southeast-3 | docker login --username AWS --password-stdin ${{ secrets.PROD_CGK_AWS_ACCOUNT }}.dkr.ecr.ap-southeast-3.amazonaws.com
+          docker tag ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }} ${{ secrets.PROD_CGK_AWS_ACCOUNT }}.dkr.ecr.ap-southeast-3.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}
+          docker tag ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64 ${{ secrets.PROD_CGK_AWS_ACCOUNT }}.dkr.ecr.ap-southeast-3.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
+          docker push ${{ secrets.PROD_CGK_AWS_ACCOUNT }}.dkr.ecr.ap-southeast-3.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}
+          docker push ${{ secrets.PROD_CGK_AWS_ACCOUNT }}.dkr.ecr.ap-southeast-3.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
       - name: Configure AWS Credentials (prod-BJS)
         uses: aws-actions/configure-aws-credentials@v1
         with:
