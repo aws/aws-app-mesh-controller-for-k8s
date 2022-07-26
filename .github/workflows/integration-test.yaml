@@ -36,7 +36,7 @@ jobs:
       - name: configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ secrets.CI_AWS_ROLE }}
+          role-to-assume: arn:aws:iam::115811320858:role/AWSAppMeshControllerGithubRunner
           aws-region: us-west-2
       - name: setup kind and run integration tests
         run: make integration-test
