@@ -24,6 +24,9 @@ jobs:
         with:
           go-version: '1.16.*'
         id: go
+      - name: install controller-gen
+        run: |
+          go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1
       - name: setup environment
         run: |
           source ~/.bashrc
