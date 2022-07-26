@@ -19,6 +19,11 @@ jobs:
       - name: clean work dir from previous runs
         run: |
           rm -rf *
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::115811320858:role/AWSAppMeshControllerGithubRunner
+          aws-region: us-west-2
       - name: setup go 1.16
         uses: actions/setup-go@v3
         with:
@@ -32,11 +37,6 @@ jobs:
           source ~/.bashrc
       - name: checkout code
         uses: actions/checkout@v2
-      - name: configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::115811320858:role/AWSAppMeshControllerGithubRunner
-          aws-region: us-west-2
       - name: setup kind and run integration tests
         run: make integration-test
   cleanup:
