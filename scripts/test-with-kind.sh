@@ -10,8 +10,8 @@ SCRIPTS_DIR=$(cd "$(dirname "$0")" || exit 1; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
 INT_TEST_DIR="$ROOT_DIR/test/integration"
 
-AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-""}
-AWS_REGION=${AWS_REGION:-"us-west-2"}
+#AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-""}
+#AWS_REGION=${AWS_REGION:-"us-west-2"}
 IMAGE_NAME=amazon/appmesh-controller
 ECR_URL=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 IMAGE=${ECR_URL}/${IMAGE_NAME}
@@ -38,11 +38,12 @@ check_is_installed controller-gen "You can install controller-gen with the helpe
 
 
 function setup_kind_cluster {
-    TEST_ID=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
-    CLUSTER_NAME_BASE=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
-    CLUSTER_NAME="appmesh-test-$CLUSTER_NAME_BASE"-"${TEST_ID}"
-    TMP_DIR=$ROOT_DIR/build/tmp-$CLUSTER_NAME
-    $SCRIPTS_DIR/provision-kind-cluster.sh "${CLUSTER_NAME}" -v "${K8S_VERSION}"
+    #TEST_ID=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
+    #CLUSTER_NAME_BASE=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
+    #CLUSTER_NAME="appmesh-test-$CLUSTER_NAME_BASE"-"${TEST_ID}"
+    #TMP_DIR=$ROOT_DIR/build/tmp-$CLUSTER_NAME
+    #$SCRIPTS_DIR/provision-kind-cluster.sh "${CLUSTER_NAME}" -v "${K8S_VERSION}"
+    $SCRIPTS_DIR/create-kind-cluster-with-registry.sh
 }
 
 function install_crds {
@@ -53,8 +54,9 @@ function install_crds {
 
 function build_and_publish_controller {
        echo -n "building and publishing appmesh controller  ... "
-       AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make docker-build
-       AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make docker-push
+       docker buildx build --platform linux/amd64 -t $(IMAGE) . --load
+       # AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make docker-build
+       # AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make docker-push
        echo "ok."
 }
 
@@ -99,19 +101,20 @@ function clean_up {
 
 trap "clean_up" EXIT
 
-aws_check_credentials
+#aws_check_credentials
 
-if [ -z "$AWS_ACCOUNT_ID" ]; then
-    AWS_ACCOUNT_ID=$( aws_account_id )
-fi
+#if [ -z "$AWS_ACCOUNT_ID" ]; then
+#    AWS_ACCOUNT_ID=$( aws_account_id )
+#fi
 
-ecr_login $AWS_REGION $ECR_URL
+#ecr_login $AWS_REGION $ECR_URL
 
 # Build and publish the controller image
-build_and_publish_controller
+# build_and_publish_controller
 
 setup_kind_cluster
-export KUBECONFIG="${TMP_DIR}/kubeconfig"
+# export KUBECONFIG="${TMP_DIR}/kubeconfig"
+build_and_publish_controller
 
 # Generate and install CRDs
 install_crds
