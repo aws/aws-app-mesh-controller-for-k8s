@@ -22,7 +22,7 @@ jobs:
       - name: configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::115811320858:role/AWSAppMeshControllerGithubRunner
+          role-to-assume: ${{ secrets.BETA_AWS_ROLE }}
           aws-region: us-west-2
       - name: setup go 1.16
         uses: actions/setup-go@v3
