@@ -341,10 +341,10 @@ func BuildSDKVirtualNodeSpec(vn *appmesh.VirtualNode, vsByKey map[types.Namespac
 		return sdkVSRefConvertFunc(a.(*appmesh.VirtualServiceReference), b.(*string), scope)
 	})
 	sdkVNSpec := &appmeshsdk.VirtualNodeSpec{}
-	newSpec := vn.Spec.DeepCopy()
-	newSpec.Backends = []appmesh.Backend{}
+	tempSpec := vn.Spec.DeepCopy()
+	tempSpec.Backends = []appmesh.Backend{}
 	for _, vs := range vsByKey {
-		newSpec.Backends = append(newSpec.Backends, appmesh.Backend{
+		tempSpec.Backends = append(tempSpec.Backends, appmesh.Backend{
 			VirtualService: appmesh.VirtualServiceBackend{
 				VirtualServiceRef: &appmesh.VirtualServiceReference{
 					Namespace: aws.String(vs.Namespace),
@@ -353,7 +353,7 @@ func BuildSDKVirtualNodeSpec(vn *appmesh.VirtualNode, vsByKey map[types.Namespac
 			},
 		})
 	}
-	if err := converter.Convert(newSpec, sdkVNSpec, nil); err != nil {
+	if err := converter.Convert(tempSpec, sdkVNSpec, nil); err != nil {
 		return nil, err
 	}
 	return sdkVNSpec, nil
