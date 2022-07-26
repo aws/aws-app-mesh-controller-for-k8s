@@ -29,7 +29,8 @@ type enqueueRequestsForBackendGroupEvents struct {
 
 // Create is called in response to a create event
 func (h *enqueueRequestsForBackendGroupEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
-	h.enqueueVirtualNodesForMesh(context.Background(), queue, e.Object.(*appmesh.BackendGroup).Spec.MeshRef)
+	bg := e.Object.(*appmesh.BackendGroup)
+	h.enqueueVirtualNodesForMesh(context.Background(), queue, bg.Spec.MeshRef, bg)
 }
 
 // Update is called in response to an update event
@@ -37,7 +38,7 @@ func (h *enqueueRequestsForBackendGroupEvents) Update(e event.UpdateEvent, queue
 	bgOld := e.ObjectOld.(*appmesh.BackendGroup)
 	bgNew := e.ObjectNew.(*appmesh.BackendGroup)
 	if !reflect.DeepEqual(bgOld.Spec.VirtualServices, bgNew.Spec.VirtualServices) {
-		h.enqueueVirtualNodesForMesh(context.Background(), queue, bgNew.Spec.MeshRef)
+		h.enqueueVirtualNodesForMesh(context.Background(), queue, bgNew.Spec.MeshRef, bgNew)
 	}
 }
 
@@ -52,10 +53,11 @@ func (h *enqueueRequestsForBackendGroupEvents) Generic(e event.GenericEvent, que
 	// no-op
 }
 
-func (h *enqueueRequestsForBackendGroupEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.RateLimitingInterface, meshRef *appmesh.MeshReference) {
+func (h *enqueueRequestsForBackendGroupEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.RateLimitingInterface, meshRef *appmesh.MeshReference,
+	backendGroup *appmesh.BackendGroup) {
 	vnList := &appmesh.VirtualNodeList{}
 	if err := h.k8sClient.List(ctx, vnList); err != nil {
-		h.log.Error(err, "failed to enqueue virtualNodes for mesh events",
+		h.log.Error(err, "failed to enqueue virtualNodes for backend group events",
 			"mesh", meshRef.Name)
 		return
 	}
@@ -63,6 +65,11 @@ func (h *enqueueRequestsForBackendGroupEvents) enqueueVirtualNodesForMesh(ctx co
 		if vn.Spec.MeshRef == nil || *meshRef != *vn.Spec.MeshRef {
 			continue
 		}
-		queue.Add(ctrl.Request{NamespacedName: k8s.NamespacedName(&vn)})
+		for _, bg := range vn.Spec.BackendGroups {
+			if bg.Name == backendGroup.Name && bg.Namespace != nil && *bg.Namespace == backendGroup.Namespace {
+				queue.Add(ctrl.Request{NamespacedName: k8s.NamespacedName(&vn)})
+				break
+			}
+		}
 	}
 }

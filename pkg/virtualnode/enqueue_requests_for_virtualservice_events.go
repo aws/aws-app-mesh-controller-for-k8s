@@ -28,7 +28,7 @@ type enqueueRequestsForVirtualServiceEvents struct {
 
 // Create is called in response to a create event
 func (h *enqueueRequestsForVirtualServiceEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
-	h.enqueueVirtualNodesForMesh(context.Background(), queue, e.Object.(*appmesh.VirtualService).Spec.MeshRef)
+	h.enqueueVirtualNodesForMesh(context.Background(), queue, e.Object.(*appmesh.VirtualService).Spec.MeshRef, e.Object.(*appmesh.VirtualService))
 }
 
 // Update is called in response to an update event
@@ -47,10 +47,11 @@ func (h *enqueueRequestsForVirtualServiceEvents) Generic(e event.GenericEvent, q
 	// no-op
 }
 
-func (h *enqueueRequestsForVirtualServiceEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.RateLimitingInterface, meshRef *appmesh.MeshReference) {
+func (h *enqueueRequestsForVirtualServiceEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.RateLimitingInterface, meshRef *appmesh.MeshReference,
+	vs *appmesh.VirtualService) {
 	vnList := &appmesh.VirtualNodeList{}
 	if err := h.k8sClient.List(ctx, vnList); err != nil {
-		h.log.Error(err, "failed to enqueue virtualNodes for mesh events",
+		h.log.Error(err, "failed to enqueue virtualNodes for virtual service events",
 			"mesh", meshRef.Name)
 		return
 	}
@@ -58,6 +59,11 @@ func (h *enqueueRequestsForVirtualServiceEvents) enqueueVirtualNodesForMesh(ctx 
 		if vn.Spec.MeshRef == nil || *meshRef != *vn.Spec.MeshRef {
 			continue
 		}
-		queue.Add(ctrl.Request{NamespacedName: k8s.NamespacedName(&vn)})
+		for _, bg := range vn.Spec.BackendGroups {
+			if bg.Name == "*" && bg.Namespace != nil && *bg.Namespace == vs.Namespace {
+				queue.Add(ctrl.Request{NamespacedName: k8s.NamespacedName(&vn)})
+				break
+			}
+		}
 	}
 }

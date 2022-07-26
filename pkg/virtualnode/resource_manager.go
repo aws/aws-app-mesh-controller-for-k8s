@@ -153,13 +153,13 @@ func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Cont
 				}
 				vsRefs = append(vsRefs, vsRef)
 			}
-			continue
+		} else {
+			bg, err := m.referencesResolver.ResolveBackendGroupReference(ctx, vn, backendGroupRef)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to resolve backendGroupRef")
+			}
+			vsRefs = append(vsRefs, bg.Spec.VirtualServices...)
 		}
-		bg, err := m.referencesResolver.ResolveBackendGroupReference(ctx, vn, backendGroupRef)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to resolve backendGroupRef")
-		}
-		vsRefs = append(vsRefs, bg.Spec.VirtualServices...)
 	}
 	for _, vsRef := range vsRefs {
 		vsKey := references.ObjectKeyForVirtualServiceReference(vn, vsRef)
