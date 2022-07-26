@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -150,13 +151,13 @@ type DynamicStack struct {
 }
 
 // expects the stack can be deployed to namespace successfully
-func (s *DynamicStack) Deploy(ctx context.Context, f *framework.Framework) {
+func (s *DynamicStack) Deploy(ctx context.Context, f *framework.Framework, basePath string) {
 	s.createMeshAndNamespace(ctx, f)
 	if s.ServiceDiscoveryType == manifest.CloudMapServiceDiscovery {
 		s.createCloudMapNamespace(ctx, f)
 		time.Sleep(1 * time.Minute)
 	}
-	s.createConfigMap(ctx, f)
+	s.createConfigMap(ctx, f, basePath)
 	mb := &manifest.ManifestBuilder{
 		Namespace:            s.namespace.Name,
 		ServiceDiscoveryType: s.ServiceDiscoveryType,
@@ -256,13 +257,15 @@ func (s *DynamicStack) Check(ctx context.Context, f *framework.Framework) {
 	Expect(len(checkErrors)).To(BeZero())
 }
 
-func (s *DynamicStack) createConfigMap(ctx context.Context, f *framework.Framework) {
+func (s *DynamicStack) createConfigMap(ctx context.Context, f *framework.Framework, basePath string) {
 	By("create ConfigMap", func() {
-		handler_driver_content, handler_driver_err := ioutil.ReadFile("/Users/eavishal/appmesh/AppMeshLoadTester/scripts/request_handler_driver.sh")
+		handler_driver_path := filepath.Join(basePath, "scripts", "request_handler_driver.sh")
+		handler_driver_content, handler_driver_err := ioutil.ReadFile(handler_driver_path)
 		if handler_driver_err != nil {
 			fmt.Println(handler_driver_err)
 		}
-		handler_content, handler_err := ioutil.ReadFile("/Users/eavishal/appmesh/AppMeshLoadTester/scripts/request_handler.py")
+		handler_path := filepath.Join(basePath, "scripts", "request_handler.py")
+		handler_content, handler_err := ioutil.ReadFile(handler_path)
 		if handler_err != nil {
 			fmt.Println(handler_err)
 		}

@@ -2,92 +2,132 @@ package load
 
 import (
 	"context"
+	"encoding/json"
+	"flag"
 	"fmt"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/fishapp"
-	"time"
-
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	. "github.com/onsi/ginkgo"
-	"go.uber.org/zap"
+	"io/ioutil"
+	"os/exec"
+	"path/filepath"
+	"time"
 )
 
-func initParams() (fishapp.DynamicStack, []*fishapp.DynamicStack) {
-	var stackPrototype fishapp.DynamicStack
-	var stacksPendingCleanUp []*fishapp.DynamicStack
+var basePath string
+var configPath string
+var loadDriverPath string
 
-	stackPrototype = fishapp.DynamicStack{
-		IsTLSEnabled: true,
+func init() {
+	flag.StringVar(&basePath, "base-path", "/Users/eavishal/appmesh/AppMeshLoadTester/", "Load Driver base path")
+	configPath = filepath.Join(basePath, "config.json")
+	loadDriverPath = filepath.Join(basePath, "scripts", "load_driver.py")
+}
+
+type Config struct {
+	IsTLSEnabled                bool                `json:"isTLSEnabled"`
+	IsmTLSEnabled               bool                `json:"ismTLSEnabled"`
+	RoutesCountPerVirtualRouter int                 `json:"RoutesCountPerVirtualRouter"`
+	BackendsCountPerVirtualNode int                 `json:"BackendsCountPerVirtualNode"`
+	ReplicasPerVirtualNode      int32               `json:"ReplicasPerVirtualNode"`
+	ConnectivityCheckPerURL     int                 `json:"ConnectivityCheckPerURL"`
+	Backends_map                map[string][]string `json:"backends_map"`
+	Load_tests                  []map[string]string `json:"load_tests"`
+	Metrics                     map[string]string   `json:"metrics"`
+}
+
+func readDriverConfig(configPath string) Config {
+	var config Config
+	file, fileErr := ioutil.ReadFile(configPath)
+	if fileErr != nil {
+		panic(fileErr)
+	}
+	if jsonErr := json.Unmarshal([]byte(file), &config); jsonErr != nil {
+		panic(jsonErr)
+	}
+
+	return config
+}
+
+func createResourcesStack(config Config) (DynamicStack, []*DynamicStack) {
+	var stackPrototype DynamicStack
+	var stacksPendingCleanUp []*DynamicStack
+
+	stackPrototype = DynamicStack{
+		IsTLSEnabled: config.IsTLSEnabled,
 		//Please set "enable-sds" to true in controller, prior to enabling this.
 		//*TODO* Rename it to include SDS in it's name once we convert file based TLS test -> file based mTLS test.
-		IsmTLSEnabled:               false,
-		VirtualServicesCount:        5,
-		VirtualNodesCount:           5,
-		RoutesCountPerVirtualRouter: 2,
-		TargetsCountPerRoute:        4,
-		BackendsCountPerVirtualNode: 2,
-		ReplicasPerVirtualNode:      3,
-		ConnectivityCheckPerURL:     400,
+		IsmTLSEnabled:               config.IsmTLSEnabled,
+		VirtualServicesCount:        2,
+		VirtualNodesCount:           2,
+		RoutesCountPerVirtualRouter: config.RoutesCountPerVirtualRouter,
+		TargetsCountPerRoute:        1,
+		BackendsCountPerVirtualNode: config.BackendsCountPerVirtualNode,
+		ReplicasPerVirtualNode:      config.ReplicasPerVirtualNode,
+		ConnectivityCheckPerURL:     config.ConnectivityCheckPerURL,
 	}
 	stacksPendingCleanUp = nil
 
 	return stackPrototype, stacksPendingCleanUp
 }
 
-func upgradeControllerInjector(stackDefault fishapp.DynamicStack, stackPrototype fishapp.DynamicStack, stacksPendingCleanUp []*fishapp.DynamicStack, ctx context.Context, f *framework.Framework) {
+func upgradeControllerInjector(stackDefault DynamicStack, stackPrototype DynamicStack, stacksPendingCleanUp []*DynamicStack, ctx context.Context, f *framework.Framework) []*DynamicStack {
 	if f.Options.ControllerImage != "" || f.Options.InjectorImage != "" {
 		if f.Options.ControllerImage != "" {
-			fmt.Sprintf("upgrade cluster into new controller")
+			fmt.Println(fmt.Sprintf("upgrade cluster into new controller"))
 			f.HelmManager.UpgradeAppMeshController(f.Options.ControllerImage)
 		}
 		if f.Options.InjectorImage != "" {
-			fmt.Sprintf("upgrade cluster into new injector")
+			fmt.Println(fmt.Sprintf("upgrade cluster into new injector"))
 			f.HelmManager.UpgradeAppMeshInjector(f.Options.InjectorImage)
 		}
 
-		fmt.Sprintf("sleep 1 minute to give controller/injector a break")
+		fmt.Println(fmt.Sprintf("sleep 1 minute to give controller/injector a break"))
 		time.Sleep(1 * time.Minute)
 
-		fmt.Sprintf("check stack behavior on cluster with upgraded controller/injector")
+		fmt.Println(fmt.Sprintf("check stack behavior on cluster with upgraded controller/injector"))
 		stackDefault.Check(ctx, f)
 
 		stackNew := stackPrototype
-		fmt.Sprintf("deploy new stack into cluster with upgraded controller/injector")
+		fmt.Println(fmt.Sprintf("deploy new stack into cluster with upgraded controller/injector"))
 		stacksPendingCleanUp = append(stacksPendingCleanUp, &stackNew)
-		stackNew.Deploy(ctx, f)
+		stackNew.Deploy(ctx, f, basePath)
 
-		fmt.Sprintf("sleep 1 minute to give controller/injector a break")
+		fmt.Println(fmt.Sprintf("sleep 1 minute to give controller/injector a break"))
 		time.Sleep(1 * time.Minute)
 
-		fmt.Sprintf("check new stack behavior on cluster with upgraded controller/injector")
+		fmt.Println(fmt.Sprintf("check new stack behavior on cluster with upgraded controller/injector"))
 		stackNew.Check(ctx, f)
 	}
+	return stacksPendingCleanUp
 }
 
-func spinUpResources(stackPrototype fishapp.DynamicStack, stacksPendingCleanUp []*fishapp.DynamicStack, sdType manifest.ServiceDiscoveryType, checkConnectivity bool, ctx context.Context, f *framework.Framework) {
+func spinUpResources(stackPrototype DynamicStack, stacksPendingCleanUp []*DynamicStack, sdType manifest.ServiceDiscoveryType, checkConnectivity bool, ctx context.Context, f *framework.Framework) []*DynamicStack {
 	//for _, sdType := range []manifest.ServiceDiscoveryType{manifest.DNSServiceDiscovery, manifest.CloudMapServiceDiscovery} {
-	fmt.Sprintf("Service discovery type -: %v", sdType)
+	fmt.Println(fmt.Sprintf("Service discovery type -: %v", sdType))
 	stackPrototype.ServiceDiscoveryType = sdType
 	stackDefault := stackPrototype
 
-	fmt.Sprintf("deploy stack into cluster with default controller/injector")
+	fmt.Println("deploy stack into cluster with default controller/injector")
 	stacksPendingCleanUp = append(stacksPendingCleanUp, &stackDefault)
-	stackDefault.Deploy(ctx, f)
+	stackDefault.Deploy(ctx, f, basePath)
 
-	fmt.Sprintf("sleep 1 minute to give controller/injector a break")
+	fmt.Println("sleep 1 minute to give controller/injector a break")
 	time.Sleep(1 * time.Minute)
 
-	//fmt.Sprintf("stackDefault -:")
 	if checkConnectivity {
-		fmt.Sprintf("Checking stack behavior/connectivity on cluster with default controller/injector")
+		fmt.Println(fmt.Sprintf("Checking stack behavior/connectivity on cluster with default controller/injector"))
 		stackDefault.Check(ctx, f)
 	}
 
-	fmt.Sprintf("Entering upgradeControllerInjector")
-	upgradeControllerInjector(stackDefault, stackPrototype, stacksPendingCleanUp, ctx, f)
+	fmt.Println("Entering upgradeControllerInjector")
+	stacksPendingCleanUp = upgradeControllerInjector(stackDefault, stackPrototype, stacksPendingCleanUp, ctx, f)
+
+	return stacksPendingCleanUp
 }
 
-func spinDownResources(stacksPendingCleanUp []*fishapp.DynamicStack, ctx context.Context, f *framework.Framework) {
+func spinDownResources(stacksPendingCleanUp []*DynamicStack, ctx context.Context, f *framework.Framework) {
+	fmt.Println("Length of stacksPendingCleanUp = ", len(stacksPendingCleanUp))
 	for _, stack := range stacksPendingCleanUp {
 		stack.Cleanup(ctx, f)
 	}
@@ -96,46 +136,34 @@ func spinDownResources(stacksPendingCleanUp []*fishapp.DynamicStack, ctx context
 var _ = Describe("Running Load Test Driver", func() {
 	var ctx context.Context
 	var f *framework.Framework
+
 	Context("normal test dimensions", func() {
-		var stackPrototype fishapp.DynamicStack
-		var stacksPendingCleanUp []*fishapp.DynamicStack
+		var stackPrototype DynamicStack
+		var stacksPendingCleanUp []*DynamicStack
+
+		fmt.Println("Reading config from -: ", configPath)
+		config := readDriverConfig(configPath)
 
 		BeforeEach(func() {
 			ctx = context.Background()
 			f = framework.New(framework.GlobalOptions)
-			stackPrototype, stacksPendingCleanUp = initParams()
-
-			//stackPrototype = fishapp.DynamicStack{
-			//	IsTLSEnabled: true,
-			//	//Please set "enable-sds" to true in controller, prior to enabling this.
-			//	//*TODO* Rename it to include SDS in it's name once we convert file based TLS test -> file based mTLS test.
-			//	IsmTLSEnabled:               false,
-			//	VirtualServicesCount:        5,
-			//	VirtualNodesCount:           5,
-			//	RoutesCountPerVirtualRouter: 2,
-			//	TargetsCountPerRoute:        4,
-			//	BackendsCountPerVirtualNode: 2,
-			//	ReplicasPerVirtualNode:      3,
-			//	ConnectivityCheckPerURL:     400,
-			//}
-			//stacksPendingCleanUp = nil
+			stackPrototype, stacksPendingCleanUp = createResourcesStack(config)
 		})
 
-		f.Logger.Info("stackPrototype Values -: ", zap.Int("VirtualServicesCount", stackPrototype.VirtualServicesCount), zap.Int("VirtualNodesCount", stackPrototype.VirtualNodesCount))
 		sdType := manifest.DNSServiceDiscovery
 
 		It(fmt.Sprintf("should behaves correctly with service discovery type %v", sdType), func() {
 
 			checkConnectivity := false
-			spinUpResources(stackPrototype, stacksPendingCleanUp, sdType, checkConnectivity, ctx, f)
-			fmt.Sprintf("should behaves correctly with service discovery type %v", stackPrototype.ServiceDiscoveryType)
-			//sleep_duration := 6 * time.Hour
-			//fmt.Printf("Sleeping %d mins", sleep_duration)
-			//time.Sleep(sleep_duration)
+			stacksPendingCleanUp = spinUpResources(stackPrototype, stacksPendingCleanUp, sdType, checkConnectivity, ctx, f)
 
 			// Run Python load driver script
-			//err := exec.Command("python3", "/Users/eavishal/appmesh/AppMeshLoadTester/scripts/load_driver.py").Run()
-			//fmt.Sprintf("Ran Load Driver with Error -: %v", err)
+			fmt.Printf("Running Fortio Load Driver from %s\n", loadDriverPath)
+			if err := exec.Command("python3", loadDriverPath, configPath, basePath).Run(); err != nil {
+				fmt.Printf("Load Driver Failed with error -: %v\n", err)
+			}
+
+			fmt.Println("Fortio Load Driver success")
 			f.Logger.Info("Spinning down resources")
 			spinDownResources(stacksPendingCleanUp, ctx, f)
 		})
