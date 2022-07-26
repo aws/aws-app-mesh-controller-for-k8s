@@ -32,6 +32,11 @@ jobs:
           source ~/.bashrc
       - name: checkout code
         uses: actions/checkout@v2
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.RUNNER_ACTION_ROLE }}
+          aws-region: us-west-2
       - name: setup kind and run integration tests
         run: make integration-test
   cleanup:
