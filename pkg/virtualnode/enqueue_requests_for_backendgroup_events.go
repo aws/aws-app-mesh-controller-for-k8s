@@ -66,9 +66,16 @@ func (h *enqueueRequestsForBackendGroupEvents) enqueueVirtualNodesForMesh(ctx co
 			continue
 		}
 		for _, bg := range vn.Spec.BackendGroups {
-			if bg.Name == backendGroup.Name && bg.Namespace != nil && *bg.Namespace == backendGroup.Namespace {
-				queue.Add(ctrl.Request{NamespacedName: k8s.NamespacedName(&vn)})
-				break
+			if bg.Name == backendGroup.Name {
+				if bg.Namespace != nil {
+					if *bg.Namespace == backendGroup.Namespace {
+						queue.Add(ctrl.Request{NamespacedName: k8s.NamespacedName(&vn)})
+					}
+				} else {
+					if backendGroup.Namespace == vn.Namespace {
+						queue.Add(ctrl.Request{NamespacedName: k8s.NamespacedName(&vn)})
+					}
+				}
 			}
 		}
 	}
