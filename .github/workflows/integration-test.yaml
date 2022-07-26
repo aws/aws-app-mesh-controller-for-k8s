@@ -7,15 +7,14 @@ on:
     branches:
       - master
 
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
   build:
     name: integration-test
     runs-on: ubuntu-18.04
     # runs-on: [self-hosted, aws-app-mesh-controller-for-k8s, X64 ]
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: clean work dir from previous runs
         run: |
