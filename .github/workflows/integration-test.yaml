@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - master
-  pull_request:
+  pull_request_target:
     branches:
       - master
 
@@ -20,6 +20,11 @@ jobs:
         with:
           go-version: '1.16.*'
         id: go
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.BETA_AWS_ROLE }}
+          aws-region: us-west-2
       - name: checkout code
         uses: actions/checkout@v2
       - name: install controller-gen
