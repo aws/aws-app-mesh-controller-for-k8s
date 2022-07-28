@@ -53,12 +53,10 @@ func (h *enqueueRequestsForBackendGroupEvents) Generic(e event.GenericEvent, que
 	// no-op
 }
 
-func (h *enqueueRequestsForBackendGroupEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.RateLimitingInterface, meshRef *appmesh.MeshReference,
-	backendGroup *appmesh.BackendGroup) {
+func (h *enqueueRequestsForBackendGroupEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.RateLimitingInterface, meshRef *appmesh.MeshReference, backendGroup *appmesh.BackendGroup) {
 	vnList := &appmesh.VirtualNodeList{}
 	if err := h.k8sClient.List(ctx, vnList); err != nil {
-		h.log.Error(err, "failed to enqueue virtualNodes for backend group events",
-			"mesh", meshRef.Name)
+		h.log.Error(err, "failed to enqueue virtualNodes for backend group events", "mesh", meshRef.Name)
 		return
 	}
 	for _, vn := range vnList.Items {

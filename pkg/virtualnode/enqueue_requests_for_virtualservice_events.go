@@ -47,12 +47,10 @@ func (h *enqueueRequestsForVirtualServiceEvents) Generic(e event.GenericEvent, q
 	// no-op
 }
 
-func (h *enqueueRequestsForVirtualServiceEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.RateLimitingInterface, meshRef *appmesh.MeshReference,
-	vs *appmesh.VirtualService) {
+func (h *enqueueRequestsForVirtualServiceEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.RateLimitingInterface, meshRef *appmesh.MeshReference, vs *appmesh.VirtualService) {
 	vnList := &appmesh.VirtualNodeList{}
 	if err := h.k8sClient.List(ctx, vnList); err != nil {
-		h.log.Error(err, "failed to enqueue virtualNodes for virtual service events",
-			"mesh", meshRef.Name)
+		h.log.Error(err, "failed to enqueue virtualNodes for virtual service events", "mesh", meshRef.Name)
 		return
 	}
 	for _, vn := range vnList.Items {

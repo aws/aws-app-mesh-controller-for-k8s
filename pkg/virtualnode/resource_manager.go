@@ -222,14 +222,10 @@ func (m *defaultResourceManager) createSDKVirtualNode(ctx context.Context, ms *a
 
 func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN *appmeshsdk.VirtualNodeData, ms *appmesh.Mesh, vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeData, error) {
 	actualSDKVNSpec := sdkVN.Spec
-	for i, j := range vsByKey {
-		m.log.Info(vn.Name + "> " + i.String() + ", " + j.Name)
-	}
 	desiredSDKVNSpec, err := BuildSDKVirtualNodeSpec(vn, vsByKey)
 	if err != nil {
 		return nil, err
 	}
-	m.log.Info(vn.Name + "> SDK spec built")
 
 	opts := equality.CompareOptionForVirtualNodeSpec()
 	if cmp.Equal(desiredSDKVNSpec, actualSDKVNSpec, opts) {
