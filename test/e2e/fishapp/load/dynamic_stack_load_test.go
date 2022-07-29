@@ -15,12 +15,12 @@ import (
 
 	inject "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/references"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	"github.com/aws/aws-sdk-go/aws"
@@ -652,6 +652,60 @@ func (s *DynamicStack) registerVirtualNodeSDSEntry(nodeName string) error {
 		return fmt.Errorf("error: %s", err)
 	}
 	return nil
+}
+
+func (s *DynamicStackNew) waitUntilFortioComponentsActive(ctx context.Context, f *framework.Framework, namespace string, name string) {
+	var replicas int32 = 1
+	vn := &appmesh.VirtualNode{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		}}
+	dp := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+		}}
+
+	var waitErrors []error
+	waitErrorsMutex := &sync.Mutex{}
+	var wg sync.WaitGroup
+	// Check VNode
+	wg.Add(1)
+	go func(vn *appmesh.VirtualNode) {
+		defer wg.Done()
+		vn, err := f.VNManager.WaitUntilVirtualNodeActive(ctx, vn)
+		if err != nil {
+			waitErrorsMutex.Lock()
+			waitErrors = append(waitErrors, errors.Wrapf(err, "VirtualNode: %v", k8s.NamespacedName(vn).String()))
+			waitErrorsMutex.Unlock()
+			return
+		}
+		s.createdNodeVNs["fortio"] = vn
+	}(vn)
+	// Check Deployment
+	wg.Add(1)
+	go func(dp *appsv1.Deployment) {
+		defer wg.Done()
+		dp, err := f.DPManager.WaitUntilDeploymentReady(ctx, dp)
+		if err != nil {
+			waitErrorsMutex.Lock()
+			waitErrors = append(waitErrors, errors.Wrapf(err, "Deployment: %v", k8s.NamespacedName(dp).String()))
+			waitErrorsMutex.Unlock()
+			return
+		}
+		s.createdNodeDPs["fortio"] = dp
+	}(dp)
+
+	wg.Wait()
+	for _, waitErr := range waitErrors {
+		f.Logger.Error("Failed to wait until all Fortio components become active", zap.Error(waitErr))
+	}
+
+	Expect(len(waitErrors)).To(BeZero())
 }
 
 func (s *DynamicStack) createResourcesForNodes(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {

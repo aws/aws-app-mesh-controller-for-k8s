@@ -152,7 +152,7 @@ func spinDownResources(stacksPendingCleanUp []*DynamicStackNew, ctx context.Cont
 	}
 }
 
-func deployFortio(stacksPendingCleanUp []*DynamicStackNew) *exec.Cmd {
+func deployFortio(ctx context.Context, f *framework.Framework, stacksPendingCleanUp []*DynamicStackNew) *exec.Cmd {
 	By("Applying Fortio components using kubectl", func() {
 		fortioCmd := exec.Command("kubectl", "apply", "-f", filepath.Join(basePath, "fortio.yaml"))
 		fmt.Printf("Running kubectl apply -: %s\n", fortioCmd.String())
@@ -169,8 +169,8 @@ func deployFortio(stacksPendingCleanUp []*DynamicStackNew) *exec.Cmd {
 		Expect(fortioErr).NotTo(HaveOccurred())
 	})
 
-	// Sleeping for 10 seconds for fortio components to become active before port-forwarding
-	time.Sleep(20 * time.Second)
+	stacksPendingCleanUp[0].waitUntilFortioComponentsActive(ctx, f, stacksPendingCleanUp[0].namespace.Name, "fortio")
+	fmt.Println("All Fortio Components Active")
 
 	// Port forward Fortio to localhost
 	var portForwardCmd *exec.Cmd
@@ -219,8 +219,7 @@ var _ = Describe("Running Load Test Driver", func() {
 			stacksPendingCleanUp = spinUpResources(stackPrototype, stacksPendingCleanUp, sdType, checkConnectivity, ctx, f)
 			defer spinDownResources(stacksPendingCleanUp, ctx, f)
 
-			time.Sleep(60 * time.Minute)
-			portForwardCmd := deployFortio(stacksPendingCleanUp)
+			portForwardCmd := deployFortio(ctx, f, stacksPendingCleanUp)
 			defer func() {
 				fmt.Println("killing Fortio port-forward process")
 				if portForwardKillErr := portForwardCmd.Process.Kill(); portForwardKillErr != nil {
@@ -228,6 +227,7 @@ var _ = Describe("Running Load Test Driver", func() {
 				}
 			}()
 
+			time.Sleep(10 * time.Minute)
 			// Run Fortio load driver script
 			By(fmt.Sprintf("Running Fortio Load Driver from %s\n", loadDriverPath), func() {
 				loadDriverCmd := exec.Command("python3", loadDriverPath, configPath, basePath)
