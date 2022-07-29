@@ -21,9 +21,7 @@ var configPath string
 var loadDriverPath string
 
 func init() {
-	flag.StringVar(&basePath, "base-path", "/Users/eavishal/appmesh/AppMeshLoadTester/", "Load Driver base path")
-	configPath = filepath.Join(basePath, "config.json")
-	loadDriverPath = filepath.Join(basePath, "scripts", "load_driver.py")
+	flag.StringVar(&basePath, "base-path", "", "Load Driver base path")
 }
 
 type Config struct {
@@ -202,12 +200,15 @@ var _ = Describe("Running Load Test Driver", func() {
 		var stackPrototype DynamicStackNew
 		var stacksPendingCleanUp []*DynamicStackNew
 
-		fmt.Println("Reading config from -: ", configPath)
-		config := readDriverConfig(configPath)
-
 		BeforeEach(func() {
 			ctx = context.Background()
 			f = framework.New(framework.GlobalOptions)
+
+			// Ginkgo flag parsing happens in BeforeEach or It blocks only
+			configPath = filepath.Join(basePath, "config.json")
+			loadDriverPath = filepath.Join(basePath, "scripts", "load_driver.py")
+			fmt.Println("Reading config from -: ", configPath)
+			config := readDriverConfig(configPath)
 			stackPrototype, stacksPendingCleanUp = createResourcesStack(config)
 		})
 
