@@ -1,6 +1,7 @@
 package load
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
@@ -8,6 +9,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
@@ -25,15 +27,13 @@ func init() {
 }
 
 type Config struct {
-	IsTLSEnabled                bool                `json:"isTLSEnabled"`
-	IsmTLSEnabled               bool                `json:"ismTLSEnabled"`
-	RoutesCountPerVirtualRouter int                 `json:"RoutesCountPerVirtualRouter"`
-	BackendsCountPerVirtualNode int                 `json:"BackendsCountPerVirtualNode"`
-	ReplicasPerVirtualNode      int32               `json:"ReplicasPerVirtualNode"`
-	ConnectivityCheckPerURL     int                 `json:"ConnectivityCheckPerURL"`
-	Backends_map                map[string][]string `json:"backends_map"`
-	Load_tests                  []map[string]string `json:"load_tests"`
-	Metrics                     map[string]string   `json:"metrics"`
+	IsTLSEnabled            bool                `json:"isTLSEnabled"`
+	IsmTLSEnabled           bool                `json:"ismTLSEnabled"`
+	ReplicasPerVirtualNode  int32               `json:"ReplicasPerVirtualNode"`
+	ConnectivityCheckPerURL int                 `json:"ConnectivityCheckPerURL"`
+	Backends_map            map[string][]string `json:"backends_map"`
+	Load_tests              []map[string]string `json:"load_tests"`
+	Metrics                 map[string]string   `json:"metrics"`
 }
 
 func readDriverConfig(configPath string) Config {
@@ -49,29 +49,49 @@ func readDriverConfig(configPath string) Config {
 	return config
 }
 
-func createResourcesStack(config Config) (DynamicStack, []*DynamicStack) {
-	var stackPrototype DynamicStack
-	var stacksPendingCleanUp []*DynamicStack
+func getNodeNamesFromConfig(backendsMap map[string][]string) []string {
+	var nodeMap = make(map[string]bool)
+	for node, backends := range backendsMap {
+		if _, ok := nodeMap[node]; !ok {
+			nodeMap[node] = true
+		}
+		for _, backendNode := range backends {
+			if _, ok := nodeMap[backendNode]; !ok {
+				nodeMap[backendNode] = true
+			}
+		}
+	}
+	nodeNames := make([]string, len(nodeMap))
+	i := 0
+	for k := range nodeMap {
+		nodeNames[i] = k
+		i++
+	}
+	return nodeNames
+}
 
-	stackPrototype = DynamicStack{
+func createResourcesStack(config Config) (DynamicStackNew, []*DynamicStackNew) {
+	var stackPrototype DynamicStackNew
+	var stacksPendingCleanUp []*DynamicStackNew
+
+	nodeNames := getNodeNamesFromConfig(config.Backends_map)
+
+	stackPrototype = DynamicStackNew{
 		IsTLSEnabled: config.IsTLSEnabled,
 		//Please set "enable-sds" to true in controller, prior to enabling this.
 		//*TODO* Rename it to include SDS in it's name once we convert file based TLS test -> file based mTLS test.
-		IsmTLSEnabled:               config.IsmTLSEnabled,
-		VirtualServicesCount:        2,
-		VirtualNodesCount:           2,
-		RoutesCountPerVirtualRouter: config.RoutesCountPerVirtualRouter,
-		TargetsCountPerRoute:        1,
-		BackendsCountPerVirtualNode: config.BackendsCountPerVirtualNode,
-		ReplicasPerVirtualNode:      config.ReplicasPerVirtualNode,
-		ConnectivityCheckPerURL:     config.ConnectivityCheckPerURL,
+		IsmTLSEnabled:           config.IsmTLSEnabled,
+		InputNodeNamesList:      nodeNames,
+		InputNodeBackendsMap:    config.Backends_map,
+		ReplicasPerVirtualNode:  config.ReplicasPerVirtualNode,
+		ConnectivityCheckPerURL: config.ConnectivityCheckPerURL,
 	}
 	stacksPendingCleanUp = nil
 
 	return stackPrototype, stacksPendingCleanUp
 }
 
-func upgradeControllerInjector(stackDefault DynamicStack, stackPrototype DynamicStack, stacksPendingCleanUp []*DynamicStack, ctx context.Context, f *framework.Framework) []*DynamicStack {
+func upgradeControllerInjector(stackDefault DynamicStackNew, stackPrototype DynamicStackNew, stacksPendingCleanUp []*DynamicStackNew, ctx context.Context, f *framework.Framework) []*DynamicStackNew {
 	if f.Options.ControllerImage != "" || f.Options.InjectorImage != "" {
 		if f.Options.ControllerImage != "" {
 			fmt.Println(fmt.Sprintf("upgrade cluster into new controller"))
@@ -85,8 +105,8 @@ func upgradeControllerInjector(stackDefault DynamicStack, stackPrototype Dynamic
 		fmt.Println(fmt.Sprintf("sleep 1 minute to give controller/injector a break"))
 		time.Sleep(1 * time.Minute)
 
-		fmt.Println(fmt.Sprintf("check stack behavior on cluster with upgraded controller/injector"))
-		stackDefault.Check(ctx, f)
+		//fmt.Println(fmt.Sprintf("check stack behavior on cluster with upgraded controller/injector"))
+		//stackDefault.Check(ctx, f)
 
 		stackNew := stackPrototype
 		fmt.Println(fmt.Sprintf("deploy new stack into cluster with upgraded controller/injector"))
@@ -96,14 +116,13 @@ func upgradeControllerInjector(stackDefault DynamicStack, stackPrototype Dynamic
 		fmt.Println(fmt.Sprintf("sleep 1 minute to give controller/injector a break"))
 		time.Sleep(1 * time.Minute)
 
-		fmt.Println(fmt.Sprintf("check new stack behavior on cluster with upgraded controller/injector"))
-		stackNew.Check(ctx, f)
+		//fmt.Println(fmt.Sprintf("check new stack behavior on cluster with upgraded controller/injector"))
+		//stackNew.Check(ctx, f)
 	}
 	return stacksPendingCleanUp
 }
 
-func spinUpResources(stackPrototype DynamicStack, stacksPendingCleanUp []*DynamicStack, sdType manifest.ServiceDiscoveryType, checkConnectivity bool, ctx context.Context, f *framework.Framework) []*DynamicStack {
-	//for _, sdType := range []manifest.ServiceDiscoveryType{manifest.DNSServiceDiscovery, manifest.CloudMapServiceDiscovery} {
+func spinUpResources(stackPrototype DynamicStackNew, stacksPendingCleanUp []*DynamicStackNew, sdType manifest.ServiceDiscoveryType, checkConnectivity bool, ctx context.Context, f *framework.Framework) []*DynamicStackNew {
 	fmt.Println(fmt.Sprintf("Service discovery type -: %v", sdType))
 	stackPrototype.ServiceDiscoveryType = sdType
 	stackDefault := stackPrototype
@@ -115,22 +134,64 @@ func spinUpResources(stackPrototype DynamicStack, stacksPendingCleanUp []*Dynami
 	fmt.Println("sleep 1 minute to give controller/injector a break")
 	time.Sleep(1 * time.Minute)
 
-	if checkConnectivity {
-		fmt.Println(fmt.Sprintf("Checking stack behavior/connectivity on cluster with default controller/injector"))
-		stackDefault.Check(ctx, f)
-	}
+	//if checkConnectivity {
+	//	fmt.Println(fmt.Sprintf("Checking stack behavior/connectivity on cluster with default controller/injector"))
+	//	stackDefault.Check(ctx, f)
+	//}
 
-	fmt.Println("Entering upgradeControllerInjector")
 	stacksPendingCleanUp = upgradeControllerInjector(stackDefault, stackPrototype, stacksPendingCleanUp, ctx, f)
 
 	return stacksPendingCleanUp
 }
 
-func spinDownResources(stacksPendingCleanUp []*DynamicStack, ctx context.Context, f *framework.Framework) {
+func spinDownResources(stacksPendingCleanUp []*DynamicStackNew, ctx context.Context, f *framework.Framework) {
+	fmt.Println("Spinning down resources")
 	fmt.Println("Length of stacksPendingCleanUp = ", len(stacksPendingCleanUp))
 	for _, stack := range stacksPendingCleanUp {
 		stack.Cleanup(ctx, f)
 	}
+}
+
+func deployFortio(stacksPendingCleanUp []*DynamicStackNew) *exec.Cmd {
+	By("Applying Fortio components using kubectl", func() {
+		fortioCmd := exec.Command("kubectl", "apply", "-f", filepath.Join(basePath, "fortio.yaml"))
+		fmt.Printf("Running kubectl apply -: %s\n", fortioCmd.String())
+		var out bytes.Buffer
+		var stderr bytes.Buffer
+		fortioCmd.Stdout = &out
+		fortioCmd.Stderr = &stderr
+		fortioErr := fortioCmd.Run()
+		if fortioErr != nil {
+			fmt.Printf("Fortio kubectl failed with error -: %v -: %s\n", fortioErr, stderr.String())
+		} else {
+			fmt.Println("Successfully applied Fortio components using kubectl -: \n", out.String())
+		}
+		Expect(fortioErr).NotTo(HaveOccurred())
+	})
+
+	// Sleeping for 10 seconds for fortio components to become active before port-forwarding
+	time.Sleep(20 * time.Second)
+
+	// Port forward Fortio to localhost
+	var portForwardCmd *exec.Cmd
+	By("Port-forwarding Fortio service to local", func() {
+		portForwardCmd = exec.Command("kubectl", fmt.Sprintf("--namespace"), stacksPendingCleanUp[0].namespace.Name, "port-forward", "service/fortio", "9091:8080")
+		var out bytes.Buffer
+		var stderr bytes.Buffer
+		portForwardCmd.Stdout = &out
+		portForwardCmd.Stderr = &stderr
+
+		fmt.Printf("Running port-forwarding command -: %s\n", portForwardCmd.String())
+		portForwardErr := portForwardCmd.Start()
+		if portForwardErr != nil {
+			fmt.Printf("Fortio port-forwarding failed with error -: %v -: %s\n", portForwardErr, stderr.String())
+		} else {
+			fmt.Println(out.String())
+		}
+		Expect(portForwardErr).NotTo(HaveOccurred())
+	})
+
+	return portForwardCmd
 }
 
 var _ = Describe("Running Load Test Driver", func() {
@@ -138,8 +199,8 @@ var _ = Describe("Running Load Test Driver", func() {
 	var f *framework.Framework
 
 	Context("normal test dimensions", func() {
-		var stackPrototype DynamicStack
-		var stacksPendingCleanUp []*DynamicStack
+		var stackPrototype DynamicStackNew
+		var stacksPendingCleanUp []*DynamicStackNew
 
 		fmt.Println("Reading config from -: ", configPath)
 		config := readDriverConfig(configPath)
@@ -156,16 +217,33 @@ var _ = Describe("Running Load Test Driver", func() {
 
 			checkConnectivity := false
 			stacksPendingCleanUp = spinUpResources(stackPrototype, stacksPendingCleanUp, sdType, checkConnectivity, ctx, f)
+			defer spinDownResources(stacksPendingCleanUp, ctx, f)
 
-			// Run Python load driver script
-			fmt.Printf("Running Fortio Load Driver from %s\n", loadDriverPath)
-			if err := exec.Command("python3", loadDriverPath, configPath, basePath).Run(); err != nil {
-				fmt.Printf("Load Driver Failed with error -: %v\n", err)
-			}
+			time.Sleep(60 * time.Minute)
+			portForwardCmd := deployFortio(stacksPendingCleanUp)
+			defer func() {
+				fmt.Println("killing Fortio port-forward process")
+				if portForwardKillErr := portForwardCmd.Process.Kill(); portForwardKillErr != nil {
+					fmt.Println("failed to kill process. Error -: ", portForwardKillErr, "Continuing...")
+				}
+			}()
 
-			fmt.Println("Fortio Load Driver success")
-			f.Logger.Info("Spinning down resources")
-			spinDownResources(stacksPendingCleanUp, ctx, f)
+			// Run Fortio load driver script
+			By(fmt.Sprintf("Running Fortio Load Driver from %s\n", loadDriverPath), func() {
+				loadDriverCmd := exec.Command("python3", loadDriverPath, configPath, basePath)
+				fmt.Printf("Load Driver Command -: %s\n", loadDriverCmd)
+				var stderr bytes.Buffer
+				var stdout bytes.Buffer
+				loadDriverCmd.Stdout = &stdout
+				loadDriverCmd.Stderr = &stderr
+				err := loadDriverCmd.Run()
+				if err != nil {
+					fmt.Printf("Load Driver Failed with error -: %v -: %s\n", err, stderr.String())
+				} else {
+					fmt.Println("Fortio Load Driver success -: \n", stdout.String())
+				}
+				Expect(err).NotTo(HaveOccurred())
+			})
 		})
 
 	})

@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -69,7 +70,7 @@ var (
 // A dynamic generated stack designed to test app mesh integration :D
 // Suppose given configuration below:
 //		5 VirtualServicesCount
-//		10 VirtualNodesCount
+//		5 VirtualNodesCount
 //		2 RoutesCountPerVirtualRouter
 //		2 TargetsCountPerRoute
 //		4 BackendsCountPerVirtualNode
@@ -150,8 +151,46 @@ type DynamicStack struct {
 	VNReferenceMap map[string][]*string
 }
 
+type DynamicStackNew struct {
+	// service discovery type
+	ServiceDiscoveryType manifest.ServiceDiscoveryType
+
+	// tls
+	IsTLSEnabled bool
+
+	//mtls
+	IsmTLSEnabled bool
+
+	// List of User provided names for nodes
+	InputNodeNamesList []string
+
+	// User provided mapping of node to backends names
+	InputNodeBackendsMap map[string][]string
+
+	// number of replicas per virtual node
+	ReplicasPerVirtualNode int32
+
+	// how many time to check connectivity per URL
+	ConnectivityCheckPerURL int
+
+	// ====== runtime variables ======
+	mesh              *appmesh.Mesh
+	namespace         *corev1.Namespace
+	cloudMapNamespace string
+
+	createdNodeVNs  map[string]*appmesh.VirtualNode
+	createdNodeDPs  map[string]*appsv1.Deployment
+	createdNodeSVCs map[string]*corev1.Service
+
+	createdServiceVSs  map[string]*appmesh.VirtualService
+	createdServiceSVCs map[string]*corev1.Service
+
+	BackendVNsByVR map[string][]string
+	VNReferenceMap map[string][]*string
+}
+
 // expects the stack can be deployed to namespace successfully
-func (s *DynamicStack) Deploy(ctx context.Context, f *framework.Framework, basePath string) {
+func (s *DynamicStackNew) Deploy(ctx context.Context, f *framework.Framework, basePath string) {
 	s.createMeshAndNamespace(ctx, f)
 	if s.ServiceDiscoveryType == manifest.CloudMapServiceDiscovery {
 		s.createCloudMapNamespace(ctx, f)
@@ -169,33 +208,33 @@ func (s *DynamicStack) Deploy(ctx context.Context, f *framework.Framework, baseP
 			return
 		}
 		s.createResourcesForNodesWithTLS(ctx, f, mb)
-	} else if s.IsmTLSEnabled {
-		err := s.deploySDSProvider(ctx, f)
-		if err != nil {
-			f.Logger.Error("error creating sds provider")
-			return
-		}
-		err = s.registerAgentSDSEntry()
-		if err != nil {
-			return
-		}
-		s.createResourcesForNodesWithmTLS(ctx, f, mb)
-	} else {
-		s.createResourcesForNodes(ctx, f, mb)
-	}
+	} //else if s.IsmTLSEnabled {					// TODO -: fix these
+	//	err := s.deploySDSProvider(ctx, f)
+	//	if err != nil {
+	//		f.Logger.Error("error creating sds provider")
+	//		return
+	//	}
+	//	err = s.registerAgentSDSEntry()
+	//	if err != nil {
+	//		return
+	//	}
+	//	s.createResourcesForNodesWithmTLS(ctx, f, mb)
+	//} else {
+	//	s.createResourcesForNodes(ctx, f, mb)
+	//}
 	s.createResourcesForServices(ctx, f, mb)
 	s.grantVirtualNodesBackendAccess(ctx, f)
-	if s.IsmTLSEnabled {
-		s.updateListenerSANsForNodes(ctx, f)
-	}
+	//if s.IsmTLSEnabled {
+	//	s.updateListenerSANsForNodes(ctx, f)
+	//}
 }
 
 // expects the stack can be cleaned up from namespace successfully
-func (s *DynamicStack) Cleanup(ctx context.Context, f *framework.Framework) {
+func (s *DynamicStackNew) Cleanup(ctx context.Context, f *framework.Framework) {
 	var deletionErrors []error
-	if errs := s.revokeVirtualNodeBackendAccess(ctx, f); len(errs) != 0 {
-		deletionErrors = append(deletionErrors, errs...)
-	}
+	//if errs := s.revokeVirtualNodeBackendAccess(ctx, f); len(errs) != 0 {
+	//	deletionErrors = append(deletionErrors, errs...)
+	//}
 	if errs := s.deleteResourcesForServices(ctx, f); len(errs) != 0 {
 		deletionErrors = append(deletionErrors, errs...)
 	}
@@ -257,7 +296,7 @@ func (s *DynamicStack) Check(ctx context.Context, f *framework.Framework) {
 	Expect(len(checkErrors)).To(BeZero())
 }
 
-func (s *DynamicStack) createConfigMap(ctx context.Context, f *framework.Framework, basePath string) {
+func (s *DynamicStackNew) createConfigMap(ctx context.Context, f *framework.Framework, basePath string) {
 	By("create ConfigMap", func() {
 		handler_driver_path := filepath.Join(basePath, "scripts", "request_handler_driver.sh")
 		handler_driver_content, handler_driver_err := ioutil.ReadFile(handler_driver_path)
@@ -288,7 +327,7 @@ func (s *DynamicStack) createConfigMap(ctx context.Context, f *framework.Framewo
 	})
 }
 
-func (s *DynamicStack) createMeshAndNamespace(ctx context.Context, f *framework.Framework) {
+func (s *DynamicStackNew) createMeshAndNamespace(ctx context.Context, f *framework.Framework) {
 	By("create a mesh", func() {
 		meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
 		mesh := &appmesh.Mesh{
@@ -352,7 +391,7 @@ func (s *DynamicStack) createMeshAndNamespace(ctx context.Context, f *framework.
 	})
 }
 
-func (s *DynamicStack) deleteMeshAndNamespace(ctx context.Context, f *framework.Framework) []error {
+func (s *DynamicStackNew) deleteMeshAndNamespace(ctx context.Context, f *framework.Framework) []error {
 	var deletionErrors []error
 	if s.namespace != nil {
 		By(fmt.Sprintf("delete namespace: %s", s.namespace.Name), func() {
@@ -401,7 +440,7 @@ func (s *DynamicStack) deleteMeshAndNamespace(ctx context.Context, f *framework.
 	return deletionErrors
 }
 
-func (s *DynamicStack) createCloudMapNamespace(ctx context.Context, f *framework.Framework) {
+func (s *DynamicStackNew) createCloudMapNamespace(ctx context.Context, f *framework.Framework) {
 	cmNamespace := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
 	if s.IsTLSEnabled {
 		cmNamespace = "tls-e2e.svc.cluster.local"
@@ -420,7 +459,7 @@ func (s *DynamicStack) createCloudMapNamespace(ctx context.Context, f *framework
 	})
 }
 
-func (s *DynamicStack) deleteCloudMapNamespace(ctx context.Context, f *framework.Framework) []error {
+func (s *DynamicStackNew) deleteCloudMapNamespace(ctx context.Context, f *framework.Framework) []error {
 	var deletionErrors []error
 	if s.cloudMapNamespace != "" {
 		By(fmt.Sprintf("delete cloudMap namespace %s", s.cloudMapNamespace), func() {
@@ -519,7 +558,7 @@ func (s *DynamicStack) deleteCloudMapNamespace(ctx context.Context, f *framework
 	return deletionErrors
 }
 
-func (s *DynamicStack) createCertificateAuthority(ctx context.Context, f *framework.Framework) error {
+func (s *DynamicStackNew) createCertificateAuthority(ctx context.Context, f *framework.Framework) error {
 	_, err := exec.Command("/bin/sh", caCertScript).Output()
 	if err != nil {
 		return fmt.Errorf("error: %s", err)
@@ -527,7 +566,7 @@ func (s *DynamicStack) createCertificateAuthority(ctx context.Context, f *framew
 	return nil
 }
 
-func (s *DynamicStack) createTLSCertsForNodes(nodeName string) error {
+func (s *DynamicStackNew) createTLSCertsForNodes(nodeName string) error {
 	nodeCertCfgFile := certsBasePath + nodeName + certsCfgFileSuffix
 	replaceExpr := "s/node/" + nodeName + "/g"
 	cmd := exec.Command("sed", "-e", replaceExpr, genericNodeCertCfgFile)
@@ -549,7 +588,7 @@ func (s *DynamicStack) createTLSCertsForNodes(nodeName string) error {
 	return nil
 }
 
-func (s *DynamicStack) deleteCerts() error {
+func (s *DynamicStackNew) deleteCerts() error {
 	fmt.Printf("Delete Certs")
 	_, err := exec.Command("/bin/sh", certCleanupScript).Output()
 	if err != nil {
@@ -558,7 +597,7 @@ func (s *DynamicStack) deleteCerts() error {
 	return nil
 }
 
-func (s *DynamicStack) createSecretsForNodeResource(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder,
+func (s *DynamicStackNew) createSecretsForNodeResource(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder,
 	nodeName string, nodeSecretName string) error {
 	nodeCertChain := nodeName + certChainSuffix
 	nodeKey := nodeName + certKeySuffix
@@ -571,6 +610,16 @@ func (s *DynamicStack) createSecretsForNodeResource(ctx context.Context, f *fram
 	return nil
 }
 
+func (s *DynamicStackNew) buildDNSFromInputName(inputNodeNames []string) string {
+	var dnsNames []string
+	for _, inputName := range inputNodeNames {
+		nodeDNSName := fmt.Sprintf("http://service-%s.%s.svc.cluster.local:%d", inputName, s.namespace.Name, AppContainerPort)
+		dnsNames = append(dnsNames, nodeDNSName)
+	}
+
+	return strings.Join(dnsNames, ",")
+}
+
 func (s *DynamicStack) deploySDSProvider(ctx context.Context, f *framework.Framework) error {
 	_, err := exec.Command("/bin/sh", sdsDeployScript, "deploy").Output()
 	if err != nil {
@@ -581,7 +630,7 @@ func (s *DynamicStack) deploySDSProvider(ctx context.Context, f *framework.Frame
 	return nil
 }
 
-func (s *DynamicStack) deleteSDSProvider() error {
+func (s *DynamicStackNew) deleteSDSProvider() error {
 	_, err := exec.Command("/bin/sh", sdsDeployScript, "delete").Output()
 	if err != nil {
 		return fmt.Errorf("error: %s", err)
@@ -750,11 +799,15 @@ func (s *DynamicStack) createResourcesForNodes(ctx context.Context, f *framework
 	})
 }
 
-func (s *DynamicStack) createResourcesForNodesWithTLS(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
+func (s *DynamicStackNew) createResourcesForNodesWithTLS(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
 	By("create all resources for nodes", func() {
-		s.createdNodeVNs = make([]*appmesh.VirtualNode, s.VirtualNodesCount)
-		s.createdNodeDPs = make([]*appsv1.Deployment, s.VirtualNodesCount)
-		s.createdNodeSVCs = make([]*corev1.Service, s.VirtualNodesCount)
+		s.createdNodeVNs = make(map[string]*appmesh.VirtualNode)
+		s.createdNodeDPs = make(map[string]*appsv1.Deployment)
+		s.createdNodeSVCs = make(map[string]*corev1.Service)
+
+		waitErrorsMutex := &sync.Mutex{}
+		mapMutex := &sync.RWMutex{}
+		var wg sync.WaitGroup
 
 		vnBuilder := &manifest.VNBuilder{
 			ServiceDiscoveryType: s.ServiceDiscoveryType,
@@ -762,19 +815,19 @@ func (s *DynamicStack) createResourcesForNodesWithTLS(ctx context.Context, f *fr
 			CloudMapNamespace:    s.cloudMapNamespace,
 		}
 
-		for i := 0; i != s.VirtualNodesCount; i++ {
-			instanceName := fmt.Sprintf("node-%d", i)
-			By(fmt.Sprintf("create certs for node #%d", i), func() {
+		for _, inputNodeName := range s.InputNodeNamesList {
+			instanceName := fmt.Sprintf("node-%s", inputNodeName)
+			By(fmt.Sprintf("create certs for node #%s", inputNodeName), func() {
 				err := s.createTLSCertsForNodes(instanceName)
 				Expect(err).NotTo(HaveOccurred())
 			})
-			By(fmt.Sprintf("create certs for node #%d", i), func() {
-				nodeSecretName := fmt.Sprintf("node-%d-tls", i)
+			By(fmt.Sprintf("create secrets for node #%s", inputNodeName), func() {
+				nodeSecretName := fmt.Sprintf("node-%s-tls", inputNodeName)
 				err := s.createSecretsForNodeResource(ctx, f, mb, instanceName, nodeSecretName)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			By(fmt.Sprintf("create VirtualNode for node #%d", i), func() {
+			By(fmt.Sprintf("create VirtualNode for node #%s", inputNodeName), func() {
 				tlsEnforce := true
 				nodeBackendDefaults := &appmesh.BackendDefaults{
 					ClientPolicy: &appmesh.ClientPolicy{
@@ -807,11 +860,11 @@ func (s *DynamicStack) createResourcesForNodesWithTLS(ctx context.Context, f *fr
 				vn := vnBuilder.BuildVirtualNode(instanceName, nil, listeners, nodeBackendDefaults)
 				err := f.K8sClient.Create(ctx, vn)
 				Expect(err).NotTo(HaveOccurred())
-				s.createdNodeVNs[i] = vn
+				s.createdNodeVNs[inputNodeName] = vn
 			})
 
-			By(fmt.Sprintf("create Deployment for node #%d", i), func() {
-				nodeSecretName := fmt.Sprintf("node-%d-tls", i)
+			By(fmt.Sprintf("create Deployment for node #%s", inputNodeName), func() {
+				nodeSecretName := fmt.Sprintf("node-%s-tls", inputNodeName)
 				certsPath := nodeSecretName + ":/certs/"
 				annotations := map[string]string{
 					"appmesh.k8s.aws/secretMounts":             certsPath,
@@ -834,46 +887,46 @@ func (s *DynamicStack) createResourcesForNodesWithTLS(ctx context.Context, f *fr
 								Value: "/scripts-dir/request_handler.py",
 							},
 							{
-								Name:  "COLOR",
-								Value: instanceName,
+								Name:  "BACKENDS",
+								Value: s.buildDNSFromInputName(s.InputNodeBackendsMap[inputNodeName]),
 							},
 						},
 						VolumeMounts: []corev1.VolumeMount{{Name: "scripts-vol", MountPath: "/scripts-dir", ReadOnly: true}},
 					},
-					{
-						Name:          "http-proxy",
-						AppImage:      defaultHTTPProxyImage,
-						ContainerPort: HttpProxyContainerPort,
-						Args: []string{
-							"--hostname=0.0.0.0",
-							fmt.Sprintf("--port=%d", HttpProxyContainerPort),
-						},
-					},
+					//{
+					//	Name:          "http-proxy",
+					//	AppImage:      defaultHTTPProxyImage,
+					//	ContainerPort: HttpProxyContainerPort,
+					//	Args: []string{
+					//		"--hostname=0.0.0.0",
+					//		fmt.Sprintf("--port=%d", HttpProxyContainerPort),
+					//	},
+					//},
 				}
 				containers := mb.BuildContainerSpec(containersInfo)
 				dp := mb.BuildDeployment(instanceName, s.ReplicasPerVirtualNode, containers, annotations)
 				err := f.K8sClient.Create(ctx, dp)
 				Expect(err).NotTo(HaveOccurred())
-				s.createdNodeDPs[i] = dp
+				s.createdNodeDPs[inputNodeName] = dp
 			})
 
-			By(fmt.Sprintf("create Service for node #%d", i), func() {
+			By(fmt.Sprintf("create Service for node #%s", inputNodeName), func() {
 				svc := mb.BuildServiceWithSelector(instanceName, AppContainerPort, AppContainerPort)
 				err := f.K8sClient.Create(ctx, svc)
 				Expect(err).NotTo(HaveOccurred())
-				s.createdNodeSVCs[i] = svc
+				s.createdNodeSVCs[inputNodeName] = svc
 			})
 		}
 
 		By("wait all VirtualNodes become active", func() {
 			var waitErrors []error
-			waitErrorsMutex := &sync.Mutex{}
-			var wg sync.WaitGroup
-			for i := 0; i != s.VirtualNodesCount; i++ {
+			for _, inputNodeName := range s.InputNodeNamesList {
 				wg.Add(1)
-				go func(nodeIndex int) {
+				go func(nodeName string) {
 					defer wg.Done()
-					vn := s.createdNodeVNs[nodeIndex]
+					mapMutex.RLock()
+					vn := s.createdNodeVNs[nodeName]
+					mapMutex.RUnlock()
 					vn, err := f.VNManager.WaitUntilVirtualNodeActive(ctx, vn)
 					if err != nil {
 						waitErrorsMutex.Lock()
@@ -881,8 +934,10 @@ func (s *DynamicStack) createResourcesForNodesWithTLS(ctx context.Context, f *fr
 						waitErrorsMutex.Unlock()
 						return
 					}
-					s.createdNodeVNs[nodeIndex] = vn
-				}(i)
+					mapMutex.Lock()
+					s.createdNodeVNs[nodeName] = vn
+					mapMutex.Unlock()
+				}(inputNodeName)
 			}
 			wg.Wait()
 			for _, waitErr := range waitErrors {
@@ -893,13 +948,13 @@ func (s *DynamicStack) createResourcesForNodesWithTLS(ctx context.Context, f *fr
 
 		By("wait all deployments become ready", func() {
 			var waitErrors []error
-			waitErrorsMutex := &sync.Mutex{}
-			var wg sync.WaitGroup
-			for i := 0; i != s.VirtualNodesCount; i++ {
+			for _, inputNodeName := range s.InputNodeNamesList {
 				wg.Add(1)
-				go func(nodeIndex int) {
+				go func(nodeName string) {
 					defer wg.Done()
-					dp := s.createdNodeDPs[nodeIndex]
+					mapMutex.RLock()
+					dp := s.createdNodeDPs[nodeName]
+					mapMutex.RUnlock()
 					dp, err := f.DPManager.WaitUntilDeploymentReady(ctx, dp)
 					if err != nil {
 						waitErrorsMutex.Lock()
@@ -907,8 +962,10 @@ func (s *DynamicStack) createResourcesForNodesWithTLS(ctx context.Context, f *fr
 						waitErrorsMutex.Unlock()
 						return
 					}
-					s.createdNodeDPs[nodeIndex] = dp
-				}(i)
+					mapMutex.Lock()
+					s.createdNodeDPs[nodeName] = dp
+					mapMutex.Unlock()
+				}(inputNodeName)
 			}
 			wg.Wait()
 			for _, waitErr := range waitErrors {
@@ -920,12 +977,13 @@ func (s *DynamicStack) createResourcesForNodesWithTLS(ctx context.Context, f *fr
 		By("check all VirtualNode in aws", func() {
 			var checkErrors []error
 			checkErrorsMutex := &sync.Mutex{}
-			var wg sync.WaitGroup
-			for i := 0; i != s.VirtualNodesCount; i++ {
+			for _, inputNodeName := range s.InputNodeNamesList {
 				wg.Add(1)
-				go func(nodeIndex int) {
+				go func(nodeName string) {
 					defer wg.Done()
-					vn := s.createdNodeVNs[nodeIndex]
+					mapMutex.RLock()
+					vn := s.createdNodeVNs[nodeName]
+					mapMutex.RUnlock()
 					err := f.VNManager.CheckVirtualNodeInAWS(ctx, s.mesh, vn)
 					if err != nil {
 						checkErrorsMutex.Lock()
@@ -933,7 +991,7 @@ func (s *DynamicStack) createResourcesForNodesWithTLS(ctx context.Context, f *fr
 						checkErrorsMutex.Unlock()
 						return
 					}
-				}(i)
+				}(inputNodeName)
 			}
 			wg.Wait()
 			for _, checkErr := range checkErrors {
@@ -1144,14 +1202,18 @@ func (s *DynamicStack) createResourcesForNodesWithmTLS(ctx context.Context, f *f
 	})
 }
 
-func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework.Framework) []error {
+func (s *DynamicStackNew) deleteResourcesForNodes(ctx context.Context, f *framework.Framework) []error {
 	var deletionErrors []error
 	By("delete all resources for nodes", func() {
-		for i, svc := range s.createdNodeSVCs {
+		waitErrorsMutex := &sync.Mutex{}
+		var wg sync.WaitGroup
+		mapMutex := &sync.RWMutex{}
+
+		for inputNodeName, svc := range s.createdNodeSVCs {
 			if svc == nil {
 				continue
 			}
-			By(fmt.Sprintf("delete Service for node #%d", i), func() {
+			By(fmt.Sprintf("delete Service for node #%s", inputNodeName), func() {
 				if err := f.K8sClient.Delete(ctx, svc); err != nil {
 					f.Logger.Error("failed to delete Service",
 						zap.String("namespace", svc.Namespace),
@@ -1162,11 +1224,11 @@ func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework
 				}
 			})
 		}
-		for i, dp := range s.createdNodeDPs {
+		for inputNodeName, dp := range s.createdNodeDPs {
 			if dp == nil {
 				continue
 			}
-			By(fmt.Sprintf("delete Deployment for node #%d", i), func() {
+			By(fmt.Sprintf("delete Deployment for node #%s", inputNodeName), func() {
 				if err := f.K8sClient.Delete(ctx, dp,
 					client.PropagationPolicy(metav1.DeletePropagationForeground), client.GracePeriodSeconds(0)); err != nil {
 					f.Logger.Error("failed to delete Deployment",
@@ -1178,11 +1240,11 @@ func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework
 				}
 			})
 		}
-		for i, vn := range s.createdNodeVNs {
+		for inputNodeName, vn := range s.createdNodeVNs {
 			if vn == nil {
 				continue
 			}
-			By(fmt.Sprintf("delete VirtualNode for node #%d", i), func() {
+			By(fmt.Sprintf("delete VirtualNode for node #%s", inputNodeName), func() {
 				if err := f.K8sClient.Delete(ctx, vn); err != nil {
 					f.Logger.Error("failed to delete VirtualNode",
 						zap.String("namespace", vn.Namespace),
@@ -1196,23 +1258,23 @@ func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework
 
 		By("wait all deployments become deleted", func() {
 			var waitErrors []error
-			waitErrorsMutex := &sync.Mutex{}
-			var wg sync.WaitGroup
-			for i, dp := range s.createdNodeDPs {
+			for inputNodeName, dp := range s.createdNodeDPs {
 				if dp == nil {
 					continue
 				}
 				wg.Add(1)
-				go func(nodeIndex int) {
+				go func(nodeName string) {
 					defer wg.Done()
-					dp := s.createdNodeDPs[nodeIndex]
+					mapMutex.RLock()
+					dp := s.createdNodeDPs[nodeName]
+					mapMutex.RUnlock()
 					if err := f.DPManager.WaitUntilDeploymentDeleted(ctx, dp); err != nil {
 						waitErrorsMutex.Lock()
 						waitErrors = append(waitErrors, errors.Wrapf(err, "Deployment: %v", k8s.NamespacedName(dp).String()))
 						waitErrorsMutex.Unlock()
 						return
 					}
-				}(i)
+				}(inputNodeName)
 			}
 			wg.Wait()
 			for _, waitErr := range waitErrors {
@@ -1223,23 +1285,23 @@ func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework
 
 		By("wait all VirtualNodes become deleted", func() {
 			var waitErrors []error
-			waitErrorsMutex := &sync.Mutex{}
-			var wg sync.WaitGroup
-			for i, vn := range s.createdNodeVNs {
+			for inputNodeName, vn := range s.createdNodeVNs {
 				if vn == nil {
 					continue
 				}
 				wg.Add(1)
-				go func(nodeIndex int) {
+				go func(nodeName string) {
 					defer wg.Done()
-					vn := s.createdNodeVNs[nodeIndex]
+					mapMutex.RLock()
+					vn := s.createdNodeVNs[nodeName]
+					mapMutex.RUnlock()
 					if err := f.VNManager.WaitUntilVirtualNodeDeleted(ctx, vn); err != nil {
 						waitErrorsMutex.Lock()
 						waitErrors = append(waitErrors, errors.Wrapf(err, "VirtualNode: %v", k8s.NamespacedName(vn).String()))
 						waitErrorsMutex.Unlock()
 						return
 					}
-				}(i)
+				}(inputNodeName)
 			}
 			wg.Wait()
 			for _, waitErr := range waitErrors {
@@ -1251,84 +1313,60 @@ func (s *DynamicStack) deleteResourcesForNodes(ctx context.Context, f *framework
 	return deletionErrors
 }
 
-func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
+func (s *DynamicStackNew) createResourcesForServices(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
 	By("create all resources for services", func() {
-		s.createdServiceVSs = make([]*appmesh.VirtualService, s.VirtualServicesCount)
-		s.createdServiceVRs = make([]*appmesh.VirtualRouter, s.VirtualServicesCount)
-		s.createdServiceSVCs = make([]*corev1.Service, s.VirtualServicesCount)
-		s.BackendVNsByVR = make(map[string][]string)
+		s.createdServiceVSs = make(map[string]*appmesh.VirtualService)
+		s.createdServiceSVCs = make(map[string]*corev1.Service)
 
-		vrBuilder := &manifest.VRBuilder{
-			Namespace: s.namespace.Name,
-		}
+		waitErrorsMutex := &sync.Mutex{}
+		var wg sync.WaitGroup
+		mapMutex := &sync.RWMutex{}
+
+		// Should VS be added to vn.spec.Backends to be able to make HTTP request to that VS?
+		//s.BackendVNsByVR = make(map[string][]string)
+
 		vsBuilder := &manifest.VSBuilder{
 			Namespace: s.namespace.Name,
 		}
 
-		nextVirtualNodeIndex := 0
-		for i := 0; i != s.VirtualServicesCount; i++ {
-			instanceName := fmt.Sprintf("service-%d", i)
-			var VRBackends []string
-			By(fmt.Sprintf("create VirtualRouter for service #%d", i), func() {
-				var routeCfgs []manifest.RouteToWeightedVirtualNodes
-				for routeIndex := 0; routeIndex != s.RoutesCountPerVirtualRouter; routeIndex++ {
-					var weightedTargets []manifest.WeightedVirtualNode
-					for targetIndex := 0; targetIndex != s.TargetsCountPerRoute; targetIndex++ {
-						weightedTargets = append(weightedTargets, manifest.WeightedVirtualNode{
-							VirtualNode: k8s.NamespacedName(s.createdNodeVNs[nextVirtualNodeIndex]),
-							Weight:      1,
-						})
-						VRBackends = append(VRBackends, s.createdNodeVNs[nextVirtualNodeIndex].Name)
-						nextVirtualNodeIndex = (nextVirtualNodeIndex + 1) % s.VirtualNodesCount
-					}
-					routeCfgs = append(routeCfgs, manifest.RouteToWeightedVirtualNodes{
-						Path:            fmt.Sprintf("/path-%d", routeIndex),
-						WeightedTargets: weightedTargets,
-					})
-				}
+		for _, inputNodeName := range s.InputNodeNamesList {
+			instanceName := fmt.Sprintf("service-%s", inputNodeName)
 
-				routes := vrBuilder.BuildRoutes(routeCfgs)
-				vrBuilder.Listeners = []appmesh.VirtualRouterListener{vrBuilder.BuildVirtualRouterListener("http", AppContainerPort)}
-
-				vr := vrBuilder.BuildVirtualRouter(instanceName, routes)
-				err := f.K8sClient.Create(ctx, vr)
-				Expect(err).NotTo(HaveOccurred())
-				s.createdServiceVRs[i] = vr
-				s.BackendVNsByVR[instanceName] = VRBackends
-			})
-
-			By(fmt.Sprintf("create VirtualService for service #%d", i), func() {
-				vs := vsBuilder.BuildVirtualServiceWithRouterBackend(instanceName, instanceName)
+			By(fmt.Sprintf("create VirtualService for service #%s", inputNodeName), func() {
+				vs := vsBuilder.BuildVirtualServiceWithNodeBackend(instanceName, s.createdNodeVNs[inputNodeName].Name)
 				err := f.K8sClient.Create(ctx, vs)
 				Expect(err).NotTo(HaveOccurred())
-				s.createdServiceVSs[i] = vs
+				s.createdServiceVSs[inputNodeName] = vs
 			})
 
-			By(fmt.Sprintf("create Service for service #%d", i), func() {
+			By(fmt.Sprintf("create Service for service #%s", inputNodeName), func() {
 				svc := mb.BuildServiceWithSelector(instanceName, AppContainerPort, AppContainerPort)
 				err := f.K8sClient.Create(ctx, svc)
 				Expect(err).NotTo(HaveOccurred())
-				s.createdServiceSVCs[i] = svc
+				s.createdServiceSVCs[inputNodeName] = svc
 			})
 		}
 
 		By("wait all VirtualService become active", func() {
 			var waitErrors []error
-			waitErrorsMutex := &sync.Mutex{}
-			var wg sync.WaitGroup
-			for i := 0; i != s.VirtualServicesCount; i++ {
+			for _, inputNodeName := range s.InputNodeNamesList {
 				wg.Add(1)
-				go func(serviceIndex int) {
+				go func(nodeName string) {
 					defer wg.Done()
-					vs, err := f.VSManager.WaitUntilVirtualServiceActive(ctx, s.createdServiceVSs[serviceIndex])
+					mapMutex.RLock()
+					createdVS := s.createdServiceVSs[nodeName]
+					mapMutex.RUnlock()
+					vs, err := f.VSManager.WaitUntilVirtualServiceActive(ctx, createdVS)
 					if err != nil {
 						waitErrorsMutex.Lock()
 						waitErrors = append(waitErrors, errors.Wrapf(err, "VirtualService: %v", k8s.NamespacedName(vs).String()))
 						waitErrorsMutex.Unlock()
 						return
 					}
-					s.createdServiceVSs[serviceIndex] = vs
-				}(i)
+					mapMutex.Lock()
+					s.createdServiceVSs[nodeName] = vs
+					mapMutex.Unlock()
+				}(inputNodeName)
 			}
 			wg.Wait()
 			for _, waitErr := range waitErrors {
@@ -1337,40 +1375,16 @@ func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framew
 			Expect(len(waitErrors)).To(BeZero())
 		})
 
-		By("check all VirtualRouters in AWS", func() {
-			var checkErrors []error
-			checkErrorsMutex := &sync.Mutex{}
-			var wg sync.WaitGroup
-			for i := 0; i != s.VirtualServicesCount; i++ {
-				wg.Add(1)
-				go func(serviceIndex int) {
-					defer wg.Done()
-					vr := s.createdServiceVRs[serviceIndex]
-					err := f.VRManager.CheckVirtualRouterInAWS(ctx, s.mesh, vr)
-					if err != nil {
-						checkErrorsMutex.Lock()
-						checkErrors = append(checkErrors, errors.Wrapf(err, "VirtualRouter: %v", k8s.NamespacedName(vr).String()))
-						checkErrorsMutex.Unlock()
-						return
-					}
-				}(i)
-			}
-			wg.Wait()
-			for _, checkErr := range checkErrors {
-				f.Logger.Error("failed to check all VirtualRouters in AWS", zap.Error(checkErr))
-			}
-			Expect(len(checkErrors)).To(BeZero())
-		})
-
 		By("check all VirtualService in AWS", func() {
 			var checkErrors []error
 			checkErrorsMutex := &sync.Mutex{}
-			var wg sync.WaitGroup
-			for i := 0; i != s.VirtualServicesCount; i++ {
+			for _, inputNodeName := range s.InputNodeNamesList {
 				wg.Add(1)
-				go func(serviceIndex int) {
+				go func(nodeName string) {
 					defer wg.Done()
-					vs := s.createdServiceVSs[serviceIndex]
+					mapMutex.RLock()
+					vs := s.createdServiceVSs[nodeName]
+					mapMutex.RUnlock()
 					err := f.VSManager.CheckVirtualServiceInAWS(ctx, s.mesh, vs)
 					if err != nil {
 						checkErrorsMutex.Lock()
@@ -1378,7 +1392,7 @@ func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framew
 						checkErrorsMutex.Unlock()
 						return
 					}
-				}(i)
+				}(inputNodeName)
 			}
 			wg.Wait()
 			for _, checkErr := range checkErrors {
@@ -1389,15 +1403,15 @@ func (s *DynamicStack) createResourcesForServices(ctx context.Context, f *framew
 	})
 }
 
-func (s *DynamicStack) deleteResourcesForServices(ctx context.Context, f *framework.Framework) []error {
+func (s *DynamicStackNew) deleteResourcesForServices(ctx context.Context, f *framework.Framework) []error {
 	var deletionErrors []error
 	By("delete all resources for services", func() {
-		for i, svc := range s.createdServiceSVCs {
+		for inputNodeName, svc := range s.createdServiceSVCs {
 			if svc == nil {
 				continue
 			}
 
-			By(fmt.Sprintf("delete Service for service #%d", i), func() {
+			By(fmt.Sprintf("delete Service for service #%s", inputNodeName), func() {
 				if err := f.K8sClient.Delete(ctx, svc); err != nil {
 					f.Logger.Error("failed to delete Service",
 						zap.String("namespace", svc.Namespace),
@@ -1408,30 +1422,15 @@ func (s *DynamicStack) deleteResourcesForServices(ctx context.Context, f *framew
 				}
 			})
 		}
-		for i, vs := range s.createdServiceVSs {
+		for inputNodeName, vs := range s.createdServiceVSs {
 			if vs == nil {
 				continue
 			}
-			By(fmt.Sprintf("delete VirtualService for service #%d", i), func() {
+			By(fmt.Sprintf("delete VirtualService for service #%s", inputNodeName), func() {
 				if err := f.K8sClient.Delete(ctx, vs); err != nil {
 					f.Logger.Error("failed to delete VirtualService",
 						zap.String("namespace", vs.Namespace),
 						zap.String("name", vs.Name),
-						zap.Error(err),
-					)
-					deletionErrors = append(deletionErrors, err)
-				}
-			})
-		}
-		for i, vr := range s.createdServiceVRs {
-			if vr == nil {
-				continue
-			}
-			By(fmt.Sprintf("delete VirtualRouter for service #%d", i), func() {
-				if err := f.K8sClient.Delete(ctx, vr); err != nil {
-					f.Logger.Error("failed to delete VirtualRouter",
-						zap.String("namespace", vr.Namespace),
-						zap.String("name", vr.Name),
 						zap.Error(err),
 					)
 					deletionErrors = append(deletionErrors, err)
@@ -1443,21 +1442,24 @@ func (s *DynamicStack) deleteResourcesForServices(ctx context.Context, f *framew
 			var waitErrors []error
 			waitErrorsMutex := &sync.Mutex{}
 			var wg sync.WaitGroup
-			for i, vs := range s.createdServiceVSs {
+			mapMutex := &sync.RWMutex{}
+			for inputNodeName, vs := range s.createdServiceVSs {
 				if vs == nil {
 					continue
 				}
 				wg.Add(1)
-				go func(serviceIndex int) {
+				go func(nodeName string) {
 					defer wg.Done()
-					vs := s.createdServiceVSs[serviceIndex]
+					mapMutex.RLock()
+					vs := s.createdServiceVSs[nodeName]
+					mapMutex.RUnlock()
 					if err := f.VSManager.WaitUntilVirtualServiceDeleted(ctx, vs); err != nil {
 						waitErrorsMutex.Lock()
 						waitErrors = append(waitErrors, errors.Wrapf(err, "VirtualService: %v", k8s.NamespacedName(vs).String()))
 						waitErrorsMutex.Unlock()
 						return
 					}
-				}(i)
+				}(inputNodeName)
 			}
 			wg.Wait()
 			for _, waitErr := range waitErrors {
@@ -1465,50 +1467,24 @@ func (s *DynamicStack) deleteResourcesForServices(ctx context.Context, f *framew
 			}
 			Expect(len(waitErrors)).To(BeZero())
 		})
-		By("wait all VirtualRouter become deleted", func() {
-			var waitErrors []error
-			waitErrorsMutex := &sync.Mutex{}
-			var wg sync.WaitGroup
-			for i, vr := range s.createdServiceVRs {
-				if vr == nil {
-					continue
-				}
-				wg.Add(1)
-				go func(serviceIndex int) {
-					defer wg.Done()
-					vr := s.createdServiceVRs[serviceIndex]
-					if err := f.VRManager.WaitUntilVirtualRouterDeleted(ctx, vr); err != nil {
-						waitErrorsMutex.Lock()
-						waitErrors = append(waitErrors, errors.Wrapf(err, "VirtualRouter: %v", k8s.NamespacedName(vr).String()))
-						waitErrorsMutex.Unlock()
-						return
-					}
-				}(i)
-			}
-			wg.Wait()
-			for _, waitErr := range waitErrors {
-				f.Logger.Error("failed to wait all VirtualRouter become deleted", zap.Error(waitErr))
-			}
-			Expect(len(waitErrors)).To(BeZero())
-		})
 	})
 	return deletionErrors
 }
 
-func (s *DynamicStack) grantVirtualNodesBackendAccess(ctx context.Context, f *framework.Framework) {
+func (s *DynamicStackNew) grantVirtualNodesBackendAccess(ctx context.Context, f *framework.Framework) {
 	By("granting VirtualNodes backend access", func() {
 		s.VNReferenceMap = make(map[string][]*string)
-		nextVirtualServiceIndex := 0
-		for i, vn := range s.createdNodeVNs {
+		for inputNodeName, vn := range s.createdNodeVNs {
 			if vn == nil {
 				continue
 			}
-			By(fmt.Sprintf("granting VirtualNode backend access for node #%d", i), func() {
+			By(fmt.Sprintf("granting VirtualNode backend access for node #%s", inputNodeName), func() {
 				var vnBackends []appmesh.Backend
 				var backendSANs []*string
 				backendSANsMap := make(map[string]bool)
-				for backendIndex := 0; backendIndex != s.BackendsCountPerVirtualNode; backendIndex++ {
-					vs := s.createdServiceVSs[nextVirtualServiceIndex]
+				for _, backendNodeName := range s.InputNodeBackendsMap[inputNodeName] {
+					vs := s.createdServiceVSs[backendNodeName]
+					fmt.Printf("Granting backend access for node %s to service -: %s\n", inputNodeName, vs.Name)
 					vnBackends = append(vnBackends, appmesh.Backend{
 						VirtualService: appmesh.VirtualServiceBackend{
 							VirtualServiceRef: &appmesh.VirtualServiceReference{
@@ -1518,6 +1494,7 @@ func (s *DynamicStack) grantVirtualNodesBackendAccess(ctx context.Context, f *fr
 						},
 					})
 					if s.IsmTLSEnabled {
+						fmt.Println("Entered mTLS part of grantVirtualNodesBackendAccess")
 						for _, backendVN := range s.BackendVNsByVR[vs.Name] {
 							if _, ok := backendSANsMap[backendVN]; ok {
 								continue
@@ -1529,10 +1506,10 @@ func (s *DynamicStack) grantVirtualNodesBackendAccess(ctx context.Context, f *fr
 							backendSANs = append(backendSANs, &backendSVID)
 						}
 					}
-					nextVirtualServiceIndex = (nextVirtualServiceIndex + 1) % s.VirtualServicesCount
 				}
 
 				vnNew := vn.DeepCopy()
+				fmt.Printf("Number of backends for node %s = %d\n", inputNodeName, len(vnBackends))
 				vnNew.Spec.Backends = vnBackends
 				if s.IsmTLSEnabled {
 					vnNew.Spec.BackendDefaults.ClientPolicy.TLS.Validation.SubjectAlternativeNames.Match.Exact = backendSANs
@@ -1540,20 +1517,20 @@ func (s *DynamicStack) grantVirtualNodesBackendAccess(ctx context.Context, f *fr
 
 				err := f.K8sClient.Patch(ctx, vnNew, client.MergeFrom(vn))
 				Expect(err).NotTo(HaveOccurred())
-				s.createdNodeVNs[i] = vnNew
+				s.createdNodeVNs[inputNodeName] = vnNew
 			})
 		}
 	})
 }
 
-func (s *DynamicStack) revokeVirtualNodeBackendAccess(ctx context.Context, f *framework.Framework) []error {
+func (s *DynamicStackNew) revokeVirtualNodeBackendAccess(ctx context.Context, f *framework.Framework) []error {
 	var deletionErrors []error
 	By("revoking VirtualNodes backend access", func() {
-		for i, vn := range s.createdNodeVNs {
+		for inputNodeName, vn := range s.createdNodeVNs {
 			if vn == nil || len(vn.Spec.Backends) == 0 {
 				continue
 			}
-			By(fmt.Sprintf("revoking VirtualNode backend access for node #%d", i), func() {
+			By(fmt.Sprintf("revoking VirtualNode backend access for node #%s", inputNodeName), func() {
 				vnNew := vn.DeepCopy()
 				vnNew.Spec.Backends = nil
 
