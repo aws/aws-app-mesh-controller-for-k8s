@@ -52,9 +52,6 @@ var _ = Describe("test dynamically generated symmetrical mesh", func() {
 		})
 
 		AfterEach(func() {
-			sleep_duration := 6 * time.Hour
-			fmt.Printf("Sleeping %d mins", sleep_duration)
-			time.Sleep(sleep_duration)
 			for _, stack := range stacksPendingCleanUp {
 				stack.Cleanup(ctx, f)
 			}
