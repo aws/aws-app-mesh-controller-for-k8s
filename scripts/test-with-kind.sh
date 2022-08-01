@@ -107,6 +107,9 @@ fi
 
 ecr_login $AWS_REGION $ECR_URL
 
+curl -L https://go.kubebuilder.io/dl/2.3.1/linux/amd64 | tar -xz -C /tmp/
+sudo mv /tmp/kubebuilder_2.3.1_linux_amd64 /usr/local/kubebuilder
+
 # Build and publish the controller image
 build_and_publish_controller
 
