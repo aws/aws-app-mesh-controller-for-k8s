@@ -6,13 +6,16 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
+	"github.com/aws/aws-sdk-go/aws"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 )
 
@@ -167,10 +170,9 @@ func deployFortio(ctx context.Context, f *framework.Framework, stacksPendingClea
 		Expect(fortioErr).NotTo(HaveOccurred())
 	})
 
-	stacksPendingCleanUp[0].waitUntilFortioComponentsActive(ctx, f, stacksPendingCleanUp[0].namespace.Name, "fortio")
+	fortio_vn, _ := stacksPendingCleanUp[0].waitUntilFortioComponentsActive(ctx, f, stacksPendingCleanUp[0].namespace.Name, "fortio")
 	fmt.Println("All Fortio Components Active")
 
-	// Port forward Fortio to localhost
 	var portForwardCmd *exec.Cmd
 	By("Port-forwarding Fortio service to local", func() {
 		portForwardCmd = exec.Command("kubectl", fmt.Sprintf("--namespace"), stacksPendingCleanUp[0].namespace.Name, "port-forward", "service/fortio", "9091:8080")
@@ -187,6 +189,31 @@ func deployFortio(ctx context.Context, f *framework.Framework, stacksPendingClea
 			fmt.Println(out.String())
 		}
 		Expect(portForwardErr).NotTo(HaveOccurred())
+	})
+
+	By("Adding all VirtualServices as backends of Fortio", func() {
+		var vnBackends []appmesh.Backend
+		for _, vs := range stacksPendingCleanUp[0].createdServiceVSs {
+			fmt.Printf("Granting backend access for Fortio to service -: %s\n", vs.Name)
+			vnBackends = append(vnBackends, appmesh.Backend{
+				VirtualService: appmesh.VirtualServiceBackend{
+					VirtualServiceRef: &appmesh.VirtualServiceReference{
+						Namespace: aws.String(vs.Namespace),
+						Name:      vs.Name,
+					},
+				},
+			})
+		}
+		vnNew := fortio_vn.DeepCopy()
+		fmt.Printf("Number of backends for Fortio = %d\n", len(vnBackends))
+		vnNew.Spec.Backends = vnBackends
+		//if s.IsmTLSEnabled {
+		//	vnNew.Spec.BackendDefaults.ClientPolicy.TLS.Validation.SubjectAlternativeNames.Match.Exact = backendSANs
+		//}
+
+		err := f.K8sClient.Patch(ctx, vnNew, client.MergeFrom(fortio_vn))
+		Expect(err).NotTo(HaveOccurred())
+		stacksPendingCleanUp[0].createdNodeVNs["fortio"] = vnNew
 	})
 
 	return portForwardCmd
@@ -228,7 +255,8 @@ var _ = Describe("Running Load Test Driver", func() {
 				}
 			}()
 
-			time.Sleep(10 * time.Minute)
+			time.Sleep(2 * time.Minute)
+
 			// Run Fortio load driver script
 			By(fmt.Sprintf("Running Fortio Load Driver from %s\n", loadDriverPath), func() {
 				loadDriverCmd := exec.Command("python3", loadDriverPath, configPath, basePath)
@@ -239,7 +267,7 @@ var _ = Describe("Running Load Test Driver", func() {
 				loadDriverCmd.Stderr = &stderr
 				err := loadDriverCmd.Run()
 				if err != nil {
-					fmt.Printf("Load Driver Failed with error -: %v -: %s\n", err, stderr.String())
+					fmt.Printf("Load Driver Failed with error -: \n%v -: %s\n", err, stderr.String())
 				} else {
 					fmt.Println("Fortio Load Driver success -: \n", stdout.String())
 				}

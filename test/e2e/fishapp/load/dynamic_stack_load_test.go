@@ -654,7 +654,7 @@ func (s *DynamicStack) registerVirtualNodeSDSEntry(nodeName string) error {
 	return nil
 }
 
-func (s *DynamicStackNew) waitUntilFortioComponentsActive(ctx context.Context, f *framework.Framework, namespace string, name string) {
+func (s *DynamicStackNew) waitUntilFortioComponentsActive(ctx context.Context, f *framework.Framework, namespace string, name string) (*appmesh.VirtualNode, *appsv1.Deployment) {
 	var replicas int32 = 1
 	vn := &appmesh.VirtualNode{
 		ObjectMeta: metav1.ObjectMeta{
@@ -706,6 +706,7 @@ func (s *DynamicStackNew) waitUntilFortioComponentsActive(ctx context.Context, f
 	}
 
 	Expect(len(waitErrors)).To(BeZero())
+	return vn, dp
 }
 
 func (s *DynamicStack) createResourcesForNodes(ctx context.Context, f *framework.Framework, mb *manifest.ManifestBuilder) {
