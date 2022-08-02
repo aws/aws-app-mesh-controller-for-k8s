@@ -36,6 +36,6 @@ jobs:
         uses: helm/kind-action@v1.3.0
         with:
           config: ./scripts/kind-two-node-cluster.yaml
-          cluster-name: appmesh-test
+          cluster_name: appmesh-test
       - name: run integration tests
         run: make run-integration-test
