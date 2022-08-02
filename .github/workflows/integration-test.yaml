@@ -28,6 +28,9 @@ jobs:
       - name: install controller-gen
         run: |
           go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1
+      - name: install ginkgo
+        run: |
+          go install github.com/onsi/ginkgo/ginkgo
       - name: checkout code
         uses: actions/checkout@v2
       - name: build controller
