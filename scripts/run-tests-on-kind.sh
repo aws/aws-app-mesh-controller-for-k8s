@@ -35,6 +35,8 @@ function install_controller {
        kubectl create ns $__ns
        APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make helm-deploy
        sleep 10
+       kubectl get nodes
+       kubectl describe nodes
        kubectl describe deployment/$__controller_name -n $__ns
        kubectl describe replicaset -n $__ns
        kubectl describe pods -n $__ns
