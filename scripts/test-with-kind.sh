@@ -113,21 +113,3 @@ sudo mv /tmp/kubebuilder_1.0.8_linux_amd64 /usr/local/kubebuilder
 # Build and publish the controller image
 build_and_publish_controller
 
-setup_kind_cluster
-export KUBECONFIG="${TMP_DIR}/kubeconfig"
-
-# Generate and install CRDs
-install_crds
-
-# Install the controller
-install_controller
-
-# Show the installed CRDs
-kubectl get crds
-
-#FIXME sometimes the test controller "deployment" is ready but internally process is not ready
-# leading to tests failing. Added this hack to workaround. Will be replaced with a better
-# check later
-sleep 15
-
-run_integration_tests

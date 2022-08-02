@@ -30,5 +30,12 @@ jobs:
           go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1
       - name: checkout code
         uses: actions/checkout@v2
-      - name: setup kind and run integration tests
+      - name: build controller
         run: make integration-test
+      - name: setup kind
+        uses: helm/kind-action@v1.3.0
+        with:
+          config: ./scripts/kind-two-node-cluster.yaml
+          cluster-name: appmesh-test
+      - name: run integration tests
+        run: make run-integration-test

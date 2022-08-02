@@ -88,6 +88,9 @@ docker-push: check-env
 integration-test: ## Run the integration using kind clusters
 	@./scripts/test-with-kind.sh
 
+run-integration-test: ## Run the integration tests on kind
+	@./scripts/run-tests-on-kind.sh
+
 delete-all-kind-clusters:	## Delete all local kind clusters
 	@kind get clusters | \
 	while read name ; do \
