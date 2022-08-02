@@ -1,5 +1,6 @@
 # Image URL to use all building/pushing image targets
 IMAGE_NAME=amazon/appmesh-controller
+AWS_ACCOUNT ?= $(AWS_ACCOUNT_ID)
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE_NAME)
 REPO_FULL_NAME=aws/aws-app-mesh-controller-for-k8s
 BINARY_NAME ?= "appmesh-controller"
@@ -86,7 +87,7 @@ docker-push: check-env
 	docker push $(IMAGE)
 
 kind-load:
-	kind load $(IMAGE)
+	kind load docker-image $(IMAGE)
 
 integration-test: ## Run the integration using kind clusters
 	@./scripts/test-with-kind.sh
