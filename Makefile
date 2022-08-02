@@ -87,7 +87,7 @@ docker-push: check-env
 	docker push $(IMAGE)
 
 kind-load:
-	kind load docker-image $(IMAGE)
+	kind load docker-image $(IMAGE) --name appmesh-test
 
 integration-test: ## Run the integration using kind clusters
 	@./scripts/test-with-kind.sh
