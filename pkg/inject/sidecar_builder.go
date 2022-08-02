@@ -165,6 +165,8 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 
 	env["APPMESH_PLATFORM_K8S_VERSION"] = vars.K8sVersion
 	env["APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION"] = vars.ControllerVersion
+	env["APPNET_AGENT_ADMIN_MODE"] = "uds"
+	env["APPNET_AGENT_ADMIN_UDS_PATH"] = "/tmp/agent.sock"
 	return nil
 }
 
@@ -196,9 +198,10 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (core
 	if vars.WaitUntilProxyReady {
 		envoy.Lifecycle.PostStart = &corev1.Handler{
 			Exec: &corev1.ExecAction{Command: []string{
-				"sh", "-c", fmt.Sprintf("if [[ $(/usr/bin/envoy --version) =~ ([0-9]+\\.([0-9]+) && ${BASH_REMATCH[1]} -gt 2 || ${BASH_REMATCH[2]} -gt 23 ]];"+
-					"then APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=%d APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=%d /usr/bin/agent -envoyReadiness;"+
-					"else echo 'WaitUntilProxyReady is not supported in Envoy < 1.23'; fi", vars.PostStartTimeout, vars.PostStartInterval),
+				// "sh", "-c", fmt.Sprintf("if [[ $(/usr/bin/envoy --version) =~ ([0-9]+\\.([0-9]+) && ${BASH_REMATCH[1]} -gt 2 || ${BASH_REMATCH[2]} -gt 22 ]];"+
+				// 	"then APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=%d APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=%d /usr/bin/agent -envoyReadiness;"+
+				// 	"else echo 'WaitUntilProxyReady is not supported in Envoy < 1.22'; fi", vars.PostStartTimeout, vars.PostStartInterval),
+				"sh", "-c", "APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=60 APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=5 /usr/bin/agent -envoyReadiness",
 			}},
 		}
 	}
