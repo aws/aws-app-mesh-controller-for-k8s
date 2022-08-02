@@ -85,6 +85,9 @@ docker-build: check-env test
 docker-push: check-env
 	docker push $(IMAGE)
 
+kind-load:
+	kind load $(IMAGE)
+
 integration-test: ## Run the integration using kind clusters
 	@./scripts/test-with-kind.sh
 

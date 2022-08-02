@@ -71,7 +71,7 @@ export KUBECONFIG="$HOME/.kube/config"
 # Generate and install CRDs
 install_crds
 
-ecr_login $AWS_REGION $ECR_URL
+make kind-load
 
 # Install the controller
 install_controller
