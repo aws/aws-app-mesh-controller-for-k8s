@@ -111,6 +111,9 @@ func main() {
 		setupLog.Error(err, "invalid flags")
 		os.Exit(1)
 	}
+
+	awsCloudConfig.HandleAccountID(setupLog)
+
 	if err := injectConfig.Validate(); err != nil {
 		setupLog.Error(err, "invalid flags")
 		os.Exit(1)
