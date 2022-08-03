@@ -5,10 +5,15 @@ FROM --platform=${TARGETPLATFORM} golang:1.16 as builder
 
 WORKDIR /workspace
 
-COPY . ./
-# cache deps before building and copying source so that we don't need to re-download as much
-# and so that source changes don't invalidate our downloaded layer
+COPY go.mod go.sum ./
+
+# uncomment if using vendor
+# COPY ./vendor ./vendor
+
+ENV GOPROXY=direct
 RUN go mod download
+
+COPY . ./
 
 ARG TARGETOS
 ARG TARGETARCH
