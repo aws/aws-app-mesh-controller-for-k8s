@@ -63,7 +63,7 @@ function install_controller {
        local __controller_name="appmesh-controller"
        local __ns="appmesh-system"
        kubectl create ns $__ns
-       APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make helm-deploy
+       APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION ENABLE_BACKEND_GROUPS=true make helm-deploy
        check_deployment_rollout $__controller_name $__ns
        echo -n "check the pods in appmesh-system namespace ... "
        kubectl get pod -n $__ns
