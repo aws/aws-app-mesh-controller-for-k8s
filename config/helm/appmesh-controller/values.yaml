@@ -6,6 +6,7 @@ replicaCount: 1
 region: ""
 accountId: ""
 preview: false
+enableBackendGroups: false
 clusterName: ""
 
 image:

@@ -38,24 +38,27 @@ func NewDefaultResourceManager(
 	appMeshSDK services.AppMesh,
 	referencesResolver references.Resolver,
 	accountID string,
-	log logr.Logger) ResourceManager {
+	log logr.Logger,
+	enableBackendGroups bool) ResourceManager {
 
 	return &defaultResourceManager{
-		k8sClient:          k8sClient,
-		appMeshSDK:         appMeshSDK,
-		referencesResolver: referencesResolver,
-		accountID:          accountID,
-		log:                log,
+		k8sClient:           k8sClient,
+		appMeshSDK:          appMeshSDK,
+		referencesResolver:  referencesResolver,
+		accountID:           accountID,
+		log:                 log,
+		enableBackendGroups: enableBackendGroups,
 	}
 }
 
 // defaultResourceManager implements ResourceManager
 type defaultResourceManager struct {
-	k8sClient          client.Client
-	appMeshSDK         services.AppMesh
-	referencesResolver references.Resolver
-	accountID          string
-	log                logr.Logger
+	k8sClient           client.Client
+	appMeshSDK          services.AppMesh
+	referencesResolver  references.Resolver
+	accountID           string
+	log                 logr.Logger
+	enableBackendGroups bool
 }
 
 func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.VirtualNode) error {
@@ -136,29 +139,31 @@ func (m *defaultResourceManager) validateMeshDependencies(ctx context.Context, m
 func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Context, vn *appmesh.VirtualNode) (map[types.NamespacedName]*appmesh.VirtualService, error) {
 	vsByKey := make(map[types.NamespacedName]*appmesh.VirtualService)
 	vsRefs := ExtractVirtualServiceReferences(vn)
-	for _, backendGroupRef := range vn.Spec.BackendGroups {
-		// Wildcard special case
-		bgKey := references.ObjectKeyForBackendGroupReference(vn, backendGroupRef)
-		if bgKey.Name == "*" {
-			var listOptions client.ListOptions
-			listOptions.Namespace = bgKey.Namespace
-			vsList := &appmesh.VirtualServiceList{}
-			if err := m.k8sClient.List(ctx, vsList, &listOptions); err != nil {
-				return nil, fmt.Errorf("could not list virtualservices for namespace: %s", bgKey.Namespace)
-			}
-			for _, vs := range vsList.Items {
-				vsRef := appmesh.VirtualServiceReference{
-					Namespace: aws.String(vs.Namespace),
-					Name:      vs.Name,
+	if m.enableBackendGroups {
+		for _, backendGroupRef := range vn.Spec.BackendGroups {
+			// Wildcard special case
+			bgKey := references.ObjectKeyForBackendGroupReference(vn, backendGroupRef)
+			if bgKey.Name == "*" {
+				var listOptions client.ListOptions
+				listOptions.Namespace = bgKey.Namespace
+				vsList := &appmesh.VirtualServiceList{}
+				if err := m.k8sClient.List(ctx, vsList, &listOptions); err != nil {
+					return nil, fmt.Errorf("could not list virtualservices for namespace: %s", bgKey.Namespace)
 				}
-				vsRefs = append(vsRefs, vsRef)
+				for _, vs := range vsList.Items {
+					vsRef := appmesh.VirtualServiceReference{
+						Namespace: aws.String(vs.Namespace),
+						Name:      vs.Name,
+					}
+					vsRefs = append(vsRefs, vsRef)
+				}
+			} else {
+				bg, err := m.referencesResolver.ResolveBackendGroupReference(ctx, vn, backendGroupRef)
+				if err != nil {
+					return nil, errors.Wrapf(err, "failed to resolve backendGroupRef")
+				}
+				vsRefs = append(vsRefs, bg.Spec.VirtualServices...)
 			}
-		} else {
-			bg, err := m.referencesResolver.ResolveBackendGroupReference(ctx, vn, backendGroupRef)
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to resolve backendGroupRef")
-			}
-			vsRefs = append(vsRefs, bg.Spec.VirtualServices...)
 		}
 	}
 	for _, vsRef := range vsRefs {

@@ -11,6 +11,7 @@ const (
 	flagEnableECRSecret             = "enable-ecr-secret"
 	flagEnableSDS                   = "enable-sds"
 	flagSdsUdsPath                  = "sds-uds-path"
+	flagEnableBackendGroups         = "enable-backend-groups"
 
 	flagSidecarImage               = "sidecar-image"
 	flagSidecarCpuRequests         = "sidecar-cpu-requests"
@@ -61,6 +62,8 @@ type Config struct {
 	EnableSDS bool
 	// Contains the Unix Domain Socket Path for SDS provider.
 	SdsUdsPath string
+	// If enabled, experimental Backend Groups feature will be enabled.
+	EnableBackendGroups bool
 
 	// Sidecar settings
 	SidecarImage               string
@@ -123,6 +126,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	//Set to the SPIRE Agent's default UDS path for now as App Mesh only supports SPIRE as SDS provider for preview.
 	fs.StringVar(&cfg.SdsUdsPath, flagSdsUdsPath, "/run/spire/sockets/agent.sock",
 		"Unix Domain Socket path for SDS provider")
+	fs.BoolVar(&cfg.EnableBackendGroups, flagEnableBackendGroups, false, "If enabled, experimental Backend Groups feature will be enabled.")
 	fs.StringVar(&cfg.SidecarImage, flagSidecarImage, "public.ecr.aws/appmesh/aws-appmesh-envoy:v1.22.2.0-prod",
 		"Envoy sidecar container image.")
 	fs.StringVar(&cfg.SidecarCpuRequests, flagSidecarCpuRequests, "10m",

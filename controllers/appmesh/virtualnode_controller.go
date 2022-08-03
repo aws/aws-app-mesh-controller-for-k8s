@@ -36,7 +36,8 @@ func NewVirtualNodeReconciler(
 	finalizerManager k8s.FinalizerManager,
 	vnResManager virtualnode.ResourceManager,
 	log logr.Logger,
-	recorder record.EventRecorder) *virtualNodeReconciler {
+	recorder record.EventRecorder,
+	enableBackendGroups bool) *virtualNodeReconciler {
 	return &virtualNodeReconciler{
 		k8sClient:                              k8sClient,
 		finalizerManager:                       finalizerManager,
@@ -46,6 +47,7 @@ func NewVirtualNodeReconciler(
 		enqueueRequestsForVirtualServiceEvents: virtualnode.NewEnqueueRequestsForVirtualServiceEvents(k8sClient, log),
 		log:                                    log,
 		recorder:                               recorder,
+		enableBackendGroups:                    enableBackendGroups,
 	}
 }
 
@@ -60,6 +62,8 @@ type virtualNodeReconciler struct {
 	enqueueRequestsForVirtualServiceEvents handler.EventHandler
 	log                                    logr.Logger
 	recorder                               record.EventRecorder
+
+	enableBackendGroups bool
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes,verbs=get;list;watch;create;update;patch;delete
@@ -73,13 +77,21 @@ func (r *virtualNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 }
 
 func (r *virtualNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&appmesh.VirtualNode{}).
-		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
-		Watches(&source.Kind{Type: &appmesh.BackendGroup{}}, r.enqueueRequestsForBackendGroupEvents).
-		Watches(&source.Kind{Type: &appmesh.VirtualService{}}, r.enqueueRequestsForVirtualServiceEvents).
-		WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
-		Complete(r)
+	if r.enableBackendGroups {
+		return ctrl.NewControllerManagedBy(mgr).
+			For(&appmesh.VirtualNode{}).
+			Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
+			Watches(&source.Kind{Type: &appmesh.BackendGroup{}}, r.enqueueRequestsForBackendGroupEvents).
+			Watches(&source.Kind{Type: &appmesh.VirtualService{}}, r.enqueueRequestsForVirtualServiceEvents).
+			WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
+			Complete(r)
+	} else {
+		return ctrl.NewControllerManagedBy(mgr).
+			For(&appmesh.VirtualNode{}).
+			Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
+			WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
+			Complete(r)
+	}
 }
 
 func (r *virtualNodeReconciler) reconcile(ctx context.Context, req ctrl.Request) error {
