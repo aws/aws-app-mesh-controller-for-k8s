@@ -58,7 +58,7 @@ helm-lint:
 
 
 helm-deploy: check-env manifests
-	helm upgrade -i appmesh-controller config/helm/appmesh-controller --namespace appmesh-system --set image.repository=$(REPO) --set image.tag=$(VERSION) --set preview=$(PREVIEW) --set enableBackendGroups=$(ENABLE_BACKEND_GROUPS)
+	helm upgrade -i appmesh-controller config/helm/appmesh-controller --namespace appmesh-system --set image.repository=$(REPO) --set image.tag=$(VERSION) --set preview=$(PREVIEW) --set enableBackendGroups=${ENABLE_BACKEND_GROUPS}
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
