@@ -29,11 +29,18 @@ func (cfg *CloudConfig) BindFlags(fs *pflag.FlagSet) {
 	fs.Var(cfg.ThrottleConfig, flagAWSAPIThrottle, "throttle settings for AWS APIs, format: serviceID1:operationRegex1=rate:burst,serviceID2:operationRegex2=rate:burst")
 }
 
-//function to check if aws accountId got converted to scientific notation, and convert back
+// function to check if aws accountId got converted to scientific notation, and convert back
+// silently log any improperly formatted ids
 func (cfg *CloudConfig) HandleAccountID(log logr.Logger) {
-	matched, _ := regexp.MatchString("^([0-9]{1}[.])([0-9]{11})(e\\+11)", cfg.AccountID)
-	if matched {
-		log.Error(nil, "The following AWS Account ID is not formatted correctly: "+cfg.AccountID)
+	properIDMatched, _ := regexp.MatchString("^(\\d{12})$", cfg.AccountID)
+
+	if properIDMatched {
+		return
+	}
+	log.Error(nil, "The following AWS Account ID is not formatted correctly: "+cfg.AccountID)
+
+	scientificMatched, _ := regexp.MatchString("^(\\d[.])(\\d{11})(e\\+11)$", cfg.AccountID)
+	if scientificMatched {
 		cfg.AccountID = cfg.AccountID[0:13]
 		cfg.AccountID = strings.Replace(cfg.AccountID, ".", "", 1)
 		log.Error(nil, "Using the converted AWS Account ID: "+cfg.AccountID)

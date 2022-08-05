@@ -31,12 +31,28 @@ func TestCloudConfig(t *testing.T) {
 			wantAccountID: "123456789012",
 		},
 		{
+			name: "properID with characters at end",
+			args: args{
+
+				accountId: "123456789012abc",
+			},
+			wantAccountID: "123456789012abc",
+		},
+		{
 			name: "Scientific Notation case formatted as expected to handle",
 			args: args{
 
 				accountId: "1.23456789012e+11",
 			},
 			wantAccountID: "123456789012",
+		},
+		{
+			name: "Scientific Notation case extra letters at end",
+			args: args{
+
+				accountId: "1.23456789012e+1123",
+			},
+			wantAccountID: "1.23456789012e+1123",
 		},
 		{
 			name: "Scientific Notation case: Too many digits",
