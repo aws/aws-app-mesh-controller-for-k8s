@@ -34,7 +34,7 @@ func (cfg *CloudConfig) BindFlags(fs *pflag.FlagSet) {
 func (cfg *CloudConfig) HandleAccountID(log logr.Logger) {
 	properIDMatched, _ := regexp.MatchString("^(\\d{12})$", cfg.AccountID)
 
-	if properIDMatched {
+	if properIDMatched || cfg.AccountID == "" {
 		return
 	}
 	log.Error(nil, "The following AWS Account ID is not formatted correctly: "+cfg.AccountID)

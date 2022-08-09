@@ -78,6 +78,14 @@ func TestCloudConfig(t *testing.T) {
 			},
 			wantAccountID: "1.234567890e+11",
 		},
+		{
+			name: "No AccountID Provided",
+			args: args{
+
+				accountId: "",
+			},
+			wantAccountID: "",
+		},
 	}
 
 	for _, tt := range tests {
