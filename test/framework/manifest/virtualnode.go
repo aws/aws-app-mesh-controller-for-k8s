@@ -25,7 +25,13 @@ type VNBuilder struct {
 
 func (b *VNBuilder) BuildVirtualNode(instanceName string, backendVirtualServices []types.NamespacedName,
 	listeners []appmesh.Listener, backendDefaults *appmesh.BackendDefaults) *appmesh.VirtualNode {
-	labels := b.buildSelectors(instanceName)
+
+	podSelectors := b.buildSelectors(instanceName)
+	return b.BuildVirtualNodeWithPodSelector(instanceName, backendVirtualServices, listeners, backendDefaults, podSelectors)
+}
+
+func (b *VNBuilder) BuildVirtualNodeWithPodSelector(instanceName string, backendVirtualServices []types.NamespacedName,
+	listeners []appmesh.Listener, backendDefaults *appmesh.BackendDefaults, podSelectors map[string]string) *appmesh.VirtualNode {
 	vnName := b.buildName(instanceName)
 
 	var sd *appmesh.ServiceDiscovery
@@ -56,7 +62,7 @@ func (b *VNBuilder) BuildVirtualNode(instanceName string, backendVirtualServices
 			Name:      vnName,
 		},
 		Spec: appmesh.VirtualNodeSpec{
-			PodSelector:      &metav1.LabelSelector{MatchLabels: labels},
+			PodSelector:      &metav1.LabelSelector{MatchLabels: podSelectors},
 			Listeners:        listeners,
 			ServiceDiscovery: sd,
 			Backends:         backends,

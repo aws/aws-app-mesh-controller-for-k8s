@@ -66,6 +66,15 @@ spec:
                 description: The AWS IAM account ID of the service mesh owner. Required
                   if the account ID is not your own.
                 type: string
+              meshServiceDiscovery:
+                properties:
+                  ipPreference:
+                    description: The ipPreference for the mesh.
+                    enum:
+                    - IPv6_ONLY
+                    - IPv4_ONLY
+                    type: string
+                type: object
               namespaceSelector:
                 description: "NamespaceSelector selects Namespaces using labels to
                   designate mesh membership. This field follows standard label selector

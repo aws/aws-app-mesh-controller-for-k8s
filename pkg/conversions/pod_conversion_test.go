@@ -1,6 +1,7 @@
 package conversions
 
 import (
+	"k8s.io/client-go/tools/cache"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -58,6 +59,43 @@ func TestConvertObj(t *testing.T) {
 	assert.Equal(t, len(convertedPod.ObjectMeta.Annotations), 0, "Annotations must be excluded/empty")
 	assert.Equal(t, len(convertedPod.ObjectMeta.Labels), 2, "Labels must be excluded/empty")
 	assert.Equal(t, len(convertedPod.Spec.Containers), 0, "Container should be excluded/empty")
+}
+
+func TestConvertObj_DeletedFinalStateUnknown(t *testing.T) {
+	podConverter := NewPodConverter()
+	cachedPod := &v1.Pod{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "TestPod",
+			Namespace: "TestNameSpace",
+		},
+	}
+
+	tombstone := cache.DeletedFinalStateUnknown{
+		Obj: cachedPod,
+	}
+	convertedObj, err := podConverter.ConvertObject(tombstone)
+	assert.NoError(t, err)
+
+	convertedPod, ok := convertedObj.(*v1.Pod)
+	if !ok {
+		t.Error("Conversion Failed")
+	}
+
+	assert.Same(t, convertedPod, cachedPod, "should return the cached pod")
+}
+
+func TestConvertObj_UnknownObject(t *testing.T) {
+	podConverter := NewPodConverter()
+	other := &v1.Namespace{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      "UhOh",
+			Namespace: "ShouldntHappen",
+		},
+	}
+
+	converted, err := podConverter.ConvertObject(other)
+	assert.Error(t, err)
+	assert.Nil(t, converted)
 }
 
 func TestConvertList(t *testing.T) {

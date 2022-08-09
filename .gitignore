@@ -17,6 +17,7 @@ build
 # Ignore vendored files
 
 vendor
+override_model_dev.sh
 
 # editor and IDE paraphernalia
 .idea

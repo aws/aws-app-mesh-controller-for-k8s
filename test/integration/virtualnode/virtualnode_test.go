@@ -3,30 +3,30 @@ package virtualnode_test
 import (
 	"context"
 	"fmt"
+	appmeshk8s "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/servicediscovery"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"go.uber.org/zap"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/servicediscovery"
-	appsv1 "k8s.io/api/apps/v1"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
-	"go.uber.org/zap"
-
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
-	appmeshk8s "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/virtualnode"
 
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -140,6 +140,44 @@ var _ = Describe("VirtualNode", func() {
 
 			})
 
+			vnName = fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+			vn = vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
+			vn.Spec.AWSName = aws.String(fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(256)))
+
+			By("Creating a virtual node resource in k8s with a name exceeding the character limit", func() {
+				// Not using vnTest.Create as it hangs
+				err := f.K8sClient.Create(ctx, vn)
+				observedVn := &appmesh.VirtualNode{}
+				for i := 0; i < 5; i++ {
+					if err := f.K8sClient.Get(ctx, k8s.NamespacedName(vn), observedVn); err != nil {
+						if i >= 5 {
+							Expect(err).NotTo(HaveOccurred())
+						}
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
+				vnTest.VirtualNodes[vn.Name] = vn
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Check virtual node in AWS - it should not exist", func() {
+				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
+				Expect(err).To(HaveOccurred())
+			})
+
+			By("checking events for the BadRequestException", func() {
+				clientset, err := kubernetes.NewForConfig(f.RestCfg)
+				Expect(err).NotTo(HaveOccurred())
+				events, err := clientset.CoreV1().Events(vnTest.Namespace.Name).List(ctx, metav1.ListOptions{
+					FieldSelector: fmt.Sprintf("involvedObject.name=%s", vn.Name),
+					TypeMeta: metav1.TypeMeta{
+						Kind: "Pod",
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(events.Items).NotTo(BeEmpty())
+			})
+
 			By("Set incorrect labels on namespace", func() {
 				oldNS := vnTest.Namespace.DeepCopy()
 				vnTest.Namespace.Labels = algorithm.MergeStringMap(map[string]string{
@@ -159,110 +197,6 @@ var _ = Describe("VirtualNode", func() {
 				Expect(err).To(HaveOccurred())
 			})
 
-		})
-
-		It("should create a virtual node with CloudMap ServiceDiscovery enabled", func() {
-
-			meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
-			mesh := &appmesh.Mesh{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: meshName,
-				},
-				Spec: appmesh.MeshSpec{
-					NamespaceSelector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{
-							"mesh": meshName,
-						},
-					},
-				},
-			}
-
-			By("creating a mesh resource in k8s", func() {
-				err := meshTest.Create(ctx, f, mesh)
-				Expect(err).NotTo(HaveOccurred())
-			})
-
-			By("validating the resources in AWS", func() {
-				err := meshTest.CheckInAWS(ctx, f, mesh)
-				Expect(err).NotTo(HaveOccurred())
-
-			})
-
-			cmNamespace := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
-			By(fmt.Sprintf("create cloudMap namespace %s", cmNamespace), func() {
-				resp, err := f.CloudMapClient.CreatePrivateDnsNamespaceWithContext(ctx, &servicediscovery.CreatePrivateDnsNamespaceInput{
-					Name: aws.String(cmNamespace),
-					Vpc:  aws.String(f.Options.AWSVPCID),
-				})
-				Expect(err).NotTo(HaveOccurred())
-				f.Logger.Info("created cloudMap namespace",
-					zap.String("namespace", cmNamespace),
-					zap.String("operationID", aws.StringValue(resp.OperationId)),
-				)
-				vnTest.CloudMapNameSpace = cmNamespace
-			})
-			//Allow CloudMap Namespace to sync
-			time.Sleep(30 * time.Second)
-
-			vnBuilder := &manifest.VNBuilder{
-				ServiceDiscoveryType: manifest.CloudMapServiceDiscovery,
-				CloudMapNamespace:    cmNamespace,
-			}
-
-			mb := &manifest.ManifestBuilder{
-				ServiceDiscoveryType: manifest.CloudMapServiceDiscovery,
-			}
-
-			By("Create a namespace and add labels", func() {
-				namespace, err := f.NSManager.AllocateNamespace(ctx, "appmeshtest")
-				Expect(err).NotTo(HaveOccurred())
-				vnBuilder.Namespace = namespace.Name
-				vnTest.Namespace = namespace
-				vnTest.Deployments = make(map[string]*appsv1.Deployment)
-				mb.Namespace = namespace.Name
-
-				oldNS := namespace.DeepCopy()
-				namespace.Labels = algorithm.MergeStringMap(map[string]string{
-					"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
-					"mesh":                                   meshName,
-				}, namespace.Labels)
-
-				err = f.K8sClient.Patch(ctx, namespace, client.MergeFrom(oldNS))
-				Expect(err).NotTo(HaveOccurred())
-			})
-
-			vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
-			listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
-			backends := []types.NamespacedName{}
-			vn := vnBuilder.BuildVirtualNode(vnName, backends, listeners, &appmesh.BackendDefaults{})
-
-			By("Creating a virtual node resource in k8s", func() {
-				err := vnTest.Create(ctx, f, vn)
-				Expect(err).NotTo(HaveOccurred())
-			})
-
-			By(fmt.Sprintf("create a deployment for VirtualNode"), func() {
-				containersInfo := []manifest.ContainerInfo{
-					{
-						Name:          "app",
-						AppImage:      defaultAppImage,
-						ContainerPort: AppContainerPort,
-					},
-				}
-				containers := mb.BuildContainerSpec(containersInfo)
-				dp := mb.BuildDeployment(vnName, 2, containers, map[string]string{})
-				//dp := mb.BuildDeployment(vnName, 2, defaultAppImage, AppContainerPort, []corev1.EnvVar{}, map[string]string{})
-				err := f.K8sClient.Create(ctx, dp)
-				Expect(err).NotTo(HaveOccurred())
-				vnTest.Deployments[vnName] = dp
-			})
-
-			//Let Instances sync with CloudMap and Pod Readiness Gate go through
-			time.Sleep(60 * time.Second)
-			By("validating the virtual node in AWS AppMesh & CloudMap", func() {
-				err := vnTest.CheckInAWS(ctx, f, mesh, vn)
-				Expect(err).NotTo(HaveOccurred())
-			})
 		})
 
 		It("should delete a virtual node in AWS", func() {
@@ -983,6 +917,283 @@ var _ = Describe("VirtualNode", func() {
 
 				err = vnTest.CheckInAWS(ctx, f, mesh, vnTest.VirtualNodes[vn.Name])
 				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+	})
+
+	Context("Virtual Node CloudMap scenarios", func() {
+		var (
+			meshSpec  *appmesh.Mesh
+			meshTest  mesh.MeshTest
+			vnTest    virtualnode.VirtualNodeTest
+			vnBuilder *manifest.VNBuilder
+			mb        *manifest.ManifestBuilder
+		)
+
+		BeforeEach(func() {
+			meshTest = mesh.MeshTest{
+				Meshes: make(map[string]*appmesh.Mesh),
+			}
+
+			vnTest = virtualnode.VirtualNodeTest{
+				VirtualNodes: make(map[string]*appmesh.VirtualNode),
+				Pods:         make(map[string]*corev1.Pod),
+				Deployments:  make(map[string]*appsv1.Deployment),
+			}
+
+			meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
+			meshSpec = &appmesh.Mesh{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: meshName,
+				},
+				Spec: appmesh.MeshSpec{
+					NamespaceSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"mesh": meshName,
+						},
+					},
+				},
+			}
+
+			By("creating a mesh resource in k8s: "+meshName, func() {
+				err := meshTest.Create(ctx, f, meshSpec)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("validating the resources in AWS", func() {
+				err := meshTest.CheckInAWS(ctx, f, meshSpec)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			cmNamespace := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
+
+			By(fmt.Sprintf("create cloudMap namespace %s", cmNamespace), func() {
+				resp, err := f.CloudMapClient.CreatePrivateDnsNamespaceWithContext(ctx, &servicediscovery.CreatePrivateDnsNamespaceInput{
+					Name: aws.String(cmNamespace),
+					Vpc:  aws.String(f.Options.AWSVPCID),
+				})
+				Expect(err).NotTo(HaveOccurred())
+				f.Logger.Info("created cloudMap namespace",
+					zap.String("namespace", cmNamespace),
+					zap.String("operationID", aws.StringValue(resp.OperationId)),
+				)
+				vnTest.CloudMapNameSpace = cmNamespace
+			})
+
+			//Allow CloudMap Namespace to sync
+			time.Sleep(30 * time.Second)
+
+			vnBuilder = &manifest.VNBuilder{
+				ServiceDiscoveryType: manifest.CloudMapServiceDiscovery,
+				CloudMapNamespace:    cmNamespace,
+			}
+
+			mb = &manifest.ManifestBuilder{
+				ServiceDiscoveryType: manifest.CloudMapServiceDiscovery,
+			}
+
+			By("Create a namespace and add labels", func() {
+				namespace, err := f.NSManager.AllocateNamespace(ctx, "appmeshtest")
+				Expect(err).NotTo(HaveOccurred())
+				vnBuilder.Namespace = namespace.Name
+				vnTest.Namespace = namespace
+				mb.Namespace = namespace.Name
+
+				oldNS := namespace.DeepCopy()
+				namespace.Labels = algorithm.MergeStringMap(map[string]string{
+					"appmesh.k8s.aws/sidecarInjectorWebhook": "enabled",
+					"mesh":                                   meshName,
+				}, namespace.Labels)
+
+				err = f.K8sClient.Patch(ctx, namespace, client.MergeFrom(oldNS))
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+
+		AfterEach(func() {
+			vnTest.Cleanup(ctx, f)
+			meshTest.Cleanup(ctx, f)
+		})
+
+		Context("Virtual Node CloudMap Scenarios", func() {
+			It("should create a virtual node with CloudMap ServiceDiscovery enabled", func() {
+				containersInfo := []manifest.ContainerInfo{
+					{
+						Name:          "app",
+						AppImage:      defaultAppImage,
+						ContainerPort: AppContainerPort,
+					},
+				}
+				containers := mb.BuildContainerSpec(containersInfo)
+				podGroup := mb.BuildPodGroup(containers, "pods", 2)
+
+				vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+				listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
+				vn := vnBuilder.BuildVirtualNodeWithPodSelector(vnName, nil, listeners, &appmesh.BackendDefaults{}, podGroup.MatchLabels)
+
+				By("Creating a virtual node resource in k8s", func() {
+					err := vnTest.Create(ctx, f, vn)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				vnTest.CreatePodGroup(ctx, f, podGroup)
+
+				//Let Instances sync with CloudMap and Pod Readiness Gate go through
+				time.Sleep(60 * time.Second)
+				By("validating the virtual node in AWS AppMesh & CloudMap", func() {
+					err := vnTest.CheckInAWSWithExpectedPods(ctx, f, meshSpec, vn, podGroup.Pods)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				By("delete one of the pods for the virtual node", func() {
+					err := f.K8sClient.Delete(ctx, podGroup.Pods[0])
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				//Let instances sync with CloudMap
+				time.Sleep(60 * time.Second)
+				By(fmt.Sprint("validate the virtual node instance registrations were removed"), func() {
+					err := vnTest.CheckInAWSWithExpectedPods(ctx, f, meshSpec, vn, podGroup.Pods[1:2])
+					Expect(err).NotTo(HaveOccurred())
+				})
+			})
+
+			It("should update instance registrations when pod selector changes on virtual node", func() {
+				containersInfo := []manifest.ContainerInfo{
+					{
+						Name:          "app",
+						AppImage:      defaultAppImage,
+						ContainerPort: AppContainerPort,
+					},
+				}
+				containers := mb.BuildContainerSpec(containersInfo)
+				podGroup := mb.BuildPodGroup(containers, "pods", 2)
+
+				vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+				listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
+				vn := vnBuilder.BuildVirtualNodeWithPodSelector(vnName, nil, listeners, &appmesh.BackendDefaults{}, podGroup.MatchLabels)
+
+				By("Creating a virtual node resource in k8s", func() {
+					err := vnTest.Create(ctx, f, vn)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				vnTest.CreatePodGroup(ctx, f, podGroup)
+
+				//Let Instances sync with CloudMap and Pod Readiness Gate go through
+				time.Sleep(60 * time.Second)
+				By("validating the virtual node in AWS AppMesh & CloudMap", func() {
+					err := vnTest.CheckInAWSWithExpectedPods(ctx, f, meshSpec, vn, podGroup.Pods)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				By("updating virtual node pod selector", func() {
+					oldVn := vn.DeepCopy()
+					vn.Spec.PodSelector.MatchLabels = map[string]string{
+						"wont": "match",
+					}
+					err := vnTest.Update(ctx, f, vn, oldVn)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				//Let instances sync with CloudMap
+				time.Sleep(60 * time.Second)
+				By(fmt.Sprint("validate the virtual node instance registrations were removed"), func() {
+					err := vnTest.CheckInAWSWithExpectedPods(ctx, f, meshSpec, vn, nil)
+					Expect(err).NotTo(HaveOccurred())
+				})
+			})
+
+			It("should remove all instance registrations when pod selector is removed from virtual node", func() {
+				containersInfo := []manifest.ContainerInfo{
+					{
+						Name:          "app",
+						AppImage:      defaultAppImage,
+						ContainerPort: AppContainerPort,
+					},
+				}
+				containers := mb.BuildContainerSpec(containersInfo)
+				podGroup := mb.BuildPodGroup(containers, "pods", 2)
+
+				vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+
+				listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
+				vn := vnBuilder.BuildVirtualNodeWithPodSelector(vnName, nil, listeners, &appmesh.BackendDefaults{}, podGroup.MatchLabels)
+
+				By("Creating a virtual node resource in k8s", func() {
+					err := vnTest.Create(ctx, f, vn)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				vnTest.CreatePodGroup(ctx, f, podGroup)
+
+				//Let Instances sync with CloudMap and Pod Readiness Gate go through
+				time.Sleep(60 * time.Second)
+				By("validating the virtual node in AWS AppMesh & CloudMap", func() {
+					err := vnTest.CheckInAWSWithExpectedPods(ctx, f, meshSpec, vn, podGroup.Pods)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				By("updating virtual node pod selector", func() {
+					oldVn := vn.DeepCopy()
+					vn.Spec.PodSelector = nil
+					err := vnTest.Update(ctx, f, vn, oldVn)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				//Let instances sync with CloudMap
+				time.Sleep(60 * time.Second)
+				By(fmt.Sprint("validate the virtual node instance registrations were removed"), func() {
+					err := vnTest.CheckInAWSWithExpectedPods(ctx, f, meshSpec, vn, nil)
+					Expect(err).NotTo(HaveOccurred())
+				})
+			})
+
+			It("virtual node registrations should be updated when associated pod labels change", func() {
+				containersInfo := []manifest.ContainerInfo{
+					{
+						Name:          "app",
+						AppImage:      defaultAppImage,
+						ContainerPort: AppContainerPort,
+					},
+				}
+				containers := mb.BuildContainerSpec(containersInfo)
+				podGroup := mb.BuildPodGroup(containers, "pods", 2)
+
+				vnName := fmt.Sprintf("vn-%s", utils.RandomDNS1123Label(8))
+
+				listeners := []appmesh.Listener{vnBuilder.BuildListener("http", 8080)}
+				vn := vnBuilder.BuildVirtualNodeWithPodSelector(vnName, nil, listeners, &appmesh.BackendDefaults{}, podGroup.MatchLabels)
+
+				By("Creating a virtual node resource in k8s", func() {
+					err := vnTest.Create(ctx, f, vn)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				vnTest.CreatePodGroup(ctx, f, podGroup)
+
+				//Let Instances sync with CloudMap and Pod Readiness Gate go through
+				time.Sleep(60 * time.Second)
+				By("validating the virtual node in AWS AppMesh & CloudMap", func() {
+					err := vnTest.CheckInAWSWithExpectedPods(ctx, f, meshSpec, vn, podGroup.Pods)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				By("updating pod labels", func() {
+					pod := podGroup.Pods[1]
+					oldPod := pod.DeepCopy()
+					pod.ObjectMeta.Labels["app"] = "nope"
+					err := f.K8sClient.Patch(ctx, pod, client.MergeFrom(oldPod))
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				//Let instances sync with CloudMap
+				time.Sleep(60 * time.Second)
+				By(fmt.Sprint("validate the virtual node instance registrations were removed"), func() {
+					err := vnTest.CheckInAWSWithExpectedPods(ctx, f, meshSpec, vn, podGroup.Pods[0:1])
+					Expect(err).NotTo(HaveOccurred())
+				})
 			})
 		})
 	})

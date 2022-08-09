@@ -31,14 +31,16 @@ type Manager interface {
 	WaitUntilVirtualNodeActive(ctx context.Context, vn *appmesh.VirtualNode) (*appmesh.VirtualNode, error)
 	WaitUntilVirtualNodeDeleted(ctx context.Context, vn *appmesh.VirtualNode) error
 	CheckVirtualNodeInAWS(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode) error
-	CheckVirtualNodeInCloudMap(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode) error
+	CheckVirtualNodeInCloudMap(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, ipFamily string) error
+	CheckVirtualNodeInCloudMapWithExpectedRegisteredPods(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedRegisteredPods []*corev1.Pod) error
 }
 
-func NewManager(k8sClient client.Client, appMeshSDK services.AppMesh, cloudMapSDK services.CloudMap) Manager {
+func NewManager(k8sClient client.Client, appMeshSDK services.AppMesh, cloudMapSDK services.CloudMap, ipFamily string) Manager {
 	return &defaultManager{
 		k8sClient:   k8sClient,
 		appMeshSDK:  appMeshSDK,
 		cloudMapSDK: cloudMapSDK,
+		ipFamily:    ipFamily,
 	}
 }
 
@@ -46,6 +48,7 @@ type defaultManager struct {
 	k8sClient   client.Client
 	appMeshSDK  services.AppMesh
 	cloudMapSDK services.CloudMap
+	ipFamily    string
 }
 
 func (m *defaultManager) WaitUntilVirtualNodeActive(ctx context.Context, vn *appmesh.VirtualNode) (*appmesh.VirtualNode, error) {
@@ -114,7 +117,7 @@ func (m *defaultManager) CheckVirtualNodeInAWS(ctx context.Context, ms *appmesh.
 	}
 
 	if vn.Spec.ServiceDiscovery.AWSCloudMap != nil {
-		if err := m.CheckVirtualNodeInCloudMap(ctx, ms, vn); err != nil {
+		if err := m.CheckVirtualNodeInCloudMap(ctx, ms, vn, m.ipFamily); err != nil {
 			return err
 		}
 	}
@@ -122,7 +125,7 @@ func (m *defaultManager) CheckVirtualNodeInAWS(ctx context.Context, ms *appmesh.
 	return nil
 }
 
-func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode) error {
+func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, ipFamily string) error {
 	//Get Pods that the VirtualNode selects on
 	var podsList corev1.PodList
 	var listOptions client.ListOptions
@@ -138,7 +141,11 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 	for i := range podsList.Items {
 		pod := &podsList.Items[i]
 		instanceAttributeMap := make(map[string]string)
-		instanceAttributeMap[cloudmap.AttrAWSInstanceIPV4] = pod.Status.PodIP
+		if ipFamily == utils.IPv6 {
+			instanceAttributeMap[cloudmap.AttrAWSInstanceIPV6] = pod.Status.PodIP
+		} else {
+			instanceAttributeMap[cloudmap.AttrAWSInstanceIPV4] = pod.Status.PodIP
+		}
 		instanceAttributeMap[cloudmap.AttrK8sPod] = pod.Name
 		instanceAttributeMap[cloudmap.AttrK8sNamespace] = pod.Namespace
 		instanceAttributeMap[cloudmap.AttrAppMeshMesh] = awssdk.StringValue(ms.Spec.AWSName)
@@ -146,6 +153,20 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 		instanceAttributeMap[cloudmap.AttrAWSInstancePort] = strconv.Itoa(int(vn.Spec.Listeners[0].PortMapping.Port))
 		localInstanceInfoMap[pod.Status.PodIP] = instanceAttributeMap
 	}
+
+	return m.checkVirtualNodeInCloudMapWithExpectedRegistrations(ctx, vn, localInstanceInfoMap, ipFamily)
+}
+
+func (m *defaultManager) CheckVirtualNodeInCloudMapWithExpectedRegisteredPods(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedRegisteredPods []*corev1.Pod) error {
+	expectedRegistrationInfo, err := m.loadExpectedRegistrationInfo(ctx, ms, vn, expectedRegisteredPods)
+	if err != nil {
+		return err
+	}
+
+	return m.checkVirtualNodeInCloudMapWithExpectedRegistrations(ctx, vn, expectedRegistrationInfo, m.ipFamily)
+}
+
+func (m *defaultManager) checkVirtualNodeInCloudMapWithExpectedRegistrations(ctx context.Context, vn *appmesh.VirtualNode, localInstanceInfoMap map[string]map[string]string, ipFamily string) error {
 	cloudMapConfig := vn.Spec.ServiceDiscovery.AWSCloudMap
 
 	//Get CloudMap Namespace Info
@@ -193,13 +214,18 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 		ServiceId: sdkSVCSummary.Id,
 	}
 
+	expectedInstanceCount := len(localInstanceInfoMap)
 	//Get Instance info
-	cloudMapInstanceInfoMap := make(map[string]map[string]string, instanceCount)
+	cloudMapInstanceInfoMap := make(map[string]map[string]string, expectedInstanceCount)
 	if err := m.cloudMapSDK.ListInstancesPagesWithContext(ctx, listInstancesInput,
 		func(listInstancesOutput *servicediscovery.ListInstancesOutput, lastPage bool) bool {
 			for _, instance := range listInstancesOutput.Instances {
 				cloudMapInstanceAttributes := make(map[string]string)
-				cloudMapInstanceAttributes[cloudmap.AttrAWSInstanceIPV4] = *instance.Attributes[cloudmap.AttrAWSInstanceIPV4]
+				if ipFamily == utils.IPv6 {
+					cloudMapInstanceAttributes[cloudmap.AttrAWSInstanceIPV6] = *instance.Attributes[cloudmap.AttrAWSInstanceIPV6]
+				} else {
+					cloudMapInstanceAttributes[cloudmap.AttrAWSInstanceIPV4] = *instance.Attributes[cloudmap.AttrAWSInstanceIPV4]
+				}
 				cloudMapInstanceAttributes[cloudmap.AttrK8sPod] = *instance.Attributes[cloudmap.AttrK8sPod]
 				cloudMapInstanceAttributes[cloudmap.AttrK8sNamespace] = *instance.Attributes[cloudmap.AttrK8sNamespace]
 				cloudMapInstanceAttributes[cloudmap.AttrAppMeshMesh] = *instance.Attributes[cloudmap.AttrAppMeshMesh]
@@ -214,8 +240,8 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 		return err
 	}
 
-	if len(cloudMapInstanceInfoMap) != len(localInstanceInfoMap) {
-		return fmt.Errorf("instance count mismatch")
+	if len(cloudMapInstanceInfoMap) != expectedInstanceCount {
+		return fmt.Errorf("instance count mismatch, expected %d found %d", expectedInstanceCount, len(cloudMapInstanceInfoMap))
 	}
 	if err := compareInstances(cloudMapInstanceInfoMap, localInstanceInfoMap); err != nil {
 		return fmt.Errorf("instance info mismatch")
@@ -223,10 +249,54 @@ func (m *defaultManager) CheckVirtualNodeInCloudMap(ctx context.Context, ms *app
 	return nil
 }
 
+func (m *defaultManager) loadExpectedRegistrationInfo(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedRegisteredPods []*corev1.Pod) (map[string]map[string]string, error) {
+	//Get Pods that the VirtualNode selects on
+	var podsList corev1.PodList
+	var listOptions client.ListOptions
+	listOptions.Namespace = vn.Namespace
+
+	if err := m.k8sClient.List(ctx, &podsList, &listOptions); err != nil {
+		return nil, err
+	}
+
+	expectedCount := len(expectedRegisteredPods)
+	localInstanceInfoMap := make(map[string]map[string]string, expectedCount)
+	for i := range podsList.Items {
+		pod := &podsList.Items[i]
+		if m.findPodByName(pod.Name, expectedRegisteredPods) != nil {
+			instanceAttributeMap := make(map[string]string)
+			instanceAttributeMap[cloudmap.AttrAWSInstanceIPV4] = pod.Status.PodIP
+			instanceAttributeMap[cloudmap.AttrK8sPod] = pod.Name
+			instanceAttributeMap[cloudmap.AttrK8sNamespace] = pod.Namespace
+			instanceAttributeMap[cloudmap.AttrAppMeshMesh] = awssdk.StringValue(ms.Spec.AWSName)
+			instanceAttributeMap[cloudmap.AttrAppMeshVirtualNode] = awssdk.StringValue(vn.Spec.AWSName)
+			instanceAttributeMap[cloudmap.AttrAWSInstancePort] = strconv.Itoa(int(vn.Spec.Listeners[0].PortMapping.Port))
+			localInstanceInfoMap[pod.Status.PodIP] = instanceAttributeMap
+		}
+	}
+
+	if len(localInstanceInfoMap) != expectedCount {
+		return nil, fmt.Errorf("could not match expected pods with pods present in the cluster. expected %d, found %d", expectedCount, len(localInstanceInfoMap))
+	}
+
+	return localInstanceInfoMap, nil
+}
+
+func (m *defaultManager) findPodByName(name string, podsToSearch []*corev1.Pod) *corev1.Pod {
+	for _, p := range podsToSearch {
+		if p.Name == name {
+			return p
+		}
+	}
+
+	return nil
+}
+
 func compareInstances(cloudMapInstanceInfo map[string]map[string]string, localInstanceInfo map[string]map[string]string) error {
 	for cloudMapInstanceId, cloudMapInstanceAttr := range cloudMapInstanceInfo {
 		localInstanceAttributes := localInstanceInfo[cloudMapInstanceId]
 		if cloudMapInstanceAttr[cloudmap.AttrAWSInstanceIPV4] != localInstanceAttributes[cloudmap.AttrAWSInstanceIPV4] ||
+			cloudMapInstanceAttr[cloudmap.AttrAWSInstanceIPV6] != localInstanceAttributes[cloudmap.AttrAWSInstanceIPV6] ||
 			cloudMapInstanceAttr[cloudmap.AttrK8sPod] != localInstanceAttributes[cloudmap.AttrK8sPod] ||
 			cloudMapInstanceAttr[cloudmap.AttrK8sNamespace] != localInstanceAttributes[cloudmap.AttrK8sNamespace] ||
 			cloudMapInstanceAttr[cloudmap.AttrAppMeshMesh] != localInstanceAttributes[cloudmap.AttrAppMeshMesh] ||

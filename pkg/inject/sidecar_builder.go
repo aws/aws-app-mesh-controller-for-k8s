@@ -44,6 +44,8 @@ type EnvoyTemplateVariables struct {
 	StatsDSocketPath         string
 	K8sVersion               string
 	ControllerVersion        string
+	EnableAdminAccessForIpv6 bool
+	UseDualStackEndpoint     string
 }
 
 func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) error {
@@ -52,6 +54,10 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 	// 2) we don't allow overriding controller managed env with pod annotations
 	env["APPMESH_VIRTUAL_NODE_NAME"] = vname
 	env["AWS_REGION"] = vars.AWSRegion
+
+	env["ENVOY_ADMIN_ACCESS_ENABLE_IPV6"] = strconv.FormatBool(vars.EnableAdminAccessForIpv6)
+
+	env["APPMESH_DUALSTACK_ENDPOINT"] = vars.UseDualStackEndpoint
 
 	// Set the value to 1 to connect to the App Mesh Preview Channel endpoint.
 	// See https://docs.aws.amazon.com/app-mesh/latest/userguide/preview.html

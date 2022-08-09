@@ -24,6 +24,8 @@ const (
 	flagReadinessProbePeriod       = "readiness-probe-period"
 	flagEnvoyAdminAccessPort       = "envoy-admin-access-port"
 	flagEnvoyAdminAccessLogFile    = "envoy-admin-access-log-file"
+	flagEnvoyAdminAccessEnableIpv6 = "envoy-admin-access-enable-ipv6"
+	flagDualStackEndpoint          = "dual-stack-endpoint"
 
 	flagInitImage  = "init-image"
 	flagIgnoredIPs = "ignored-ips"
@@ -45,6 +47,8 @@ const (
 	flagStatsDPort           = "statsd-port"
 	flagStatsDSocketPath     = "statsd-socket-path"
 	flagXRayImage            = "xray-image"
+
+	flagClusterName = "cluster-name"
 )
 
 type Config struct {
@@ -71,6 +75,8 @@ type Config struct {
 	ReadinessProbePeriod       int32
 	EnvoyAdminAcessPort        int32
 	EnvoyAdminAccessLogFile    string
+	DualStackEndpoint          bool
+	EnvoyAdminAccessEnableIPv6 bool
 
 	// Init container settings
 	InitImage  string
@@ -94,6 +100,8 @@ type Config struct {
 	StatsDPort           int32
 	StatsDSocketPath     string
 	XRayImage            string
+
+	ClusterName string
 }
 
 // MultipleTracer checks if more than one tracer is configured.
@@ -115,7 +123,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	//Set to the SPIRE Agent's default UDS path for now as App Mesh only supports SPIRE as SDS provider for preview.
 	fs.StringVar(&cfg.SdsUdsPath, flagSdsUdsPath, "/run/spire/sockets/agent.sock",
 		"Unix Domain Socket path for SDS provider")
-	fs.StringVar(&cfg.SidecarImage, flagSidecarImage, "public.ecr.aws/appmesh/aws-appmesh-envoy:v1.21.1.2-prod",
+	fs.StringVar(&cfg.SidecarImage, flagSidecarImage, "public.ecr.aws/appmesh/aws-appmesh-envoy:v1.22.2.0-prod",
 		"Envoy sidecar container image.")
 	fs.StringVar(&cfg.SidecarCpuRequests, flagSidecarCpuRequests, "10m",
 		"Sidecar CPU resources requests.")
@@ -139,7 +147,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"Number of seconds after Envoy has started before readiness probes are initiated")
 	fs.Int32Var(&cfg.ReadinessProbePeriod, flagReadinessProbePeriod, 10,
 		"How often (in seconds) to perform the readiness probe on Envoy container")
-	fs.StringVar(&cfg.InitImage, flagInitImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v4-prod",
+	fs.StringVar(&cfg.InitImage, flagInitImage, "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v6-prod",
 		"Init container image.")
 	fs.StringVar(&cfg.IgnoredIPs, flagIgnoredIPs, "169.254.169.254",
 		"Init container ignored IPs.")
@@ -177,6 +185,9 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"DogStatsD Agent tracing port")
 	fs.StringVar(&cfg.StatsDSocketPath, flagStatsDSocketPath, "",
 		"DogStatsD Agent unix domain socket")
+	fs.BoolVar(&cfg.DualStackEndpoint, flagDualStackEndpoint, false, "Use DualStack Endpoint")
+	fs.BoolVar(&cfg.DualStackEndpoint, flagEnvoyAdminAccessEnableIpv6, false, "Enable Admin access when using IPv6")
+	fs.StringVar(&cfg.ClusterName, flagClusterName, "", "ClusterName in context")
 }
 
 func (cfg *Config) BindEnv() error {

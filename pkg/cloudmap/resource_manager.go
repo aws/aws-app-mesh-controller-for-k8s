@@ -52,7 +52,8 @@ func NewDefaultResourceManager(
 	instancesReconciler InstancesReconciler,
 	enableCustomHealthCheck bool,
 	log logr.Logger,
-	cfg Config) ResourceManager {
+	cfg Config,
+	ipFamily string) ResourceManager {
 
 	return &defaultResourceManager{
 		config:                      cfg,
@@ -65,6 +66,7 @@ func NewDefaultResourceManager(
 		namespaceSummaryCache:       cache.NewLRUExpireCache(defaultNamespaceCacheMaxSize),
 		serviceSummaryCache:         cache.NewLRUExpireCache(defaultServiceCacheMaxSize),
 		log:                         log,
+		ipFamily:                    ipFamily,
 	}
 }
 
@@ -81,6 +83,7 @@ type defaultResourceManager struct {
 	namespaceSummaryCache *cache.LRUExpireCache
 	serviceSummaryCache   *cache.LRUExpireCache
 	log                   logr.Logger
+	ipFamily              string
 }
 
 func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.VirtualNode) error {
@@ -111,8 +114,10 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 		return err
 	}
 
+	var readyPods []*corev1.Pod
+	var notReadyPods []*corev1.Pod
 	if vn.Spec.PodSelector != nil {
-		readyPods, notReadyPods, _, err := m.virtualNodeEndpointResolver.Resolve(ctx, vn)
+		readyPods, notReadyPods, _, err = m.virtualNodeEndpointResolver.Resolve(ctx, vn)
 		if err != nil {
 			return err
 		}
@@ -120,10 +125,13 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vn *appmesh.Virt
 			"readyPods", len(readyPods),
 			"notReadyPods", len(notReadyPods),
 		)
-		nodeInfoByName := m.getClusterNodeInfo(ctx)
-		if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, readyPods, notReadyPods, nodeInfoByName); err != nil {
-			return err
-		}
+	} else {
+		m.log.V(1).Info("VirtualNode does not have a pod selector, no endpoints")
+	}
+
+	nodeInfoByName := m.getClusterNodeInfo(ctx)
+	if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, readyPods, notReadyPods, nodeInfoByName); err != nil {
+		return err
 	}
 
 	return nil
@@ -153,11 +161,10 @@ func (m *defaultResourceManager) Cleanup(ctx context.Context, vn *appmesh.Virtua
 		return nil
 	}
 
-	if vn.Spec.PodSelector != nil {
-		if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, nil, nil, nil); err != nil {
-			return err
-		}
+	if err := m.instancesReconciler.Reconcile(ctx, ms, vn, *svcSummary, nil, nil, nil); err != nil {
+		return err
 	}
+
 	if err := m.deleteCloudMapService(ctx, vn, nsSummary, svcSummary); err != nil {
 		return err
 	}
@@ -335,6 +342,12 @@ func (m *defaultResourceManager) deleteCloudMapService(ctx context.Context, vn *
 func (m *defaultResourceManager) createCloudMapServiceUnderPrivateDNSNamespace(ctx context.Context, vn *appmesh.VirtualNode,
 	nsSummary *servicediscovery.NamespaceSummary, serviceName string, cloudMapTTL int64) (*servicediscovery.Service, error) {
 	creatorRequestID := string(vn.UID)
+	var dnsRecordType string
+	if m.ipFamily == IPv6 {
+		dnsRecordType = servicediscovery.RecordTypeAaaa
+	} else {
+		dnsRecordType = servicediscovery.RecordTypeA
+	}
 	createServiceInput := &servicediscovery.CreateServiceInput{
 		CreatorRequestId: awssdk.String(creatorRequestID),
 		NamespaceId:      nsSummary.Id,
@@ -343,7 +356,7 @@ func (m *defaultResourceManager) createCloudMapServiceUnderPrivateDNSNamespace(c
 			RoutingPolicy: awssdk.String(servicediscovery.RoutingPolicyMultivalue),
 			DnsRecords: []*servicediscovery.DnsRecord{
 				{
-					Type: awssdk.String(servicediscovery.RecordTypeA),
+					Type: awssdk.String(dnsRecordType),
 					TTL:  awssdk.Int64(cloudMapTTL),
 				},
 			},
@@ -398,7 +411,7 @@ func (m *defaultResourceManager) removeCloudMapServiceFromServiceSummaryCache(ns
 	m.serviceSummaryCache.Remove(cacheKey)
 }
 
-// isCloudMapServiceOwnedByVirtualNode checks whether an CloudMap ervice is owned by VirtualNode.
+// isCloudMapServiceOwnedByVirtualNode checks whether an CloudMap service is owned by VirtualNode.
 // if it's owned, VirtualNode deletion is responsible for deleting the CloudMap Service
 func (m *defaultResourceManager) isCloudMapServiceOwnedByVirtualNode(ctx context.Context, svc *servicediscovery.Service, vn *appmesh.VirtualNode) bool {
 	return awssdk.StringValue(svc.CreatorRequestId) == string(vn.UID)
