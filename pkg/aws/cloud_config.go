@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"fmt"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
@@ -43,6 +44,6 @@ func (cfg *CloudConfig) HandleAccountID(log logr.Logger) {
 	if scientificMatched {
 		cfg.AccountID = cfg.AccountID[0:13]
 		cfg.AccountID = strings.Replace(cfg.AccountID, ".", "", 1)
-		log.Error(nil, "Using the converted AWS Account ID: "+cfg.AccountID)
+		log.Error(nil, fmt.Sprintf("Using the converted AWS Account ID: %s", cfg.AccountID))
 	}
 }
