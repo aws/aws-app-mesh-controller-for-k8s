@@ -149,6 +149,8 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				k8sVersion:                 m.k8sVersion,
 				useDualStackEndpoint:       m.config.DualStackEndpoint,
 				enableAdminAccessIPv6:      m.config.EnvoyAdminAccessEnableIPv6,
+				postStartTimeout:           m.config.PostStartTimeout,
+				postStartInterval:          m.config.PostStartInterval,
 			}, ms, vn),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,
