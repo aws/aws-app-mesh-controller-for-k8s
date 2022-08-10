@@ -294,6 +294,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -422,6 +430,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
@@ -563,6 +579,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
@@ -733,6 +757,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -873,6 +905,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -1002,6 +1042,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
@@ -1150,6 +1198,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -1277,6 +1333,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
@@ -1453,6 +1517,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -1601,6 +1673,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -1741,6 +1821,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
@@ -1886,6 +1974,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
@@ -2038,6 +2134,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
@@ -2230,6 +2334,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -2374,6 +2486,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
@@ -2537,6 +2657,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -2680,6 +2808,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -2745,9 +2881,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: &corev1.Handler{
 									Exec: &corev1.ExecAction{Command: []string{
-										"sh", "-c", "if [[ $(/usr/bin/envoy --version) =~ ([0-9]+\\.([0-9]+) && ${BASH_REMATCH[1]} -gt 2 || ${BASH_REMATCH[2]} -gt 23 ]];" +
-											"then APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=60 APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=5 /usr/bin/agent -envoyReadiness;" +
-											"else echo 'WaitUntilProxyReady is not supported in Envoy < 1.23'; fi",
+										"sh", "-c", "if [[ $(/usr/bin/envoy --version) =~ ([0-9]+)\\.([0-9]+)\\.([0-9]+)-appmesh\\.([0-9]+) && " +
+											"${BASH_REMATCH[1]} -gt 2 || ${BASH_REMATCH[2]} -gt 22 || (${BASH_REMATCH[3]} -eq 2 && ${BASH_REMATCH[4]} -gt 0) ]]; " +
+											"then APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=60 APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=5 /usr/bin/agent -envoyReadiness; " +
+											"else echo 'WaitUntilProxyReady is not supported in Envoy version < 1.22.2.1'; fi",
 									}},
 								},
 								PreStop: &corev1.Handler{
@@ -2805,6 +2942,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",

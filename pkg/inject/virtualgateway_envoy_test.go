@@ -357,6 +357,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -459,6 +467,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 											FieldPath: "metadata.uid",
 										},
 									},
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
@@ -568,6 +584,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -671,6 +695,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 											FieldPath: "metadata.uid",
 										},
 									},
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
@@ -776,6 +808,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -879,6 +919,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 											FieldPath: "metadata.uid",
 										},
 									},
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
@@ -994,6 +1042,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 											FieldPath: "metadata.uid",
 										},
 									},
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
@@ -1140,6 +1196,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1266,6 +1330,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1387,6 +1459,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1486,6 +1566,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 											FieldPath: "metadata.uid",
 										},
 									},
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
@@ -1592,6 +1680,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 											FieldPath: "metadata.uid",
 										},
 									},
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
@@ -1714,6 +1810,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1819,6 +1923,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 											FieldPath: "metadata.uid",
 										},
 									},
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
