@@ -41,3 +41,12 @@ func ObjectKeyForVirtualRouterReference(obj metav1.Object, vrRef appmesh.Virtual
 	}
 	return types.NamespacedName{Namespace: namespace, Name: vrRef.Name}
 }
+
+// ObjectKeyForBackendGroupReference returns the key of referenced BackendGroup CR.
+func ObjectKeyForBackendGroupReference(obj metav1.Object, bgRef appmesh.BackendGroupReference) types.NamespacedName {
+	namespace := obj.GetNamespace()
+	if bgRef.Namespace != nil && len(*bgRef.Namespace) != 0 {
+		namespace = *bgRef.Namespace
+	}
+	return types.NamespacedName{Namespace: namespace, Name: bgRef.Name}
+}
