@@ -24,3 +24,5 @@ override_model_dev.sh
 *.swp
 *.swo
 *~
+
+AWSLatticeControllerForK8sExternal.iml

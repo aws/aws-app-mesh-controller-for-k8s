@@ -2,7 +2,6 @@ package manifest
 
 import (
 	"go.uber.org/zap"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,8 +23,10 @@ type ContainerInfo struct {
 	Name          string
 	AppImage      string
 	ContainerPort int32
+	Command       []string
 	Env           []corev1.EnvVar
 	Args          []string
+	VolumeMounts  []corev1.VolumeMount
 }
 
 type PodGroupInfo struct {
@@ -39,15 +40,17 @@ func (b *ManifestBuilder) BuildContainerSpec(containersInfo []ContainerInfo) []c
 	var containers []corev1.Container
 	for index, _ := range containersInfo {
 		container := corev1.Container{
-			Name:  containersInfo[index].Name,
-			Image: containersInfo[index].AppImage,
+			Name:    containersInfo[index].Name,
+			Image:   containersInfo[index].AppImage,
+			Command: containersInfo[index].Command,
 			Ports: []corev1.ContainerPort{
 				{
 					ContainerPort: containersInfo[index].ContainerPort,
 				},
 			},
-			Env:  containersInfo[index].Env,
-			Args: containersInfo[index].Args,
+			Env:          containersInfo[index].Env,
+			Args:         containersInfo[index].Args,
+			VolumeMounts: containersInfo[index].VolumeMounts,
 		}
 		containers = append(containers, container)
 	}
@@ -73,6 +76,7 @@ func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, c
 				},
 				Spec: corev1.PodSpec{
 					Containers: containers,
+					Volumes:    []corev1.Volume{{Name: "scripts-vol", VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "scripts-configmap"}}}}},
 				},
 			},
 		},

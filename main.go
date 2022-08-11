@@ -113,6 +113,7 @@ func main() {
 		setupLog.Error(err, "invalid flags")
 		os.Exit(1)
 	}
+
 	if err := injectConfig.Validate(); err != nil {
 		setupLog.Error(err, "invalid flags")
 		os.Exit(1)
@@ -129,6 +130,7 @@ func main() {
 		"BuildDate", version.BuildDate,
 	)
 
+	awsCloudConfig.HandleAccountID(setupLog)
 	parsedPort := strconv.Itoa(healthProbePort)
 	healthProbeBindAddress := ":" + parsedPort
 	setupLog.Info("Health endpoint", "HealthProbeBindAddress", healthProbeBindAddress)
