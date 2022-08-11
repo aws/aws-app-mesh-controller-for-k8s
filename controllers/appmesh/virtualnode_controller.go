@@ -36,14 +36,18 @@ func NewVirtualNodeReconciler(
 	finalizerManager k8s.FinalizerManager,
 	vnResManager virtualnode.ResourceManager,
 	log logr.Logger,
-	recorder record.EventRecorder) *virtualNodeReconciler {
+	recorder record.EventRecorder,
+	enableBackendGroups bool) *virtualNodeReconciler {
 	return &virtualNodeReconciler{
-		k8sClient:                    k8sClient,
-		finalizerManager:             finalizerManager,
-		vnResManager:                 vnResManager,
-		enqueueRequestsForMeshEvents: virtualnode.NewEnqueueRequestsForMeshEvents(k8sClient, log),
-		log:                          log,
-		recorder:                     recorder,
+		k8sClient:                              k8sClient,
+		finalizerManager:                       finalizerManager,
+		vnResManager:                           vnResManager,
+		enqueueRequestsForMeshEvents:           virtualnode.NewEnqueueRequestsForMeshEvents(k8sClient, log),
+		enqueueRequestsForBackendGroupEvents:   virtualnode.NewEnqueueRequestsForBackendGroupEvents(k8sClient, log),
+		enqueueRequestsForVirtualServiceEvents: virtualnode.NewEnqueueRequestsForVirtualServiceEvents(k8sClient, log),
+		log:                                    log,
+		recorder:                               recorder,
+		enableBackendGroups:                    enableBackendGroups,
 	}
 }
 
@@ -53,25 +57,41 @@ type virtualNodeReconciler struct {
 	finalizerManager k8s.FinalizerManager
 	vnResManager     virtualnode.ResourceManager
 
-	enqueueRequestsForMeshEvents handler.EventHandler
-	log                          logr.Logger
-	recorder                     record.EventRecorder
+	enqueueRequestsForMeshEvents           handler.EventHandler
+	enqueueRequestsForBackendGroupEvents   handler.EventHandler
+	enqueueRequestsForVirtualServiceEvents handler.EventHandler
+	log                                    logr.Logger
+	recorder                               record.EventRecorder
+
+	enableBackendGroups bool
 }
 
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=virtualnodes/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=backendgroups,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=appmesh.k8s.aws,resources=backendgroups/status,verbs=get;update;patch
 
 func (r *virtualNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	return runtime.HandleReconcileError(r.reconcile(ctx, req), r.log)
 }
 
 func (r *virtualNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&appmesh.VirtualNode{}).
-		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
-		WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
-		Complete(r)
+	if r.enableBackendGroups {
+		return ctrl.NewControllerManagedBy(mgr).
+			For(&appmesh.VirtualNode{}).
+			Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
+			Watches(&source.Kind{Type: &appmesh.BackendGroup{}}, r.enqueueRequestsForBackendGroupEvents).
+			Watches(&source.Kind{Type: &appmesh.VirtualService{}}, r.enqueueRequestsForVirtualServiceEvents).
+			WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
+			Complete(r)
+	} else {
+		return ctrl.NewControllerManagedBy(mgr).
+			For(&appmesh.VirtualNode{}).
+			Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
+			WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
+			Complete(r)
+	}
 }
 
 func (r *virtualNodeReconciler) reconcile(ctx context.Context, req ctrl.Request) error {

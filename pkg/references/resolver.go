@@ -21,6 +21,8 @@ type Resolver interface {
 	ResolveVirtualServiceReference(ctx context.Context, obj metav1.Object, ref appmesh.VirtualServiceReference) (*appmesh.VirtualService, error)
 	// ResolveVirtualRouterReference returns a virtualRouter CR based obj and ref
 	ResolveVirtualRouterReference(ctx context.Context, obj metav1.Object, ref appmesh.VirtualRouterReference) (*appmesh.VirtualRouter, error)
+	// ResolveBackendGroupReference returns a backendGroup CR based obj and ref
+	ResolveBackendGroupReference(ctx context.Context, obj metav1.Object, ref appmesh.BackendGroupReference) (*appmesh.BackendGroup, error)
 }
 
 // NewDefaultResolver constructs new defaultResolver
@@ -97,4 +99,13 @@ func (r *defaultResolver) ResolveVirtualRouterReference(ctx context.Context, obj
 		return nil, errors.Wrapf(err, "unable to fetch virtualRouter: %v", vrKey)
 	}
 	return vr, nil
+}
+
+func (r *defaultResolver) ResolveBackendGroupReference(ctx context.Context, obj metav1.Object, ref appmesh.BackendGroupReference) (*appmesh.BackendGroup, error) {
+	bgKey := ObjectKeyForBackendGroupReference(obj, ref)
+	bg := &appmesh.BackendGroup{}
+	if err := r.k8sClient.Get(ctx, bgKey, bg); err != nil {
+		return nil, errors.Wrapf(err, "unable to fetch backendGroup: %v", bgKey)
+	}
+	return bg, nil
 }

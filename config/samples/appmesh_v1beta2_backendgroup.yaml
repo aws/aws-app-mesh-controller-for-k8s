@@ -1,0 +1,6 @@
+apiVersion: appmesh.k8s.aws/v1beta2
+kind: BackendGroup
+metadata:
+  name: backendgroup-sample
+spec:
+  # TODO(user): Add fields here

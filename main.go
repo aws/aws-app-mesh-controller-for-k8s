@@ -208,14 +208,14 @@ func main() {
 	meshResManager := mesh.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), cloud.AccountID(), ctrl.Log)
 	vgResManager := virtualgateway.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	grResManager := gatewayroute.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
-	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
+	vnResManager := virtualnode.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log, injectConfig.EnableBackendGroups)
 	vsResManager := virtualservice.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	vrResManager := virtualrouter.NewDefaultResourceManager(mgr.GetClient(), cloud.AppMesh(), referencesResolver, cloud.AccountID(), ctrl.Log)
 	cloudMapResManager := cloudmap.NewDefaultResourceManager(mgr.GetClient(), cloud.CloudMap(), referencesResolver, virtualNodeEndpointResolver, cloudMapInstancesReconciler, enableCustomHealthCheck, ctrl.Log, cloudMapConfig, ipFamily)
 	msReconciler := appmeshcontroller.NewMeshReconciler(mgr.GetClient(), finalizerManager, meshMembersFinalizer, meshResManager, ctrl.Log.WithName("controllers").WithName("Mesh"), mgr.GetEventRecorderFor("Mesh"))
 	vgReconciler := appmeshcontroller.NewVirtualGatewayReconciler(mgr.GetClient(), finalizerManager, vgMembersFinalizer, vgResManager, ctrl.Log.WithName("controllers").WithName("VirtualGateway"), mgr.GetEventRecorderFor("VirtualGateway"))
 	grReconciler := appmeshcontroller.NewGatewayRouteReconciler(mgr.GetClient(), finalizerManager, grResManager, ctrl.Log.WithName("controllers").WithName("GatewayRoute"), mgr.GetEventRecorderFor("GatewayRoute"))
-	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"), mgr.GetEventRecorderFor("VirtualNode"))
+	vnReconciler := appmeshcontroller.NewVirtualNodeReconciler(mgr.GetClient(), finalizerManager, vnResManager, ctrl.Log.WithName("controllers").WithName("VirtualNode"), mgr.GetEventRecorderFor("VirtualNode"), injectConfig.EnableBackendGroups)
 
 	cloudMapReconciler := appmeshcontroller.NewCloudMapReconciler(
 		mgr.GetClient(),
@@ -274,6 +274,8 @@ func main() {
 	appmeshwebhook.NewVirtualServiceValidator().SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualRouterMutator(meshMembershipDesignator).SetupWithManager(mgr)
 	appmeshwebhook.NewVirtualRouterValidator().SetupWithManager(mgr)
+	appmeshwebhook.NewBackendGroupMutator(meshMembershipDesignator).SetupWithManager(mgr)
+	appmeshwebhook.NewBackendGroupValidator().SetupWithManager(mgr)
 	corewebhook.NewPodMutator(sidecarInjector).SetupWithManager(mgr)
 
 	// Add liveness probe

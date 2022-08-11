@@ -7,6 +7,7 @@ MAKEFILE_PATH = $(dir $(realpath -s $(firstword $(MAKEFILE_LIST))))
 VERSION ?= $(shell git describe --dirty --tags --always)
 IMAGE ?= $(REPO):$(VERSION)
 PREVIEW=false
+ENABLE_BACKEND_GROUPS?=false
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1"
@@ -57,7 +58,7 @@ helm-lint:
 
 
 helm-deploy: check-env manifests
-	helm upgrade -i appmesh-controller config/helm/appmesh-controller --namespace appmesh-system --set image.repository=$(REPO) --set image.tag=$(VERSION) --set preview=$(PREVIEW)
+	helm upgrade -i appmesh-controller config/helm/appmesh-controller --namespace appmesh-system --set image.repository=$(REPO) --set image.tag=$(VERSION) --set preview=$(PREVIEW) --set enableBackendGroups=$(ENABLE_BACKEND_GROUPS)
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen

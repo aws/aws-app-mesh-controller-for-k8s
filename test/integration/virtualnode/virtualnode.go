@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
@@ -210,4 +211,8 @@ func (m *VirtualNodeTest) CheckInAWS(ctx context.Context, f *framework.Framework
 
 func (m *VirtualNodeTest) CheckInAWSWithExpectedPods(ctx context.Context, f *framework.Framework, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedRegisteredPods []*corev1.Pod) error {
 	return f.VNManager.CheckVirtualNodeInCloudMapWithExpectedRegisteredPods(ctx, ms, vn, expectedRegisteredPods)
+}
+
+func (m *VirtualNodeTest) ValidateBackends(ctx context.Context, f *framework.Framework, ms *appmesh.Mesh, vn *appmesh.VirtualNode, expectedBackends []types.NamespacedName) error {
+	return f.VNManager.ValidateVirtualNodeBackends(ctx, ms, vn, expectedBackends)
 }

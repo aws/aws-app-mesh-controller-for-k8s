@@ -190,6 +190,23 @@ spec:
                         type: object
                     type: object
                 type: object
+              backendGroups:
+                description: BackendGroups that define a set of backends the virtual
+                  node is expected to send outbound traffic to.
+                items:
+                  description: BackendGroupReference holds a reference to BackendGroup.appmesh.k8s.aws
+                  properties:
+                    name:
+                      description: Name is the name of BackendGroup CR
+                      type: string
+                    namespace:
+                      description: Namespace is the namespace of BackendGroup CR.
+                        If unspecified, defaults to the referencing object's namespace
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               backends:
                 description: The backends that the virtual node is expected to send
                   outbound traffic to.
