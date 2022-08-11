@@ -56,7 +56,8 @@ spec:
         args:
         - --enable-leader-election=true
         - --log-level={{ .Values.log.level }}
-        - --sidecar-image={{ .Values.sidecar.image.repository }}:{{ .Values.sidecar.image.tag }}
+        - --sidecar-image-repository={{ .Values.sidecar.image.repository }}
+        - --sidecar-image-tag={{ .Values.sidecar.image.tag }}
         - --sidecar-cpu-requests={{ .Values.sidecar.resources.requests.cpu }}
         - --sidecar-memory-requests={{ .Values.sidecar.resources.requests.memory }}
         - --sidecar-cpu-limits={{ .Values.sidecar.resources.limits.cpu }}

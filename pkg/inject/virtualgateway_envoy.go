@@ -19,7 +19,8 @@ type virtualGatwayEnvoyConfig struct {
 	logLevel                   string
 	adminAccessPort            int32
 	adminAccessLogFile         string
-	sidecarImage               string
+	sidecarImageRepository     string
+	sidecarImageTag            string
 	readinessProbeInitialDelay int32
 	readinessProbePeriod       int32
 	enableXrayTracing          bool
@@ -79,7 +80,7 @@ func (m *virtualGatewayEnvoyConfig) mutate(pod *corev1.Pod) error {
 	//we override the image to latest Envoy so customers do not have to manually manage
 	// envoy versions and let controller handle consistency versions across the mesh
 	if m.virtualGatewayImageOverride(pod) {
-		envoy.Image = m.mutatorConfig.sidecarImage
+		envoy.Image = fmt.Sprintf("%s:%s", m.mutatorConfig.sidecarImageRepository, m.mutatorConfig.sidecarImageTag)
 	}
 
 	for idx, env := range pod.Spec.Containers[envoyIdx].Env {

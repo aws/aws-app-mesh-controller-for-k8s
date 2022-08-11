@@ -29,7 +29,8 @@ type EnvoyTemplateVariables struct {
 	PreStopDelay             string
 	PostStartTimeout         int32
 	PostStartInterval        int32
-	SidecarImage             string
+	SidecarImageRepository   string
+	SidecarImageTag          string
 	EnableXrayTracing        bool
 	XrayDaemonPort           int32
 	XraySamplingRate         string
@@ -174,7 +175,7 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (core
 
 	envoy := corev1.Container{
 		Name:  "envoy",
-		Image: vars.SidecarImage,
+		Image: fmt.Sprintf("%s:%s", vars.SidecarImageRepository, vars.SidecarImageTag),
 		SecurityContext: &corev1.SecurityContext{
 			RunAsUser: aws.Int64(1337),
 		},

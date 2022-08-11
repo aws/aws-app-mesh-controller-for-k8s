@@ -13,7 +13,8 @@ const (
 	flagSdsUdsPath                  = "sds-uds-path"
 	flagEnableBackendGroups         = "enable-backend-groups"
 
-	flagSidecarImage               = "sidecar-image"
+	flagSidecarImageRepository     = "sidecar-image-repository"
+	flagSidecarImageTag            = "sidecar-image-tag"
 	flagSidecarCpuRequests         = "sidecar-cpu-requests"
 	flagSidecarMemoryRequests      = "sidecar-memory-requests"
 	flagSidecarCpuLimits           = "sidecar-cpu-limits"
@@ -69,7 +70,8 @@ type Config struct {
 	EnableBackendGroups bool
 
 	// Sidecar settings
-	SidecarImage               string
+	SidecarImageRepository     string
+	SidecarImageTag            string
 	SidecarCpuRequests         string
 	SidecarMemoryRequests      string
 	SidecarCpuLimits           string
@@ -133,8 +135,9 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&cfg.SdsUdsPath, flagSdsUdsPath, "/run/spire/sockets/agent.sock",
 		"Unix Domain Socket path for SDS provider")
 	fs.BoolVar(&cfg.EnableBackendGroups, flagEnableBackendGroups, false, "If enabled, experimental Backend Groups feature will be enabled.")
-	fs.StringVar(&cfg.SidecarImage, flagSidecarImage, "public.ecr.aws/appmesh/aws-appmesh-envoy:v1.22.2.1-prod",
-		"Envoy sidecar container image.")
+	fs.StringVar(&cfg.SidecarImageRepository, flagSidecarImageRepository, "public.ecr.aws/appmesh/aws-appmesh-envoy",
+		"Envoy sidecar container image repository.")
+	fs.StringVar(&cfg.SidecarImageTag, flagSidecarImageTag, "v1.22.2.1-prod", "Envoy sidecar container image tag.")
 	fs.StringVar(&cfg.SidecarCpuRequests, flagSidecarCpuRequests, "10m",
 		"Sidecar CPU resources requests.")
 	fs.StringVar(&cfg.SidecarMemoryRequests, flagSidecarMemoryRequests, "32Mi",

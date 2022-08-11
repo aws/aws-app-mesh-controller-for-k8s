@@ -27,7 +27,8 @@ type envoyMutatorConfig struct {
 	postStartInterval          int32
 	readinessProbeInitialDelay int32
 	readinessProbePeriod       int32
-	sidecarImage               string
+	sidecarImageRepository     string
+	sidecarImageTag            string
 	sidecarCPURequests         string
 	sidecarMemoryRequests      string
 	sidecarCPULimits           string
@@ -144,7 +145,8 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		PreStopDelay:             m.mutatorConfig.preStopDelay,
 		PostStartTimeout:         m.mutatorConfig.postStartTimeout,
 		PostStartInterval:        m.mutatorConfig.postStartInterval,
-		SidecarImage:             m.mutatorConfig.sidecarImage,
+		SidecarImageRepository:   m.mutatorConfig.sidecarImageRepository,
+		SidecarImageTag:          m.mutatorConfig.sidecarImageTag,
 		EnableXrayTracing:        m.mutatorConfig.enableXrayTracing,
 		XrayDaemonPort:           m.mutatorConfig.xrayDaemonPort,
 		XraySamplingRate:         m.mutatorConfig.xraySamplingRate,
