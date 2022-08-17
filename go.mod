@@ -3,7 +3,7 @@ module github.com/aws/aws-app-mesh-controller-for-k8s
 go 1.16
 
 require (
-	github.com/aws/aws-sdk-go v1.44.17
+	github.com/aws/aws-sdk-go v1.44.79
 	github.com/docker/docker v20.10.17+incompatible // indirect
 	github.com/evanphx/json-patch v4.11.0+incompatible
 	github.com/garyburd/redigo v1.6.3 // indirect
@@ -44,5 +44,3 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
 
 replace github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
-
-replace github.com/aws/aws-sdk-go => ./vendor/github.com/aws/aws-sdk-go
