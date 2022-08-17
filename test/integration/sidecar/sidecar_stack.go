@@ -424,7 +424,7 @@ func (s *SidecarStack) cleanup(ctx context.Context, f *framework.Framework) {
 }
 
 func (s *SidecarStack) pollPodUntilCondition(ctx context.Context, podName string, condition corev1.PodPhase) error {
-	return wait.Poll(5*time.Second, 180*time.Second, func() (done bool, err error) {
+	return wait.Poll(5*time.Second, 300*time.Second, func() (done bool, err error) {
 		pods, err := s.k8client.CoreV1().Pods(s.testName).List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return false, err

@@ -25,12 +25,12 @@ var _ = Describe("sidecar features", func() {
 		var err error
 
 		BeforeEach(func() {
-			stack, err = newSidecarStack_v1_22("sidecar-test", framework.GlobalOptions.KubeConfig, 8090)
+			stack, err = newSidecarStack_v1_22("sidecar-test-v1-22-2-0", framework.GlobalOptions.KubeConfig, 8090)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		AfterEach(func() {
-			stack.cleanup(ctx, f)
+			// stack.cleanup(ctx, f)
 		})
 
 		It("expect pod status to be Running", func() {
