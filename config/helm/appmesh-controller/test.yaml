@@ -35,10 +35,13 @@ sidecar:
   lifecycleHooks:
     # sidecar.lifecycleHooks: Envoy PreStop Hook Delay
     preStopDelay: 20
+    postStartTimeout: 180
+    postStartInterval: 5
   probes:
     # sidecar.probes: Envoy Readiness Probe
     readinessProbeInitialDelay: 1
     readinessProbePeriod: 10
+  waitUntilProxyReady: false
 init:
   image:
     repository: 840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager

@@ -199,7 +199,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					sidecarCPULimits:           cpuLimits.String(),
@@ -294,6 +295,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -331,7 +340,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 10,
 					readinessProbePeriod:       2,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					controllerVersion:          "v1.4.1",
@@ -424,6 +434,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -457,7 +475,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 3,
 					readinessProbePeriod:       5,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableXrayTracing:          true,
@@ -565,6 +584,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -598,7 +625,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 3,
 					readinessProbePeriod:       5,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableXrayTracing:          true,
@@ -625,7 +653,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableJaegerTracing:        true,
@@ -733,6 +762,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -766,7 +803,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableDatadogTracing:       true,
@@ -873,6 +911,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -906,7 +952,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableStatsTags:            true,
@@ -1004,6 +1051,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -1037,7 +1092,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableStatsD:               true,
@@ -1150,6 +1206,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -1183,7 +1247,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					controllerVersion:          "v1.4.1",
@@ -1279,6 +1344,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -1344,7 +1417,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 10,
 					readinessProbePeriod:       2,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					controllerVersion:          "v1.4.1",
@@ -1453,6 +1527,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -1505,7 +1587,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 10,
 					readinessProbePeriod:       2,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					controllerVersion:          "v1.4.1",
@@ -1601,6 +1684,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -1634,7 +1725,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					sidecarMemoryLimits:        memoryLimits.String(),
@@ -1743,6 +1835,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -1779,7 +1879,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					sidecarCPULimits:           cpuLimits.String(),
@@ -1888,6 +1989,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -1924,7 +2033,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					sidecarCPULimits:           cpuLimits.String(),
@@ -2040,6 +2150,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -2077,7 +2195,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					controllerVersion:          "v1.4.1",
@@ -2118,7 +2237,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableDatadogTracing:       true,
@@ -2230,6 +2350,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -2263,7 +2391,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableStatsD:               true,
@@ -2376,6 +2505,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -2409,7 +2546,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					enableStatsD:               true,
@@ -2537,6 +2675,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
 									Value: "",
 									ValueFrom: &corev1.EnvVarSource{
@@ -2570,7 +2716,8 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					preStopDelay:               "20",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					sidecarCPURequests:         cpuRequests.String(),
 					sidecarMemoryRequests:      memoryRequests.String(),
 					sidecarCPULimits:           cpuLimits.String(),
@@ -2680,6 +2827,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -2691,6 +2846,153 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									"memory": memoryLimits,
 								},
 							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "enabled waitUntilProxyReady",
+			fields: fields{
+				vn: vn,
+				ms: ms,
+				mutatorConfig: envoyMutatorConfig{
+					awsRegion:                  "us-west-2",
+					preview:                    true,
+					logLevel:                   "debug",
+					adminAccessPort:            9901,
+					preStopDelay:               "20",
+					postStartInterval:          5,
+					postStartTimeout:           60,
+					readinessProbeInitialDelay: 10,
+					readinessProbePeriod:       2,
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
+					sidecarCPURequests:         cpuRequests.String(),
+					sidecarMemoryRequests:      memoryRequests.String(),
+					waitUntilProxyReady:        true,
+					controllerVersion:          "v1.4.1",
+					k8sVersion:                 "v1.20.1-eks-fdsedv",
+				},
+			},
+			args: args{
+				pod: pod,
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "my-ns",
+					Name:      "my-pod",
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "envoy",
+							Image: "envoy:v2",
+							SecurityContext: &corev1.SecurityContext{
+								RunAsUser: aws.Int64(1337),
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "stats",
+									ContainerPort: 9901,
+									Protocol:      "TCP",
+								},
+							},
+							Lifecycle: &corev1.Lifecycle{
+								PostStart: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "if [[ $(/usr/bin/envoy --version) =~ ([0-9]+)\\.([0-9]+)\\.([0-9]+)-appmesh\\.([0-9]+) && " +
+											"${BASH_REMATCH[1]} -ge 2 || (${BASH_REMATCH[1]} -ge 1 && ${BASH_REMATCH[2]} -gt 22) || (${BASH_REMATCH[1]} -ge 1 && " +
+											"${BASH_REMATCH[2]} -ge 22 && ${BASH_REMATCH[3]} -gt 2) || (${BASH_REMATCH[1]} -ge 1 && ${BASH_REMATCH[2]} -ge 22 && " +
+											"${BASH_REMATCH[3]} -ge 2 && ${BASH_REMATCH[4]} -gt 0) ]]; then APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=60 " +
+											"APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=5 /usr/bin/agent -envoyReadiness; else echo 'WaitUntilProxyReady " +
+											"is not supported in Envoy version < 1.22.2.1'; fi",
+									}},
+								},
+								PreStop: &corev1.Handler{
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "sleep 20",
+									}},
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								Handler: corev1.Handler{
+
+									Exec: &corev1.ExecAction{Command: []string{
+										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
+									}},
+								},
+								InitialDelaySeconds: 10,
+								TimeoutSeconds:      1,
+								PeriodSeconds:       2,
+								SuccessThreshold:    1,
+								FailureThreshold:    3,
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
+								},
+								{
+									Name:  "APPMESH_PREVIEW",
+									Value: "1",
+								},
+								{
+									Name:  "ENVOY_LOG_LEVEL",
+									Value: "debug",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_PORT",
+									Value: "9901",
+								},
+								{
+									Name:  "AWS_REGION",
+									Value: "us-west-2",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION",
+									Value: "v1.4.1",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_VERSION",
+									Value: "v1.20.1-eks-fdsedv",
+								},
+								{
+									Name:  "APPMESH_DUALSTACK_ENDPOINT",
+									Value: "0",
+								},
+								{
+									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
+									Value: "false",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
+								{
+									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
+									Value: "",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.uid",
+										},
+									},
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+						{
+							Name:  "app",
+							Image: "app/v1",
 						},
 					},
 				},

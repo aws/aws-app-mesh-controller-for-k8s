@@ -27,7 +27,10 @@ type EnvoyTemplateVariables struct {
 	AdminAccessPort          int32
 	AdminAccessLogFile       string
 	PreStopDelay             string
-	SidecarImage             string
+	PostStartTimeout         int32
+	PostStartInterval        int32
+	SidecarImageRepository   string
+	SidecarImageTag          string
 	EnableXrayTracing        bool
 	XrayDaemonPort           int32
 	XraySamplingRate         string
@@ -46,6 +49,7 @@ type EnvoyTemplateVariables struct {
 	ControllerVersion        string
 	EnableAdminAccessForIpv6 bool
 	UseDualStackEndpoint     string
+	WaitUntilProxyReady      bool
 }
 
 func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) error {
@@ -162,6 +166,8 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 
 	env["APPMESH_PLATFORM_K8S_VERSION"] = vars.K8sVersion
 	env["APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION"] = vars.ControllerVersion
+	env["APPNET_AGENT_ADMIN_MODE"] = "uds"
+	env["APPNET_AGENT_ADMIN_UDS_PATH"] = "/tmp/agent.sock"
 	return nil
 }
 
@@ -169,7 +175,7 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (core
 
 	envoy := corev1.Container{
 		Name:  "envoy",
-		Image: vars.SidecarImage,
+		Image: fmt.Sprintf("%s:%s", vars.SidecarImageRepository, vars.SidecarImageTag),
 		SecurityContext: &corev1.SecurityContext{
 			RunAsUser: aws.Int64(1337),
 		},
@@ -188,6 +194,20 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (core
 				}},
 			},
 		},
+	}
+
+	if vars.WaitUntilProxyReady {
+		envoy.Lifecycle.PostStart = &corev1.Handler{
+			Exec: &corev1.ExecAction{Command: []string{
+				// use bash regex and rematch to parse and check envoy version is >= 1.22.2.1
+				"sh", "-c", fmt.Sprintf("if [[ $(/usr/bin/envoy --version) =~ ([0-9]+)\\.([0-9]+)\\.([0-9]+)-appmesh\\.([0-9]+) && "+
+					"${BASH_REMATCH[1]} -ge 2 || (${BASH_REMATCH[1]} -ge 1 && ${BASH_REMATCH[2]} -gt 22) || (${BASH_REMATCH[1]} -ge 1 && "+
+					"${BASH_REMATCH[2]} -ge 22 && ${BASH_REMATCH[3]} -gt 2) || (${BASH_REMATCH[1]} -ge 1 && ${BASH_REMATCH[2]} -ge 22 && "+
+					"${BASH_REMATCH[3]} -ge 2 && ${BASH_REMATCH[4]} -gt 0) ]]; then APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=%d "+
+					"APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=%d /usr/bin/agent -envoyReadiness; else echo 'WaitUntilProxyReady "+
+					"is not supported in Envoy version < 1.22.2.1'; fi", vars.PostStartTimeout, vars.PostStartInterval),
+			}},
+		}
 	}
 
 	vname := fmt.Sprintf("mesh/%s/virtualNode/%s", vars.MeshName, vars.VirtualGatewayOrNodeName)
