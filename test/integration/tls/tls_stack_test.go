@@ -72,23 +72,23 @@ var _ = Describe("tls feature test", func() {
 					})
 				})
 
-				It(fmt.Sprintf("Should behave correctly when cert validation fails"), func() {
-					stackPrototype.ServiceDiscoveryType = sdType
-					stackDefault := stackPrototype
+				// It(fmt.Sprintf("Should behave correctly when cert validation fails"), func() {
+				// 	stackPrototype.ServiceDiscoveryType = sdType
+				// 	stackDefault := stackPrototype
 
-					By("deploy tls stack into cluster", func() {
-						stacksPendingCleanUp = append(stacksPendingCleanUp, &stackDefault)
-						stackDefault.DeployTLSValidationStack(ctx, f)
-					})
+				// 	By("deploy tls stack into cluster", func() {
+				// 		stacksPendingCleanUp = append(stacksPendingCleanUp, &stackDefault)
+				// 		stackDefault.DeployTLSValidationStack(ctx, f)
+				// 	})
 
-					By("sleep 30 seconds for Envoys to be configured", func() {
-						time.Sleep(60 * time.Second)
-					})
+				// 	By("sleep 30 seconds for Envoys to be configured", func() {
+				// 		time.Sleep(30 * time.Second)
+				// 	})
 
-					By("check tls behavior", func() {
-						stackDefault.CheckTLSBehavior(ctx, f, false)
-					})
-				})
+				// 	By("check tls behavior", func() {
+				// 		stackDefault.CheckTLSBehavior(ctx, f, false)
+				// 	})
+				// })
 			}(sdType)
 		}
 	})
