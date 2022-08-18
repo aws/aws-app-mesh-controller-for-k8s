@@ -25,8 +25,10 @@ type SidecarStack struct {
 	k8client         *kubernetes.Clientset
 	testName         string
 
-	mesh      *appmesh.Mesh
-	namespace *corev1.Namespace
+	mesh       *appmesh.Mesh
+	namespace  *corev1.Namespace
+	frontendVN *appmesh.VirtualNode
+	frontendDP *appsv1.Deployment
 }
 
 func newSidecarStack_v1_22(name, kubecfg string, port int) (*SidecarStack, error) {
@@ -130,6 +132,8 @@ func (s *SidecarStack) createFrontendResources(ctx context.Context, f *framework
 
 		_, err = f.VNManager.WaitUntilVirtualNodeActive(ctx, vn)
 		Expect(err).NotTo(HaveOccurred())
+
+		s.frontendVN = vn
 	})
 
 	By("create frontend Deployment", func() {
@@ -177,10 +181,20 @@ func (s *SidecarStack) createFrontendResources(ctx context.Context, f *framework
 
 		err := f.K8sClient.Create(ctx, dp)
 		Expect(err).NotTo(HaveOccurred())
+
+		s.frontendDP = dp
 	})
 }
 
 func (s *SidecarStack) cleanup(ctx context.Context, f *framework.Framework) {
+	if err := f.K8sClient.Delete(ctx, s.frontendVN); err != nil {
+		f.Logger.Error("failed to delete frontend virtual node")
+	}
+
+	if err := f.K8sClient.Delete(ctx, s.frontendDP); err != nil {
+		f.Logger.Error("failed to delete frontend deployment")
+	}
+
 	if err := f.K8sClient.Delete(ctx, s.namespace); err != nil {
 		f.Logger.Error("failed to delete namespace")
 	}

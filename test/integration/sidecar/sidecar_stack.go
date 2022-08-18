@@ -31,8 +31,15 @@ type SidecarStack struct {
 	k8client         *kubernetes.Clientset
 	testName         string
 
-	mesh      *appmesh.Mesh
-	namespace *corev1.Namespace
+	mesh        *appmesh.Mesh
+	namespace   *corev1.Namespace
+	backendVS   *appmesh.VirtualService
+	backendVN   *appmesh.VirtualNode
+	backendDP   *appsv1.Deployment
+	backendSVC  *corev1.Service
+	backendSVC2 *corev1.Service
+	frontendVN  *appmesh.VirtualNode
+	frontendJob *batchv1.Job
 }
 
 func newSidecarStack(name string, kubecfg string) (*SidecarStack, error) {
@@ -191,6 +198,8 @@ func (s *SidecarStack) createFrontendResources(ctx context.Context, f *framework
 
 		_, err = f.VNManager.WaitUntilVirtualNodeActive(ctx, vn)
 		Expect(err).NotTo(HaveOccurred())
+
+		s.frontendVN = vn
 	})
 
 	By("create frontend Deployment", func() {
@@ -245,6 +254,8 @@ func (s *SidecarStack) createFrontendResources(ctx context.Context, f *framework
 
 		err := f.K8sClient.Create(ctx, dp)
 		Expect(err).NotTo(HaveOccurred())
+
+		s.frontendJob = dp
 	})
 
 	err := s.pollPodUntilCondition(ctx, "front", corev1.PodRunning)
@@ -294,6 +305,8 @@ func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.
 
 		_, err = f.VNManager.WaitUntilVirtualNodeActive(ctx, vn)
 		Expect(err).NotTo(HaveOccurred())
+
+		s.backendVN = vn
 	})
 
 	By("create backend VirtualService", func() {
@@ -316,6 +329,8 @@ func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.
 
 		err := f.K8sClient.Create(ctx, vs)
 		Expect(err).NotTo(HaveOccurred())
+
+		s.backendVS = vs
 	})
 
 	By("create backend Deployment", func() {
@@ -365,6 +380,8 @@ func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.
 
 		err := f.K8sClient.Create(ctx, dp)
 		Expect(err).NotTo(HaveOccurred())
+
+		s.backendDP = dp
 	})
 
 	By("create color Service", func() {
@@ -384,6 +401,8 @@ func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.
 
 		err := f.K8sClient.Create(ctx, svc)
 		Expect(err).NotTo(HaveOccurred())
+
+		s.backendSVC = svc
 	})
 
 	By("create color-blue Service", func() {
@@ -407,6 +426,8 @@ func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.
 
 		err := f.K8sClient.Create(ctx, svc)
 		Expect(err).NotTo(HaveOccurred())
+
+		s.backendSVC2 = svc
 	})
 
 	err := s.pollPodUntilCondition(ctx, "color", corev1.PodRunning)
@@ -414,6 +435,34 @@ func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.
 }
 
 func (s *SidecarStack) cleanup(ctx context.Context, f *framework.Framework) {
+	if err := f.K8sClient.Delete(ctx, s.backendVS); err != nil {
+		f.Logger.Error("failed to delete backend virtual service")
+	}
+
+	if err := f.K8sClient.Delete(ctx, s.backendVN); err != nil {
+		f.Logger.Error("failed to delete backend virtual node")
+	}
+
+	if err := f.K8sClient.Delete(ctx, s.backendDP); err != nil {
+		f.Logger.Error("failed to delete backend virtual deployment")
+	}
+
+	if err := f.K8sClient.Delete(ctx, s.backendSVC); err != nil {
+		f.Logger.Error("failed to delete backend service")
+	}
+
+	if err := f.K8sClient.Delete(ctx, s.backendSVC2); err != nil {
+		f.Logger.Error("failed to delete backend service")
+	}
+
+	if err := f.K8sClient.Delete(ctx, s.frontendVN); err != nil {
+		f.Logger.Error("failed to delete frontend virtual node")
+	}
+
+	if err := f.K8sClient.Delete(ctx, s.frontendJob); err != nil {
+		f.Logger.Error("failed to delete frontend job")
+	}
+
 	if err := f.K8sClient.Delete(ctx, s.namespace); err != nil {
 		f.Logger.Error("failed to delete namespace")
 	}

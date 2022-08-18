@@ -30,7 +30,7 @@ var _ = Describe("sidecar features", func() {
 		})
 
 		AfterEach(func() {
-			// stack.cleanup(ctx, f)
+			stack.cleanup(ctx, f)
 		})
 
 		It("expect pod status to be Running", func() {
