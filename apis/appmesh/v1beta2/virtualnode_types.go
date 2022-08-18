@@ -347,12 +347,34 @@ type ServiceDiscovery struct {
 	DNS *DNSServiceDiscovery `json:"dns,omitempty"`
 }
 
+type JsonFormatRef struct {
+	// The name of the field in the JSON object
+	// +kubebuilder:validation:MinLength=1
+	Key string `json:"key"`
+	// The format string
+	// +kubebuilder:validation:MinLength=1
+	Value string `json:"value"`
+}
+
+// Format specifies the structure of the access log output
+type LoggingFormat struct {
+	// Output specified fields as a JSON object
+	// +optional
+	Json []*JsonFormatRef `json:"json,omitempty"`
+	// Custom format string
+	// +optional
+	Text *string `json:"text,omitempty"`
+}
+
 // FileAccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_FileAccessLog.html
 type FileAccessLog struct {
 	// The file path to write access logs to.
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=255
 	Path string `json:"path"`
+	// Structured access log output format
+	// +optional
+	Format *LoggingFormat `json:"format,omitempty"`
 }
 
 // AccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_AccessLog.html

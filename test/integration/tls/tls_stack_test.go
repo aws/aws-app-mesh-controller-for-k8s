@@ -3,11 +3,12 @@ package tls_test
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/tls"
 	. "github.com/onsi/ginkgo"
-	"time"
 )
 
 var _ = Describe("tls feature test", func() {
@@ -22,6 +23,16 @@ var _ = Describe("tls feature test", func() {
 		var stackPrototype tls.TLSStack
 		var stacksPendingCleanUp []*tls.TLSStack
 
+		BeforeEach(func() {
+			stacksPendingCleanUp = nil
+		})
+
+		AfterEach(func() {
+			for _, stack := range stacksPendingCleanUp {
+				stack.CleanupTLSStack(ctx, f)
+			}
+		})
+
 		for _, sdType := range []manifest.ServiceDiscoveryType{manifest.DNSServiceDiscovery} {
 			func(sdType manifest.ServiceDiscoveryType) {
 				It(fmt.Sprintf("Should behave correctly with end-to-end TLS configuration"), func() {
@@ -30,6 +41,7 @@ var _ = Describe("tls feature test", func() {
 					stackDefault := stackPrototype
 
 					By("deploy tls stack into cluster", func() {
+						stacksPendingCleanUp = append(stacksPendingCleanUp, &stackDefault)
 						stackDefault.DeployTLSStack(ctx, f)
 					})
 
@@ -39,10 +51,6 @@ var _ = Describe("tls feature test", func() {
 
 					By("check tls behavior", func() {
 						stackDefault.CheckTLSBehavior(ctx, f, true)
-					})
-
-					By("clean up TLS test stack", func() {
-						stackDefault.CleanupTLSStack(ctx, f)
 					})
 				})
 
@@ -62,33 +70,25 @@ var _ = Describe("tls feature test", func() {
 					By("check tls behavior", func() {
 						stackDefault.CheckTLSBehavior(ctx, f, false)
 					})
-
-					By("clean up TLS test stack", func() {
-						stackDefault.CleanupTLSStack(ctx, f)
-					})
 				})
 
-				It(fmt.Sprintf("Should behave correctly when cert validation fails"), func() {
-					stackPrototype.ServiceDiscoveryType = sdType
-					stackDefault := stackPrototype
+				// It(fmt.Sprintf("Should behave correctly when cert validation fails"), func() {
+				// 	stackPrototype.ServiceDiscoveryType = sdType
+				// 	stackDefault := stackPrototype
 
-					By("deploy tls stack into cluster", func() {
-						stacksPendingCleanUp = append(stacksPendingCleanUp, &stackDefault)
-						stackDefault.DeployTLSValidationStack(ctx, f)
-					})
+				// 	By("deploy tls stack into cluster", func() {
+				// 		stacksPendingCleanUp = append(stacksPendingCleanUp, &stackDefault)
+				// 		stackDefault.DeployTLSValidationStack(ctx, f)
+				// 	})
 
-					By("sleep 30 seconds for Envoys to be configured", func() {
-						time.Sleep(30 * time.Second)
-					})
+				// 	By("sleep 30 seconds for Envoys to be configured", func() {
+				// 		time.Sleep(30 * time.Second)
+				// 	})
 
-					By("check tls behavior", func() {
-						stackDefault.CheckTLSBehavior(ctx, f, false)
-					})
-
-					By("clean up TLS test stack", func() {
-						stackDefault.CleanupTLSStack(ctx, f)
-					})
-				})
+				// 	By("check tls behavior", func() {
+				// 		stackDefault.CheckTLSBehavior(ctx, f, false)
+				// 	})
+				// })
 			}(sdType)
 		}
 	})
