@@ -13,7 +13,8 @@ const (
 	flagSdsUdsPath                  = "sds-uds-path"
 	flagEnableBackendGroups         = "enable-backend-groups"
 
-	flagSidecarImage               = "sidecar-image"
+	flagSidecarImageRepository     = "sidecar-image-repository"
+	flagSidecarImageTag            = "sidecar-image-tag"
 	flagSidecarCpuRequests         = "sidecar-cpu-requests"
 	flagSidecarMemoryRequests      = "sidecar-memory-requests"
 	flagSidecarCpuLimits           = "sidecar-cpu-limits"
@@ -21,12 +22,15 @@ const (
 	flagPreview                    = "preview"
 	flagLogLevel                   = "sidecar-log-level"
 	flagPreStopDelay               = "prestop-delay"
+	flagPostStartTimeout           = "poststart-timeout"
+	flagPostStartInterval          = "poststart-interval"
 	flagReadinessProbeInitialDelay = "readiness-probe-initial-delay"
 	flagReadinessProbePeriod       = "readiness-probe-period"
 	flagEnvoyAdminAccessPort       = "envoy-admin-access-port"
 	flagEnvoyAdminAccessLogFile    = "envoy-admin-access-log-file"
 	flagEnvoyAdminAccessEnableIpv6 = "envoy-admin-access-enable-ipv6"
 	flagDualStackEndpoint          = "dual-stack-endpoint"
+	flagWaitUntilProxyReady        = "wait-until-proxy-ready"
 
 	flagInitImage  = "init-image"
 	flagIgnoredIPs = "ignored-ips"
@@ -66,7 +70,8 @@ type Config struct {
 	EnableBackendGroups bool
 
 	// Sidecar settings
-	SidecarImage               string
+	SidecarImageRepository     string
+	SidecarImageTag            string
 	SidecarCpuRequests         string
 	SidecarMemoryRequests      string
 	SidecarCpuLimits           string
@@ -74,12 +79,15 @@ type Config struct {
 	Preview                    bool
 	LogLevel                   string
 	PreStopDelay               string
+	PostStartTimeout           int32
+	PostStartInterval          int32
 	ReadinessProbeInitialDelay int32
 	ReadinessProbePeriod       int32
 	EnvoyAdminAcessPort        int32
 	EnvoyAdminAccessLogFile    string
 	DualStackEndpoint          bool
 	EnvoyAdminAccessEnableIPv6 bool
+	WaitUntilProxyReady        bool
 
 	// Init container settings
 	InitImage  string
@@ -127,8 +135,9 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&cfg.SdsUdsPath, flagSdsUdsPath, "/run/spire/sockets/agent.sock",
 		"Unix Domain Socket path for SDS provider")
 	fs.BoolVar(&cfg.EnableBackendGroups, flagEnableBackendGroups, false, "If enabled, experimental Backend Groups feature will be enabled.")
-	fs.StringVar(&cfg.SidecarImage, flagSidecarImage, "public.ecr.aws/appmesh/aws-appmesh-envoy:v1.22.2.1-prod",
-		"Envoy sidecar container image.")
+	fs.StringVar(&cfg.SidecarImageRepository, flagSidecarImageRepository, "public.ecr.aws/appmesh/aws-appmesh-envoy",
+		"Envoy sidecar container image repository.")
+	fs.StringVar(&cfg.SidecarImageTag, flagSidecarImageTag, "v1.22.2.1-prod", "Envoy sidecar container image tag.")
 	fs.StringVar(&cfg.SidecarCpuRequests, flagSidecarCpuRequests, "10m",
 		"Sidecar CPU resources requests.")
 	fs.StringVar(&cfg.SidecarMemoryRequests, flagSidecarMemoryRequests, "32Mi",
@@ -147,6 +156,10 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"AWS App Mesh envoy access log path")
 	fs.StringVar(&cfg.PreStopDelay, flagPreStopDelay, "20",
 		"AWS App Mesh envoy preStop hook sleep duration")
+	fs.Int32Var(&cfg.PostStartTimeout, flagPostStartTimeout, 180,
+		"AWS App Mesh envoy postStart hook timeout duration")
+	fs.Int32Var(&cfg.PostStartInterval, flagPostStartInterval, 5,
+		"AWS App Mesh envoy postStart hook interval duration")
 	fs.Int32Var(&cfg.ReadinessProbeInitialDelay, flagReadinessProbeInitialDelay, 1,
 		"Number of seconds after Envoy has started before readiness probes are initiated")
 	fs.Int32Var(&cfg.ReadinessProbePeriod, flagReadinessProbePeriod, 10,
@@ -192,6 +205,8 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&cfg.DualStackEndpoint, flagDualStackEndpoint, false, "Use DualStack Endpoint")
 	fs.BoolVar(&cfg.DualStackEndpoint, flagEnvoyAdminAccessEnableIpv6, false, "Enable Admin access when using IPv6")
 	fs.StringVar(&cfg.ClusterName, flagClusterName, "", "ClusterName in context")
+	fs.BoolVar(&cfg.WaitUntilProxyReady, flagWaitUntilProxyReady, false,
+		"Enable pod postStart hook to delay application startup until proxy is ready to accept traffic")
 }
 
 func (cfg *Config) BindEnv() error {

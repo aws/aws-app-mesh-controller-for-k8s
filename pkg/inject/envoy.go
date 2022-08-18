@@ -23,9 +23,12 @@ type envoyMutatorConfig struct {
 	adminAccessPort            int32
 	adminAccessLogFile         string
 	preStopDelay               string
+	postStartTimeout           int32
+	postStartInterval          int32
 	readinessProbeInitialDelay int32
 	readinessProbePeriod       int32
-	sidecarImage               string
+	sidecarImageRepository     string
+	sidecarImageTag            string
 	sidecarCPURequests         string
 	sidecarMemoryRequests      string
 	sidecarCPULimits           string
@@ -44,6 +47,7 @@ type envoyMutatorConfig struct {
 	statsDPort                 int32
 	statsDAddress              string
 	statsDSocketPath           string
+	waitUntilProxyReady        bool
 	controllerVersion          string
 	k8sVersion                 string
 	useDualStackEndpoint       bool
@@ -107,7 +111,14 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 	if m.mutatorConfig.enableSDS && !isSDSDisabled(pod) {
 		mutateSDSMounts(pod, &container, m.mutatorConfig.sdsUdsPath)
 	}
-	pod.Spec.Containers = append(pod.Spec.Containers, container)
+
+	// waitUntilProxyReady requires starting sidecar container first
+	if m.mutatorConfig.waitUntilProxyReady {
+		pod.Spec.Containers = append([]corev1.Container{container}, pod.Spec.Containers...)
+	} else {
+		pod.Spec.Containers = append(pod.Spec.Containers, container)
+	}
+
 	return nil
 }
 
@@ -132,7 +143,10 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		AdminAccessPort:          m.mutatorConfig.adminAccessPort,
 		AdminAccessLogFile:       m.mutatorConfig.adminAccessLogFile,
 		PreStopDelay:             m.mutatorConfig.preStopDelay,
-		SidecarImage:             m.mutatorConfig.sidecarImage,
+		PostStartTimeout:         m.mutatorConfig.postStartTimeout,
+		PostStartInterval:        m.mutatorConfig.postStartInterval,
+		SidecarImageRepository:   m.mutatorConfig.sidecarImageRepository,
+		SidecarImageTag:          m.mutatorConfig.sidecarImageTag,
 		EnableXrayTracing:        m.mutatorConfig.enableXrayTracing,
 		XrayDaemonPort:           m.mutatorConfig.xrayDaemonPort,
 		XraySamplingRate:         m.mutatorConfig.xraySamplingRate,
@@ -151,6 +165,7 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		K8sVersion:               m.mutatorConfig.k8sVersion,
 		UseDualStackEndpoint:     useDualStackEndpoint,
 		EnableAdminAccessForIpv6: m.mutatorConfig.enableAdminAccessIPv6,
+		WaitUntilProxyReady:      m.mutatorConfig.waitUntilProxyReady,
 	}
 }
 

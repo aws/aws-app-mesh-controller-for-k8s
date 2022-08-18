@@ -287,7 +287,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 					controllerVersion:          "v1.4.1",
@@ -357,6 +358,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -387,7 +396,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					readinessProbeInitialDelay: 3,
 					readinessProbePeriod:       5,
 					controllerVersion:          "v1.4.1",
@@ -460,6 +470,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -490,7 +508,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 					controllerVersion:          "v1.4.1",
@@ -568,6 +587,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -598,7 +625,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v3",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v3",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 					controllerVersion:          "v1.4.1",
@@ -672,6 +700,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -702,7 +738,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v3",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v3",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 					controllerVersion:          "v1.4.1",
@@ -776,6 +813,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -806,7 +851,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 					controllerVersion:          "v1.4.1",
@@ -880,6 +926,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -910,7 +964,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					enableXrayTracing:          true,
 					xrayDaemonPort:             2000,
 					xraySamplingRate:           "0.01",
@@ -995,6 +1050,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1025,7 +1088,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					enableXrayTracing:          true,
 					xrayDaemonPort:             2000,
 					xraySamplingRate:           "1.01",
@@ -1049,7 +1113,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					enableJaegerTracing:        true,
 					jaegerPort:                 "80",
 					jaegerAddress:              "jaeger-collector.system",
@@ -1140,6 +1205,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1170,7 +1243,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					enableJaegerTracing:        false,
 					jaegerPort:                 "80",
 					jaegerAddress:              "jaeger-collector.system",
@@ -1266,6 +1340,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1296,7 +1378,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					enableJaegerTracing:        false,
 					jaegerPort:                 "80",
 					jaegerAddress:              "jaeger-collector.system",
@@ -1387,6 +1470,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1417,7 +1508,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					logLevel:                   "debug",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 					controllerVersion:          "v1.4.1",
@@ -1487,6 +1579,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1519,7 +1619,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sdsUdsPath:                 "/run/spire/sockets/agent.sock",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 					controllerVersion:          "v1.4.1",
@@ -1593,6 +1694,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1641,7 +1750,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sdsUdsPath:                 "/run/spire/sockets/agent.sock",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 					controllerVersion:          "v1.4.1",
@@ -1714,6 +1824,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 										},
 									},
 								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -1746,7 +1864,8 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					sdsUdsPath:                 "/run/spire/sockets/agent.sock",
 					adminAccessPort:            9901,
 					adminAccessLogFile:         "/tmp/envoy_admin_access.log",
-					sidecarImage:               "envoy:v2",
+					sidecarImageRepository:     "envoy",
+					sidecarImageTag:            "v2",
 					readinessProbeInitialDelay: 1,
 					readinessProbePeriod:       10,
 					controllerVersion:          "v1.4.1",
@@ -1819,6 +1938,14 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 											FieldPath: "metadata.uid",
 										},
 									},
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_MODE",
+									Value: "uds",
+								},
+								{
+									Name:  "APPNET_AGENT_ADMIN_UDS_PATH",
+									Value: "/tmp/agent.sock",
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
