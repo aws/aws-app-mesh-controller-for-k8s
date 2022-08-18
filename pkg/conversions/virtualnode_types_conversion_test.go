@@ -3790,3 +3790,64 @@ func TestConvert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(t *testing.T) {
 		})
 	}
 }
+
+func TestConvert_CRD_LoggingFormat_To_SDK_LoggingFormat(t *testing.T) {
+	tests := []struct {
+		name       string
+		crdObj     *appmesh.LoggingFormat
+		wantSDKObj *appmeshsdk.LoggingFormat
+	}{
+		{
+			name: "text",
+			crdObj: &appmesh.LoggingFormat{
+				Text: aws.String("custom text"),
+			},
+			wantSDKObj: &appmeshsdk.LoggingFormat{
+				Text: aws.String("custom text"),
+			},
+		},
+		{
+			name: "json",
+			crdObj: &appmesh.LoggingFormat{
+				Json: []*appmesh.JsonFormatRef{
+					{
+						Key:   "key",
+						Value: "value",
+					},
+					{
+						Key:   "key1",
+						Value: "value1",
+					},
+				},
+			},
+			wantSDKObj: &appmeshsdk.LoggingFormat{
+				Json: []*appmeshsdk.JsonFormatRef{
+					{
+						Key:   aws.String("key"),
+						Value: aws.String("value"),
+					},
+					{
+						Key:   aws.String("key1"),
+						Value: aws.String("value1"),
+					},
+				},
+			},
+		},
+		{
+			name: "empty json",
+			crdObj: &appmesh.LoggingFormat{
+				Json: []*appmesh.JsonFormatRef{},
+			},
+			wantSDKObj: &appmeshsdk.LoggingFormat{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sdkObj := &appmeshsdk.LoggingFormat{}
+			Convert_CRD_LoggingFormat_To_SDK_LoggingFormat(tt.crdObj, sdkObj)
+
+			assert.Equal(t, tt.wantSDKObj, sdkObj)
+		})
+	}
+}

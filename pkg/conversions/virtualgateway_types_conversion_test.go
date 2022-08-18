@@ -1163,40 +1163,46 @@ func TestConvert_CRD_VirtualGatewayListenerTLS_To_SDK_VirtualGatewayListenerTLS(
 }
 
 func TestConvert_CRD_VirtualGatewayFileAccessLog_To_SDK_VirtualGatewayFileAccessLog(t *testing.T) {
-	type args struct {
-		crdObj *appmesh.VirtualGatewayFileAccessLog
-		sdkObj *appmeshsdk.VirtualGatewayFileAccessLog
-		scope  conversion.Scope
-	}
 	tests := []struct {
 		name       string
-		args       args
+		crdObj     *appmesh.VirtualGatewayFileAccessLog
+		scope      conversion.Scope
 		wantSDKObj *appmeshsdk.VirtualGatewayFileAccessLog
 		wantErr    error
 	}{
 		{
 			name: "normal case",
-			args: args{
-				crdObj: &appmesh.VirtualGatewayFileAccessLog{
-					Path: "/",
-				},
-				sdkObj: &appmeshsdk.VirtualGatewayFileAccessLog{},
-				scope:  nil,
+			crdObj: &appmesh.VirtualGatewayFileAccessLog{
+				Path: "/",
 			},
 			wantSDKObj: &appmeshsdk.VirtualGatewayFileAccessLog{
 				Path: aws.String("/"),
 			},
 		},
+		{
+			name: "logging format",
+			crdObj: &appmesh.VirtualGatewayFileAccessLog{
+				Path:   "/",
+				Format: &appmesh.LoggingFormat{},
+			},
+			wantSDKObj: &appmeshsdk.VirtualGatewayFileAccessLog{
+				Path:   aws.String("/"),
+				Format: &appmeshsdk.LoggingFormat{},
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := Convert_CRD_VirtualGatewayFileAccessLog_To_SDK_VirtualGatewayFileAccessLog(tt.args.crdObj, tt.args.sdkObj, tt.args.scope)
+			sdkObj := &appmeshsdk.VirtualGatewayFileAccessLog{}
+			err := Convert_CRD_VirtualGatewayFileAccessLog_To_SDK_VirtualGatewayFileAccessLog(tt.crdObj, sdkObj, tt.scope)
+
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.wantSDKObj, tt.args.sdkObj)
 			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantSDKObj, sdkObj)
 		})
 	}
 }

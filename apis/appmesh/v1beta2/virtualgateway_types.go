@@ -190,6 +190,9 @@ type VirtualGatewayFileAccessLog struct {
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=255
 	Path string `json:"path"`
+	// Structured access log output format
+	// +optional
+	Format *LoggingFormat `json:"format,omitempty"`
 }
 
 // VirtualGatewayAccessLog refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
