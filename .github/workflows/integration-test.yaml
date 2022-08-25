@@ -41,4 +41,4 @@ jobs:
           config: ./scripts/kind-two-node-cluster.yaml
           cluster_name: appmesh-test
       - name: run integration tests
-        run: make run-integration-test
+        run: AWS_VPC_ID=${{ secrets.AWS_VPC_ID }} make run-integration-test

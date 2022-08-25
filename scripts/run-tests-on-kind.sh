@@ -11,6 +11,7 @@ ROOT_DIR="$SCRIPTS_DIR/.."
 INT_TEST_DIR="$ROOT_DIR/test/integration"
 
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-""}
+AWS_VPC_ID=${AWS_VPC_ID:-""}
 AWS_REGION=${AWS_REGION:-"us-west-2"}
 IMAGE_NAME=amazon/appmesh-controller
 ECR_URL=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
@@ -44,7 +45,7 @@ function install_controller {
 }
 
 function run_integration_tests {
-  local __vpc_id=$( vpc_id )
+  #local __vpc_id=$( vpc_id )
 
   for __type in ${INT_TEST_DIR}/*
   do
@@ -57,7 +58,7 @@ function run_integration_tests {
     echo -n "running integration test type $__type ... "
     ginkgo -v -r $__type -- --cluster-kubeconfig=${KUBECONFIG} \
             --cluster-name=${CLUSTER_NAME} --aws-region=${AWS_REGION} \
-            --aws-vpc-id=$__vpc_id
+            --aws-vpc-id=${AWS_VPC_ID}
     echo "ok."
   done
 }
