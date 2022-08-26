@@ -37,6 +37,7 @@ function install_controller {
        APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make helm-deploy
        sleep 10
        kubectl describe pods -n $__ns
+       kubectl logs -l app.kubernetes.io/name=appmesh-controller -n $__ns
        check_deployment_rollout $__controller_name $__ns
        echo -n "check the pods in appmesh-system namespace ... "
        kubectl get pod -n $__ns
