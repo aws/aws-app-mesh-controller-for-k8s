@@ -64,6 +64,7 @@ helm-deploy: check-env manifests
 	helm upgrade -i appmesh-controller config/helm/appmesh-controller --namespace appmesh-system \
 		--set image.repository=$(REPO) \
 		--set image.tag=$(VERSION) \
+		--set accountId=$(AWS_ACCOUNT) \
 		--set region=$(AWS_REGION) \
 		--set preview=$(PREVIEW) \
 		--set enableBackendGroups=$(ENABLE_BACKEND_GROUPS) \
