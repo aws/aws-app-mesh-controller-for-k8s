@@ -82,4 +82,6 @@ kubectl get crds
 # check later
 sleep 15
 
-run_integration_tests
+
+
+run_integration_tests & kubectl logs -l app.kubernetes.io/name=appmesh-controller -n $__ns -w
