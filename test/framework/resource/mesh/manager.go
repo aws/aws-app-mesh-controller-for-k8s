@@ -2,6 +2,7 @@ package mesh
 
 import (
 	"context"
+	"fmt"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/mesh"
@@ -40,6 +41,7 @@ func (m *defaultManager) WaitUntilMeshActive(ctx context.Context, mesh *appmesh.
 
 		// sometimes there's a delay in the resource showing up
 		for i := 0; i < 5; i++ {
+			fmt.Println("Waiting for mesh")
 			if err := m.k8sClient.Get(ctx, k8s.NamespacedName(mesh), observedMesh); err != nil {
 				if i >= 5 {
 					return false, err

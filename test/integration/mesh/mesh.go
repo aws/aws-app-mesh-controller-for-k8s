@@ -21,6 +21,7 @@ type MeshTest struct {
 }
 
 func (m *MeshTest) Create(ctx context.Context, f *framework.Framework, mesh *appmesh.Mesh) error {
+	fmt.Println("Creating mesh")
 	err := f.K8sClient.Create(ctx, mesh)
 	if err != nil {
 		return err
