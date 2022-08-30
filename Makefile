@@ -67,7 +67,6 @@ helm-deploy: check-env manifests
 		--set accountId=$(AWS_ACCOUNT) \
 		--set region=$(AWS_REGION) \
 		--set preview=$(PREVIEW) \
-		--set serviceAccount.create=false \
 		--set enableBackendGroups=$(ENABLE_BACKEND_GROUPS) \
 		--set sidecar.waitUntilProxyReady=$(WAIT_PROXY_READY) \
 		--set sidecar.image.tag=$(SIDECAR_IMAGE_TAG)
