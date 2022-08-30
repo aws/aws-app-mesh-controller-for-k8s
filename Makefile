@@ -2,6 +2,8 @@
 IMAGE_NAME=amazon/appmesh-controller
 AWS_ACCOUNT ?= $(AWS_ACCOUNT_ID)
 AWS_VPC_ID ?= $(AWS_VPC_ID)
+AWS_SECRET_ACCESS_KEY ?= $(AWS_SECRET_ACCESS_KEY)
+AWS_SESSION_TOKEN ?= $(AWS_SESSION_TOKEN)
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE_NAME)
 REPO_FULL_NAME=aws/aws-app-mesh-controller-for-k8s
 BINARY_NAME ?= "appmesh-controller"
@@ -69,7 +71,11 @@ helm-deploy: check-env manifests
 		--set preview=$(PREVIEW) \
 		--set enableBackendGroups=$(ENABLE_BACKEND_GROUPS) \
 		--set sidecar.waitUntilProxyReady=$(WAIT_PROXY_READY) \
-		--set sidecar.image.tag=$(SIDECAR_IMAGE_TAG)
+		--set sidecar.image.tag=$(SIDECAR_IMAGE_TAG) \
+		--set env.AWS_ACCOUNT_ID=$(AWS_ACCOUNT) \
+		--set env.AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
+		--set env.AWS_SESSION_TOKEN=$(AWS_SESSION_TOKEN) \
+		--set env.AWS_DEFAULT_REGION=us-west-2
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
