@@ -30,6 +30,7 @@ func Convert_CRD_WeightedTarget_To_SDK_WeightedTarget(crdObj *appmesh.WeightedTa
 	}
 
 	sdkObj.Weight = aws.Int64(crdObj.Weight)
+	sdkObj.Port = crdObj.Port
 	return nil
 }
 
@@ -70,6 +71,7 @@ func Convert_CRD_HTTPRouteMatch_To_SDK_HttpRouteMatch(crdObj *appmesh.HTTPRouteM
 	sdkObj.Method = crdObj.Method
 	sdkObj.Prefix = crdObj.Prefix
 	sdkObj.Scheme = crdObj.Scheme
+	sdkObj.Port = crdObj.Port
 
 	if crdObj.Path != nil {
 		Convert_CRD_HTTPPathMatch_To_SDK_HttpPathMatch(crdObj, sdkObj)

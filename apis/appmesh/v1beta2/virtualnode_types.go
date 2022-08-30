@@ -429,7 +429,6 @@ type VirtualNodeSpec struct {
 	PodSelector *metav1.LabelSelector `json:"podSelector,omitempty"`
 	// The listener that the virtual node is expected to receive inbound traffic from
 	// +kubebuilder:validation:MinItems=0
-	// +kubebuilder:validation:MaxItems=1
 	// +optional
 	Listeners []Listener `json:"listeners,omitempty"`
 	// The service discovery information for the virtual node. Optional if there is no

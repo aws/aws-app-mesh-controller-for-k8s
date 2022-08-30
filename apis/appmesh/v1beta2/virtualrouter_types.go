@@ -39,6 +39,10 @@ type WeightedTarget struct {
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Maximum=100
 	Weight int64 `json:"weight"`
+	// Specifies the targeted port of the weighted object
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	Port *int64 `json:"port,omitempty"`
 }
 
 // HTTPRouteHeader refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteHeader.html
@@ -81,6 +85,10 @@ type HTTPRouteMatch struct {
 	// +kubebuilder:validation:MaxItems=10
 	// +optional
 	QueryParameters []HTTPQueryParameters `json:"queryParameters,omitempty"`
+	// Specifies the port to match requests with
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	Port *int64 `json:"port,omitempty"`
 }
 
 // HTTPRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_HttpRouteAction.html
@@ -277,7 +285,6 @@ type VirtualRouterSpec struct {
 	AWSName *string `json:"awsName,omitempty"`
 	// The listeners that the virtual router is expected to receive inbound traffic from
 	// +kubebuilder:validation:MinItems=1
-	// +kubebuilder:validation:MaxItems=1
 	Listeners []VirtualRouterListener `json:"listeners,omitempty"`
 
 	// The routes associated with VirtualRouter

@@ -331,7 +331,6 @@ type VirtualGatewaySpec struct {
 	GatewayRouteSelector *metav1.LabelSelector `json:"gatewayRouteSelector,omitempty"`
 	// The listener that the virtual gateway is expected to receive inbound traffic from
 	// +kubebuilder:validation:MinItems=0
-	// +kubebuilder:validation:MaxItems=1
 	Listeners []VirtualGatewayListener `json:"listeners,omitempty"`
 	// The inbound and outbound access logging information for the virtual gateway.
 	// +optional

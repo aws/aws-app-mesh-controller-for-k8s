@@ -78,6 +78,11 @@ spec:
                         description: An object that represents the target that traffic
                           is routed to when a request matches the route.
                         properties:
+                          port:
+                            description: Specifies the port of the gateway route target
+                            format: int64
+                            minimum: 0
+                            type: integer
                           virtualService:
                             description: The virtual service to associate with the
                               gateway route target.
@@ -258,6 +263,11 @@ spec:
                         description: An object that represents the target that traffic
                           is routed to when a request matches the route.
                         properties:
+                          port:
+                            description: Specifies the port of the gateway route target
+                            format: int64
+                            minimum: 0
+                            type: integer
                           virtualService:
                             description: The virtual service to associate with the
                               gateway route target.
@@ -408,6 +418,12 @@ spec:
                             minLength: 1
                             type: string
                         type: object
+                      port:
+                        description: Specifies the port the request to be matched
+                          on
+                        format: int64
+                        minimum: 0
+                        type: integer
                       prefix:
                         description: Either Prefix or Hostname must be specified.
                           Both are allowed as well. Specifies the prefix to match
@@ -486,6 +502,11 @@ spec:
                         description: An object that represents the target that traffic
                           is routed to when a request matches the route.
                         properties:
+                          port:
+                            description: Specifies the port of the gateway route target
+                            format: int64
+                            minimum: 0
+                            type: integer
                           virtualService:
                             description: The virtual service to associate with the
                               gateway route target.
@@ -636,6 +657,12 @@ spec:
                             minLength: 1
                             type: string
                         type: object
+                      port:
+                        description: Specifies the port the request to be matched
+                          on
+                        format: int64
+                        minimum: 0
+                        type: integer
                       prefix:
                         description: Either Prefix or Hostname must be specified.
                           Both are allowed as well. Specifies the prefix to match
