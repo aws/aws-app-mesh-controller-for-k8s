@@ -72,10 +72,9 @@ helm-deploy: check-env manifests
 		--set enableBackendGroups=$(ENABLE_BACKEND_GROUPS) \
 		--set sidecar.waitUntilProxyReady=$(WAIT_PROXY_READY) \
 		--set sidecar.image.tag=$(SIDECAR_IMAGE_TAG) \
-		--set env.AWS_ACCOUNT_ID=$(AWS_ACCOUNT) \
-		--set env.AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
-		--set env.AWS_SESSION_TOKEN=$(AWS_SESSION_TOKEN) \
-		--set env.AWS_DEFAULT_REGION=us-west-2
+		--set awsSecretAccessKey=$(AWS_SECRET_ACCESS_KEY) \
+		--set awsSessionToken=$(AWS_SESSION_TOKEN) \
+		--set awsDefaultRegion=us-west-2
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
