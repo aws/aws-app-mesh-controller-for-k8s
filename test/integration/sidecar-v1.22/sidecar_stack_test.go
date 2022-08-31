@@ -37,7 +37,7 @@ var _ = Describe("sidecar features", func() {
 			stack.createMeshAndNamespace(ctx, f)
 			stack.createFrontendResources(ctx, f)
 
-			err := wait.Poll(1*time.Second, 30*time.Second, func() (done bool, err error) {
+			err := wait.Poll(5*time.Second, 300*time.Second, func() (done bool, err error) {
 				pods, err := stack.k8client.CoreV1().Pods(stack.testName).List(ctx, metav1.ListOptions{})
 				if err != nil {
 					return false, err
