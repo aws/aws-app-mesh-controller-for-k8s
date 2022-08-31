@@ -124,6 +124,8 @@ spec:
           #- name: {{ $key }}
           #  value: {{ $value }}
           #{{- end }}
+          - name: TEST
+            value: "test"
           - name: AWS_ACCOUNT_ID
             value: {{ .Values.accountId }}
           - name: AWS_SECRET_ACCESS_KEY
