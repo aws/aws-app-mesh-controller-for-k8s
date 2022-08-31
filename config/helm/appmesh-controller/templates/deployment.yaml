@@ -121,6 +121,8 @@ spec:
         env:
           - name: TEST
             value: "test"
+          - name: AWS_SESSION_TOKEN
+            value: {{ .Values.awsSessionToken }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
         livenessProbe:
