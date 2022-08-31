@@ -55,7 +55,7 @@ function install_crds {
 
 function build_and_publish_controller {
        echo -n "building and publishing appmesh controller  ... "
-       AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION docker-build
+       AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make docker-build
        AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make docker-push
        echo "ok."
 }
