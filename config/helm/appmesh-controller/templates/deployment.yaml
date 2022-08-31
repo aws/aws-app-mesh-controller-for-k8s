@@ -118,12 +118,7 @@ spec:
         # this must be same as livenessProbe port which can be configured 
         - --health-probe-port={{ .Values.livenessProbe.httpGet.port }}
         - --wait-until-proxy-ready={{ .Values.sidecar.waitUntilProxyReady }}
-        # {{- if .Values.env }}
         env:
-          #{{- range $key, $value := .Values.env }}
-          #- name: {{ $key }}
-          #  value: {{ $value }}
-          #{{- end }}
           - name: TEST
             value: "test"
           - name: AWS_ACCOUNT_ID
@@ -134,7 +129,6 @@ spec:
             value: {{ .Values.awsSessionToken }}
           - name: AWS_DEFAULT_REGION
             value: {{ .Values.awsDefaultRegion }}
-        # {{- end}}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
         livenessProbe:
