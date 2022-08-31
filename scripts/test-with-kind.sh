@@ -55,13 +55,7 @@ function install_crds {
 
 function build_and_publish_controller {
        echo -n "building and publishing appmesh controller  ... "
-       if [ -z "$AWS_SECRET_ACCESS_KEY" ]
-       then
-             echo "access key is empty"
-       else
-             echo "access key is NOT empty"
-       fi
-       AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN docker-build
+       AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION docker-build
        AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make docker-push
        echo "ok."
 }
@@ -71,7 +65,13 @@ function install_controller {
        local __controller_name="appmesh-controller"
        local __ns="appmesh-system"
        kubectl create ns $__ns
-       APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION ENABLE_BACKEND_GROUPS=true make helm-deploy
+       if [ -z "$AWS_SECRET_ACCESS_KEY" ]
+       then
+             echo "access key is empty"
+       else
+             echo "access key is NOT empty"
+       fi
+       APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN ENABLE_BACKEND_GROUPS=true make helm-deploy
        check_deployment_rollout $__controller_name $__ns
        echo -n "check the pods in appmesh-system namespace ... "
        kubectl get pod -n $__ns
