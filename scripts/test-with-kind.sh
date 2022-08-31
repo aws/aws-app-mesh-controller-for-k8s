@@ -11,6 +11,8 @@ ROOT_DIR="$SCRIPTS_DIR/.."
 INT_TEST_DIR="$ROOT_DIR/test/integration"
 
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-""}
+AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-""}
+AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-""}
 AWS_REGION=${AWS_REGION:-"us-west-2"}
 IMAGE_NAME=amazon/appmesh-controller
 ECR_URL=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
@@ -53,7 +55,13 @@ function install_crds {
 
 function build_and_publish_controller {
        echo -n "building and publishing appmesh controller  ... "
-       AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make docker-build
+       if [ -z "$AWS_SECRET_ACCESS_KEY" ]
+       then
+             echo "access key is empty"
+       else
+             echo "access key is NOT empty"
+       fi
+       AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN docker-build
        AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make docker-push
        echo "ok."
 }
