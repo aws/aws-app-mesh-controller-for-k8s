@@ -75,6 +75,8 @@ helm-deploy: check-env manifests
 		--set awsSecretAccessKey=$(AWS_SECRET_ACCESS_KEY) \
 		--set awsSessionToken=$(AWS_SESSION_TOKEN) \
 		--set awsDefaultRegion=us-west-2
+	[[ ! -z "$AWS_SECRET_ACCESS_KEY" ]] && echo "Access key not empty" || echo "Access key empty"
+	[[ ! -z "$AWS_SESSION_TOKEN" ]] && echo "Session token not empty" || echo "Session token empty"
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen

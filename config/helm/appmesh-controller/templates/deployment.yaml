@@ -127,11 +127,11 @@ spec:
           - name: AWS_ACCOUNT_ID
             value: {{ .Values.accountId }}
           - name: AWS_SECRET_ACCESS_KEY
-              value: {{ .Values.awsSecretAccessKey }}
+            value: {{ .Values.awsSecretAccessKey }}
           - name: AWS_SESSION_TOKEN
-              value: {{ .Values.awsSessionToken }}
+            value: {{ .Values.awsSessionToken }}
           - name: AWS_DEFAULT_REGION
-              value: {{ .Values.awsDefaultRegion }}
+            value: {{ .Values.awsDefaultRegion }}
         # {{- end}}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
