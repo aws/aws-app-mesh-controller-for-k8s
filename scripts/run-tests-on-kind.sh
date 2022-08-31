@@ -34,7 +34,13 @@ function install_controller {
        local __controller_name="appmesh-controller"
        local __ns="appmesh-system"
        kubectl create ns $__ns
-       APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make helm-deploy
+       if [ -z "$AWS_SECRET_ACCESS_KEY" ]
+       then
+             echo -n "access key is empty"
+       else
+             echo -n "access key is NOT empty"
+       fi
+       APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION ENABLE_BACKEND_GROUPS=true AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN make helm-deploy
        sleep 10
        kubectl describe pods -n $__ns
        kubectl logs -l app.kubernetes.io/name=appmesh-controller -n $__ns
