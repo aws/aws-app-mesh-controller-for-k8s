@@ -120,10 +120,10 @@ spec:
         - --wait-until-proxy-ready={{ .Values.sidecar.waitUntilProxyReady }}
         # {{- if .Values.env }}
         env:
-          {{- range $key, $value := .Values.env }}
-          - name: {{ $key }}
-            value: {{ $value }}
-          {{- end }}
+          #{{- range $key, $value := .Values.env }}
+          #- name: {{ $key }}
+          #  value: {{ $value }}
+          #{{- end }}
           - name: AWS_ACCOUNT_ID
             value: {{ .Values.accountId }}
           - name: AWS_SECRET_ACCESS_KEY
@@ -131,7 +131,7 @@ spec:
           - name: AWS_SESSION_TOKEN
               value: {{ .Values.awsSessionToken }}
           - name: AWS_DEFAULT_REGION
-              value: { { .Values.awsDefaultRegion } }
+              value: {{ .Values.awsDefaultRegion }}
         # {{- end}}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
