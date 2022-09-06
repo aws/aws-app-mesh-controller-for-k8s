@@ -25,10 +25,13 @@ func Convert_CRD_GatewayRouteVirtualService_To_SDK_GatewayRouteVirtualService(cr
 }
 
 func Convert_CRD_GatewayRouteTarget_To_SDK_GatewayRouteTarget(crdObj *appmesh.GatewayRouteTarget, sdkObj *appmeshsdk.GatewayRouteTarget, scope conversion.Scope) error {
+	sdkObj.Port = crdObj.Port
 	sdkObj.VirtualService = &appmeshsdk.GatewayRouteVirtualService{}
+
 	if err := Convert_CRD_GatewayRouteVirtualService_To_SDK_GatewayRouteVirtualService(&crdObj.VirtualService, sdkObj.VirtualService, scope); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -55,6 +58,8 @@ func Convert_CRD_GRPCHostnameRewrite_To_SDK_GrpcHostnameRewrite(crdObj *appmesh.
 
 func Convert_CRD_GRPCGatewayRouteMatch_To_SDK_GrpcGatewayRouteMatch(crdObj *appmesh.GRPCGatewayRouteMatch, sdkObj *appmeshsdk.GrpcGatewayRouteMatch) error {
 	sdkObj.ServiceName = crdObj.ServiceName
+	sdkObj.Port = crdObj.Port
+
 	if crdObj.Hostname != nil {
 		sdkObj.Hostname = &appmeshsdk.GatewayRouteHostnameMatch{}
 		Convert_CRD_GatewayRouteHostnameMatch_To_SDK_GatewayRouteHostnameMatch(crdObj.Hostname, sdkObj.Hostname)
@@ -146,22 +151,28 @@ func Convert_CRD_HTTPGatewayRouteRewritePath_To_SDK_HttpGatewayRouteRewritePath(
 
 func Convert_CRD_HTTPGatewayRouteMatch_To_SDK_HttpGatewayRouteMatch(crdObj *appmesh.HTTPGatewayRouteMatch, sdkObj *appmeshsdk.HttpGatewayRouteMatch) error {
 	sdkObj.Prefix = crdObj.Prefix
+	sdkObj.Method = crdObj.Method
+	sdkObj.Port = crdObj.Port
+
 	if crdObj.Hostname != nil {
 		sdkObj.Hostname = &appmeshsdk.GatewayRouteHostnameMatch{}
 		Convert_CRD_GatewayRouteHostnameMatch_To_SDK_GatewayRouteHostnameMatch(crdObj.Hostname, sdkObj.Hostname)
 	}
-	sdkObj.Method = crdObj.Method
+
 	if crdObj.Headers != nil && len(crdObj.Headers) != 0 {
 		if err := Convert_CRD_HTTPGatewayRouteHeaders_To_SDK_HttpGatewayRouteHeaders(crdObj, sdkObj); err != nil {
 			return err
 		}
 	}
+
 	if crdObj.Path != nil {
 		Convert_CRD_HTTPGatewayPath_To_SDK_HttpGatewayPath(crdObj, sdkObj)
 	}
+
 	if crdObj.QueryParameters != nil && len(crdObj.QueryParameters) != 0 {
 		Convert_CRD_HTTPGatewayRouteQueryParams_To_SDK_HttpGatewayRouteQueryParams(crdObj, sdkObj)
 	}
+
 	return nil
 }
 

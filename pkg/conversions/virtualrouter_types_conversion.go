@@ -30,6 +30,7 @@ func Convert_CRD_WeightedTarget_To_SDK_WeightedTarget(crdObj *appmesh.WeightedTa
 	}
 
 	sdkObj.Weight = aws.Int64(crdObj.Weight)
+	sdkObj.Port = crdObj.Port
 	return nil
 }
 
@@ -70,6 +71,7 @@ func Convert_CRD_HTTPRouteMatch_To_SDK_HttpRouteMatch(crdObj *appmesh.HTTPRouteM
 	sdkObj.Method = crdObj.Method
 	sdkObj.Prefix = crdObj.Prefix
 	sdkObj.Scheme = crdObj.Scheme
+	sdkObj.Port = crdObj.Port
 
 	if crdObj.Path != nil {
 		Convert_CRD_HTTPPathMatch_To_SDK_HttpPathMatch(crdObj, sdkObj)
@@ -242,8 +244,21 @@ func Convert_CRD_TCPTimeout_To_SDK_TcpTimeout(crdObj *appmesh.TCPTimeout,
 	return nil
 }
 
+func Convert_CRD_TCPRouteMatch_To_SDK_TCPRouteMatch(crdObj *appmesh.TCPRouteMatch,
+	sdkObj *appmeshsdk.TcpRouteMatch, scope conversion.Scope) error {
+
+	sdkObj.Port = crdObj.Port
+
+	return nil
+}
+
 func Convert_CRD_TCPRoute_To_SDK_TcpRoute(crdObj *appmesh.TCPRoute,
 	sdkObj *appmeshsdk.TcpRoute, scope conversion.Scope) error {
+
+	sdkObj.Match = &appmeshsdk.TcpRouteMatch{}
+	if err := Convert_CRD_TCPRouteMatch_To_SDK_TCPRouteMatch(&crdObj.Match, sdkObj.Match, scope); err != nil {
+		return err
+	}
 
 	sdkObj.Action = &appmeshsdk.TcpRouteAction{}
 	if err := Convert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(&crdObj.Action, sdkObj.Action, scope); err != nil {

@@ -109,6 +109,22 @@ func TestConvert_CRD_WeightedTarget_To_SDK_WeightedTarget(t *testing.T) {
 				Weight:      aws.Int64(100),
 			},
 		},
+		{
+			name: "support port",
+			args: args{
+				crdObj: &appmesh.WeightedTarget{
+					VirtualNodeARN: aws.String("arn:aws:appmesh:us-west-2:000000000000:mesh/mesh-name/virtualNode/vn-name"),
+					Weight:         int64(100),
+					Port:           aws.Int64(8080),
+				},
+				sdkObj: &appmeshsdk.WeightedTarget{},
+			},
+			wantSDKObj: &appmeshsdk.WeightedTarget{
+				VirtualNode: aws.String("vn-name"),
+				Weight:      aws.Int64(100),
+				Port:        aws.Int64(8080),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1123,6 +1139,9 @@ func TestConvert_CRD_TCPRoute_To_SDK_TcpRoute(t *testing.T) {
 			name: "normal case",
 			args: args{
 				crdObj: &appmesh.TCPRoute{
+					Match: appmesh.TCPRouteMatch{
+						Port: aws.Int64(8080),
+					},
 					Action: appmesh.TCPRouteAction{
 						WeightedTargets: []appmesh.WeightedTarget{
 							{
@@ -1162,6 +1181,9 @@ func TestConvert_CRD_TCPRoute_To_SDK_TcpRoute(t *testing.T) {
 							Weight:      aws.Int64(90),
 						},
 					},
+				},
+				Match: &appmeshsdk.TcpRouteMatch{
+					Port: aws.Int64(8080),
 				},
 			},
 		},
@@ -2448,6 +2470,9 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 								},
 							},
 						},
+						Match: appmesh.TCPRouteMatch{
+							Port: aws.Int64(8080),
+						},
 					},
 					Priority: aws.Int64(400),
 				},
@@ -2646,6 +2671,9 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 								Weight:      aws.Int64(90),
 							},
 						},
+					},
+					Match: &appmeshsdk.TcpRouteMatch{
+						Port: aws.Int64(8080),
 					},
 				},
 				Priority: aws.Int64(400),
@@ -2947,6 +2975,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 							},
 						},
 					},
+					Match: &appmeshsdk.TcpRouteMatch{},
 				},
 				Priority: nil,
 			},
@@ -3246,6 +3275,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 							},
 						},
 					},
+					Match: &appmeshsdk.TcpRouteMatch{},
 				},
 				Priority: aws.Int64(400),
 			},

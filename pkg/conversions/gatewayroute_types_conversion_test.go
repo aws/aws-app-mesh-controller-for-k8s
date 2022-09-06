@@ -285,6 +285,18 @@ func TestConvert_CRD_HTTPGatewayRouteMatch_To_SDK_HttpGatewayRouteMatch(t *testi
 				Method: aws.String("POST"),
 			},
 		},
+		{
+			name: "port match",
+			args: args{
+				crdObj: &appmesh.HTTPGatewayRouteMatch{
+					Port: aws.Int64(8080),
+				},
+				sdkObj: &appmeshsdk.HttpGatewayRouteMatch{},
+			},
+			wantSDKObj: &appmeshsdk.HttpGatewayRouteMatch{
+				Port: aws.Int64(8080),
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -449,11 +461,13 @@ func TestConvert_CRD_GRPCGatewayRouteMatch_To_SDK_GrpcGatewayRouteMatch(t *testi
 			args: args{
 				crdObj: &appmesh.GRPCGatewayRouteMatch{
 					ServiceName: aws.String("foo.foodomain.local"),
+					Port:        aws.Int64(8080),
 				},
 				sdkObj: &appmeshsdk.GrpcGatewayRouteMatch{},
 			},
 			wantSDKObj: &appmeshsdk.GrpcGatewayRouteMatch{
 				ServiceName: aws.String("foo.foodomain.local"),
+				Port:        aws.Int64(8080),
 			},
 		},
 		{
@@ -642,6 +656,7 @@ func TestConvert_CRD_GRPCGatewayRouteAction_To_SDK_GrpcGatewayRouteAction(t *tes
 								Name:      "vs-1",
 							},
 						},
+						Port: aws.Int64(8080),
 					},
 				},
 				sdkObj: &appmeshsdk.GrpcGatewayRouteAction{},
@@ -657,6 +672,7 @@ func TestConvert_CRD_GRPCGatewayRouteAction_To_SDK_GrpcGatewayRouteAction(t *tes
 					VirtualService: &appmeshsdk.GatewayRouteVirtualService{
 						VirtualServiceName: aws.String("vs-1.ns-1"),
 					},
+					Port: aws.Int64(8080),
 				},
 			},
 		},
@@ -671,6 +687,7 @@ func TestConvert_CRD_GRPCGatewayRouteAction_To_SDK_GrpcGatewayRouteAction(t *tes
 								Name:      "vs-1",
 							},
 						},
+						Port: aws.Int64(8080),
 					},
 					Rewrite: &appmesh.GrpcGatewayRouteRewrite{
 						Hostname: &appmesh.GatewayRouteHostnameRewrite{
@@ -691,6 +708,7 @@ func TestConvert_CRD_GRPCGatewayRouteAction_To_SDK_GrpcGatewayRouteAction(t *tes
 					VirtualService: &appmeshsdk.GatewayRouteVirtualService{
 						VirtualServiceName: aws.String("vs-1.ns-1"),
 					},
+					Port: aws.Int64(8080),
 				},
 				Rewrite: &appmeshsdk.GrpcGatewayRouteRewrite{
 					Hostname: &appmeshsdk.GatewayRouteHostnameRewrite{

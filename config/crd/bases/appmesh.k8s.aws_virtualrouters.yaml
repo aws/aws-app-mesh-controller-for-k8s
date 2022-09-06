@@ -82,7 +82,6 @@ spec:
                   required:
                   - portMapping
                   type: object
-                maxItems: 1
                 minItems: 1
                 type: array
               meshRef:
@@ -120,6 +119,12 @@ spec:
                               items:
                                 description: WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
                                 properties:
+                                  port:
+                                    description: Specifies the targeted port of the
+                                      weighted object
+                                    format: int64
+                                    minimum: 0
+                                    type: integer
                                   virtualNodeARN:
                                     description: Amazon Resource Name to AppMesh VirtualNode
                                       object to associate with the weighted target.
@@ -236,6 +241,11 @@ spec:
                               maxLength: 50
                               minLength: 1
                               type: string
+                            port:
+                              description: Specifies the port to match requests with
+                              format: int64
+                              minimum: 0
+                              type: integer
                             serviceName:
                               description: The fully qualified domain name for the
                                 service to match from the request.
@@ -363,6 +373,12 @@ spec:
                               items:
                                 description: WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
                                 properties:
+                                  port:
+                                    description: Specifies the targeted port of the
+                                      weighted object
+                                    format: int64
+                                    minimum: 0
+                                    type: integer
                                   virtualNodeARN:
                                     description: Amazon Resource Name to AppMesh VirtualNode
                                       object to associate with the weighted target.
@@ -502,6 +518,11 @@ spec:
                                   minLength: 1
                                   type: string
                               type: object
+                            port:
+                              description: Specifies the port to match requests with
+                              format: int64
+                              minimum: 0
+                              type: integer
                             prefix:
                               description: Specifies the prefix to match requests
                                 with
@@ -643,6 +664,12 @@ spec:
                               items:
                                 description: WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
                                 properties:
+                                  port:
+                                    description: Specifies the targeted port of the
+                                      weighted object
+                                    format: int64
+                                    minimum: 0
+                                    type: integer
                                   virtualNodeARN:
                                     description: Amazon Resource Name to AppMesh VirtualNode
                                       object to associate with the weighted target.
@@ -782,6 +809,11 @@ spec:
                                   minLength: 1
                                   type: string
                               type: object
+                            port:
+                              description: Specifies the port to match requests with
+                              format: int64
+                              minimum: 0
+                              type: integer
                             prefix:
                               description: Specifies the prefix to match requests
                                 with
@@ -931,6 +963,12 @@ spec:
                               items:
                                 description: WeightedTarget refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_WeightedTarget.html
                                 properties:
+                                  port:
+                                    description: Specifies the targeted port of the
+                                      weighted object
+                                    format: int64
+                                    minimum: 0
+                                    type: integer
                                   virtualNodeARN:
                                     description: Amazon Resource Name to AppMesh VirtualNode
                                       object to associate with the weighted target.
@@ -971,6 +1009,16 @@ spec:
                           required:
                           - weightedTargets
                           type: object
+                        match:
+                          description: An object that represents the criteria for
+                            determining a request match.
+                          properties:
+                            port:
+                              description: Specifies the port to match requests with
+                              format: int64
+                              minimum: 0
+                              type: integer
+                          type: object
                         timeout:
                           description: An object that represents a tcp timeout.
                           properties:
@@ -996,6 +1044,7 @@ spec:
                           type: object
                       required:
                       - action
+                      - match
                       type: object
                   required:
                   - name
