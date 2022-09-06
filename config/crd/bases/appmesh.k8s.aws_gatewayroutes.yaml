@@ -204,6 +204,12 @@ spec:
                         maxItems: 10
                         minItems: 1
                         type: array
+                      port:
+                        description: Specifies the port the request to be matched
+                          on
+                        format: int64
+                        minimum: 0
+                        type: integer
                       serviceName:
                         description: Either ServiceName or Hostname must be specified.
                           Both are allowed as well The fully qualified domain name

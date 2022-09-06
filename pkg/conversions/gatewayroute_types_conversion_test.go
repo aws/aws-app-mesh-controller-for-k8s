@@ -461,11 +461,13 @@ func TestConvert_CRD_GRPCGatewayRouteMatch_To_SDK_GrpcGatewayRouteMatch(t *testi
 			args: args{
 				crdObj: &appmesh.GRPCGatewayRouteMatch{
 					ServiceName: aws.String("foo.foodomain.local"),
+					Port:        aws.Int64(8080),
 				},
 				sdkObj: &appmeshsdk.GrpcGatewayRouteMatch{},
 			},
 			wantSDKObj: &appmeshsdk.GrpcGatewayRouteMatch{
 				ServiceName: aws.String("foo.foodomain.local"),
+				Port:        aws.Int64(8080),
 			},
 		},
 		{

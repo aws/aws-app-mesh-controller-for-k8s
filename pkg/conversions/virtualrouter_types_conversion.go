@@ -244,8 +244,21 @@ func Convert_CRD_TCPTimeout_To_SDK_TcpTimeout(crdObj *appmesh.TCPTimeout,
 	return nil
 }
 
+func Convert_CRD_TCPRouteMatch_To_SDK_TCPRouteMatch(crdObj *appmesh.TCPRouteMatch,
+	sdkObj *appmeshsdk.TcpRouteMatch, scope conversion.Scope) error {
+
+	sdkObj.Port = crdObj.Port
+
+	return nil
+}
+
 func Convert_CRD_TCPRoute_To_SDK_TcpRoute(crdObj *appmesh.TCPRoute,
 	sdkObj *appmeshsdk.TcpRoute, scope conversion.Scope) error {
+
+	sdkObj.Match = &appmeshsdk.TcpRouteMatch{}
+	if err := Convert_CRD_TCPRouteMatch_To_SDK_TCPRouteMatch(&crdObj.Match, sdkObj.Match, scope); err != nil {
+		return err
+	}
 
 	sdkObj.Action = &appmeshsdk.TcpRouteAction{}
 	if err := Convert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(&crdObj.Action, sdkObj.Action, scope); err != nil {

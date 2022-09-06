@@ -149,11 +149,21 @@ type TCPRouteAction struct {
 
 // TCPRoute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRoute.html
 type TCPRoute struct {
+	// An object that represents the criteria for determining a request match.
+	Match TCPRouteMatch `json:"match"`
 	// The action to take if a match is determined.
 	Action TCPRouteAction `json:"action"`
 	// An object that represents a tcp timeout.
 	// +optional
 	Timeout *TCPTimeout `json:"timeout,omitempty"`
+}
+
+// TCPRouteMatch refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRouteMatch.html
+type TCPRouteMatch struct {
+	// Specifies the port to match requests with
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	Port *int64 `json:"port,omitempty"`
 }
 
 // GRPCRouteMetadata refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteMetadata.html
@@ -185,6 +195,10 @@ type GRPCRouteMatch struct {
 	// +kubebuilder:validation:MaxItems=10
 	// +optional
 	Metadata []GRPCRouteMetadata `json:"metadata,omitempty"`
+	// Specifies the port to match requests with
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	Port *int64 `json:"port,omitempty"`
 }
 
 // GRPCRouteAction refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcRouteAction.html

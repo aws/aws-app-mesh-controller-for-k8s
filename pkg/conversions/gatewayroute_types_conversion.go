@@ -58,6 +58,8 @@ func Convert_CRD_GRPCHostnameRewrite_To_SDK_GrpcHostnameRewrite(crdObj *appmesh.
 
 func Convert_CRD_GRPCGatewayRouteMatch_To_SDK_GrpcGatewayRouteMatch(crdObj *appmesh.GRPCGatewayRouteMatch, sdkObj *appmeshsdk.GrpcGatewayRouteMatch) error {
 	sdkObj.ServiceName = crdObj.ServiceName
+	sdkObj.Port = crdObj.Port
+
 	if crdObj.Hostname != nil {
 		sdkObj.Hostname = &appmeshsdk.GatewayRouteHostnameMatch{}
 		Convert_CRD_GatewayRouteHostnameMatch_To_SDK_GatewayRouteHostnameMatch(crdObj.Hostname, sdkObj.Hostname)

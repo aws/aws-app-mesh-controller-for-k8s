@@ -290,6 +290,12 @@ spec:
                         maxItems: 10
                         minItems: 1
                         type: array
+                      port:
+                        description: Specifies the port the request to be matched
+                          on
+                        format: int64
+                        minimum: 0
+                        type: integer
                       serviceName:
                         description: Either ServiceName or Hostname must be specified.
                           Both are allowed as well The fully qualified domain name
@@ -3105,6 +3111,11 @@ spec:
                               maxLength: 50
                               minLength: 1
                               type: string
+                            port:
+                              description: Specifies the port to match requests with
+                              format: int64
+                              minimum: 0
+                              type: integer
                             serviceName:
                               description: The fully qualified domain name for the
                                 service to match from the request.
@@ -3868,6 +3879,16 @@ spec:
                           required:
                           - weightedTargets
                           type: object
+                        match:
+                          description: An object that represents the criteria for
+                            determining a request match.
+                          properties:
+                            port:
+                              description: Specifies the port to match requests with
+                              format: int64
+                              minimum: 0
+                              type: integer
+                          type: object
                         timeout:
                           description: An object that represents a tcp timeout.
                           properties:
@@ -3893,6 +3914,7 @@ spec:
                           type: object
                       required:
                       - action
+                      - match
                       type: object
                   required:
                   - name

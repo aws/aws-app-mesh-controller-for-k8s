@@ -55,6 +55,10 @@ type GRPCGatewayRouteMatch struct {
 	// +kubebuilder:validation:MaxItems=10
 	// +optional
 	Metadata []GRPCGatewayRouteMetadata `json:"metadata,omitempty"`
+	// Specifies the port the request to be matched on
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	Port *int64 `json:"port,omitempty"`
 }
 
 // GRPCGatewayRouteMetadata refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_GrpcGatewayRouteMetadata.html
