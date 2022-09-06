@@ -18,6 +18,7 @@ nav:
       - APIDesign: reference/api_design.md
       - SidecarInjection: reference/injector.md
       - VirtualGateway CRD: reference/vgw.md
+      - BackendGroup CRD: reference/backend_groups.md
 plugins:
   - search
 theme:
