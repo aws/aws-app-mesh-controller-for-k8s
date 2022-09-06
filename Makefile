@@ -3,6 +3,7 @@ IMAGE_NAME=amazon/appmesh-controller
 AWS_ACCOUNT ?= $(AWS_ACCOUNT_ID)
 AWS_VPC_ID ?= $(AWS_VPC_ID)
 AWS_SECRET_ACCESS_KEY ?= $(AWS_SECRET_ACCESS_KEY)
+AWS_ACCESS_KEY_ID ?= $(AWS_ACCESS_KEY_ID)
 AWS_SESSION_TOKEN ?= $(AWS_SESSION_TOKEN)
 REPO=$(AWS_ACCOUNT).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE_NAME)
 REPO_FULL_NAME=aws/aws-app-mesh-controller-for-k8s
@@ -73,6 +74,7 @@ helm-deploy: check-env manifests
 		--set sidecar.waitUntilProxyReady=$(WAIT_PROXY_READY) \
 		--set sidecar.image.tag=$(SIDECAR_IMAGE_TAG) \
 		--set awsSecretAccessKey=$(AWS_SECRET_ACCESS_KEY) \
+		--set awsAccessKeyId=$(AWS_ACCESS_KEY_ID) \
 		--set awsSessionToken=$(AWS_SESSION_TOKEN) \
 		--set awsDefaultRegion=us-west-2
 

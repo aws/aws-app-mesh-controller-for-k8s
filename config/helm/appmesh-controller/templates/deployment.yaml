@@ -121,6 +121,8 @@ spec:
         env:
           - name: AWS_ACCOUNT_ID
             value: {{ quote .Values.accountId }}
+          - name: AWS_ACCESS_KEY_ID
+            value: {{ .Values.awsAccessKeyId }}
           - name: AWS_SESSION_TOKEN
             value: {{ .Values.awsSessionToken }}
           - name: AWS_SECRET_ACCESS_KEY
