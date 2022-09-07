@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("sidecar features", func() {
@@ -32,21 +32,19 @@ var _ = Describe("sidecar features", func() {
 		})
 
 		It("should have the color annotation", func() {
-			/*
-				stack.createMeshAndNamespace(ctx, f)
-				stack.createBackendResources(ctx, f)
-				stack.createFrontendResources(ctx, f)
+			stack.createMeshAndNamespace(ctx, f)
+			stack.createBackendResources(ctx, f)
+			stack.createFrontendResources(ctx, f)
 
-				pods, err := stack.k8client.CoreV1().Pods(stack.testName).List(ctx, metav1.ListOptions{})
-				Expect(err).NotTo(HaveOccurred())
+			pods, err := stack.k8client.CoreV1().Pods(stack.testName).List(ctx, metav1.ListOptions{})
+			Expect(err).NotTo(HaveOccurred())
 
-				for _, pod := range pods.Items {
-					ann := pod.ObjectMeta.Annotations
-					color := ann["color"]
+			for _, pod := range pods.Items {
+				ann := pod.ObjectMeta.Annotations
+				color := ann["color"]
 
-					Expect(color).To(Equal(stack.color))
-				}
-			*/
+				Expect(color).To(Equal(stack.color))
+			}
 		})
 	})
 })
