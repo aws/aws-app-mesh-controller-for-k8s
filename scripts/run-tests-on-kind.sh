@@ -64,11 +64,15 @@ function run_integration_tests {
         APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make helm-deploy ENABLE_BACKEND_GROUPS=true WAIT_PROXY_READY=true
         check_deployment_rollout appmesh-controller appmesh-system
         kubectl get pod -n appmesh-system
+        # wait to make sure cert pod rotation occurs before the test starts
+        sleep 15
           ;;
       sidecar-v1.22.2.0)
         APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make helm-deploy WAIT_PROXY_READY=true SIDECAR_IMAGE_TAG=v1.22.2.0-prod
         check_deployment_rollout appmesh-controller appmesh-system
         kubectl get pod -n appmesh-system
+        # wait to make sure cert pod rotation occurs before the test starts
+        sleep 15
           ;;
     esac
 
