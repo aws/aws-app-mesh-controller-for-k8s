@@ -90,5 +90,7 @@ sleep 15
 
 
 
-run_integration_tests & kubectl logs --follow -l app.kubernetes.io/name=appmesh-controller -n appmesh-system
-sleep 600
+run_integration_tests
+#& kubectl logs --follow -l app.kubernetes.io/name=appmesh-controller -n appmesh-system
+#sleep 600
+
