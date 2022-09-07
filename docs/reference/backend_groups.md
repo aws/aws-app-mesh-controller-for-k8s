@@ -1,9 +1,9 @@
 ### Backend Groups
 Backend Groups are an experimental feature aimed at simplifying the process of defining backends for VirtualNodes.  
-#### Enabling Backend Groups ####  
+#### Enabling Backend Groups
 To use Backend Groups, include the flag `enableBackendGroups=true` in your controller deployment.
 
-#### BackendGroup Spec ####  
+#### BackendGroup Spec
 A Backend Group defines a set of VirtualService backends that can be added to VirtualNodes.
 
 Here is a sample spec with a Backend Group containing 3 VirtualServices. This group is applied to a VirtualNode.

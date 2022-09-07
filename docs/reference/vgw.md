@@ -1,10 +1,10 @@
 ### GatewayRoute to VirtualGateway Association via (Yaml Spec)
 A VirtualGateway can select GatewayRoute using following selectors  
-#### namespaceSelector ####  
+#### namespaceSelector
 VirtualGateway must specify namespaceSelector to associate GatewayRoutes belonging to a particular namespace.
 An empty namespaceSelector would target GatewayRoutes in all namespaces. While nil or not specifying any namespace selector would not select any GatewayRoutes.
 
-#### gatewayRouteSelector ####  
+#### gatewayRouteSelector 
 VirtualGateway can additionally specify gatewayRouteSelector to select subset of GatewayRoutes in a given namespace. 
 An empty or not specifying this field (nil) will select all GatewayRoutes in a given namespace. If specified then it will select only those GatewayRoutes which have the matching labels. 
 
