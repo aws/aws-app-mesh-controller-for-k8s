@@ -13,7 +13,7 @@ VERSION ?= $(shell git describe --dirty --tags --always)
 IMAGE ?= $(REPO):$(VERSION)
 PREVIEW=false
 ENABLE_BACKEND_GROUPS?=false
-WAIT_PROXY_READY=false
+WAIT_PROXY_READY?=false
 SIDECAR_IMAGE_TAG=v1.22.2.1-prod
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
