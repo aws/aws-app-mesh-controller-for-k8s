@@ -8,9 +8,8 @@
       
       
       
-      
-      <link rel="shortcut icon" href="../../assets/images/aws_appmesh_icon.svg">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.4">
+      <link rel="icon" href="../../assets/images/aws_appmesh_icon.svg">
+      <meta name="generator" content="mkdocs-1.3.1, mkdocs-material-8.4.2">
     
     
       
@@ -18,30 +17,33 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.358818c7.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.69437709.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.f0267088.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.cbb835fc.min.css">
         
           
           
           <meta name="theme-color" content="#4051b5">
         
       
+      
     
     
     
       
         
-        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
-        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
     
-    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
+
     
     
   </head>
@@ -53,8 +55,9 @@
     
     
     <body dir="ltr" data-md-color-scheme="" data-md-color-primary="indigo" data-md-color-accent="indigo">
-      
   
+    
+    
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
@@ -70,50 +73,58 @@
       
     </div>
     
+    
       
 
 <header class="md-header" data-md-component="header">
-  <nav class="md-header-nav md-grid" aria-label="Header">
-    <a href="../.." title="AWS App Mesh Controller" class="md-header-nav__button md-logo" aria-label="AWS App Mesh Controller">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="AWS App Mesh Controller" class="md-header__button md-logo" aria-label="AWS App Mesh Controller" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
 
     </a>
-    <label class="md-header-nav__button md-icon" for="__drawer">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
     </label>
-    <div class="md-header-nav__title" data-md-component="header-title">
-      
-        <div class="md-header-nav__ellipsis">
-          <span class="md-header-nav__topic md-ellipsis">
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
             AWS App Mesh Controller
           </span>
-          <span class="md-header-nav__topic md-ellipsis">
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
             
               APIDesign
             
           </span>
         </div>
-      
+      </div>
     </div>
     
-      <label class="md-header-nav__button md-icon" for="__search">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
       </label>
-      
-<div class="md-search" data-md-component="search" role="dialog">
+      <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
       <label class="md-search__icon md-icon" for="__search">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
       </label>
-      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
-      </button>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
     </form>
     <div class="md-search__output">
       <div class="md-search__scrollwrap" data-md-scrollfix>
@@ -129,12 +140,11 @@
 </div>
     
     
-      <div class="md-header-nav__source">
-        
-<a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/" title="Go to repository" class="md-source">
+      <div class="md-header__source">
+        <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
   </div>
   <div class="md-source__repository">
     aws/aws-app-mesh-controller-for-k8s
@@ -143,39 +153,43 @@
       </div>
     
   </nav>
+  
 </header>
     
     <div class="md-container" data-md-component="container">
       
       
         
+          
+        
       
       <main class="md-main" data-md-component="main">
         <div class="md-main__inner md-grid">
           
             
-              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
 
+
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="AWS App Mesh Controller" class="md-nav__button md-logo" aria-label="AWS App Mesh Controller">
+    <a href="../.." title="AWS App Mesh Controller" class="md-nav__button md-logo" aria-label="AWS App Mesh Controller" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
 
     </a>
     AWS App Mesh Controller
   </label>
   
     <div class="md-nav__source">
-      
-<a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/" title="Go to repository" class="md-source">
+      <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
   </div>
   <div class="md-source__repository">
     aws/aws-app-mesh-controller-for-k8s
@@ -189,136 +203,15 @@
       
       
 
-
-  <li class="md-nav__item">
-    <a href="../.." class="md-nav__link">
-      Home
-    </a>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item md-nav__item--nested">
-    
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
-    
-    <label class="md-nav__link" for="nav-2">
-      Guide
-      <span class="md-nav__icon md-icon"></span>
-    </label>
-    <nav class="md-nav" aria-label="Guide" data-md-level="1">
-      <label class="md-nav__title" for="nav-2">
-        <span class="md-nav__icon md-icon"></span>
-        Guide
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
-        
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../guide/installation/" class="md-nav__link">
-      Installation
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../guide/monitoring/" class="md-nav__link">
-      Monitoring
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../guide/tracing/" class="md-nav__link">
-      Tracing
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../guide/troubleshooting/" class="md-nav__link">
-      Troubleshooting
-    </a>
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../guide/development/" class="md-nav__link">
-      Development
-    </a>
-  </li>
-
-        
-      </ul>
-    </nav>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item md-nav__item--nested">
-    
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
-    
-    <label class="md-nav__link" for="nav-3">
-      Tutorials
-      <span class="md-nav__icon md-icon"></span>
-    </label>
-    <nav class="md-nav" aria-label="Tutorials" data-md-level="1">
-      <label class="md-nav__title" for="nav-3">
-        <span class="md-nav__icon md-icon"></span>
-        Tutorials
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
-        
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../tutorials/walkthroughs/" class="md-nav__link">
-      Walkthroughs
-    </a>
-  </li>
-
-        
-      </ul>
-    </nav>
-  </li>
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
 
     
       
@@ -326,61 +219,225 @@
       
 
   
-
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  
+  
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
-    
-    <label class="md-nav__link" for="nav-4">
-      Reference
-      <span class="md-nav__icon md-icon"></span>
-    </label>
-    <nav class="md-nav" aria-label="Reference" data-md-level="1">
-      <label class="md-nav__title" for="nav-4">
-        <span class="md-nav__icon md-icon"></span>
-        Reference
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
-        
-        
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" type="checkbox" id="__nav_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          Guide
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Guide" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Guide
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
           
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../api_spec/" class="md-nav__link">
-      APISpec
-    </a>
-  </li>
-
-        
-          
-          
-          
-
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/installation/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
   
 
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/monitoring/" class="md-nav__link">
+        Monitoring
+      </a>
+    </li>
+  
 
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/tracing/" class="md-nav__link">
+        Tracing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/troubleshooting/" class="md-nav__link">
+        Troubleshooting
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/development/" class="md-nav__link">
+        Development
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
     
       
+      
+      
+
+  
+  
+  
     
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Tutorials
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Tutorials" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Tutorials
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/walkthroughs/" class="md-nav__link">
+        Walkthroughs
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
     
-      <label class="md-nav__link md-nav__link--active" for="__toc">
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_spec/" class="md-nav__link">
+        APISpec
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          APIDesign
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         APIDesign
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="./" class="md-nav__link md-nav__link--active">
-      APIDesign
-    </a>
-    
+      </a>
       
+        
+
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
   
   
     
@@ -390,7 +447,7 @@
       <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
   <a href="#introduction" class="md-nav__link">
@@ -499,37 +556,58 @@
     </ul>
   
 </nav>
-    
-  </li>
+      
+    </li>
+  
 
-        
+            
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../injector/" class="md-nav__link">
+        SidecarInjection
+      </a>
+    </li>
+  
+
+            
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vgw/" class="md-nav__link">
+        VirtualGateway CRD
+      </a>
+    </li>
+  
+
+            
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backend_groups/" class="md-nav__link">
+        BackendGroup CRD
+      </a>
+    </li>
+  
 
-
-  <li class="md-nav__item">
-    <a href="../injector/" class="md-nav__link">
-      SidecarInjection
-    </a>
-  </li>
-
-        
+            
           
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../vgw/" class="md-nav__link">
-      VirtualGateway CRD
-    </a>
-  </li>
-
-        
-      </ul>
-    </nav>
-  </li>
+        </ul>
+      </nav>
+    </li>
+  
 
     
   </ul>
@@ -539,11 +617,14 @@
               </div>
             
             
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
+
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
   
   
     
@@ -553,7 +634,7 @@
       <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
   <a href="#introduction" class="md-nav__link">
@@ -667,16 +748,17 @@
               </div>
             
           
-          <div class="md-content">
+          <div class="md-content" data-md-component="content">
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/reference/api_design.md" title="Edit this page" class="md-content__button md-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
-                  </a>
-                
-                
-                <h1 id="appmesh-k8s-integration-v1beta2-crd-api-design">AppMesh-K8s integration v1beta2 CRD API design<a class="headerlink" href="#appmesh-k8s-integration-v1beta2-crd-api-design" title="Permanent link">&para;</a></h1>
+  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/reference/api_design.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+<h1 id="appmesh-k8s-integration-v1beta2-crd-api-design">AppMesh-K8s integration v1beta2 CRD API design<a class="headerlink" href="#appmesh-k8s-integration-v1beta2-crd-api-design" title="Permanent link">&para;</a></h1>
 <h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
 <p>AppMesh is a service mesh product offered by Amazon. EKS team owns a controller that provides integration between AppMesh and Kubernetes using a <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/">custom resource</a>(CRD) API.</p>
 <p>This document proposes a new version(v1beta2) of CRD API to address issues in current API design(v1beta1).</p>
@@ -732,36 +814,36 @@
 <p>Mesh resource have a field “<strong>awsName</strong>” to denote the AppMesh name for mesh. It defaults to be same as the name of mesh k8s resource.  </p>
 <p>Note: we may consider use other field name like “meshName”, “awsMeshName”. we choose “awsName” over simply “name” to avoid confusing.</p>
 <p>This enables use cases like use same resource name(e.g. “<em>global</em>”) for the k8s Mesh resource in different EKS clusters, while maps to different appMesh name.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Mesh</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">global</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">awsName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-cluster-mesh</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Mesh</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">global</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">awsName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-cluster-mesh</span><span class="w"></span>
 </code></pre></div>
 </li>
 <li>
 <p>VirtualService resource have a field “<strong>awsName</strong>” to denote the AppMesh name for VirtualService. It defaults to be  "$name.$namespace" of VirtualService k8s resource.</p>
 <p>Note: <strong>the controller is responsible for detecting conflicting awsName with a mesh and report errors</strong>.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">VirtualService</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">svc-a</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">awsName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">svc-a.my-app-ns</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VirtualService</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-a</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">awsName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-a.my-app-ns</span><span class="w"></span>
 </code></pre></div>
 <p>Alternative designs considered:</p>
 <ol>
 <li>
 <p>Enforce bind appMesh virtualServiceName to be VirtualService resource’s name. (<strong>this is existing design used in our controller</strong>)
-    <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">VirtualService</span>
-<span class="nt">metadata</span><span class="p">:</span>
-    <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-node.my-app-ns.svc.cluster.local</span>
-<span class="nt">spec</span><span class="p">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">...</span>
+    <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VirtualService</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-node.my-app-ns.svc.cluster.local</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">...</span><span class="w"></span>
 </code></pre></div></p>
 <p>Pros:
 * the k8s namespace serves as a scope as a weak guarantee for uniqueness  of hostNames. (it’s weak guarantee since there can still be possible hostName conflicts for resources in multiple namespaces)</p>
@@ -771,15 +853,15 @@
 </li>
 <li>
 <p>have an array field “<strong>hosts</strong>” to denote the AppMesh names for VirtualService <strong>For each host, we’ll transparently create an appMesh VirtualService object</strong>. It defaults to have single entry of the VirtualService resource’s name.
-    <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">VirtualService</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-svc</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">hosts</span><span class="p">:</span> 
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">my-app-svc.my-app-ns</span>
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">my-app-svc.my-app-ns.svc.cluster.local</span>
+    <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VirtualService</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-svc</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-svc.my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-svc.my-app-ns.svc.cluster.local</span><span class="w"></span>
 </code></pre></div></p>
 <p>Pros:
 * user friendly if multiple hostname for a service is desired. (under k8s, a pod can use multiple name to contact a service with the help of DNS search list).</p>
@@ -793,13 +875,13 @@
 <p>Note: we may consider use other field name like “virtualNodeName”, “awsVirtualNodeName”. we choose “awsName” over simply “name” to avoid confusing.</p>
 <p>Note: <strong>currently controller use "-" as separator when build name, but we plan to change it to "_" to avoid conflicts with k8s's naming restrictions</strong>.</p>
 <p>This enables use cases like have different app mesh VirtualNode under different context. e.g. for a mesh designated for a single EKS cluster, the default can be “<em>${name}_${namespace}</em>”. And for a mesh designated to be shared by multiple EKS clusters, the default can be “<em>${name}<em>${namespace}</em>${clusterName}</em>”. The naming pattern can be controlled by immutable attributes on mesh resource in the future(e.g. <em>spec.multiCluster</em>)</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">VirtualNode</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">node-v1</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">awsName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">node-v1_my-app-ns</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VirtualNode</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">node-v1</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">awsName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">node-v1_my-app-ns</span><span class="w"></span>
 </code></pre></div>
 </li>
 </ol>
@@ -808,41 +890,41 @@
 <ol>
 <li>
 <p>use <strong>virtualNodeRef</strong> for reference from VirtualRouter to VirtualNode
-    <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">VirtualRouter</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">svc-a</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">awsName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">svc-a_my-app-ns</span>
-  <span class="nt">listeners</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">portMapping</span><span class="p">:</span>
-        <span class="nt">port</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">9080</span>
-        <span class="nt">protocol</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http</span>
-  <span class="nt">routes</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">route-to-auth</span>
-      <span class="nt">http</span><span class="p">:</span>
-        <span class="nt">match</span><span class="p">:</span>
-          <span class="nt">prefix</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/auth</span>
-        <span class="nt">action</span><span class="p">:</span>
-          <span class="nt">weightedTargets</span><span class="p">:</span>
-            <span class="p p-Indicator">-</span> <span class="nt">virtualNodeRef</span><span class="p">:</span>
-                <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span> <span class="c1"># can be omitted if in same namespace as VirtualRouter</span>
-                <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">node-v1</span>
-              <span class="nt">weight</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+    <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VirtualRouter</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-a</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">awsName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-a_my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">listeners</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">portMapping</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9080</span><span class="w"></span>
+<span class="w">        </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http</span><span class="w"></span>
+<span class="w">  </span><span class="nt">routes</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">route-to-auth</span><span class="w"></span>
+<span class="w">      </span><span class="nt">http</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">match</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/auth</span><span class="w"></span>
+<span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">weightedTargets</span><span class="p">:</span><span class="w"></span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualNodeRef</span><span class="p">:</span><span class="w"></span>
+<span class="w">                </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"> </span><span class="c1"># can be omitted if in same namespace as VirtualRouter</span><span class="w"></span>
+<span class="w">                </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">node-v1</span><span class="w"></span>
+<span class="w">              </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"></span>
 </code></pre></div></p>
 <p>Alternative designs considered:</p>
 <ol>
 <li>
 <p>use mangled name of k8s virtualNode resource. (<strong>this is existing design used in our controller</strong>)</p>
 <p>We can use a mangled name of virtualNode resource. like “<em>${nodeName}</em>” when referencing a virtualNode within current namespace and “<em>${nodeName}.${namespace}</em>” when referencing a virtualNode in another namespace.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">weightedTargets</span><span class="p">:</span>
-<span class="p p-Indicator">-</span> <span class="nt">virtualNodeName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">colorteller.appmesh-demo</span>
-    <span class="l l-Scalar l-Scalar-Plain">weight</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
-<span class="p p-Indicator">-</span> <span class="nt">virtualNodeName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">colorteller-blue</span>
-    <span class="l l-Scalar l-Scalar-Plain">weight</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">3</span>
-<span class="p p-Indicator">-</span> <span class="nt">virtualNodeName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">colorteller-black.appmesh-demo</span>
-    <span class="l l-Scalar l-Scalar-Plain">weight</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">3</span>
+<div class="highlight"><pre><span></span><code><span class="nt">weightedTargets</span><span class="p">:</span><span class="w"></span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualNodeName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">colorteller.appmesh-demo</span><span class="w"></span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">weight</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span><span class="w"></span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualNodeName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">colorteller-blue</span><span class="w"></span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">weight</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w"></span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualNodeName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">colorteller-black.appmesh-demo</span><span class="w"></span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">weight</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w"></span>
 </code></pre></div>
 <p>Cons:
 * VirtualNodeName here is ambiguous. It’s referencing the name of k8s VirtualNode instead of appMesh VirtualNode.
@@ -852,13 +934,13 @@
 <li>
 <p>use the real name of  appMesh virtualNode.</p>
 <p>We can use the real name of appMesh virtualNode instead of mangled name of k8s object. The above example will be:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">weightedTargets</span><span class="p">:</span>
-<span class="p p-Indicator">-</span> <span class="nt">virtualNodeName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">colorteller_appmesh-demo</span>
-    <span class="l l-Scalar l-Scalar-Plain">weight</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
-<span class="p p-Indicator">-</span> <span class="nt">virtualNodeName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">colorteller-blue</span>
-    <span class="l l-Scalar l-Scalar-Plain">weight</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">3</span>
-<span class="p p-Indicator">-</span> <span class="nt">virtualNodeName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">colorteller-black_appmesh-demo</span>
-    <span class="l l-Scalar l-Scalar-Plain">weight</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">3</span>
+<div class="highlight"><pre><span></span><code><span class="nt">weightedTargets</span><span class="p">:</span><span class="w"></span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualNodeName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">colorteller_appmesh-demo</span><span class="w"></span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">weight</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span><span class="w"></span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualNodeName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">colorteller-blue</span><span class="w"></span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">weight</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w"></span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualNodeName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">colorteller-black_appmesh-demo</span><span class="w"></span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">weight</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w"></span>
 </code></pre></div>
 <p>Pros: 
 * unambiguous supported both virtualNode in k8s and external like ECS.
@@ -895,18 +977,18 @@ spec:
                 awsName: my-ecs-node
               weight: 1
 1. use <strong>virtualServiceRef</strong> for references from VirtualNode to VirtualService</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">VirtualNode</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-node</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">...other fileds...</span>
-  <span class="l l-Scalar l-Scalar-Plain">backends</span><span class="p p-Indicator">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">virtualService</span><span class="p">:</span>
-        <span class="nt">virtualServiceRef</span><span class="p">:</span>
-          <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span> <span class="c1"># can be omitted if in same namespace as VirtualNode</span>
-          <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-svc</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VirtualNode</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-node</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...other fileds...</span><span class="w"></span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">backends</span><span class="p p-Indicator">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualService</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">virtualServiceRef</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"> </span><span class="c1"># can be omitted if in same namespace as VirtualNode</span><span class="w"></span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-svc</span><span class="w"></span>
 </code></pre></div>
 <p>Alternative designs considered:</p>
 <ol>
@@ -925,77 +1007,77 @@ spec:
 <li>
 <p>[<strong>optional, not planned</strong>] <strong>virtualServiceRef</strong> can be extended to support resources outside of k8s cluster. e.g. a ECS virtual service.</p>
 <p>Note: we are using field like “awsName” instead of “virtualServiceName” to avoid confusing, since “virtualServiceName” means “name for a k8s virtualService resource” under k8s’s convention.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">VirtualNode</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-node</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">...other fields...</span>
-  <span class="l l-Scalar l-Scalar-Plain">backends</span><span class="p p-Indicator">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">virtualService</span><span class="p">:</span>
-        <span class="nt">virtualServiceRef</span><span class="p">:</span>
-          <span class="nt">awsName</span><span class="p">:</span> <span class="s">&quot;my-ecs-service&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VirtualNode</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-node</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...other fields...</span><span class="w"></span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">backends</span><span class="p p-Indicator">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualService</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">virtualServiceRef</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">awsName</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;my-ecs-service&quot;</span><span class="w"></span>
 </code></pre></div>
 </li>
 </ol>
 <h3 id="decouple-virtualrouter-from-virtualservice">Decouple VirtualRouter from VirtualService<a class="headerlink" href="#decouple-virtualrouter-from-virtualservice" title="Permanent link">&para;</a></h3>
 <p>In AppMesh a <strong>VirtualService</strong> can use either VirtualRouter or VirtualNode as provider. VirtualRouter is only need when L7 routing functionality is needed.</p>
 <p>We’ll create a new CRD named <strong>VirtualRouter</strong>, which represents AppMesh VirtualRouter object and embeds multiple AppMesh VirtualRoute objects.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">VirtualRouter</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">svc-a</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">awsName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">svc-a_my-app-ns</span>
-  <span class="nt">listeners</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">portMapping</span><span class="p">:</span>
-        <span class="nt">port</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">9080</span>
-        <span class="nt">protocol</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http</span>
-  <span class="nt">routes</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">route-to-auth</span>
-      <span class="nt">http</span><span class="p">:</span>
-        <span class="nt">match</span><span class="p">:</span>
-          <span class="nt">prefix</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/auth</span>
-        <span class="nt">action</span><span class="p">:</span>
-          <span class="nt">weightedTargets</span><span class="p">:</span>
-            <span class="p p-Indicator">-</span> <span class="nt">virtualNodeRef</span><span class="p">:</span>
-                <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-                <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">node-v1</span>
-            <span class=" -Error"> </span><span class="nt">weight</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VirtualRouter</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-a</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">awsName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-a_my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">listeners</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">portMapping</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9080</span><span class="w"></span>
+<span class="w">        </span><span class="nt">protocol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http</span><span class="w"></span>
+<span class="w">  </span><span class="nt">routes</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">route-to-auth</span><span class="w"></span>
+<span class="w">      </span><span class="nt">http</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">match</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/auth</span><span class="w"></span>
+<span class="w">        </span><span class="nt">action</span><span class="p">:</span><span class="w"></span>
+<span class="w">          </span><span class="nt">weightedTargets</span><span class="p">:</span><span class="w"></span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">virtualNodeRef</span><span class="p">:</span><span class="w"></span>
+<span class="w">                </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">                </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">node-v1</span><span class="w"></span>
+<span class="w">            </span><span class="w w-Error"> </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"></span>
 </code></pre></div>
 <p>Note: The additional hierarchy of "virtualRouter" and "virtualNode" in addition to "virtualRouterRef" and "virtualNodeRef" is to align with AppMesh API(so that additional attributes specific to provider can be added easily).</p>
 <ul>
 <li>VirtualService can reference virtualRouter as provider:
-    <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">VirtualService</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">svc-a</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">hosts</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">svc-b.my-app-ns.svc.cluster.local</span>
-  <span class="nt">provider</span><span class="p">:</span>  
-    <span class="nt">virtualRouter</span><span class="p">:</span>
-      <span class="nt">virtualRouterRef</span><span class="p">:</span>
-        <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-        <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">svc-a-router</span>
+    <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VirtualService</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-a</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-b.my-app-ns.svc.cluster.local</span><span class="w"></span>
+<span class="w">  </span><span class="nt">provider</span><span class="p">:</span><span class="w">  </span>
+<span class="w">    </span><span class="nt">virtualRouter</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">virtualRouterRef</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-a-router</span><span class="w"></span>
 </code></pre></div></li>
 <li>VirtualService can reference virtualNode as provider:
-    <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">VirtualService</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">svc-b</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">hosts</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">svc-a.my-app-ns.svc.cluster.local</span>
-  <span class="nt">provider</span><span class="p">:</span>
-    <span class="nt">virtualNode</span><span class="p">:</span>
-      <span class="nt">virtualNodeRef</span><span class="p">:</span>
-        <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-        <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">node-v2</span>
+    <div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VirtualService</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-b</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">svc-a.my-app-ns.svc.cluster.local</span><span class="w"></span>
+<span class="w">  </span><span class="nt">provider</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">virtualNode</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">virtualNodeRef</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">node-v2</span><span class="w"></span>
 </code></pre></div></li>
 </ul>
 <h3 id="use-selector-on-mesh-to-denote-mesh-membership-for-resources-within-namespaces">Use selector on Mesh to denote mesh membership for resources within namespaces<a class="headerlink" href="#use-selector-on-mesh-to-denote-mesh-membership-for-resources-within-namespaces" title="Permanent link">&para;</a></h3>
@@ -1003,69 +1085,69 @@ spec:
 <p>Note: <strong>The label selectors of two mesh must not overlap. Controller should error if detected conflicting meshes for given resource.</strong></p>
 <p>Initially, we can assume all resources in a single namespace will always belong to same mesh, so we only need <strong>namespaceSelector</strong> on <strong>Mesh</strong> resource. <strong>namespaceSelector follows standard label selector semantics, if presents not empty, it selects all namespaces.</strong></p>
 <p>This also enables use cases like share a AppMesh application configuration since the application specific configuration(virtualNode / virtualService) no longer rely on specific mesh presents.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Mesh</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">global</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">namespaceSelector</span><span class="p">:</span>
-    <span class="nt">matchLabels</span><span class="p">:</span>
-      <span class="nt">mesh</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-mesh</span>
-<span class="nn">---</span>
-<span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Namespace</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">labels</span><span class="p">:</span>
-    <span class="nt">mesh</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-mesh</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Mesh</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">global</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespaceSelector</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">mesh</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-mesh</span><span class="w"></span>
+<span class="nn">---</span><span class="w"></span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Namespace</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">labels</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">mesh</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-mesh</span><span class="w"></span>
 </code></pre></div>
 <p>[<strong>optional, not planned</strong>] If we need to support resources in a single namespace to belong to different meshes, we can extend above to have a <strong>resourceSelector</strong> to match labels on resources like VirtualService and VirtualNode in addition to the namespaceSelector.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Mesh</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-mesh</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">namespaceSelector</span><span class="p">:</span>
-    <span class="nt">matchLabels</span><span class="p">:</span>
-      <span class="nt">mesh</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-mesh</span>
-  <span class="nt">resourceSelector</span><span class="p">:</span>
-    <span class="nt">matchLabels</span><span class="p">:</span>
-      <span class="nt">mesh</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-mesh</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Mesh</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-mesh</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespaceSelector</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">mesh</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-mesh</span><span class="w"></span>
+<span class="w">  </span><span class="nt">resourceSelector</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">mesh</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-mesh</span><span class="w"></span>
 </code></pre></div>
 <p>Alternative designs considered:
 1. Use <strong>meshName</strong> on resources to denote mesh membership. (<strong>this is existing design used in our controller</strong>)</p>
-<div class="codehilite"><pre><span></span><code><span class="n">Currently</span> <span class="n">we</span> <span class="k">are</span> <span class="k">using</span> <span class="n">a</span> <span class="n">meshName</span> <span class="k">on</span> <span class="n">resources</span> <span class="k">to</span> <span class="n">denote</span> <span class="n">mesh</span> <span class="n">membership</span><span class="p">.</span>
+<div class="codehilite"><pre><span></span><code><span class="nv">Currently</span><span class="w"> </span><span class="nv">we</span><span class="w"> </span><span class="nv">are</span><span class="w"> </span><span class="nv">using</span><span class="w"> </span><span class="nv">a</span><span class="w"> </span><span class="nv">meshName</span><span class="w"> </span><span class="nv">on</span><span class="w"> </span><span class="nv">resources</span><span class="w"> </span><span class="nv">to</span><span class="w"> </span><span class="nv">denote</span><span class="w"> </span><span class="nv">mesh</span><span class="w"> </span><span class="nv">membership</span>.<span class="w"></span>
 
-<span class="o">```</span><span class="n">yaml</span>
-<span class="n">apiVersion</span><span class="p">:</span> <span class="n">appmesh</span><span class="p">.</span><span class="n">k8s</span><span class="p">.</span><span class="n">aws</span><span class="o">/</span><span class="n">v1beta1</span>
-<span class="n">kind</span><span class="p">:</span> <span class="n">VirtualService</span>
-<span class="n">metadata</span><span class="p">:</span>
-  <span class="n">namespace</span><span class="p">:</span> <span class="n">my</span><span class="o">-</span><span class="n">app</span><span class="o">-</span><span class="n">ns</span>
-  <span class="n">name</span><span class="p">:</span> <span class="n">my</span><span class="o">-</span><span class="n">app</span><span class="o">-</span><span class="n">svc</span>
-<span class="n">spec</span><span class="p">:</span>
-  <span class="n">meshName</span><span class="p">:</span> <span class="n">my</span><span class="o">-</span><span class="n">mesh</span>
-  <span class="p">...</span><span class="n">other</span> <span class="n">fields</span><span class="p">...</span>
-<span class="o">```</span>
+```<span class="nv">yaml</span><span class="w"></span>
+<span class="nv">apiVersion</span>:<span class="w"> </span><span class="nv">appmesh</span>.<span class="nv">k8s</span>.<span class="nv">aws</span><span class="o">/</span><span class="nv">v1beta1</span><span class="w"></span>
+<span class="nv">kind</span>:<span class="w"> </span><span class="nv">VirtualService</span><span class="w"></span>
+<span class="nv">metadata</span>:<span class="w"></span>
+<span class="w">  </span><span class="nv">namespace</span>:<span class="w"> </span><span class="nv">my</span><span class="o">-</span><span class="nv">app</span><span class="o">-</span><span class="nv">ns</span><span class="w"></span>
+<span class="w">  </span><span class="nv">name</span>:<span class="w"> </span><span class="nv">my</span><span class="o">-</span><span class="nv">app</span><span class="o">-</span><span class="nv">svc</span><span class="w"></span>
+<span class="nv">spec</span>:<span class="w"></span>
+<span class="w">  </span><span class="nv">meshName</span>:<span class="w"> </span><span class="nv">my</span><span class="o">-</span><span class="nv">mesh</span><span class="w"></span>
+<span class="w">  </span>...<span class="nv">other</span><span class="w"> </span><span class="nv">fields</span>...<span class="w"></span>
+```<span class="w"></span>
 
-<span class="n">Pros</span><span class="p">:</span>
-<span class="o">*</span> <span class="n">enforced</span> <span class="n">that</span> <span class="n">a</span> <span class="n">resource</span> <span class="n">can</span> <span class="k">only</span> <span class="n">belong</span> <span class="k">to</span> <span class="n">a</span> <span class="n">single</span> <span class="n">mesh</span><span class="p">.</span> 
-<span class="o">*</span> <span class="k">simple</span> <span class="k">implementation</span> <span class="k">for</span> <span class="n">lookup</span> <span class="n">mesh</span> <span class="n">based</span> <span class="k">on</span> <span class="n">resource</span><span class="p">.</span> <span class="n">since</span> <span class="n">the</span> <span class="n">meshName</span> <span class="k">is</span> <span class="n">included</span> <span class="k">on</span> <span class="n">resources</span> <span class="n">directly</span><span class="p">.</span>
+<span class="nv">Pros</span>:<span class="w"></span>
+<span class="o">*</span><span class="w"> </span><span class="nv">enforced</span><span class="w"> </span><span class="nv">that</span><span class="w"> </span><span class="nv">a</span><span class="w"> </span><span class="nv">resource</span><span class="w"> </span><span class="nv">can</span><span class="w"> </span><span class="nv">only</span><span class="w"> </span><span class="nv">belong</span><span class="w"> </span><span class="nv">to</span><span class="w"> </span><span class="nv">a</span><span class="w"> </span><span class="nv">single</span><span class="w"> </span><span class="nv">mesh</span>.<span class="w"> </span>
+<span class="o">*</span><span class="w"> </span><span class="nv">simple</span><span class="w"> </span><span class="nv">implementation</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="nv">lookup</span><span class="w"> </span><span class="nv">mesh</span><span class="w"> </span><span class="nv">based</span><span class="w"> </span><span class="nv">on</span><span class="w"> </span><span class="nv">resource</span>.<span class="w"> </span><span class="nv">since</span><span class="w"> </span><span class="nv">the</span><span class="w"> </span><span class="nv">meshName</span><span class="w"> </span><span class="nv">is</span><span class="w"> </span><span class="nv">included</span><span class="w"> </span><span class="nv">on</span><span class="w"> </span><span class="nv">resources</span><span class="w"> </span><span class="nv">directly</span>.<span class="w"></span>
 
-<span class="n">Cons</span><span class="p">:</span>
-<span class="o">*</span> <span class="n">poor</span> <span class="k">security</span> <span class="n">model</span><span class="p">.</span> <span class="n">a</span> <span class="k">less</span> <span class="n">privileged</span> <span class="k">user</span> <span class="n">limited</span> <span class="n">within</span> <span class="n">namespace</span> <span class="n">can</span> <span class="k">create</span> <span class="n">resources</span> <span class="k">into</span> <span class="n">mesh</span> <span class="n">freely</span><span class="p">.</span> 
-<span class="o">*</span> <span class="n">requires</span> <span class="k">user</span> <span class="k">to</span> <span class="k">set</span> <span class="n">meshName</span> <span class="k">on</span> <span class="k">every</span> <span class="n">resource</span> <span class="n">even</span> <span class="n">within</span> <span class="n">a</span> <span class="n">namespace</span><span class="p">.</span>
+<span class="nv">Cons</span>:<span class="w"></span>
+<span class="o">*</span><span class="w"> </span><span class="nv">poor</span><span class="w"> </span><span class="nv">security</span><span class="w"> </span><span class="nv">model</span>.<span class="w"> </span><span class="nv">a</span><span class="w"> </span><span class="nv">less</span><span class="w"> </span><span class="nv">privileged</span><span class="w"> </span><span class="nv">user</span><span class="w"> </span><span class="nv">limited</span><span class="w"> </span><span class="nv">within</span><span class="w"> </span><span class="nv">namespace</span><span class="w"> </span><span class="nv">can</span><span class="w"> </span><span class="nv">create</span><span class="w"> </span><span class="nv">resources</span><span class="w"> </span><span class="nv">into</span><span class="w"> </span><span class="nv">mesh</span><span class="w"> </span><span class="nv">freely</span>.<span class="w"> </span>
+<span class="o">*</span><span class="w"> </span><span class="nv">requires</span><span class="w"> </span><span class="nv">user</span><span class="w"> </span><span class="nv">to</span><span class="w"> </span><span class="nv">set</span><span class="w"> </span><span class="nv">meshName</span><span class="w"> </span><span class="nv">on</span><span class="w"> </span><span class="nv">every</span><span class="w"> </span><span class="nv">resource</span><span class="w"> </span><span class="nv">even</span><span class="w"> </span><span class="nv">within</span><span class="w"> </span><span class="nv">a</span><span class="w"> </span><span class="nv">namespace</span>.<span class="w"></span>
 </code></pre></div>
 
 <ol>
 <li>
 <p>Use annotation on namespaces to denote mesh membership.</p>
 <p>We can use annotations on namespaces to denote mesh membership.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Namespace</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">annotations</span><span class="p">:</span>
-    <span class="nt">appmesh.k8s.aws/mesh-name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-mesh</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Namespace</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">annotations</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">appmesh.k8s.aws/mesh-name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-mesh</span><span class="w"></span>
 </code></pre></div>
 <p>Pros: 
 * enforced that a resource in a namespace can only belong to a single mesh
@@ -1077,21 +1159,21 @@ spec:
 <li>
 <p>Use an array of selectors instead of a single one on mesh resource.</p>
 <p>Selectors among selectors array are “<strong>OR</strong>” relationship. And within a selector it’s <strong>AND</strong> relationship(e.g. resources must match both namespaceSelector &amp; resourceSelector to be member of the mesh)</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Mesh</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-mesh</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">selectors</span><span class="p">:</span>
-  <span class="p p-Indicator">-</span> <span class="nt">namespaceSelector</span><span class="p">:</span>
-      <span class="nt">matchLabels</span><span class="p">:</span>
-        <span class="nt">mesh</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-mesh</span>
-  <span class="p p-Indicator">-</span> <span class="nt">namespaceSelector</span><span class="p">:</span>
-      <span class="nt">matchLabels</span><span class="p">:</span>
-        <span class="nt">my-mesh</span><span class="p">:</span> <span class="s">&quot;true&quot;</span>
-    <span class="nt">resourceSelector</span><span class="p">:</span>
-      <span class="nt">matchLabels</span><span class="p">:</span>
-        <span class="nt">my-mesh</span><span class="p">:</span> <span class="s">&quot;true&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta2</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Mesh</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-mesh</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">selectors</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">namespaceSelector</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">mesh</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-mesh</span><span class="w"></span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">namespaceSelector</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">my-mesh</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span><span class="w"></span>
+<span class="w">    </span><span class="nt">resourceSelector</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">my-mesh</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span><span class="w"></span>
 </code></pre></div>
 <p>Pros:
 * let user freely define selectors for different use cases.</p>
@@ -1107,37 +1189,37 @@ spec:
 2. If it finds a single match, injects according to virtualNode’s mesh and name.
 3. If it finds multiple match, it reports error.
 4. The global "<em>APPMESH_NAME</em>" environment variable on injector deployment and annotation "<em>appmesh.k8s.aws/mesh</em>" and "<em>appmesh.k8s.aws/virtualNode</em>" annotation on pod will no longer be supported.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">VirtualNode</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-node</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">...other fields...</span>
-  <span class="l l-Scalar l-Scalar-Plain">podSelector</span><span class="p p-Indicator">:</span>
-    <span class="nt">matchLabels</span><span class="p">:</span>
-      <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-node</span>
-<span class="nn">---</span>
-<span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Deployment</span>
-<span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-ns</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-node-deployment</span>
-<span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">selector</span><span class="p">:</span>
-    <span class="nt">matchLabels</span><span class="p">:</span>
-      <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-node</span>
-  <span class="nt">replicas</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
-  <span class="nt">template</span><span class="p">:</span>
-    <span class="nt">metadata</span><span class="p">:</span>
-      <span class="nt">labels</span><span class="p">:</span>
-        <span class="nt">app</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">my-app-node</span>
-    <span class="nt">spec</span><span class="p">:</span>
-      <span class="nt">containers</span><span class="p">:</span>
-      <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">app</span>
-        <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">awesomeimage:v1.0.0</span>
-        <span class="nt">ports</span><span class="p">:</span>
-        <span class="p p-Indicator">-</span> <span class="nt">containerPort</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">appmesh.k8s.aws/v1beta1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">VirtualNode</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-node</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...other fields...</span><span class="w"></span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">podSelector</span><span class="p p-Indicator">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-node</span><span class="w"></span>
+<span class="nn">---</span><span class="w"></span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span><span class="w"></span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span><span class="w"></span>
+<span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-ns</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-node-deployment</span><span class="w"></span>
+<span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">selector</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-node</span><span class="w"></span>
+<span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w"></span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">labels</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-node</span><span class="w"></span>
+<span class="w">    </span><span class="nt">spec</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">containers</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app</span><span class="w"></span>
+<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">awesomeimage:v1.0.0</span><span class="w"></span>
+<span class="w">        </span><span class="nt">ports</span><span class="p">:</span><span class="w"></span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
 </code></pre></div>
 <p>Alternative designs considered:</p>
 <ol>
@@ -1151,84 +1233,81 @@ spec:
 * the annotations are intrusive to user’s application.</p>
 </li>
 </ol>
-                
-              
-              
-                
+
+
 
 
               
             </article>
+            
           </div>
         </div>
+        
       </main>
       
-        
-<footer class="md-footer">
+        <footer class="md-footer">
   
-    <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
         
-          <a href="../api_spec/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        <a href="../api_spec/" class="md-footer__link md-footer__link--prev" aria-label="Previous: APISpec" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              APISpec
             </div>
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                APISpec
-              </div>
-            </div>
-          </a>
+          </div>
+        </a>
+      
+      
         
-        
-          <a href="../injector/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                SidecarInjection
-              </div>
+        <a href="../injector/" class="md-footer__link md-footer__link--next" aria-label="Next: SidecarInjection" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              SidecarInjection
             </div>
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
-    </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
-      <div class="md-footer-copyright">
-        
-        Made with
-        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
-          Material for MkDocs
-        </a>
-      </div>
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
       
     </div>
   </div>
 </footer>
       
     </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
     
-      <script src="../../assets/javascripts/vendor.7e0ee788.min.js"></script>
-      <script src="../../assets/javascripts/bundle.b3a72adc.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
-      
-      <script>
-        app = initialize({
-          base: "../..",
-          features: ['tabs'],
-          search: Object.assign({
-            worker: "../../assets/javascripts/worker/search.4ac00218.min.js"
-          }, typeof search !== "undefined" && search)
-        })
-      </script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["tabs"], "search": "../../assets/javascripts/workers/search.ecf98df9.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.9c69f0bc.min.js"></script>
       
     
   </body>

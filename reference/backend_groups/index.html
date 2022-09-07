@@ -13,7 +13,7 @@
     
     
       
-        <title>VirtualGateway CRD - AWS App Mesh Controller</title>
+        <title>BackendGroup CRD - AWS App Mesh Controller</title>
       
     
     
@@ -64,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gatewayroute-to-virtualgateway-association-via-yaml-spec" class="md-skip">
+        <a href="#backend-groups" class="md-skip">
           Skip to content
         </a>
       
@@ -97,7 +97,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              VirtualGateway CRD
+              BackendGroup CRD
             
           </span>
         </div>
@@ -442,6 +442,20 @@
               
   
   
+  
+    <li class="md-nav__item">
+      <a href="../vgw/" class="md-nav__link">
+        VirtualGateway CRD
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
     
   
   
@@ -452,12 +466,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          VirtualGateway CRD
+          BackendGroup CRD
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        VirtualGateway CRD
+        BackendGroup CRD
       </a>
       
         
@@ -474,23 +488,23 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#gatewayroute-to-virtualgateway-association-via-yaml-spec" class="md-nav__link">
-    GatewayRoute to VirtualGateway Association via (Yaml Spec)
+  <a href="#backend-groups" class="md-nav__link">
+    Backend Groups
   </a>
   
-    <nav class="md-nav" aria-label="GatewayRoute to VirtualGateway Association via (Yaml Spec)">
+    <nav class="md-nav" aria-label="Backend Groups">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#namespaceselector" class="md-nav__link">
-    namespaceSelector ####
+  <a href="#enabling-backend-groups" class="md-nav__link">
+    Enabling Backend Groups ####
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#gatewayrouteselector" class="md-nav__link">
-    gatewayRouteSelector ####
+  <a href="#backendgroup-spec" class="md-nav__link">
+    BackendGroup Spec ####
   </a>
   
 </li>
@@ -504,20 +518,6 @@
   
 </nav>
       
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../backend_groups/" class="md-nav__link">
-        BackendGroup CRD
-      </a>
     </li>
   
 
@@ -554,23 +554,23 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#gatewayroute-to-virtualgateway-association-via-yaml-spec" class="md-nav__link">
-    GatewayRoute to VirtualGateway Association via (Yaml Spec)
+  <a href="#backend-groups" class="md-nav__link">
+    Backend Groups
   </a>
   
-    <nav class="md-nav" aria-label="GatewayRoute to VirtualGateway Association via (Yaml Spec)">
+    <nav class="md-nav" aria-label="Backend Groups">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#namespaceselector" class="md-nav__link">
-    namespaceSelector ####
+  <a href="#enabling-backend-groups" class="md-nav__link">
+    Enabling Backend Groups ####
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#gatewayrouteselector" class="md-nav__link">
-    gatewayRouteSelector ####
+  <a href="#backendgroup-spec" class="md-nav__link">
+    BackendGroup Spec ####
   </a>
   
 </li>
@@ -592,80 +592,53 @@
             <article class="md-content__inner md-typeset">
               
                 
-  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/reference/vgw.md" title="Edit this page" class="md-content__button md-icon">
+  <a href="https://github.com/aws/aws-app-mesh-controller-for-k8s/edit/master/docs/reference/backend_groups.md" title="Edit this page" class="md-content__button md-icon">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
   </a>
 
 
 
-  <h1>VirtualGateway CRD</h1>
+  <h1>BackendGroup CRD</h1>
 
-<h3 id="gatewayroute-to-virtualgateway-association-via-yaml-spec">GatewayRoute to VirtualGateway Association via (Yaml Spec)<a class="headerlink" href="#gatewayroute-to-virtualgateway-association-via-yaml-spec" title="Permanent link">&para;</a></h3>
-<p>A VirtualGateway can select GatewayRoute using following selectors  </p>
-<h4 id="namespaceselector">namespaceSelector ####<a class="headerlink" href="#namespaceselector" title="Permanent link">&para;</a></h4>
-<p>VirtualGateway must specify namespaceSelector to associate GatewayRoutes belonging to a particular namespace.
-An empty namespaceSelector would target GatewayRoutes in all namespaces. While nil or not specifying any namespace selector would not select any GatewayRoutes.</p>
-<h4 id="gatewayrouteselector">gatewayRouteSelector ####<a class="headerlink" href="#gatewayrouteselector" title="Permanent link">&para;</a></h4>
-<p>VirtualGateway can additionally specify gatewayRouteSelector to select subset of GatewayRoutes in a given namespace. 
-An empty or not specifying this field (nil) will select all GatewayRoutes in a given namespace. If specified then it will select only those GatewayRoutes which have the matching labels. </p>
-<p>Here is a sample spec with 1 VirtualGateway and 2 GatewayRoutes. Here VirtualGateway specified a gatewayRouteSelector, based on which only one of the GatewayRoutes get selected.</p>
+<h3 id="backend-groups">Backend Groups<a class="headerlink" href="#backend-groups" title="Permanent link">&para;</a></h3>
+<p>Backend Groups are an experimental feature aimed at simplifying the process of defining backends for VirtualNodes.  </p>
+<h4 id="enabling-backend-groups">Enabling Backend Groups ####<a class="headerlink" href="#enabling-backend-groups" title="Permanent link">&para;</a></h4>
+<p>To use Backend Groups, include the flag <code>enableBackendGroups=true</code> in your controller deployment.</p>
+<h4 id="backendgroup-spec">BackendGroup Spec ####<a class="headerlink" href="#backendgroup-spec" title="Permanent link">&para;</a></h4>
+<p>A Backend Group defines a set of VirtualService backends that can be added to VirtualNodes.</p>
+<p>Here is a sample spec with a Backend Group containing 3 VirtualServices. This group is applied to a VirtualNode.</p>
 <div class="highlight"><pre><span></span><code>apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualGateway
+kind: BackendGroup
 metadata:
-  name: ingress-gw
+  name: color-group
   namespace: ${APP_NAMESPACE}
 spec:
-  namespaceSelector:
-    matchLabels:
-      gateway: ingress-gw
-  gatewayRouteSelector:
-    matchLabels:
-      gateway: ingress-gw
-  podSelector:
-    matchLabels:
-      app: ingress-gw
-  listeners:
-    - portMapping:
-        port: 8088
-        protocol: http
+  virtualservices:
+    - name: green
+      namespace: namespace-1
+    - name: red
+      namespace: namespace-1
+    - name: yellow
+      namespace: namespace-2
 ---
 apiVersion: appmesh.k8s.aws/v1beta2
-kind: GatewayRoute
+kind: VirtualNode
 metadata:
-  name: gateway-route-headers
+  name: color-node
   namespace: ${APP_NAMESPACE}
 spec:
-  httpRoute:
-    match:
-      prefix: &quot;/headers&quot;
-    action:
-      target:
-        virtualService:
-          virtualServiceRef:
-            name: color-headers
+  backendGroups:
+    - name: color-group
+      namespace: ${APP_NAMESPACE}
 ---
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: GatewayRoute
-metadata:
-  name: gateway-route-paths
-  namespace: ${APP_NAMESPACE}
-  labels:
-    gateway: ingress-gw
-spec:
-  httpRoute:
-    match:
-      prefix: &quot;/paths&quot;
-    action:
-      target:
-        virtualService:
-          virtualServiceRef:
-            name: color-paths
-----
 </code></pre></div>
-<p>Since the GatewayRoute: gateway-route-headers doesn't have any matching VirtualGateway, customers will see following error message
-<div class="highlight"><pre><span></span><code>failed to find matching virtualGateway for gatewayRoute: gateway-route-headers, expecting 1 but found 0
-</code></pre></div></p>
-<p>The above error message is to only notify the user that the GatewayRoute in the error message has not been associated with any VirtualGateway. So the user should either add matching gatewayRouteSelector to the unmatched gatewayRoute or completely remove the gatewayRouteSelector so that the VirtualGateway ignores this field and uses only the namespaceSelector. </p>
+<p>VirtualNode <code>color-node</code> will be able to use <code>green</code>, <code>red</code>, and <code>yellow</code> as backends.</p>
+<p>Additionally, in the VirtualNode <code>backendGroups</code> field, specifying <code>*</code> as the Backend Group name will automatically add all VirtualServices in the specified namespace.
+<div class="highlight"><pre><span></span><code>backendGroups:
+  - name: *
+    namespace: color-namespace
+</code></pre></div>
+This allows any VirtualService in <code>color-namespace</code> to be a backend of the VirtualNode.</p>
 
 
 
@@ -684,7 +657,7 @@ spec:
     <nav class="md-footer__inner md-grid" aria-label="Footer" >
       
         
-        <a href="../injector/" class="md-footer__link md-footer__link--prev" aria-label="Previous: SidecarInjection" rel="prev">
+        <a href="../vgw/" class="md-footer__link md-footer__link--prev" aria-label="Previous: VirtualGateway CRD" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
           </div>
@@ -693,26 +666,11 @@ spec:
               <span class="md-footer__direction">
                 Previous
               </span>
-              SidecarInjection
+              VirtualGateway CRD
             </div>
           </div>
         </a>
       
-      
-        
-        <a href="../backend_groups/" class="md-footer__link md-footer__link--next" aria-label="Next: BackendGroup CRD" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              BackendGroup CRD
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
-          </div>
-        </a>
       
     </nav>
   
