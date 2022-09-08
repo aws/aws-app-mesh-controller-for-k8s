@@ -60,7 +60,7 @@ function run_integration_tests {
         continue
         ;;
       timeout)
-        kubectl logs -l app.kubernetes.io/name=appmesh-controller -n appmesh-system --follow &
+        continue
         ;;
       sidecar)
         continue # it's failing
