@@ -62,6 +62,9 @@ function run_integration_tests {
       timeout)
         continue
         ;;
+      tls)
+        continue
+        ;;
       sidecar)
         continue # it's failing
         APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make helm-deploy ENABLE_BACKEND_GROUPS=true WAIT_PROXY_READY=true
