@@ -20,10 +20,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE }}
           aws-region: us-west-2
-      - name: setup go 1.16
+      - name: setup go 1.17
         uses: actions/setup-go@v3
         with:
-          go-version: '1.16.*'
+          go-version: '1.17.*'
         id: go
       - name: install controller-gen
         run: |
