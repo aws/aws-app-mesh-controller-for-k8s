@@ -225,8 +225,10 @@ func (m *envoyMutator) getSecretMounts(pod *corev1.Pod) (map[string]string, erro
 }
 
 func (m *envoyMutator) getCustomEnv(pod *corev1.Pod) (map[string]string, error) {
+	fmt.Printf("custom env queried for %s", pod.Name)
 	customEnv := make(map[string]string)
 	if v, ok := pod.ObjectMeta.Annotations[AppMeshEnvAnnotation]; ok {
+		fmt.Printf("custom env %s: %s", pod.Name, v)
 		for _, segment := range strings.Split(v, ",") {
 			pair := strings.Split(segment, "=")
 			if len(pair) != 2 { // EnvVariableKey=EnvVariableValue
