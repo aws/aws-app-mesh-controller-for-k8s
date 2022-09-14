@@ -1,6 +1,7 @@
 package inject
 
 import (
+	"fmt"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	corev1 "k8s.io/api/core/v1"
@@ -24,10 +25,12 @@ func (m *cloudMapHealthyReadinessGate) mutate(pod *corev1.Pod) error {
 	if m.vn.Spec.ServiceDiscovery == nil || m.vn.Spec.ServiceDiscovery.AWSCloudMap == nil {
 		return nil
 	}
+	fmt.Printf("gate for %s is not ready\n", pod.Name)
 	containsAWSCloudMapHealthyReadinessGate := false
 	for _, item := range pod.Spec.ReadinessGates {
 		if item.ConditionType == k8s.ConditionAWSCloudMapHealthy {
 			containsAWSCloudMapHealthyReadinessGate = true
+			fmt.Printf("gate for %s is ready\n", pod.Name)
 			break
 		}
 	}
