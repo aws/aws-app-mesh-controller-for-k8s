@@ -25,7 +25,7 @@ func (m *cloudMapHealthyReadinessGate) mutate(pod *corev1.Pod) error {
 	if m.vn.Spec.ServiceDiscovery == nil || m.vn.Spec.ServiceDiscovery.AWSCloudMap == nil {
 		return nil
 	}
-	fmt.Printf("gate for %s is not ready\n", pod.Name)
+	fmt.Printf("pod status: %s", pod.Status.String())
 	containsAWSCloudMapHealthyReadinessGate := false
 	for _, item := range pod.Spec.ReadinessGates {
 		if item.ConditionType == k8s.ConditionAWSCloudMapHealthy {
