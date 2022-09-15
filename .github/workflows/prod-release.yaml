@@ -34,6 +34,13 @@ jobs:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.PROD_AWS_ROLE }}
           role-session-name: ControllerProdRelease
+      - name: Push docker images (ECR public)
+        run: |
+          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin public.ecr.aws/appmesh/appmesh-controller
+          docker tag ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }} public.ecr.aws/appmesh/appmesh-controller:${{ github.event.inputs.tag }}
+          docker tag ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64 public.ecr.aws/appmesh/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
+          docker push public.ecr.aws/appmesh/appmesh-controller:${{ github.event.inputs.tag }}
+          docker push public.ecr.aws/appmesh/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
       - name: Push docker images
         run: |
           aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${{ secrets.PROD_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com
