@@ -25,7 +25,7 @@ jobs:
           role-session-name: ControllerProdRelease
       - name: Pull docker images
         run: |
-          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com
           docker pull ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}
           docker pull ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
       - name: Configure AWS Credentials (prod)
