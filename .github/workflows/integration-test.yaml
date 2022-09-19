@@ -34,7 +34,8 @@ jobs:
           chmod u+x aws-k8s-tester
           sudo mv aws-k8s-tester /usr/bin/aws-k8s-tester
       - name: create eks cluster
-        run: aws-k8s-tester eks create cluster -p /tmp/test-prod-eks.yaml
+        run: aws-k8s-tester help
+        #run: aws-k8s-tester eks create cluster -p /tmp/test-prod-eks.yaml
       - name: get node status
         run: kubectl get nodes
       - name: checkout code
