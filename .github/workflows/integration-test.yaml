@@ -30,7 +30,8 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE }}
       - name: download aws-k8s-tester
         run: |
-          sudo curl https://github.com/aws/aws-k8s-tester/releases/download/v1.6.6/aws-k8s-tester-v1.6.6-linux-amd64 -o /usr/bin/aws-k8s-tester
+          curl https://github.com/aws/aws-k8s-tester/releases/download/v1.6.6/aws-k8s-tester-v1.6.6-linux-amd64 -o aws-k8s-tester
+          sudo mv aws-k8s-tester /usr/bin/aws-k8s-tester
       - name: create eks cluster
         run: aws-k8s-tester eks create cluster -p /tmp/${USER}-test-prod-eks.yaml
       - name: get node status
