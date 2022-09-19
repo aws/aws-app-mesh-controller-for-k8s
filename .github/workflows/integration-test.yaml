@@ -27,7 +27,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-west-2
-          role-to-assume: ${{ secrets.CI_AWS_ROLE }}
+          role-to-assume: ${{ secrets.AWS_ROLE }}
           role-session-name: ControllerBuildIntegrationTests
       - name: download aws-k8s-tester
         run: |
