@@ -12,23 +12,22 @@ jobs:
   build:
     name: integration-test
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT }}
     steps:
-      - name: clean work dir from previous runs
-        run: |
-          rm -rf *
       - name: setup go 1.17
         uses: actions/setup-go@v3
         with:
           go-version: '1.17.*'
         id: go
-      - name: checkout code
-        uses: actions/checkout@v2
       - name: Configure AWS Credentials (build)
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.AWS_ROLE }}
-          role-session-name: ControllerBuildIntegrationTests
       - name: download aws-k8s-tester
         run: |
           curl https://github.com/aws/aws-k8s-tester/releases/download/v1.6.6/aws-k8s-tester-v1.6.6-linux-amd64 -o aws-k8s-tester
@@ -36,6 +35,8 @@ jobs:
         run: aws-k8s-tester eks create cluster -p /tmp/${USER}-test-prod-eks.yaml
       - name: get node status
         run: kubectl get nodes
+      - name: checkout code
+        uses: actions/checkout@v2
       #- name: setup kind and run integration tests
       #  run: make integration-test
   cleanup:
