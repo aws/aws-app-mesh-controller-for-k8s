@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - eks-tests
 
 permissions:
   contents: read
@@ -10,7 +11,7 @@ permissions:
 jobs:
   build:
     name: integration-test
-    runs-on: [self-hosted, aws-app-mesh-controller-for-k8s, X64 ]
+    runs-on: ubuntu-20.04
     steps:
       - name: clean work dir from previous runs
         run: |
@@ -20,13 +21,23 @@ jobs:
         with:
           go-version: '1.17.*'
         id: go
-      - name: setup environment
-        run: |
-          source ~/.bashrc
       - name: checkout code
         uses: actions/checkout@v2
-      - name: setup kind and run integration tests
-        run: make integration-test
+      - name: Configure AWS Credentials (build)
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.CI_AWS_ROLE }}
+          role-session-name: ControllerBuildIntegrationTests
+      - name: download aws-k8s-tester
+        run: |
+          curl https://github.com/aws/aws-k8s-tester/releases/download/v1.6.6/aws-k8s-tester-v1.6.6-linux-amd64 -o aws-k8s-tester
+      - name: create eks cluster
+        run: aws-k8s-tester eks create cluster -p /tmp/${USER}-test-prod-eks.yaml
+      - name: get node status
+        run: kubectl get nodes
+      #- name: setup kind and run integration tests
+      #  run: make integration-test
   cleanup:
     runs-on: [self-hosted, aws-app-mesh-controller-for-k8s, X64]
     if: ${{ always() }}
