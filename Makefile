@@ -94,7 +94,7 @@ docker-push: check-env
 	docker push $(IMAGE)
 
 integration-test: ## Run the integration using kind clusters
-	@./scripts/test-with-kind.sh
+	@./scripts/test-with-eks.sh
 
 integration-test-eks: ## Run the integration using eks clusters
 	@./scripts/test-with-eks.sh

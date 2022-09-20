@@ -33,7 +33,7 @@ jobs:
           curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_linux_amd64.tar.gz" | tar xz -C /tmp
           sudo mv -v /tmp/eksctl /usr/local/bin
       - name: create eks cluster
-        run: make integration-test-eks
+        run: make integration-test
         #run: aws-k8s-tester eks create cluster -p /tmp/test-prod-eks.yaml
       - name: get node status
         run: |
