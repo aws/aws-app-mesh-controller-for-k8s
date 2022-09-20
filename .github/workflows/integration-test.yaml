@@ -43,6 +43,6 @@ jobs:
       - name: cleanup cluster
         if: always()
         run: |
-          eksctl delete cluster --n $CLUSTER_NAME
+          eksctl delete cluster -n $CLUSTER_NAME
       #- name: setup kind and run integration tests
       #  run: make integration-test
