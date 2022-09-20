@@ -28,25 +28,21 @@ jobs:
         with:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.AWS_ROLE }}
-      - name: download aws-k8s-tester
+      - name: download eksctl
         run: |
-          curl https://github.com/aws/aws-k8s-tester/releases/download/v1.6.6/aws-k8s-tester-v1.6.6-linux-amd64 -o aws-k8s-tester
-          chmod u+x aws-k8s-tester
-          sudo mv aws-k8s-tester /usr/bin/aws-k8s-tester
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_linux_amd64.tar.gz" | tar xz -C /tmp
+          sudo mv -v /tmp/eksctl /usr/local/bin
       - name: create eks cluster
-        run: |
-          aws-k8s-tester help
+        run: make integration-test-eks
         #run: aws-k8s-tester eks create cluster -p /tmp/test-prod-eks.yaml
       - name: get node status
-        run: kubectl get nodes
+        run: |
+          kubectl get nodes
       - name: checkout code
         uses: actions/checkout@v2
+      - name: cleanup cluster
+        if: always()
+        run: |
+          eksctl delete cluster --n $CLUSTER_NAME
       #- name: setup kind and run integration tests
       #  run: make integration-test
-  cleanup:
-    runs-on: [self-hosted, aws-app-mesh-controller-for-k8s, X64]
-    if: ${{ always() }}
-    needs: [build]
-    steps:
-      - name: delete kind clusters
-        run: make delete-all-kind-clusters
