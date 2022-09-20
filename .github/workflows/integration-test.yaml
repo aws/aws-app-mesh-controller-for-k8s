@@ -32,13 +32,13 @@ jobs:
         run: |
           curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_linux_amd64.tar.gz" | tar xz -C /tmp
           sudo mv -v /tmp/eksctl /usr/local/bin
+      - name: checkout code
+        uses: actions/checkout@v2
       - name: create eks cluster
         run: make integration-test-eks
       - name: get node status
         run: |
           kubectl get nodes
-      - name: checkout code
-        uses: actions/checkout@v2
       - name: cleanup cluster
         if: always()
         run: |
