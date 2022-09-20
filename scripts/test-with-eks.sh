@@ -98,15 +98,6 @@ function run_integration_tests {
   done
 }
 
-function clean_up {
-    if [ -v "$TMP_DIR" ]; then
-        "${SCRIPTS_DIR}"/delete-kind-cluster.sh -c "$TMP_DIR" || :
-    fi
-    return
-}
-
-trap "clean_up" EXIT
-
 aws_check_credentials
 
 if [ -z "$AWS_ACCOUNT_ID" ]; then
@@ -114,6 +105,10 @@ if [ -z "$AWS_ACCOUNT_ID" ]; then
 fi
 
 ecr_login $AWS_REGION $ECR_URL
+
+# Install kubebuilder
+curl -L https://github.com/kubernetes-sigs/kubebuilder/releases/download/v1.0.8/kubebuilder_1.0.8_linux_amd64.tar.gz | tar -xz -C /tmp/
+sudo mv /tmp/kubebuilder_1.0.8_linux_amd64 /usr/local/kubebuilder
 
 # Build and publish the controller image
 build_and_publish_controller
