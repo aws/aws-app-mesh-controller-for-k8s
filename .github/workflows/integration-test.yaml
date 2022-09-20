@@ -28,10 +28,16 @@ jobs:
         with:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.AWS_ROLE }}
-      - name: download eksctl
+      - name: install eksctl
         run: |
           curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_linux_amd64.tar.gz" | tar xz -C /tmp
           sudo mv -v /tmp/eksctl /usr/local/bin
+      - name: install controller-gen
+        run: |
+          go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1
+      - name: install ginkgo
+        run: |
+          go install github.com/onsi/ginkgo/ginkgo@v1.16.5
       - name: checkout code
         uses: actions/checkout@v2
       - name: create eks cluster
