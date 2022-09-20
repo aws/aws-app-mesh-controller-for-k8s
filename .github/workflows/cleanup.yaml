@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   cleanup:
-    name: prod-release
+    name: cleanup
     runs-on: ubuntu-18.04
     permissions:
       id-token: write
@@ -23,6 +23,10 @@ jobs:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.AWS_ROLE }}
           role-session-name: ControllerProdRelease
+      - name: install eksctl
+        run: |
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_linux_amd64.tar.gz" | tar xz -C /tmp
+          sudo mv -v /tmp/eksctl /usr/local/bin
       - name: Delete cluster
         run: |
           eksctl delete cluster -n ${{ github.event.inputs.cluster }}
