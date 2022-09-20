@@ -113,7 +113,7 @@ sudo mv /tmp/kubebuilder_1.0.8_linux_amd64 /usr/local/kubebuilder
 # Build and publish the controller image
 build_and_publish_controller
 
-export KUBECONFIG="~/.kube/config"
+export KUBECONFIG=$(pwd)"/.kube/config"
 setup_eks_cluster
 
 
