@@ -1,0 +1,28 @@
+name: prod-release
+on:
+  workflow_dispatch:
+    inputs:
+      cluster:
+        description: 'The cluster name to delete.'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    name: prod-release
+    runs-on: ubuntu-18.04
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: ${{ secrets.AWS_ROLE }}
+          role-session-name: ControllerProdRelease
+      - name: Delete cluster
+        run: |
+          eksctl delete cluster -n ${{ github.event.inputs.cluster }}

@@ -41,11 +41,8 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v2
       - name: create eks cluster
-        run: make integration-test-eks
-      - name: get node status
-        run: |
-          kubectl get nodes
+        run: CLUSTER_NAME=appmesh-test-${{ github.run_id }}-${{ github.run_attempt }} make integration-test-eks
       - name: cleanup cluster
         if: always()
         run: |
-          eksctl delete cluster -n $CLUSTER_NAME
+          eksctl delete cluster -n appmesh-test-${{ github.run_id }}-${{ github.run_attempt }}

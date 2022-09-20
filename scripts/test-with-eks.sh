@@ -17,8 +17,8 @@ ECR_URL=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 IMAGE=${ECR_URL}/${IMAGE_NAME}
 
 
-CLUSTER_NAME_BASE="test"
-CLUSTER_NAME=""
+#CLUSTER_NAME_BASE="test"
+#CLUSTER_NAME=""
 K8S_VERSION="1.23"
 TMP_DIR=""
 
@@ -37,9 +37,9 @@ check_is_installed controller-gen "You can install controller-gen with the helpe
 
 
 function setup_eks_cluster {
-    TEST_ID=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
-    CLUSTER_NAME_BASE=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
-    CLUSTER_NAME="appmesh-test-$CLUSTER_NAME_BASE"-"${TEST_ID}"
+    #TEST_ID=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
+    #CLUSTER_NAME_BASE=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
+    #CLUSTER_NAME="appmesh-test-$CLUSTER_NAME_BASE"-"${TEST_ID}"
     eksctl create cluster --name $CLUSTER_NAME --version $K8S_VERSION --nodes-min 1 --nodes-max 1 --nodes 1 --auto-kubeconfig --full-ecr-access --appmesh-access
 }
 
