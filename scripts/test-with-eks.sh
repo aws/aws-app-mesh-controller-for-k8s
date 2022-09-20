@@ -37,9 +37,6 @@ check_is_installed controller-gen "You can install controller-gen with the helpe
 
 
 function setup_eks_cluster {
-    #TEST_ID=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
-    #CLUSTER_NAME_BASE=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
-    #CLUSTER_NAME="appmesh-test-$CLUSTER_NAME_BASE"-"${TEST_ID}"
     eksctl create cluster --name $CLUSTER_NAME --version $K8S_VERSION --nodes-min 1 --nodes-max 1 --nodes 1 --kubeconfig $KUBECONFIG --full-ecr-access --appmesh-access
 }
 
@@ -70,7 +67,7 @@ function install_controller {
 }
 
 function run_integration_tests {
-  local __vpc_id=$( vpc_id )
+  local __vpc_id=$(aws eks describe-cluster --name $CLUSTER_NAME --query "cluster.resourcesVpcConfig.vpcId")
 
   for __type in ${INT_TEST_DIR}/*
   do
