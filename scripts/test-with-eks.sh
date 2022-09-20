@@ -40,7 +40,7 @@ function setup_eks_cluster {
     #TEST_ID=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
     #CLUSTER_NAME_BASE=$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
     #CLUSTER_NAME="appmesh-test-$CLUSTER_NAME_BASE"-"${TEST_ID}"
-    eksctl create cluster --name $CLUSTER_NAME --version $K8S_VERSION --nodes-min 1 --nodes-max 1 --nodes 1 --auto-kubeconfig --full-ecr-access --appmesh-access
+    eksctl create cluster --name $CLUSTER_NAME --version $K8S_VERSION --nodes-min 1 --nodes-max 1 --nodes 1 --kubeconfig $KUBECONFIG --full-ecr-access --appmesh-access
 }
 
 function install_crds {
@@ -113,8 +113,9 @@ sudo mv /tmp/kubebuilder_1.0.8_linux_amd64 /usr/local/kubebuilder
 # Build and publish the controller image
 build_and_publish_controller
 
+export KUBECONFIG="~/.kube/config"
 setup_eks_cluster
-# export KUBECONFIG="${TMP_DIR}/kubeconfig"
+
 
 # Generate and install CRDs
 install_crds
