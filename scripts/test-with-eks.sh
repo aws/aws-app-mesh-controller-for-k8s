@@ -68,6 +68,7 @@ function install_controller {
 
 function run_integration_tests {
   local __vpc_id=$(aws eks describe-cluster --name $CLUSTER_NAME --query "cluster.resourcesVpcConfig.vpcId")
+  echo $__vpc_id
 
   for __type in ${INT_TEST_DIR}/*
   do
