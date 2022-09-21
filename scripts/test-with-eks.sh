@@ -37,7 +37,7 @@ check_is_installed controller-gen "You can install controller-gen with the helpe
 
 
 function setup_eks_cluster {
-    eksctl create cluster --name $CLUSTER_NAME --version $K8S_VERSION --nodes-min 1 --nodes-max 1 --nodes 1 --kubeconfig $KUBECONFIG --full-ecr-access --appmesh-access
+    eksctl create cluster --name $CLUSTER_NAME --region us-west-2 --version $K8S_VERSION --nodes-min 1 --nodes-max 1 --nodes 1 --kubeconfig $KUBECONFIG --full-ecr-access --appmesh-access
 }
 
 function install_crds {
@@ -68,7 +68,6 @@ function install_controller {
 
 function run_integration_tests {
   local __vpc_id=$(aws eks describe-cluster --name $CLUSTER_NAME --query "cluster.resourcesVpcConfig.vpcId")
-  echo $__vpc_id
 
   for __type in ${INT_TEST_DIR}/*
   do
@@ -129,4 +128,4 @@ kubectl get crds
 # check later
 sleep 15
 
-run_integration_tests
+kubectl logs --follow -l app.kubernetes.io/name=appmesh-controller -n appmesh-system & run_integration_tests

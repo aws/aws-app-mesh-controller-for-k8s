@@ -28,6 +28,7 @@ jobs:
         with:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.AWS_ROLE }}
+          role-duration-seconds: 14400
       - name: install eksctl
         run: |
           curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_linux_amd64.tar.gz" | tar xz -C /tmp
