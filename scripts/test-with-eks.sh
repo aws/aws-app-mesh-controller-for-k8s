@@ -101,6 +101,8 @@ if [ -z "$AWS_ACCOUNT_ID" ]; then
     AWS_ACCOUNT_ID=$( aws_account_id )
 fi
 
+helm version
+
 ecr_login $AWS_REGION $ECR_URL
 
 # Install kubebuilder
