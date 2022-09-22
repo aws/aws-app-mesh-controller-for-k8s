@@ -37,7 +37,7 @@ check_is_installed controller-gen "You can install controller-gen with the helpe
 
 
 function setup_eks_cluster {
-    eksctl create cluster --name $CLUSTER_NAME --region us-west-2 --version $K8S_VERSION --nodes-min 1 --nodes-max 1 --nodes 1 --kubeconfig $KUBECONFIG --full-ecr-access --appmesh-access
+    eksctl create cluster --name $CLUSTER_NAME --region us-west-2 --version $K8S_VERSION --nodes-min 2 --nodes-max 3 --nodes 2 --kubeconfig $KUBECONFIG --full-ecr-access --appmesh-access
     eksctl utils associate-iam-oidc-provider --region $AWS_REGION --cluster $CLUSTER_NAME --approve
 }
 
