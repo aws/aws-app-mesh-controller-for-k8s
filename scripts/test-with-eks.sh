@@ -89,7 +89,7 @@ function run_integration_tests {
     esac
 
     echo -n "running integration test type $__type ... "
-    ginkgo -v -r $INT_TEST_DIR}/virtualnode -- --cluster-kubeconfig=${KUBECONFIG} \
+    ginkgo -v -r ${INT_TEST_DIR}/virtualnode -- --cluster-kubeconfig=${KUBECONFIG} \
             --cluster-name=${CLUSTER_NAME} --aws-region=${AWS_REGION} \
             --aws-vpc-id=$__vpc_id
     echo "ok."
