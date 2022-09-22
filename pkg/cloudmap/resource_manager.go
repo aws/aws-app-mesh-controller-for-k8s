@@ -207,6 +207,7 @@ func (m *defaultResourceManager) findCloudMapNamespaceFromAWS(ctx context.Contex
 	if err := m.cloudMapSDK.ListNamespacesPagesWithContext(ctx, listNamespacesInput,
 		func(listNamespacesOutput *servicediscovery.ListNamespacesOutput, lastPage bool) bool {
 			for _, ns := range listNamespacesOutput.Namespaces {
+				fmt.Println(awssdk.StringValue(ns.Name))
 				if awssdk.StringValue(ns.Name) == namespaceName {
 					nsSummary = ns
 					return false
