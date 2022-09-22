@@ -37,7 +37,7 @@ check_is_installed controller-gen "You can install controller-gen with the helpe
 
 
 function setup_eks_cluster {
-    eksctl create cluster --name $CLUSTER_NAME --region us-west-2 --version $K8S_VERSION --nodes-min 2 --nodes-max 3 --nodes 2 --kubeconfig $KUBECONFIG --full-ecr-access --appmesh-access
+    eksctl create cluster --name $CLUSTER_NAME --region us-west-2 --version $K8S_VERSION --nodes-min 2 --nodes-max 3 --nodes 2 --auto-kubeconfig --full-ecr-access --appmesh-access
     eksctl utils associate-iam-oidc-provider --region $AWS_REGION --cluster $CLUSTER_NAME --approve
 }
 
@@ -111,7 +111,7 @@ sudo mv /tmp/kubebuilder_1.0.8_linux_amd64 /usr/local/kubebuilder
 # Build and publish the controller image
 build_and_publish_controller
 
-export KUBECONFIG=$(pwd)"/.kube/config"
+export KUBECONFIG=$(pwd)"/.kube/eksctl/clusters/"$CLUSTER_NAME
 setup_eks_cluster
 
 # Generate and install CRDs
