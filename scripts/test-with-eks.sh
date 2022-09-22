@@ -101,7 +101,7 @@ if [ -z "$AWS_ACCOUNT_ID" ]; then
     AWS_ACCOUNT_ID=$( aws_account_id )
 fi
 
-helm version
+eksctl utils associate-iam-oidc-provider --region $AWS_REGION --cluster $CLUSTER_NAME --approve
 
 ecr_login $AWS_REGION $ECR_URL
 
