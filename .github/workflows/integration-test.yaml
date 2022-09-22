@@ -5,9 +5,6 @@ on:
       - master
       - eks-tests
 
-permissions:
-  contents: read
-
 jobs:
   build:
     name: integration-test
@@ -41,7 +38,7 @@ jobs:
           go install github.com/onsi/ginkgo/ginkgo@v1.16.5
       - name: checkout code
         uses: actions/checkout@v2
-      - name: create eks cluster
+      - name: create eks cluster and run tests
         run: CLUSTER_NAME=appmesh-test-${{ github.run_id }}-${{ github.run_attempt }} make integration-test-eks
       - name: cleanup cluster
         if: always()

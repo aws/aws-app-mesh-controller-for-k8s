@@ -111,7 +111,7 @@ sudo mv /tmp/kubebuilder_1.0.8_linux_amd64 /usr/local/kubebuilder
 # Build and publish the controller image
 build_and_publish_controller
 
-export KUBECONFIG=$(pwd)"/.kube/eksctl/clusters/"$CLUSTER_NAME
+export KUBECONFIG="/home/runner/.kube/eksctl/clusters/"$CLUSTER_NAME
 setup_eks_cluster
 
 # Generate and install CRDs
