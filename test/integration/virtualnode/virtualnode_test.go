@@ -982,7 +982,7 @@ var _ = Describe("VirtualNode", func() {
 			})
 
 			//Allow CloudMap Namespace to sync
-			time.Sleep(30 * time.Second)
+			time.Sleep(60 * time.Second)
 
 			vnBuilder = &manifest.VNBuilder{
 				ServiceDiscoveryType: manifest.CloudMapServiceDiscovery,
