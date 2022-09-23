@@ -62,6 +62,7 @@ helm-deploy: check-env manifests
 	helm upgrade -i appmesh-controller config/helm/appmesh-controller --namespace appmesh-system \
 		--set image.repository=$(REPO) \
 		--set image.tag=$(VERSION) \
+		--set serviceAccount.create=false \
 		--set preview=$(PREVIEW) \
 		--set enableBackendGroups=$(ENABLE_BACKEND_GROUPS) \
 		--set sidecar.waitUntilProxyReady=$(WAIT_PROXY_READY) \
