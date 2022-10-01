@@ -137,7 +137,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&cfg.EnableBackendGroups, flagEnableBackendGroups, false, "If enabled, experimental Backend Groups feature will be enabled.")
 	fs.StringVar(&cfg.SidecarImageRepository, flagSidecarImageRepository, "public.ecr.aws/appmesh/aws-appmesh-envoy",
 		"Envoy sidecar container image repository.")
-	fs.StringVar(&cfg.SidecarImageTag, flagSidecarImageTag, "v1.22.2.1-prod", "Envoy sidecar container image tag.")
+	fs.StringVar(&cfg.SidecarImageTag, flagSidecarImageTag, "v1.23.1.0-prod", "Envoy sidecar container image tag.")
 	fs.StringVar(&cfg.SidecarCpuRequests, flagSidecarCpuRequests, "10m",
 		"Sidecar CPU resources requests.")
 	fs.StringVar(&cfg.SidecarMemoryRequests, flagSidecarMemoryRequests, "32Mi",

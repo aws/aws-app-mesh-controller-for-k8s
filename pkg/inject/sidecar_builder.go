@@ -199,13 +199,13 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (core
 	if vars.WaitUntilProxyReady {
 		envoy.Lifecycle.PostStart = &corev1.Handler{
 			Exec: &corev1.ExecAction{Command: []string{
-				// use bash regex and rematch to parse and check envoy version is >= 1.22.2.1
+				// use bash regex and rematch to parse and check envoy version is >= 1.23.1.0
 				"sh", "-c", fmt.Sprintf("if [[ $(/usr/bin/envoy --version) =~ ([0-9]+)\\.([0-9]+)\\.([0-9]+)-appmesh\\.([0-9]+) && "+
 					"${BASH_REMATCH[1]} -ge 2 || (${BASH_REMATCH[1]} -ge 1 && ${BASH_REMATCH[2]} -gt 22) || (${BASH_REMATCH[1]} -ge 1 && "+
 					"${BASH_REMATCH[2]} -ge 22 && ${BASH_REMATCH[3]} -gt 2) || (${BASH_REMATCH[1]} -ge 1 && ${BASH_REMATCH[2]} -ge 22 && "+
 					"${BASH_REMATCH[3]} -ge 2 && ${BASH_REMATCH[4]} -gt 0) ]]; then APPNET_AGENT_POLL_ENVOY_READINESS_TIMEOUT_S=%d "+
 					"APPNET_AGENT_POLL_ENVOY_READINESS_INTERVAL_S=%d /usr/bin/agent -envoyReadiness; else echo 'WaitUntilProxyReady "+
-					"is not supported in Envoy version < 1.22.2.1'; fi", vars.PostStartTimeout, vars.PostStartInterval),
+					"is not supported in Envoy version < 1.23.1.0'; fi", vars.PostStartTimeout, vars.PostStartInterval),
 			}},
 		}
 	}

@@ -85,8 +85,8 @@ function run_integration_tests {
        check_deployment_rollout appmesh-controller appmesh-system
        kubectl get pod -n appmesh-system
         ;;
-      sidecar-v1.22.2.0)
-       APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make helm-deploy WAIT_PROXY_READY=true SIDECAR_IMAGE_TAG=v1.22.2.0-prod
+      sidecar-v1.23.1.0)
+       APPMESH_PREVIEW=y AWS_ACCOUNT=$AWS_ACCOUNT_ID AWS_REGION=$AWS_REGION make helm-deploy WAIT_PROXY_READY=true SIDECAR_IMAGE_TAG=v1.23.1.0-prod
        check_deployment_rollout appmesh-controller appmesh-system
        kubectl get pod -n appmesh-system
         ;;
