@@ -77,7 +77,7 @@ func New(options Options) *Framework {
 	cloud, err := aws.NewCloud(aws.CloudConfig{
 		Region:         options.AWSRegion,
 		ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig(),
-	}, nil)
+	}, nil, 0, 0)
 	Expect(err).NotTo(HaveOccurred())
 
 	f := &Framework{

@@ -28,8 +28,9 @@ type Cloud interface {
 }
 
 // NewCloud constructs new Cloud implementation.
-func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, error) {
+func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer, FipsEndpoint int, DualStack int) (Cloud, error) {
 	sess := session.Must(session.NewSession(aws.NewConfig()))
+	sessEKS := session.Must(session.NewSession(aws.NewConfig()))
 	injectUserAgent(&sess.Handlers)
 	if cfg.ThrottleConfig != nil {
 		throttler := throttle.NewThrottler(cfg.ThrottleConfig)
@@ -52,8 +53,17 @@ func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, 
 		cfg.Region = region
 	}
 
-	awsCfg := aws.NewConfig().WithRegion(cfg.Region).WithSTSRegionalEndpoint(endpoints.RegionalSTSEndpoint)
+	awsCfgEKS := aws.NewConfig().WithRegion(cfg.Region).WithSTSRegionalEndpoint(endpoints.RegionalSTSEndpoint)
+
+	awsCfg := &aws.Config{
+		Region:               aws.String(cfg.Region),
+		UseDualStackEndpoint: endpoints.DualStackEndpointState(DualStack),
+		UseFIPSEndpoint:      endpoints.FIPSEndpointState(FipsEndpoint),
+		STSRegionalEndpoint:  1,
+	}
+
 	sess = sess.Copy(awsCfg)
+	sessEKS = sessEKS.Copy(awsCfgEKS)
 	if len(cfg.AccountID) == 0 {
 		sts := services.NewSTS(sess)
 		accountID, err := sts.AccountID(context.Background())
@@ -66,7 +76,7 @@ func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, 
 		cfg:      cfg,
 		appMesh:  services.NewAppMesh(sess),
 		cloudMap: services.NewCloudMap(sess),
-		eks:      services.NewEKS(sess),
+		eks:      services.NewEKS(sessEKS),
 	}, nil
 }
 

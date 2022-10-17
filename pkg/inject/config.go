@@ -53,7 +53,9 @@ const (
 	flagStatsDSocketPath     = "statsd-socket-path"
 	flagXRayImage            = "xray-image"
 
-	flagClusterName = "cluster-name"
+	flagClusterName     = "cluster-name"
+	flagUseFipsEndpoint = "use-fips-endpoint"
+	flagUseDualStack    = "use-dual-stack"
 )
 
 type Config struct {
@@ -112,7 +114,9 @@ type Config struct {
 	StatsDSocketPath     string
 	XRayImage            string
 
-	ClusterName string
+	ClusterName     string
+	UseFipsEndpoint int
+	UseDualStack    int
 }
 
 // MultipleTracer checks if more than one tracer is configured.
@@ -205,6 +209,8 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&cfg.DualStackEndpoint, flagDualStackEndpoint, false, "Use DualStack Endpoint")
 	fs.BoolVar(&cfg.DualStackEndpoint, flagEnvoyAdminAccessEnableIpv6, false, "Enable Admin access when using IPv6")
 	fs.StringVar(&cfg.ClusterName, flagClusterName, "", "ClusterName in context")
+	fs.IntVar(&cfg.UseFipsEndpoint, flagUseFipsEndpoint, 0, "To use FIPS endpoint")
+	fs.IntVar(&cfg.UseDualStack, flagUseDualStack, 0, "To use Dual Stack Endpoint")
 	fs.BoolVar(&cfg.WaitUntilProxyReady, flagWaitUntilProxyReady, false,
 		"Enable pod postStart hook to delay application startup until proxy is ready to accept traffic")
 }

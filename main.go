@@ -172,7 +172,7 @@ func main() {
 		setupLog.Error(err, "unable to start app mesh controller")
 		os.Exit(1)
 	}
-	cloud, err := aws.NewCloud(awsCloudConfig, metrics.Registry)
+	cloud, err := aws.NewCloud(awsCloudConfig, metrics.Registry, injectConfig.UseFipsEndpoint, injectConfig.UseDualStack)
 	if err != nil {
 		setupLog.Error(err, "unable to initialize AWS cloud")
 		os.Exit(1)
