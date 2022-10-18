@@ -15,7 +15,7 @@ import (
 const envoyTracingConfigVolumeName = "envoy-tracing-config"
 
 // Envoy template variables used by envoys in pod and the envoy in VirtualGateway
-//as we use the same envoy image
+// as we use the same envoy image
 type EnvoyTemplateVariables struct {
 	AWSRegion                string
 	MeshName                 string
@@ -50,6 +50,7 @@ type EnvoyTemplateVariables struct {
 	EnableAdminAccessForIpv6 bool
 	UseDualStackEndpoint     string
 	WaitUntilProxyReady      bool
+	EnvoyStatsConfigFile     string // TODO: think name
 }
 
 func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) error {
@@ -164,6 +165,10 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 		env["JAEGER_TRACER_ADDRESS"] = vars.JaegerAddress
 	}
 
+	if vars.EnvoyStatsConfigFile != "" {
+		env["ENVOY_STATS_CONFIG_FILE"] = vars.EnvoyStatsConfigFile
+	}
+
 	env["APPMESH_PLATFORM_K8S_VERSION"] = vars.K8sVersion
 	env["APPMESH_PLATFORM_APP_MESH_CONTROLLER_VERSION"] = vars.ControllerVersion
 	env["APPNET_AGENT_ADMIN_MODE"] = "uds"
@@ -208,6 +213,13 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (core
 					"is not supported in Envoy version < 1.22.2.1'; fi", vars.PostStartTimeout, vars.PostStartInterval),
 			}},
 		}
+	}
+
+	if vars.EnvoyStatsConfigFile != "" {
+		envoy.VolumeMounts = append(envoy.VolumeMounts, corev1.VolumeMount{
+			Name:      "envoy-stats-config",
+			MountPath: vars.EnvoyStatsConfigFile,
+		})
 	}
 
 	vname := fmt.Sprintf("mesh/%s/virtualNode/%s", vars.MeshName, vars.VirtualGatewayOrNodeName)

@@ -111,6 +111,7 @@ type Config struct {
 	StatsDPort           int32
 	StatsDSocketPath     string
 	XRayImage            string
+	EnvoyTagIIkanji      bool // TODO
 
 	ClusterName string
 }

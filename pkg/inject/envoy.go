@@ -52,6 +52,7 @@ type envoyMutatorConfig struct {
 	k8sVersion                 string
 	useDualStackEndpoint       bool
 	enableAdminAccessIPv6      bool
+	envoyTagIikanji            bool // TODO:
 }
 
 func newEnvoyMutator(mutatorConfig envoyMutatorConfig, ms *appmesh.Mesh, vn *appmesh.VirtualNode) *envoyMutator {
@@ -166,6 +167,7 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		UseDualStackEndpoint:     useDualStackEndpoint,
 		EnableAdminAccessForIpv6: m.mutatorConfig.enableAdminAccessIPv6,
 		WaitUntilProxyReady:      m.mutatorConfig.waitUntilProxyReady,
+		EnvoyStatsConfigFile:     "", //TODO
 	}
 }
 

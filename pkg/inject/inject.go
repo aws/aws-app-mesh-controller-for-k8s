@@ -152,6 +152,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				enableAdminAccessIPv6:      m.config.EnvoyAdminAccessEnableIPv6,
 				postStartTimeout:           m.config.PostStartTimeout,
 				postStartInterval:          m.config.PostStartInterval,
+				envoyTagIikanji:            m.config.EnvoyTagIIkanji,
 			}, ms, vn),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,
@@ -171,6 +172,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 			newCloudMapHealthyReadinessGate(vn),
 			newIAMForServiceAccountsMutator(m.config.EnableIAMForServiceAccounts),
 			newECRSecretMutator(m.config.EnableECRSecret),
+			newEnvoyStatsConfigMutator( /* TODO */ ),
 		}
 	} else if vg != nil {
 		mutators = []PodMutator{newVirtualGatewayEnvoyConfig(virtualGatwayEnvoyConfig{
