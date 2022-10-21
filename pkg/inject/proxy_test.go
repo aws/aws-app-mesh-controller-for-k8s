@@ -1,13 +1,14 @@
 package inject
 
 import (
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func Test_proxyMutator_mutate(t *testing.T) {
@@ -39,6 +40,7 @@ func Test_proxyMutator_mutate(t *testing.T) {
 			containerImage: "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v6-prod",
 			cpuRequests:    cpuRequests.String(),
 			memoryRequests: memoryRequests.String(),
+			enableIPV6:     0,
 		},
 		egressIgnoredIPs: "192.168.0.1",
 	}

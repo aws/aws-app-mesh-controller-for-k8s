@@ -2,6 +2,7 @@ package inject
 
 import (
 	"encoding/json"
+
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -48,7 +49,7 @@ const proxyInitContainerTemplate = `
     },
     {
       "name": "APPMESH_ENABLE_IPV6",
-      "value": "1"
+      "value": "{{ .EnableIPV6 }}"
     }
   ]
 }
@@ -62,6 +63,7 @@ type InitContainerTemplateVariables struct {
 	ProxyIngressPort   int64
 	ProxyUID           int64
 	ContainerImage     string
+	EnableIPV6         int
 }
 
 type initProxyMutatorConfig struct {
@@ -70,6 +72,7 @@ type initProxyMutatorConfig struct {
 	memoryRequests string
 	cpuLimits      string
 	memoryLimits   string
+	enableIPV6     int
 }
 
 // newInitProxyMutator constructs new initProxyMutator
@@ -113,7 +116,7 @@ func (m *initProxyMutator) mutate(pod *corev1.Pod) error {
 }
 
 func (m *initProxyMutator) buildTemplateVariables() InitContainerTemplateVariables {
-	return InitContainerTemplateVariables{
+	vars := InitContainerTemplateVariables{
 		AppPorts:           m.proxyConfig.appPorts,
 		EgressIgnoredIPs:   m.proxyConfig.egressIgnoredIPs,
 		EgressIgnoredPorts: m.proxyConfig.egressIgnoredPorts,
@@ -121,7 +124,12 @@ func (m *initProxyMutator) buildTemplateVariables() InitContainerTemplateVariabl
 		ProxyIngressPort:   m.proxyConfig.proxyIngressPort,
 		ProxyUID:           m.proxyConfig.proxyUID,
 		ContainerImage:     m.mutatorConfig.containerImage,
+		EnableIPV6:         1,
 	}
+	if m.proxyConfig.enableIPV6 != nil && !*m.proxyConfig.enableIPV6 {
+		vars.EnableIPV6 = 0
+	}
+	return vars
 }
 
 func containsProxyInitContainer(pod *corev1.Pod) bool {
