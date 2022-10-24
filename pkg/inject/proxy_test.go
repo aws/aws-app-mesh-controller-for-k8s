@@ -258,6 +258,12 @@ func Test_proxyMutator_mutate(t *testing.T) {
 									Value: "0",
 								},
 							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
 						},
 					},
 				},
