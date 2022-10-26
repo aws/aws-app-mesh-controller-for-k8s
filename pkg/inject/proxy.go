@@ -57,7 +57,7 @@ type proxyConfig struct {
 	proxyIngressPort int64
 	// UID used by proxy
 	proxyUID int64
-	// whether or not to enable ipv6
+	// Whether or not to enable ipv6. *bool required instead of bool because when enableIPV6 is not set explicitly its zero value is false resulting in unexpected value of APPMESH_ENABLE_IPV6=0 in the proxyinit env vars.
 	enableIPV6 *bool
 }
 
