@@ -57,7 +57,7 @@ type proxyConfig struct {
 	proxyIngressPort int64
 	// UID used by proxy
 	proxyUID int64
-	// todo
+	// whether or not to enable ipv6
 	enableIPV6 *bool
 }
 
