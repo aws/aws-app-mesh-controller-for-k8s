@@ -1,13 +1,14 @@
 package inject
 
 import (
+	"testing"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func Test_proxyMutator_mutate(t *testing.T) {
@@ -177,6 +178,84 @@ func Test_proxyMutator_mutate(t *testing.T) {
 								{
 									Name:  "APPMESH_ENABLE_IPV6",
 									Value: "1",
+								},
+							},
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									"cpu":    cpuRequests,
+									"memory": memoryRequests,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "mutate using init container with ipv6 disabled annotation",
+			fields: fields{
+				mutatorConfig: mutatorConfig,
+				vn:            vnWithoutListener,
+			},
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/ipv6": "disabled",
+						},
+					},
+				},
+			},
+			wantPod: &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"appmesh.k8s.aws/ipv6": "disabled",
+					},
+				},
+				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Name:  "proxyinit",
+							Image: "840364872350.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-proxy-route-manager:v6-prod",
+							SecurityContext: &corev1.SecurityContext{
+								Capabilities: &corev1.Capabilities{
+									Add: []corev1.Capability{
+										"NET_ADMIN",
+									},
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "APPMESH_START_ENABLED",
+									Value: "1",
+								},
+								{
+									Name:  "APPMESH_IGNORE_UID",
+									Value: "1337",
+								},
+								{
+									Name:  "APPMESH_ENVOY_INGRESS_PORT",
+									Value: "15000",
+								},
+								{
+									Name:  "APPMESH_ENVOY_EGRESS_PORT",
+									Value: "15001",
+								},
+								{
+									Name:  "APPMESH_APP_PORTS",
+									Value: "",
+								},
+								{
+									Name:  "APPMESH_EGRESS_IGNORED_IP",
+									Value: "192.168.0.1",
+								},
+								{
+									Name:  "APPMESH_EGRESS_IGNORED_PORTS",
+									Value: "22",
+								},
+								{
+									Name:  "APPMESH_ENABLE_IPV6",
+									Value: "0",
 								},
 							},
 							Resources: corev1.ResourceRequirements{
@@ -467,6 +546,49 @@ func Test_proxyMutator_isAppMeshCNIEnabled(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &proxyMutator{}
 			got := m.isAppMeshCNIEnabled(tt.args.pod)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_proxyMutator_isIPV6Enabled(t *testing.T) {
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "IPV6 disabled from annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/ipv6": "disabled",
+						},
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "no ipv6 annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{},
+					},
+				},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &proxyMutator{}
+			got := m.isIPV6Enabled(tt.args.pod)
 			assert.Equal(t, tt.want, got)
 		})
 	}

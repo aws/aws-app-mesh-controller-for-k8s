@@ -20,6 +20,8 @@ const (
 	AppMeshEgressIgnoredIPsAnnotation = "appmesh.k8s.aws/egressIgnoredIPs"
 	//AppMeshEgressIgnoredPortsAnnotation specifies the ports that need to ignored when intercepting traffic
 	AppMeshEgressIgnoredPortsAnnotation = "appmesh.k8s.aws/egressIgnoredPorts"
+	// AppMeshIPV6Annotation allows disabling IPV6 specifically for the proxyinit container. The only allowed value is 'disabled'
+	AppMeshIPV6Annotation = "appmesh.k8s.aws/ipv6"
 	//AppMeshIgnoredGIDAnnotation specifies the GID used by proxy
 	AppMeshIgnoredGIDAnnotation = "appmesh.k8s.aws/ignoredGID"
 	//AppMeshIgnoredUIDAnnotation specifies the UID used by proxy

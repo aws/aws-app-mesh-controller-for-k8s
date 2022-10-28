@@ -2,9 +2,10 @@ package inject
 
 import (
 	"fmt"
+	"strings"
+
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	corev1 "k8s.io/api/core/v1"
-	"strings"
 )
 
 const (
@@ -56,11 +57,14 @@ type proxyConfig struct {
 	proxyIngressPort int64
 	// UID used by proxy
 	proxyUID int64
+	// Whether or not to enable ipv6. *bool required instead of bool because when enableIPV6 is not set explicitly its zero value is false resulting in unexpected value of APPMESH_ENABLE_IPV6=0 in the proxyinit env vars.
+	enableIPV6 *bool
 }
 
 func (m *proxyMutator) buildProxyConfig(pod *corev1.Pod) proxyConfig {
 	appPorts := m.getAppPorts(pod)
 	egressIgnoredPorts := m.getEgressIgnoredPorts(pod)
+	enableIPV6 := m.isIPV6Enabled(pod)
 	return proxyConfig{
 		appPorts:           appPorts,
 		egressIgnoredIPs:   m.mutatorConfig.egressIgnoredIPs,
@@ -68,6 +72,7 @@ func (m *proxyMutator) buildProxyConfig(pod *corev1.Pod) proxyConfig {
 		proxyEgressPort:    defaultProxyEgressPort,
 		proxyIngressPort:   defaultProxyIngressPort,
 		proxyUID:           defaultProxyUID,
+		enableIPV6:         &enableIPV6,
 	}
 }
 
@@ -106,4 +111,15 @@ func (m *proxyMutator) isAppMeshCNIEnabled(pod *corev1.Pod) bool {
 		return len(v) > 0
 	}
 	return false
+}
+
+func (m *proxyMutator) isIPV6Enabled(pod *corev1.Pod) bool {
+	annotations := pod.GetAnnotations()
+	if v, ok := annotations[AppMeshIPV6Annotation]; ok {
+		if v == "disabled" {
+			return false
+		}
+		envoyUtilsLogger.Info("Unsupported Value. Annotation only accepts `disabled` in the value field. ", "Value Provided: ", v)
+	}
+	return true
 }
