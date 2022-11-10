@@ -1,7 +1,6 @@
 package references
 
 import (
-	"fmt"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -50,14 +49,4 @@ func ObjectKeyForBackendGroupReference(obj metav1.Object, bgRef appmesh.BackendG
 		namespace = *bgRef.Namespace
 	}
 	return types.NamespacedName{Namespace: namespace, Name: bgRef.Name}
-}
-
-// KeyForVirtualServiceOfaVirtualNode returns the key of referenced VirtualService CR.
-func KeyForVirtualServiceOfaVirtualNode(vsRef appmesh.VirtualServiceReference) (*types.NamespacedName, error) {
-	if vsRef.Namespace != nil && len(*vsRef.Namespace) != 0 {
-		namespace := *vsRef.Namespace
-		return &types.NamespacedName{Namespace: namespace, Name: vsRef.Name}, nil
-	} else {
-		return nil, fmt.Errorf("namespace: %v, name: %v", vsRef.Namespace, vsRef.Name)
-	}
 }

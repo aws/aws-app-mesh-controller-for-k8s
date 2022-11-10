@@ -2,7 +2,6 @@ package virtualnode
 
 import (
 	"context"
-	"fmt"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	mock_resolver "github.com/aws/aws-app-mesh-controller-for-k8s/mocks/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
@@ -646,18 +645,11 @@ func Test_BuildSDKVirtualNodeSpec(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	resolver := mock_resolver.NewMockResolver(ctrl)
 
-	m := &defaultResourceManager{
-		referencesResolver: resolver,
-		log:                log.NullLogger{},
-	}
-
-	sdkVnSpec, err := m.BuildSDKVirtualNodeSpec(vn, vsByKey)
+	sdkVnSpec, err := BuildSDKVirtualNodeSpec(vn, vsByKey)
 	if err != nil {
-		assert.NoError(t, err)
+		assert.Fail(t, "Could not load BagValidationConfig", err)
 	} else {
-		fmt.Printf("%+v\n", sdkVnSpec)
 		assert.NotNil(t, sdkVnSpec.Backends[0].VirtualService.ClientPolicy)
 		assert.Nil(t, sdkVnSpec.Backends[1].VirtualService.ClientPolicy)
 	}
