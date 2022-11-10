@@ -107,7 +107,7 @@ func (s *TimeoutStack) CleanupTimeoutStack(ctx context.Context, f *framework.Fra
 	Expect(len(deletionErrors)).To(BeZero())
 }
 
-//Check Timeout behavior with and with timeout configured
+// Check Timeout behavior with and with timeout configured
 func (s *TimeoutStack) CheckTimeoutBehavior(ctx context.Context, f *framework.Framework) {
 	By(fmt.Sprintf("verify route timesout if it takes more than default 15s w/o listener timeout configured"), func() {
 		err := s.checkExpectedRouteBehavior(ctx, f, s.FrontEndDP, "defaultroute", false)

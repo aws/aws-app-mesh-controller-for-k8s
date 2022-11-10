@@ -48,9 +48,9 @@ type BackendGroupReference struct {
 	Name string `json:"name"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 // +kubebuilder:resource:categories=all
-//+kubebuilder:subresource:status
+// +kubebuilder:subresource:status
 // +kubebuilder:pruning:PreserveUnknownFields
 // BackendGroup is the Schema for the backendgroups API
 type BackendGroup struct {

@@ -66,8 +66,8 @@ type TLSStack struct {
 	BackEndVR *appmesh.VirtualRouter
 }
 
-//TLS Validation is enabled on the Frontend and Listener TLS is configured on the backend. Frontend looks
-//for certs signed by CA1 and backend certs are signed by CA1 as well.
+// TLS Validation is enabled on the Frontend and Listener TLS is configured on the backend. Frontend looks
+// for certs signed by CA1 and backend certs are signed by CA1 as well.
 func (s *TLSStack) DeployTLSStack(ctx context.Context, f *framework.Framework) {
 	s.createTLSStackMeshAndNamespace(ctx, f)
 	mb := &manifest.ManifestBuilder{
@@ -80,7 +80,7 @@ func (s *TLSStack) DeployTLSStack(ctx context.Context, f *framework.Framework) {
 	s.assignBackendVSToFrontEndVN(ctx, f)
 }
 
-//Frontend has TLS Validation enabled while TLS is disabled on the backend
+// Frontend has TLS Validation enabled while TLS is disabled on the backend
 func (s *TLSStack) DeployPartialTLSStack(ctx context.Context, f *framework.Framework) {
 	s.createTLSStackMeshAndNamespace(ctx, f)
 	time.Sleep(30 * time.Second)
@@ -94,8 +94,8 @@ func (s *TLSStack) DeployPartialTLSStack(ctx context.Context, f *framework.Frame
 	s.assignBackendVSToFrontEndVN(ctx, f)
 }
 
-//TLS Validation is enabled on the Frontend and Listener TLS is configured on the backend. Frontend looks
-//for certs signed by CA2 while backend certs are signed by CA1.
+// TLS Validation is enabled on the Frontend and Listener TLS is configured on the backend. Frontend looks
+// for certs signed by CA2 while backend certs are signed by CA1.
 func (s *TLSStack) DeployTLSValidationStack(ctx context.Context, f *framework.Framework) {
 	s.createTLSStackMeshAndNamespace(ctx, f)
 	time.Sleep(30 * time.Second)

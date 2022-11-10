@@ -69,13 +69,16 @@ var (
 
 // A dynamic generated stack designed to test app mesh integration :D
 // Suppose given configuration below:
-//		5 VirtualServicesCount
-//		5 VirtualNodesCount
-//		2 RoutesCountPerVirtualRouter
-//		2 TargetsCountPerRoute
-//		4 BackendsCountPerVirtualNode
+//
+//	5 VirtualServicesCount
+//	5 VirtualNodesCount
+//	2 RoutesCountPerVirtualRouter
+//	2 TargetsCountPerRoute
+//	4 BackendsCountPerVirtualNode
+//
 // We will generate virtual service configuration & virtual node configuration follows:
 // =======virtual services =========
+//
 //	vs1 -> /path1 -> vn1(50)
 //				  -> vn2(50)
 //		-> /path2 -> vn3(50)
@@ -96,11 +99,13 @@ var (
 //				  -> vn8(50)
 //		-> /path2 -> vn9(50)
 //				  -> vn10(50)
+//
 // =======virtual nodes =========
-//  vn1 -> vs1,vs2,vs3,vs4
-//  vn2 -> vs5,vs1,vs2,vs3
-//  vn3 -> vs4,vs5,vs1,vs2
-//  ...
+//
+//	vn1 -> vs1,vs2,vs3,vs4
+//	vn2 -> vs5,vs1,vs2,vs3
+//	vn3 -> vs4,vs5,vs1,vs2
+//	...
 //
 // then we validate each virtual node can access each virtual service at every path, and calculates the target distribution
 type DynamicStack struct {

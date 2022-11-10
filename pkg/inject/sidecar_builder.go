@@ -15,7 +15,7 @@ import (
 const envoyTracingConfigVolumeName = "envoy-tracing-config"
 
 // Envoy template variables used by envoys in pod and the envoy in VirtualGateway
-//as we use the same envoy image
+// as we use the same envoy image
 type EnvoyTemplateVariables struct {
 	AWSRegion                string
 	MeshName                 string

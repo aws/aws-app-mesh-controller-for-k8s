@@ -3,7 +3,6 @@ package virtualnode
 import (
 	"context"
 	"fmt"
-
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
@@ -139,6 +138,7 @@ func (m *defaultResourceManager) validateMeshDependencies(ctx context.Context, m
 func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Context, vn *appmesh.VirtualNode) (map[types.NamespacedName]*appmesh.VirtualService, error) {
 	vsByKey := make(map[types.NamespacedName]*appmesh.VirtualService)
 	vsRefs := ExtractVirtualServiceReferences(vn)
+	m.log.V(1).Error(errors.New(""), fmt.Sprintf("vs references %+v\n", vsRefs))
 	if m.enableBackendGroups {
 		for _, backendGroupRef := range vn.Spec.BackendGroups {
 			// Wildcard special case
@@ -177,6 +177,7 @@ func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Cont
 		}
 		vsByKey[vsKey] = vs
 	}
+	m.log.V(1).Error(errors.New(""), fmt.Sprintf("vsByKey %+v\n", vsByKey))
 	return vsByKey, nil
 }
 
@@ -209,7 +210,7 @@ func (m *defaultResourceManager) findSDKVirtualNode(ctx context.Context, ms *app
 }
 
 func (m *defaultResourceManager) createSDKVirtualNode(ctx context.Context, ms *appmesh.Mesh, vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeData, error) {
-	sdkVNSpec, err := BuildSDKVirtualNodeSpec(vn, vsByKey)
+	sdkVNSpec, err := m.BuildSDKVirtualNodeSpec(vn, vsByKey)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +228,7 @@ func (m *defaultResourceManager) createSDKVirtualNode(ctx context.Context, ms *a
 
 func (m *defaultResourceManager) updateSDKVirtualNode(ctx context.Context, sdkVN *appmeshsdk.VirtualNodeData, ms *appmesh.Mesh, vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeData, error) {
 	actualSDKVNSpec := sdkVN.Spec
-	desiredSDKVNSpec, err := BuildSDKVirtualNodeSpec(vn, vsByKey)
+	desiredSDKVNSpec, err := m.BuildSDKVirtualNodeSpec(vn, vsByKey)
 	if err != nil {
 		return nil, err
 	}
@@ -332,7 +333,7 @@ func (m *defaultResourceManager) isSDKVirtualNodeOwnedByCRDVirtualNode(ctx conte
 	return true
 }
 
-func BuildSDKVirtualNodeSpec(vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeSpec, error) {
+func (m *defaultResourceManager) BuildSDKVirtualNodeSpec(vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeSpec, error) {
 	converter := conversion.NewConverter(conversion.DefaultNameFunc)
 	converter.RegisterUntypedConversionFunc((*appmesh.VirtualNodeSpec)(nil), (*appmeshsdk.VirtualNodeSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return conversions.Convert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(a.(*appmesh.VirtualNodeSpec), b.(*appmeshsdk.VirtualNodeSpec), scope)
@@ -343,8 +344,27 @@ func BuildSDKVirtualNodeSpec(vn *appmesh.VirtualNode, vsByKey map[types.Namespac
 	})
 	sdkVNSpec := &appmeshsdk.VirtualNodeSpec{}
 	tempSpec := vn.Spec.DeepCopy()
-	tempSpec.Backends = []appmesh.Backend{}
-	for _, vs := range vsByKey {
+	backendMap := make(map[types.NamespacedName]bool)
+
+	m.log.V(1).Error(errors.New(""), fmt.Sprintf("tempSpec.Backends %+v\n", tempSpec.Backends))
+	for _, backend := range tempSpec.Backends {
+		vsKey := references.ObjectKeyForVirtualServiceReference(vn, *backend.VirtualService.VirtualServiceRef)
+		backendMap[vsKey] = true
+	}
+	m.log.V(1).Error(errors.New(""), fmt.Sprintf("backendMap %+v\n", backendMap))
+
+	var keyValues []types.NamespacedName
+	for k := range vsByKey {
+		keyValues = append(keyValues, k)
+	}
+	m.log.V(1).Error(errors.New(""), fmt.Sprintf("Details for data"),
+		"backendMap", backendMap,
+		"mapKeys", keyValues)
+
+	for vsKey, vs := range vsByKey {
+		if _, ok := backendMap[vsKey]; ok {
+			continue
+		}
 		tempSpec.Backends = append(tempSpec.Backends, appmesh.Backend{
 			VirtualService: appmesh.VirtualServiceBackend{
 				VirtualServiceRef: &appmesh.VirtualServiceReference{
@@ -357,5 +377,53 @@ func BuildSDKVirtualNodeSpec(vn *appmesh.VirtualNode, vsByKey map[types.Namespac
 	if err := converter.Convert(tempSpec, sdkVNSpec, nil); err != nil {
 		return nil, err
 	}
+
+	m.log.V(1).Error(errors.New(""), fmt.Sprintf("sdkVNSpec %+v\n", sdkVNSpec))
+
+	return sdkVNSpec, nil
+}
+
+func BuildSDKVirtualNodeSpec(vn *appmesh.VirtualNode, vsByKey map[types.NamespacedName]*appmesh.VirtualService) (*appmeshsdk.VirtualNodeSpec, error) {
+	converter := conversion.NewConverter(conversion.DefaultNameFunc)
+	converter.RegisterUntypedConversionFunc((*appmesh.VirtualNodeSpec)(nil), (*appmeshsdk.VirtualNodeSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return conversions.Convert_CRD_VirtualNodeSpec_To_SDK_VirtualNodeSpec(a.(*appmesh.VirtualNodeSpec), b.(*appmeshsdk.VirtualNodeSpec), scope)
+	})
+	sdkVSRefConvertFunc := references.BuildSDKVirtualServiceReferenceConvertFunc(vn, vsByKey)
+	converter.RegisterUntypedConversionFunc((*appmesh.VirtualServiceReference)(nil), (*string)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return sdkVSRefConvertFunc(a.(*appmesh.VirtualServiceReference), b.(*string), scope)
+	})
+	sdkVNSpec := &appmeshsdk.VirtualNodeSpec{}
+	tempSpec := vn.Spec.DeepCopy()
+	backendMap := make(map[types.NamespacedName]bool)
+
+	for _, backend := range tempSpec.Backends {
+		key, err := references.KeyForVirtualServiceOfaVirtualNode(*backend.VirtualService.VirtualServiceRef)
+		if err != nil {
+			backendMap[*key] = true
+		}
+	}
+
+	var keyValues []types.NamespacedName
+	for k := range vsByKey {
+		keyValues = append(keyValues, k)
+	}
+
+	for vsKey, vs := range vsByKey {
+		if _, ok := backendMap[vsKey]; ok {
+			continue
+		}
+		tempSpec.Backends = append(tempSpec.Backends, appmesh.Backend{
+			VirtualService: appmesh.VirtualServiceBackend{
+				VirtualServiceRef: &appmesh.VirtualServiceReference{
+					Namespace: aws.String(vs.Namespace),
+					Name:      vs.Name,
+				},
+			},
+		})
+	}
+	if err := converter.Convert(tempSpec, sdkVNSpec, nil); err != nil {
+		return nil, err
+	}
+
 	return sdkVNSpec, nil
 }

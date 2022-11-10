@@ -2,6 +2,7 @@ package virtualnode
 
 import (
 	"context"
+	"fmt"
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	mock_resolver "github.com/aws/aws-app-mesh-controller-for-k8s/mocks/aws-app-mesh-controller-for-k8s/pkg/references"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
@@ -591,5 +592,73 @@ func Test_defaultResourceManager_findVirtualServiceDependencies(t *testing.T) {
 				assert.Equal(t, tt.want, vsmap)
 			}
 		})
+	}
+}
+
+/*
+This is a bit tricky unit testing. First we created a vn having VirtualServiceRef and ClientPolicy. The VirtualServiceRef key is (ns-1/vs-1).
+Later we created two entries of vsByKey having keys (ns-2/vs-2) with a VirtualRouterServiceProvider and (ns-1/vs-1) with an empty body.
+The reason behind that, (ns-1/vs-1) key will not be converted to sdkVN because it's the same key for the vn's backend. However, VirtualRouterServiceProvider
+will not be converted as (ns-2/vs-2) will be treated as flexible backend.
+*/
+func Test_BuildSDKVirtualNodeSpec(t *testing.T) {
+	vn := &appmesh.VirtualNode{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "vn-1",
+		},
+		Spec: appmesh.VirtualNodeSpec{
+			AWSName: aws.String("app1"),
+			Backends: []appmesh.Backend{
+				{
+					VirtualService: appmesh.VirtualServiceBackend{
+						VirtualServiceRef: &appmesh.VirtualServiceReference{
+							Namespace: aws.String("ns-1"),
+							Name:      "vs-1",
+						},
+						ClientPolicy: &appmesh.ClientPolicy{
+							TLS: &appmesh.ClientPolicyTLS{
+								Enforce: aws.Bool(true),
+							},
+						},
+					}}},
+		},
+	}
+
+	vsByKey := map[types.NamespacedName]*appmesh.VirtualService{types.NamespacedName{
+		Namespace: "ns-2", Name: "vs-2"}: &appmesh.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-2",
+			Name:      "vs-2",
+		},
+		Spec: appmesh.VirtualServiceSpec{
+			AWSName: aws.String("app2"),
+			Provider: &appmesh.VirtualServiceProvider{
+				VirtualRouter: &appmesh.VirtualRouterServiceProvider{
+					VirtualRouterRef: &appmesh.VirtualRouterReference{
+						Namespace: aws.String("ns-2"),
+						Name:      "vr-2",
+					},
+				},
+			},
+		}}}
+
+	vsByKey[types.NamespacedName{Namespace: "ns-1", Name: "vs-1"}] = &appmesh.VirtualService{}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	resolver := mock_resolver.NewMockResolver(ctrl)
+
+	m := &defaultResourceManager{
+		referencesResolver: resolver,
+		log:                log.NullLogger{},
+	}
+
+	sdkVnSpec, err := m.BuildSDKVirtualNodeSpec(vn, vsByKey)
+	if err != nil {
+		assert.NoError(t, err)
+	} else {
+		fmt.Printf("%+v\n", sdkVnSpec)
+		assert.NotNil(t, sdkVnSpec.Backends[0].VirtualService.ClientPolicy)
+		assert.Nil(t, sdkVnSpec.Backends[1].VirtualService.ClientPolicy)
 	}
 }
