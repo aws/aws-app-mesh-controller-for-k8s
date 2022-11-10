@@ -138,7 +138,6 @@ func (m *defaultResourceManager) validateMeshDependencies(ctx context.Context, m
 func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Context, vn *appmesh.VirtualNode) (map[types.NamespacedName]*appmesh.VirtualService, error) {
 	vsByKey := make(map[types.NamespacedName]*appmesh.VirtualService)
 	vsRefs := ExtractVirtualServiceReferences(vn)
-	m.log.V(1).Error(errors.New(""), fmt.Sprintf("vs references %+v\n", vsRefs))
 	if m.enableBackendGroups {
 		for _, backendGroupRef := range vn.Spec.BackendGroups {
 			// Wildcard special case
@@ -177,7 +176,6 @@ func (m *defaultResourceManager) findVirtualServiceDependencies(ctx context.Cont
 		}
 		vsByKey[vsKey] = vs
 	}
-	m.log.V(1).Error(errors.New(""), fmt.Sprintf("vsByKey %+v\n", vsByKey))
 	return vsByKey, nil
 }
 

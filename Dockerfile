@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:experimental
 
 # Build the controller binary
-FROM --platform=linux/amd64 golang:1.16 as builder
+FROM --platform=${TARGETPLATFORM} golang:1.16 as builder
 
 WORKDIR /workspace
 
@@ -10,7 +10,6 @@ COPY go.mod go.sum ./
 # uncomment if using vendor
 # COPY ./vendor ./vendor
 
-ENV GOPROXY=direct
 RUN go mod download
 
 COPY . ./

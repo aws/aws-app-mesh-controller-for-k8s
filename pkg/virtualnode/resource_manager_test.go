@@ -597,8 +597,8 @@ func Test_defaultResourceManager_findVirtualServiceDependencies(t *testing.T) {
 /*
 This is a bit tricky unit testing. First we created a vn having VirtualServiceRef and ClientPolicy. The VirtualServiceRef key is (ns-1/vs-1).
 Later we created two entries of vsByKey having keys (ns-2/vs-2) with a VirtualRouterServiceProvider and (ns-1/vs-1) with an empty body.
-The reason behind that, (ns-1/vs-1) key will not be converted to sdkVN because it's the same key for the vn's backend. However, VirtualRouterServiceProvider
-will not be converted as (ns-2/vs-2) will be treated as flexible backend.
+The reason behind that, the BuildSDKVirtualNodeSpec function will not modify the vn spec under key (ns-1/vs-1) as it is part of the
+Backends. However, VirtualRouterServiceProvider will get wiped out because it is under key (ns-2/vs-2) and will be treated as flexible backend.
 */
 func Test_BuildSDKVirtualNodeSpec(t *testing.T) {
 	vn := &appmesh.VirtualNode{
@@ -648,7 +648,7 @@ func Test_BuildSDKVirtualNodeSpec(t *testing.T) {
 
 	sdkVnSpec, err := BuildSDKVirtualNodeSpec(vn, vsByKey)
 	if err != nil {
-		assert.Fail(t, "Could not load BagValidationConfig", err)
+		assert.Fail(t, "Could not convert to sdkVn spec", err)
 	} else {
 		assert.NotNil(t, sdkVnSpec.Backends[0].VirtualService.ClientPolicy)
 		assert.Nil(t, sdkVnSpec.Backends[1].VirtualService.ClientPolicy)
