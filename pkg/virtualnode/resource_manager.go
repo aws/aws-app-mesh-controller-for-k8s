@@ -3,7 +3,6 @@ package virtualnode
 import (
 	"context"
 	"fmt"
-
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
@@ -343,8 +342,17 @@ func BuildSDKVirtualNodeSpec(vn *appmesh.VirtualNode, vsByKey map[types.Namespac
 	})
 	sdkVNSpec := &appmeshsdk.VirtualNodeSpec{}
 	tempSpec := vn.Spec.DeepCopy()
-	tempSpec.Backends = []appmesh.Backend{}
-	for _, vs := range vsByKey {
+	backendMap := make(map[types.NamespacedName]bool)
+
+	for _, backend := range tempSpec.Backends {
+		vsKey := references.ObjectKeyForVirtualServiceReference(vn, *backend.VirtualService.VirtualServiceRef)
+		backendMap[vsKey] = true
+	}
+
+	for vsKey, vs := range vsByKey {
+		if _, ok := backendMap[vsKey]; ok {
+			continue
+		}
 		tempSpec.Backends = append(tempSpec.Backends, appmesh.Backend{
 			VirtualService: appmesh.VirtualServiceBackend{
 				VirtualServiceRef: &appmesh.VirtualServiceReference{

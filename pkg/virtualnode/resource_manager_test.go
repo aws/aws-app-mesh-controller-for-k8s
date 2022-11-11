@@ -593,3 +593,64 @@ func Test_defaultResourceManager_findVirtualServiceDependencies(t *testing.T) {
 		})
 	}
 }
+
+/*
+This is a bit tricky unit testing. First we created a vn having VirtualServiceRef and ClientPolicy. The VirtualServiceRef key is (ns-1/vs-1).
+Later we created two entries of vsByKey having keys (ns-2/vs-2) with a VirtualRouterServiceProvider and (ns-1/vs-1) with an empty body.
+The reason behind that, the BuildSDKVirtualNodeSpec function will not modify the vn spec under key (ns-1/vs-1) as it is part of the
+Backends. However, VirtualRouterServiceProvider will get wiped out because it is under key (ns-2/vs-2) and will be treated as flexible backend.
+*/
+func Test_BuildSDKVirtualNodeSpec(t *testing.T) {
+	vn := &appmesh.VirtualNode{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "vn-1",
+		},
+		Spec: appmesh.VirtualNodeSpec{
+			AWSName: aws.String("app1"),
+			Backends: []appmesh.Backend{
+				{
+					VirtualService: appmesh.VirtualServiceBackend{
+						VirtualServiceRef: &appmesh.VirtualServiceReference{
+							Namespace: aws.String("ns-1"),
+							Name:      "vs-1",
+						},
+						ClientPolicy: &appmesh.ClientPolicy{
+							TLS: &appmesh.ClientPolicyTLS{
+								Enforce: aws.Bool(true),
+							},
+						},
+					}}},
+		},
+	}
+
+	vsByKey := map[types.NamespacedName]*appmesh.VirtualService{types.NamespacedName{
+		Namespace: "ns-2", Name: "vs-2"}: &appmesh.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "ns-2",
+			Name:      "vs-2",
+		},
+		Spec: appmesh.VirtualServiceSpec{
+			AWSName: aws.String("app2"),
+			Provider: &appmesh.VirtualServiceProvider{
+				VirtualRouter: &appmesh.VirtualRouterServiceProvider{
+					VirtualRouterRef: &appmesh.VirtualRouterReference{
+						Namespace: aws.String("ns-2"),
+						Name:      "vr-2",
+					},
+				},
+			},
+		}}}
+
+	vsByKey[types.NamespacedName{Namespace: "ns-1", Name: "vs-1"}] = &appmesh.VirtualService{}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	sdkVnSpec, err := BuildSDKVirtualNodeSpec(vn, vsByKey)
+	if err != nil {
+		assert.Fail(t, "Could not convert to sdkVn spec", err)
+	} else {
+		assert.NotNil(t, sdkVnSpec.Backends[0].VirtualService.ClientPolicy)
+		assert.Nil(t, sdkVnSpec.Backends[1].VirtualService.ClientPolicy)
+	}
+}
