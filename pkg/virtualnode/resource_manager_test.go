@@ -505,7 +505,7 @@ func Test_defaultResourceManager_findVirtualServiceDependencies(t *testing.T) {
 				},
 			},
 			want: map[types.NamespacedName]*appmesh.VirtualService{types.NamespacedName{
-				Namespace: "ns-1", Name: "vs-1"}: &appmesh.VirtualService{
+				Namespace: "ns-1", Name: "vs-1"}: {
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "ns-1",
 					Name:      "vs-1",
@@ -548,7 +548,7 @@ func Test_defaultResourceManager_findVirtualServiceDependencies(t *testing.T) {
 				},
 			},
 			want: map[types.NamespacedName]*appmesh.VirtualService{types.NamespacedName{
-				Namespace: "ns-1", Name: "vs-1"}: &appmesh.VirtualService{
+				Namespace: "ns-1", Name: "vs-1"}: {
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "ns-1",
 					Name:      "vs-1",
@@ -601,56 +601,157 @@ The reason behind that, the BuildSDKVirtualNodeSpec function will not modify the
 Backends. However, VirtualRouterServiceProvider will get wiped out because it is under key (ns-2/vs-2) and will be treated as flexible backend.
 */
 func Test_BuildSDKVirtualNodeSpec(t *testing.T) {
-	vn := &appmesh.VirtualNode{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "vn-1",
-		},
-		Spec: appmesh.VirtualNodeSpec{
-			AWSName: aws.String("app1"),
-			Backends: []appmesh.Backend{
-				{
-					VirtualService: appmesh.VirtualServiceBackend{
-						VirtualServiceRef: &appmesh.VirtualServiceReference{
-							Namespace: aws.String("ns-1"),
-							Name:      "vs-1",
+	type args struct {
+		vn      *appmesh.VirtualNode
+		vsByKey map[types.NamespacedName]*appmesh.VirtualService
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSDKObj *appmeshsdk.ClientPolicy
+		wantErr    error
+	}{
+		{
+			name: "non nil TLS from vn backends spec having VirtualServiceRef",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "vn-1",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("app1"),
+						Backends: []appmesh.Backend{
+							{
+								VirtualService: appmesh.VirtualServiceBackend{
+									VirtualServiceRef: &appmesh.VirtualServiceReference{
+										Namespace: aws.String("ns-1"),
+										Name:      "vs-1",
+									},
+									ClientPolicy: &appmesh.ClientPolicy{
+										TLS: &appmesh.ClientPolicyTLS{
+											Enforce: aws.Bool(true),
+											Ports:   []appmesh.PortNumber{80, 443},
+											Validation: appmesh.TLSValidationContext{
+												Trust: appmesh.TLSValidationContextTrust{
+													ACM: &appmesh.TLSValidationContextACMTrust{
+														CertificateAuthorityARNs: []string{"arn-1", "arn-2"},
+													},
+												},
+											},
+										},
+									},
+								}}},
+					},
+				},
+				vsByKey: map[types.NamespacedName]*appmesh.VirtualService{
+					types.NamespacedName{Namespace: "ns-2", Name: "vs-2"}: {
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "ns-2",
+							Name:      "vs-2",
 						},
-						ClientPolicy: &appmesh.ClientPolicy{
-							TLS: &appmesh.ClientPolicyTLS{
-								Enforce: aws.Bool(true),
+						Spec: appmesh.VirtualServiceSpec{
+							AWSName: aws.String("app2"),
+							Provider: &appmesh.VirtualServiceProvider{
+								VirtualRouter: &appmesh.VirtualRouterServiceProvider{
+									VirtualRouterRef: &appmesh.VirtualRouterReference{
+										Namespace: aws.String("ns-2"),
+										Name:      "vr-2",
+									},
+								},
+							},
+						}},
+					types.NamespacedName{Namespace: "ns-1", Name: "vs-1"}: {},
+				},
+			},
+			wantSDKObj: &appmeshsdk.ClientPolicy{
+				Tls: &appmeshsdk.ClientPolicyTls{
+					Enforce: aws.Bool(true),
+					Ports:   []*int64{aws.Int64(80), aws.Int64(443)},
+					Validation: &appmeshsdk.TlsValidationContext{
+						Trust: &appmeshsdk.TlsValidationContextTrust{
+							Acm: &appmeshsdk.TlsValidationContextAcmTrust{
+								CertificateAuthorityArns: []*string{aws.String("arn-1"), aws.String("arn-2")},
 							},
 						},
-					}}},
-		},
-	}
-
-	vsByKey := map[types.NamespacedName]*appmesh.VirtualService{types.NamespacedName{
-		Namespace: "ns-2", Name: "vs-2"}: &appmesh.VirtualService{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "ns-2",
-			Name:      "vs-2",
-		},
-		Spec: appmesh.VirtualServiceSpec{
-			AWSName: aws.String("app2"),
-			Provider: &appmesh.VirtualServiceProvider{
-				VirtualRouter: &appmesh.VirtualRouterServiceProvider{
-					VirtualRouterRef: &appmesh.VirtualRouterReference{
-						Namespace: aws.String("ns-2"),
-						Name:      "vr-2",
 					},
 				},
 			},
-		}}}
-
-	vsByKey[types.NamespacedName{Namespace: "ns-1", Name: "vs-1"}] = &appmesh.VirtualService{}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	sdkVnSpec, err := BuildSDKVirtualNodeSpec(vn, vsByKey)
-	if err != nil {
-		assert.Fail(t, "Could not convert to sdkVn spec", err)
-	} else {
-		assert.NotNil(t, sdkVnSpec.Backends[0].VirtualService.ClientPolicy)
-		assert.Nil(t, sdkVnSpec.Backends[1].VirtualService.ClientPolicy)
+			wantErr: nil,
+		},
+		{
+			name: "non nil TLS from vn backends spec having VirtualServiceARN instead of VirtualServiceRef",
+			args: args{
+				vn: &appmesh.VirtualNode{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "vn-1",
+					},
+					Spec: appmesh.VirtualNodeSpec{
+						AWSName: aws.String("app1"),
+						Backends: []appmesh.Backend{
+							{
+								VirtualService: appmesh.VirtualServiceBackend{
+									VirtualServiceARN: aws.String("arn:aws:appmesh:us-west-2:233846545377:mesh/howto-k8s-http2/virtualService/color.howto-k8s-http2.svc.cluster.local"),
+									ClientPolicy: &appmesh.ClientPolicy{
+										TLS: &appmesh.ClientPolicyTLS{
+											Enforce: aws.Bool(true),
+											Ports:   []appmesh.PortNumber{80, 443},
+											Validation: appmesh.TLSValidationContext{
+												Trust: appmesh.TLSValidationContextTrust{
+													ACM: &appmesh.TLSValidationContextACMTrust{
+														CertificateAuthorityARNs: []string{"arn-1", "arn-2"},
+													},
+												},
+											},
+										},
+									},
+								}}},
+					},
+				},
+				vsByKey: map[types.NamespacedName]*appmesh.VirtualService{
+					types.NamespacedName{Namespace: "ns-2", Name: "vs-2"}: {
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: "ns-2",
+							Name:      "vs-2",
+						},
+						Spec: appmesh.VirtualServiceSpec{
+							AWSName: aws.String("app2"),
+							Provider: &appmesh.VirtualServiceProvider{
+								VirtualRouter: &appmesh.VirtualRouterServiceProvider{
+									VirtualRouterRef: &appmesh.VirtualRouterReference{
+										Namespace: aws.String("ns-2"),
+										Name:      "vr-2",
+									},
+								},
+							},
+						}},
+				},
+			},
+			wantSDKObj: &appmeshsdk.ClientPolicy{
+				Tls: &appmeshsdk.ClientPolicyTls{
+					Enforce: aws.Bool(true),
+					Ports:   []*int64{aws.Int64(80), aws.Int64(443)},
+					Validation: &appmeshsdk.TlsValidationContext{
+						Trust: &appmeshsdk.TlsValidationContextTrust{
+							Acm: &appmeshsdk.TlsValidationContextAcmTrust{
+								CertificateAuthorityArns: []*string{aws.String("arn-1"), aws.String("arn-2")},
+							},
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sdkVnSpec, err := BuildSDKVirtualNodeSpec(tt.args.vn, tt.args.vsByKey)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantSDKObj, sdkVnSpec.Backends[0].VirtualService.ClientPolicy)
+				assert.Nil(t, sdkVnSpec.Backends[1].VirtualService.ClientPolicy)
+			}
+		})
 	}
 }

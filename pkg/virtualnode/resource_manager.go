@@ -345,8 +345,10 @@ func BuildSDKVirtualNodeSpec(vn *appmesh.VirtualNode, vsByKey map[types.Namespac
 	backendMap := make(map[types.NamespacedName]bool)
 
 	for _, backend := range tempSpec.Backends {
-		vsKey := references.ObjectKeyForVirtualServiceReference(vn, *backend.VirtualService.VirtualServiceRef)
-		backendMap[vsKey] = true
+		if backend.VirtualService.VirtualServiceRef != nil {
+			vsKey := references.ObjectKeyForVirtualServiceReference(vn, *backend.VirtualService.VirtualServiceRef)
+			backendMap[vsKey] = true
+		}
 	}
 
 	for vsKey, vs := range vsByKey {
