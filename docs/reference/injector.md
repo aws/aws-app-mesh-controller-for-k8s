@@ -2,7 +2,7 @@
 
 In order to use AWS App Mesh in Kubernetes, pods in the mesh must be running the AWS App Mesh sidecar proxy (Envoy).
 
-The following sections describe methods for injecting sidecar/Envoy into a pod for Virtual Nodes and Virtual Gateways
+The following sections describe methods for injecting sidecar/Envoy into a pod for Virtual Nodes and Virtual Gateways.
 
 ## Envoy injection for virtual nodes
 
@@ -171,3 +171,26 @@ spec:
           ports:
             - containerPort: 8088
 ```
+
+
+## Custom Environment Variables For Envoy
+
+Additional environment variables can be passed to the envoy sidecar container by
+adding an `appmesh.k8s.aws/sidecarEnv` annotation to the application's
+deployment:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingress-gw
+  namespace: ns
+spec:
+  template:
+    metadata:
+      annotations:
+        appmesh.k8s.aws/sidecarEnv: "CUSTOM_VAR=value1"
+```
+
+Multiple variables can be set by passing a comma-delimited list -
+`appmesh.k8s.aws/sidecarEnv: "CUSTOM_VAR_1=a, CUSTOM_VAR_2=b"`.
