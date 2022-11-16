@@ -10,6 +10,9 @@ COPY go.mod go.sum ./
 # uncomment if using vendor
 # COPY ./vendor ./vendor
 
+ARG GOPROXY
+ENV GOPROXY=${GOPROXY}
+
 RUN go mod download
 
 COPY . ./

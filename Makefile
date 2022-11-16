@@ -88,7 +88,7 @@ generate: controller-gen
 # Requires buildx to be installed: https://docs.docker.com/buildx/working-with-buildx/
 # By default the TARGETPLATFORM is set to linux/amd64, change the value if you are building for linux/arm64
 docker-build: check-env test
-	docker buildx build --platform linux/amd64 -t $(IMAGE) . --load
+	docker buildx build --platform linux/amd64 --build-arg GOPROXY=$(GOPROXY) -t $(IMAGE) . --load
 
 docker-push: check-env
 	docker push $(IMAGE)
