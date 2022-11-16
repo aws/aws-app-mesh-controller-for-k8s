@@ -41,6 +41,7 @@ type virtualGatwayEnvoyConfig struct {
 	k8sVersion                 string
 	useDualStackEndpoint       bool
 	enableAdminAccessIPv6      bool
+	useFipsEndpoint            bool
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -114,6 +115,7 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Envo
 	preview := m.getPreview(pod)
 	useDualStackEndpoint := m.getUseDualStackEndpoint(m.mutatorConfig.useDualStackEndpoint)
 	sdsEnabled := m.mutatorConfig.enableSDS
+	useFipsEndpoint := m.getUseFipsEndpoint(m.mutatorConfig.useFipsEndpoint)
 	if m.mutatorConfig.enableSDS && isSDSDisabled(pod) {
 		sdsEnabled = false
 	}
@@ -146,6 +148,7 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Envo
 		K8sVersion:               m.mutatorConfig.k8sVersion,
 		UseDualStackEndpoint:     useDualStackEndpoint,
 		EnableAdminAccessForIpv6: m.mutatorConfig.enableAdminAccessIPv6,
+		UseFipsEndpoint:          useFipsEndpoint,
 	}
 }
 
@@ -194,6 +197,14 @@ func (m *virtualGatewayEnvoyConfig) virtualGatewayImageOverride(pod *corev1.Pod)
 
 func (m *virtualGatewayEnvoyConfig) getUseDualStackEndpoint(useDualStackEndpoint bool) string {
 	if useDualStackEndpoint {
+		return "1"
+	} else {
+		return "0"
+	}
+}
+
+func (m *virtualGatewayEnvoyConfig) getUseFipsEndpoint(useFipsEndpoint bool) string {
+	if useFipsEndpoint {
 		return "1"
 	} else {
 		return "0"

@@ -73,6 +73,7 @@ spec:
         - --envoy-admin-access-log-file={{ .Values.sidecar.envoyAdminAccessLogFile }}
         - --envoy-admin-access-enable-ipv6={{ .Values.sidecar.envoyAdminAccessEnableIPv6 }}
         - --dual-stack-endpoint={{ .Values.sidecar.useDualStackEndpoint }}
+        - --fips-endpoint={{ .Values.sidecar.useFipsEndpoint }}
         - --preview={{ .Values.preview }}
         - --enable-sds={{ .Values.sds.enabled }}
         - --sds-uds-path={{ .Values.sds.udsPath }}

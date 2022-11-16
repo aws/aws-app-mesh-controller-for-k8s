@@ -295,6 +295,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
+								},
+								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
 									Value: "uds",
 								},
@@ -432,6 +436,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
 								},
 								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
@@ -582,6 +590,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
 								},
 								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
@@ -762,6 +774,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
+								},
+								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
 									Value: "uds",
 								},
@@ -911,6 +927,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
+								},
+								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
 									Value: "uds",
 								},
@@ -1049,6 +1069,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
 								},
 								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
@@ -1206,6 +1230,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
+								},
+								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
 									Value: "uds",
 								},
@@ -1342,6 +1370,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
 								},
 								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
@@ -1527,6 +1559,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
+								},
+								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
 									Value: "uds",
 								},
@@ -1684,6 +1720,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
+								},
+								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
 									Value: "uds",
 								},
@@ -1833,6 +1873,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
 								},
 								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
@@ -1987,6 +2031,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
 								},
 								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
@@ -2148,6 +2196,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
 								},
 								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
@@ -2350,6 +2402,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
+								},
+								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
 									Value: "uds",
 								},
@@ -2503,6 +2559,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
 								},
 								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
@@ -2675,6 +2735,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 									Value: "false",
 								},
 								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
+								},
+								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
 									Value: "uds",
 								},
@@ -2817,6 +2881,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
 								},
 								{
 									Name:  "APPMESH_PLATFORM_K8S_POD_UID",
@@ -2964,6 +3032,10 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "ENVOY_ADMIN_ACCESS_ENABLE_IPV6",
 									Value: "false",
+								},
+								{
+									Name:  "APPMESH_FIPS_ENDPOINT",
+									Value: "0",
 								},
 								{
 									Name:  "APPNET_AGENT_ADMIN_MODE",
@@ -3483,6 +3555,60 @@ func Test_envoyMutator_getUseDualStackEndpoints(t *testing.T) {
 				mutatorConfig: tt.fields.mutatorConfig,
 			}
 			got := m.getUseDualStackEndpoint(m.mutatorConfig.useDualStackEndpoint)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_envoyMutator_getUseFipsEndpoints(t *testing.T) {
+	type fields struct {
+		ms            *appmesh.Mesh
+		mutatorConfig envoyMutatorConfig
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
+	}{
+		{
+			name: "enable using fips endpoint",
+			fields: fields{
+				ms: &appmesh.Mesh{
+					Spec: appmesh.MeshSpec{
+						AWSName: aws.String("my-mesh"),
+					},
+				},
+				mutatorConfig: envoyMutatorConfig{
+					accountID:       "000000000000",
+					useFipsEndpoint: false,
+				},
+			},
+			want: "0",
+		},
+		{
+			name: "disable using fips endpoint",
+			fields: fields{
+				ms: &appmesh.Mesh{
+					Spec: appmesh.MeshSpec{
+						AWSName:   aws.String("my-mesh"),
+						MeshOwner: aws.String("000000000000"),
+					},
+				},
+				mutatorConfig: envoyMutatorConfig{
+					accountID:       "000000000000",
+					useFipsEndpoint: true,
+				},
+			},
+			want: "1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &envoyMutator{
+				ms:            tt.fields.ms,
+				mutatorConfig: tt.fields.mutatorConfig,
+			}
+			got := m.getUseFipsEndpoint(m.mutatorConfig.useFipsEndpoint)
 			assert.Equal(t, tt.want, got)
 		})
 	}
