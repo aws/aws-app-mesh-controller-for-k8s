@@ -3571,7 +3571,7 @@ func Test_envoyMutator_getUseFipsEndpoints(t *testing.T) {
 		want   string
 	}{
 		{
-			name: "enable using fips endpoint",
+			name: "disable using fips endpoint",
 			fields: fields{
 				ms: &appmesh.Mesh{
 					Spec: appmesh.MeshSpec{
@@ -3586,7 +3586,7 @@ func Test_envoyMutator_getUseFipsEndpoints(t *testing.T) {
 			want: "0",
 		},
 		{
-			name: "disable using fips endpoint",
+			name: "enable using fips endpoint",
 			fields: fields{
 				ms: &appmesh.Mesh{
 					Spec: appmesh.MeshSpec{
