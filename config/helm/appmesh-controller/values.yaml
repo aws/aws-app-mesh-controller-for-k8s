@@ -24,6 +24,7 @@ sidecar:
   envoyAdminAccessLogFile: /tmp/envoy_admin_access.log
   envoyAdminAccessEnableIPv6: false
   useDualStackEndpoint: false
+  useFipsEndpoint: false
   resources:
     # sidecar.resources.requests: Envoy CPU and memory requests
     requests:
