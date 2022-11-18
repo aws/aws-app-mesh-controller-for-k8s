@@ -50,6 +50,7 @@ type EnvoyTemplateVariables struct {
 	EnableAdminAccessForIpv6 bool
 	UseDualStackEndpoint     string
 	WaitUntilProxyReady      bool
+	UseFipsEndpoint          string
 }
 
 func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) error {
@@ -63,6 +64,7 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 
 	env["APPMESH_DUALSTACK_ENDPOINT"] = vars.UseDualStackEndpoint
 
+	env["APPMESH_FIPS_ENDPOINT"] = vars.UseFipsEndpoint
 	// Set the value to 1 to connect to the App Mesh Preview Channel endpoint.
 	// See https://docs.aws.amazon.com/app-mesh/latest/userguide/preview.html
 	env["APPMESH_PREVIEW"] = vars.Preview

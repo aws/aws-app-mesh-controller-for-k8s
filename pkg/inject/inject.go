@@ -152,6 +152,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				enableAdminAccessIPv6:      m.config.EnvoyAdminAccessEnableIPv6,
 				postStartTimeout:           m.config.PostStartTimeout,
 				postStartInterval:          m.config.PostStartInterval,
+				useFipsEndpoint:            m.config.FipsEndpoint,
 			}, ms, vn),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,
@@ -204,6 +205,7 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 			k8sVersion:                 m.k8sVersion,
 			useDualStackEndpoint:       m.config.DualStackEndpoint,
 			enableAdminAccessIPv6:      m.config.EnvoyAdminAccessEnableIPv6,
+			useFipsEndpoint:            m.config.FipsEndpoint,
 		}, ms, vg),
 			newXrayMutator(xrayMutatorConfig{
 				awsRegion:             m.awsRegion,
