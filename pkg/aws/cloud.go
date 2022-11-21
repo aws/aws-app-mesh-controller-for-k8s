@@ -28,8 +28,9 @@ type Cloud interface {
 }
 
 // NewCloud constructs new Cloud implementation.
-func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, error) {
+func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer, UseAwsDualStackEndpoint int, UseAwsFIPSEndpoint int) (Cloud, error) {
 	sess := session.Must(session.NewSession(aws.NewConfig()))
+	sessAPPMESH := session.Must(session.NewSession(aws.NewConfig()))
 	injectUserAgent(&sess.Handlers)
 	if cfg.ThrottleConfig != nil {
 		throttler := throttle.NewThrottler(cfg.ThrottleConfig)
@@ -52,8 +53,19 @@ func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, 
 		cfg.Region = region
 	}
 
-	awsCfg := aws.NewConfig().WithRegion(cfg.Region).WithSTSRegionalEndpoint(endpoints.RegionalSTSEndpoint)
+	awsCfgAPPMESH := &aws.Config{
+		Region:               aws.String(cfg.Region),
+		UseDualStackEndpoint: endpoints.DualStackEndpointState(UseAwsDualStackEndpoint),
+		UseFIPSEndpoint:      endpoints.FIPSEndpointState(UseAwsFIPSEndpoint),
+		STSRegionalEndpoint:  1,
+	}
+	awsCfg := &aws.Config{
+		Region:               aws.String(cfg.Region),
+		UseFIPSEndpoint:      endpoints.FIPSEndpointState(UseAwsFIPSEndpoint),
+		STSRegionalEndpoint:  1,
+	}
 	sess = sess.Copy(awsCfg)
+	sessAPPMESH = sessAPPMESH.Copy(awsCfgAPPMESH)
 	if len(cfg.AccountID) == 0 {
 		sts := services.NewSTS(sess)
 		accountID, err := sts.AccountID(context.Background())
@@ -64,7 +76,7 @@ func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, 
 	}
 	return &defaultCloud{
 		cfg:      cfg,
-		appMesh:  services.NewAppMesh(sess),
+		appMesh:  services.NewAppMesh(sessAPPMESH),
 		cloudMap: services.NewCloudMap(sess),
 		eks:      services.NewEKS(sess),
 	}, nil

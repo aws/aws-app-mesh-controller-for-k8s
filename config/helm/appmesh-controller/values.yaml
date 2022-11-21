@@ -8,6 +8,8 @@ accountId: ""
 preview: false
 enableBackendGroups: false
 clusterName: ""
+useAwsDualStackEndpoint: 0
+useAwsFIPSEndpoint: 0
 
 image:
   repository: 840364872350.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller
