@@ -143,7 +143,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&cfg.EnableBackendGroups, flagEnableBackendGroups, false, "If enabled, experimental Backend Groups feature will be enabled.")
 	fs.StringVar(&cfg.SidecarImageRepository, flagSidecarImageRepository, "public.ecr.aws/appmesh/aws-appmesh-envoy",
 		"Envoy sidecar container image repository.")
-	fs.StringVar(&cfg.SidecarImageTag, flagSidecarImageTag, "v1.22.2.1-prod", "Envoy sidecar container image tag.")
+	fs.StringVar(&cfg.SidecarImageTag, flagSidecarImageTag, "v1.24.0.0-prod", "Envoy sidecar container image tag.")
 	fs.StringVar(&cfg.SidecarCpuRequests, flagSidecarCpuRequests, "10m",
 		"Sidecar CPU resources requests.")
 	fs.StringVar(&cfg.SidecarMemoryRequests, flagSidecarMemoryRequests, "32Mi",
@@ -216,6 +216,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&cfg.FipsEndpoint, flagFipsEndpoint, false, "Use Fips Endpoint")
 	fs.IntVar(&cfg.UseAwsFIPSEndpoint, flagUseAwsFipsEndpoint, 0, "To use FIPS Endpoint for AWS Services")
 	fs.IntVar(&cfg.UseAwsDualStackEndpoint, flagUseAwsDualStackEndpoint, 0, "To use Dual Stack Endpoint for AWS Services")
+
 }
 
 func (cfg *Config) BindEnv() error {
