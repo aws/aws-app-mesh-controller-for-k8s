@@ -28,9 +28,10 @@ type Cloud interface {
 }
 
 // NewCloud constructs new Cloud implementation.
-func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer, UseAwsDualStackEndpoint int, UseAwsFIPSEndpoint int) (Cloud, error) {
+func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, error) {
 	sess := session.Must(session.NewSession(aws.NewConfig()))
-	sessAPPMESH := session.Must(session.NewSession(aws.NewConfig()))
+	// creating separate config for AppMesh because it has DualStack endpoint, But for other AWS APIs services EKS and CloudMap DualStack endpoints(DNS ending in api.aws) are unavailable.
+	sessAppMesh := session.Must(session.NewSession(aws.NewConfig()))
 	injectUserAgent(&sess.Handlers)
 	if cfg.ThrottleConfig != nil {
 		throttler := throttle.NewThrottler(cfg.ThrottleConfig)
@@ -53,19 +54,19 @@ func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer, UseAwsDu
 		cfg.Region = region
 	}
 
-	awsCfgAPPMESH := &aws.Config{
+	awsCfgAppMesh := &aws.Config{
 		Region:               aws.String(cfg.Region),
-		UseDualStackEndpoint: endpoints.DualStackEndpointState(UseAwsDualStackEndpoint),
-		UseFIPSEndpoint:      endpoints.FIPSEndpointState(UseAwsFIPSEndpoint),
+		UseDualStackEndpoint: endpoints.DualStackEndpointState(cfg.GetAwsDualStackEndpoint()),
+		UseFIPSEndpoint:      endpoints.FIPSEndpointState(cfg.GetAwsFIPSEndpoint()),
 		STSRegionalEndpoint:  1,
 	}
 	awsCfg := &aws.Config{
-		Region:               aws.String(cfg.Region),
-		UseFIPSEndpoint:      endpoints.FIPSEndpointState(UseAwsFIPSEndpoint),
-		STSRegionalEndpoint:  1,
+		Region:              aws.String(cfg.Region),
+		UseFIPSEndpoint:     endpoints.FIPSEndpointState(cfg.GetAwsFIPSEndpoint()),
+		STSRegionalEndpoint: 1,
 	}
 	sess = sess.Copy(awsCfg)
-	sessAPPMESH = sessAPPMESH.Copy(awsCfgAPPMESH)
+	sessAppMesh = sessAppMesh.Copy(awsCfgAppMesh)
 	if len(cfg.AccountID) == 0 {
 		sts := services.NewSTS(sess)
 		accountID, err := sts.AccountID(context.Background())
@@ -76,7 +77,7 @@ func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer, UseAwsDu
 	}
 	return &defaultCloud{
 		cfg:      cfg,
-		appMesh:  services.NewAppMesh(sessAPPMESH),
+		appMesh:  services.NewAppMesh(sessAppMesh),
 		cloudMap: services.NewCloudMap(sess),
 		eks:      services.NewEKS(sess),
 	}, nil

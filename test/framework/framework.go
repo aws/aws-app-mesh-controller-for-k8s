@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/virtualrouter"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/resource/virtualservice"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
+	. "github.com/onsi/gomega"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -76,7 +77,7 @@ func New(options Options) *Framework {
 	cloud, err := aws.NewCloud(aws.CloudConfig{
 		Region:         options.AWSRegion,
 		ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig(),
-	}, nil, 0, 0)
+	}, nil)
 	Expect(err).NotTo(HaveOccurred())
 
 	f := &Framework{

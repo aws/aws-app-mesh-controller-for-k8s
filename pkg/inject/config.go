@@ -55,8 +55,6 @@ const (
 	flagXRayImage            = "xray-image"
 
 	flagClusterName = "cluster-name"
-	flagUseAwsFipsEndpoint = "use-aws-fips-endpoint"
-	flagUseAwsDualStackEndpoint    = "use-aws-dual-stack-endpoint"
 )
 
 type Config struct {
@@ -117,8 +115,6 @@ type Config struct {
 	XRayImage            string
 
 	ClusterName string
-	UseAwsDualStackEndpoint int
-	UseAwsFIPSEndpoint    int
 }
 
 // MultipleTracer checks if more than one tracer is configured.
@@ -214,8 +210,6 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&cfg.WaitUntilProxyReady, flagWaitUntilProxyReady, false,
 		"Enable pod postStart hook to delay application startup until proxy is ready to accept traffic")
 	fs.BoolVar(&cfg.FipsEndpoint, flagFipsEndpoint, false, "Use Fips Endpoint")
-	fs.IntVar(&cfg.UseAwsFIPSEndpoint, flagUseAwsFipsEndpoint, 0, "To use FIPS Endpoint for AWS Services")
-	fs.IntVar(&cfg.UseAwsDualStackEndpoint, flagUseAwsDualStackEndpoint, 0, "To use Dual Stack Endpoint for AWS Services")
 
 }
 
