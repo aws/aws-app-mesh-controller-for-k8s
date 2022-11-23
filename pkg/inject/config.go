@@ -210,7 +210,6 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&cfg.WaitUntilProxyReady, flagWaitUntilProxyReady, false,
 		"Enable pod postStart hook to delay application startup until proxy is ready to accept traffic")
 	fs.BoolVar(&cfg.FipsEndpoint, flagFipsEndpoint, false, "Use Fips Endpoint")
-
 }
 
 func (cfg *Config) BindEnv() error {
