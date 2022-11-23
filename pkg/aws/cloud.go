@@ -30,7 +30,7 @@ type Cloud interface {
 // NewCloud constructs new Cloud implementation.
 func NewCloud(cfg CloudConfig, metricsRegisterer prometheus.Registerer) (Cloud, error) {
 	sess := session.Must(session.NewSession(aws.NewConfig()))
-	// creating separate config for AppMesh because it has DualStack endpoint, But for other AWS APIs services EKS and CloudMap DualStack endpoints(DNS ending in api.aws) are unavailable.
+	// creating separate config for AppMesh because it has both DualStack and FIPS endpoint, But for other AWS APIs services EKS and CloudMap DualStack endpoints(DNS ending in api.aws) are unavailable.
 	sessAppMesh := session.Must(session.NewSession(aws.NewConfig()))
 	injectUserAgent(&sess.Handlers)
 	if cfg.ThrottleConfig != nil {
