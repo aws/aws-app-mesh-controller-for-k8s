@@ -273,6 +273,14 @@ var _ = Describe("Running Load Test Driver", func() {
 				}
 				Expect(err).NotTo(HaveOccurred())
 			})
+
+			// change waitTime for checking the status of different components in the middle of the test
+			waitTime := 0
+			fmt.Printf("Waiting %v minutes for cheking stats...", waitTime)
+			for i := 0; i < waitTime; i++ {
+				fmt.Printf("Sleeping %v minutes...\n", i+1)
+				time.Sleep(1 * time.Minute)
+			}
 		})
 
 	})

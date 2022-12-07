@@ -26,3 +26,5 @@ override_model_dev.sh
 *~
 
 AWSLatticeControllerForK8sExternal.iml
+.DS_Store
+

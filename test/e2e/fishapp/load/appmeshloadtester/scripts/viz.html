@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .error {
+        color: red;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega@5"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-lite@4.17.0"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-embed@6"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 400, "continuousHeight": 300}}, "vconcat": [{"data": {"name": "data-e085693bb1625dfd711bf5fd448b928b"}, "mark": "line", "encoding": {"color": {"field": "kubernetes_pod_name", "type": "nominal"}, "opacity": {"condition": {"value": 1, "selection": "selector001"}, "value": 0.2}, "tooltip": [{"field": "kubernetes_pod_name", "type": "nominal"}, {"field": "normalized_ts", "type": "quantitative"}, {"field": "metric_value", "type": "quantitative"}], "x": {"field": "normalized_ts", "type": "quantitative"}, "y": {"field": "metric_value", "type": "quantitative"}}, "selection": {"selector001": {"type": "multi", "fields": ["kubernetes_pod_name"], "bind": "legend"}}, "title": "envoy_ingress_rate_by_replica_set"}, {"hconcat": [{"data": {"name": "data-0df1df17bc3cfd3d6c8ec1a44f911676"}, "mark": "line", "encoding": {"color": {"field": "kubernetes_pod_name", "type": "nominal"}, "opacity": {"condition": {"value": 1, "selection": "selector001"}, "value": 0.2}, "tooltip": [{"field": "kubernetes_pod_name", "type": "nominal"}, {"field": "normalized_ts", "type": "quantitative"}, {"field": "metric_value", "type": "quantitative"}], "x": {"field": "normalized_ts", "type": "quantitative"}, "y": {"field": "metric_value", "type": "quantitative"}}, "selection": {"selector001": {"type": "multi", "fields": ["kubernetes_pod_name"], "bind": "legend"}}, "title": "envoy_2xx_requests_rate_by_replica_set"}, {"data": {"name": "data-d751713988987e9331980363e24189ce"}, "mark": "line", "encoding": {"color": {"field": "kubernetes_pod_name", "type": "nominal"}, "opacity": {"condition": {"value": 1, "selection": "selector001"}, "value": 0.2}, "tooltip": [{"field": "kubernetes_pod_name", "type": "nominal"}, {"field": "normalized_ts", "type": "nominal"}, {"field": "metric_value", "type": "quantitative"}], "x": {"field": "normalized_ts", "type": "nominal"}, "y": {"field": "metric_value", "type": "quantitative"}}, "selection": {"selector001": {"type": "multi", "fields": ["kubernetes_pod_name"], "bind": "legend"}}, "title": "envoy_5xx_requests_rate_by_replica_set"}]}], "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json", "datasets": {"data-e085693bb1625dfd711bf5fd448b928b": [{"kubernetes_pod_name": "node-0-5f8fdbb4c4-z7hr8", "timestamp": 1669227821, "metric_name": "envoy_ingress_rate_by_replica_set", "metric_value": 88.46868, "normalized_ts": 0}, {"kubernetes_pod_name": "node-1-d86c48b96-vw6vh", "timestamp": 1669227821, "metric_name": "envoy_ingress_rate_by_replica_set", "metric_value": 89.84612922584517, "normalized_ts": 0}, {"kubernetes_pod_name": "node-2-58f5879489-wj2z8", "timestamp": 1669227821, "metric_name": "envoy_ingress_rate_by_replica_set", "metric_value": 88.9272, "normalized_ts": 0}, {"kubernetes_pod_name": "node-3-5c4b5b4769-8kmgk", "timestamp": 1669227821, "metric_name": "envoy_ingress_rate_by_replica_set", "metric_value": 88.91420000000001, "normalized_ts": 0}, {"kubernetes_pod_name": "node-4-74bb655f8f-tstf2", "timestamp": 1669227821, "metric_name": "envoy_ingress_rate_by_replica_set", "metric_value": 92.2376, "normalized_ts": 0}], "data-0df1df17bc3cfd3d6c8ec1a44f911676": [{"kubernetes_pod_name": "node-0-5f8fdbb4c4-z7hr8", "timestamp": 1669227821, "metric_name": "envoy_2xx_requests_rate_by_replica_set", "metric_value": 88.46868, "normalized_ts": 0}, {"kubernetes_pod_name": "node-1-d86c48b96-vw6vh", "timestamp": 1669227821, "metric_name": "envoy_2xx_requests_rate_by_replica_set", "metric_value": 89.84612922584517, "normalized_ts": 0}, {"kubernetes_pod_name": "node-2-58f5879489-wj2z8", "timestamp": 1669227821, "metric_name": "envoy_2xx_requests_rate_by_replica_set", "metric_value": 88.9272, "normalized_ts": 0}, {"kubernetes_pod_name": "node-3-5c4b5b4769-8kmgk", "timestamp": 1669227821, "metric_name": "envoy_2xx_requests_rate_by_replica_set", "metric_value": 88.91420000000001, "normalized_ts": 0}, {"kubernetes_pod_name": "node-4-74bb655f8f-tstf2", "timestamp": 1669227821, "metric_name": "envoy_2xx_requests_rate_by_replica_set", "metric_value": 92.2376, "normalized_ts": 0}], "data-d751713988987e9331980363e24189ce": []}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div class="error" style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>
