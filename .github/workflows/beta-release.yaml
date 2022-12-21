@@ -7,85 +7,57 @@ on:
         required: true
 
 permissions:
+  id-token: write
   contents: read
 
+env:
+  IMAGE_HOST: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+  IMAGE: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller"
+  IMAGE_TAG: "${{ github.event.inputs.tag }}"
+  IMAGE_TAG_AMD: "${{ github.event.inputs.tag }}-linux_amd64"
+  IMAGE_TAG_ARM: "${{ github.event.inputs.tag }}-linux_arm64"
+
 jobs:
-  build:
-    name: integration-test
-    runs-on: [ self-hosted, aws-app-mesh-controller-for-k8s, X64 ]
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-22.04
     steps:
-      - name: clean work dir from previous runs
-        run: |
-          rm -rf *
-      - name: setup go 1.17
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.17.*'
-        id: go
-      - name: setup environment
-        run: |
-          source ~/.bashrc
-      - name: checkout code
-        uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v3
         with:
           ref: refs/tags/${{ github.event.inputs.tag }}
-      - name: setup kind and run integration tests
-        run: VERSION=${{ github.event.inputs.tag }} make integration-test
-      - name: cleanup all the kind clusters
-        run: VERSION=${{ github.event.inputs.tag }} make delete-all-kind-clusters
-  build-arm64:
-    name: build-arm64
-    runs-on: [ self-hosted, aws-app-mesh-controller-for-k8s, ARM64 ]
+      - name: Run integration test action
+        uses: ./.github/actions/integration-test
+        with:
+          aws_role: "${{ secrets.BETA_TEST_AWS_ROLE }}"
+          vpc_id: "${{ secrets.INTEG_TEST_VPC }}"
+          account_id: "${{ secrets.BETA_AWS_ACCOUNT }}"
+
+  push-images:
+    name: Build And Push Images
+    runs-on: ubuntu-22.04
+    needs: [ integration-test ]
     steps:
-      - name: clean work dir from previous runs
+      - name: Clean
         run: |
           rm -rf *
-      - name: setup go 1.17
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.17.*'
-        id: go
-      - name: setup environment
-        run: |
-          source ~/.bashrc
-      - name: checkout code
-        uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v3
         with:
           ref: refs/tags/${{ github.event.inputs.tag }}
-      - name: build for arm64
-        run: |
-          docker buildx build --platform linux/arm64 -t ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64 . --load
-          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com
-          docker push ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
-  beta-release:
-    name: beta-release
-    runs-on: ubuntu-18.04
-    needs: [ build, build-arm64 ]
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Configure AWS Credentials (build)
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: us-west-2
-          role-to-assume: ${{ secrets.CI_AWS_ROLE }}
-          role-session-name: ControllerBetaRelease
-      - name: Pull docker image
-        run: |
-          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com
-          docker pull ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}
-          docker pull ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
-      - name: Configure AWS Credentials (beta)
-        uses: aws-actions/configure-aws-credentials@v1
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
         with:
           aws-region: us-west-2
           role-to-assume: ${{ secrets.BETA_AWS_ROLE }}
-          role-session-name: ControllerBetaRelease
-      - name: Push docker image
+          role-session-name: ImagePusher
+
+      - name: Build Images
         run: |
-          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com
-          docker tag ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }} ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}
-          docker tag ${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64 ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
-          docker push ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}
-          docker push ${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}-linux_arm64
+          aws ecr get-login-password --region us-west-2 | \
+            docker login --username AWS --password-stdin $IMAGE_HOST
+          # Note: right now, this pushes the amd image under the default. This
+          # behavior should be changed to supporting multiarch shortly.
+          docker buildx build --platform linux/amd64 -t "${IMAGE}:${IMAGE_TAG}" . --push
+          docker buildx build --platform linux/arm64 -t "${IMAGE}:${IMAGE_TAG_ARM}" . --push

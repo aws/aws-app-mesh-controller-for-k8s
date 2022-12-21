@@ -53,6 +53,9 @@ type envoyMutatorConfig struct {
 	useDualStackEndpoint       bool
 	enableAdminAccessIPv6      bool
 	useFipsEndpoint            bool
+	awsAccessKeyId             string
+	awsSecretAccessKey         string
+	awsSessionToken            string
 }
 
 func newEnvoyMutator(mutatorConfig envoyMutatorConfig, ms *appmesh.Mesh, vn *appmesh.VirtualNode) *envoyMutator {
@@ -169,6 +172,9 @@ func (m *envoyMutator) buildTemplateVariables(pod *corev1.Pod) EnvoyTemplateVari
 		EnableAdminAccessForIpv6: m.mutatorConfig.enableAdminAccessIPv6,
 		WaitUntilProxyReady:      m.mutatorConfig.waitUntilProxyReady,
 		UseFipsEndpoint:          useFipsEndpoint,
+		AwsAccessKeyId:           m.mutatorConfig.awsAccessKeyId,
+		AwsSecretAccessKey:       m.mutatorConfig.awsSecretAccessKey,
+		AwsSessionToken:          m.mutatorConfig.awsSessionToken,
 	}
 }
 

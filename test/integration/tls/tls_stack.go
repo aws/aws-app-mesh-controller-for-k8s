@@ -73,6 +73,7 @@ func (s *TLSStack) DeployTLSStack(ctx context.Context, f *framework.Framework) {
 	mb := &manifest.ManifestBuilder{
 		Namespace:            s.namespace.Name,
 		ServiceDiscoveryType: s.ServiceDiscoveryType,
+		DisableIPv6:          true, // for github action compatibility
 	}
 	s.createSecretsForTLSStack(ctx, f, mb)
 	s.createVirtualNodeResourcesForTLSStack(ctx, f, mb)
@@ -87,6 +88,7 @@ func (s *TLSStack) DeployPartialTLSStack(ctx context.Context, f *framework.Frame
 	mb := &manifest.ManifestBuilder{
 		Namespace:            s.namespace.Name,
 		ServiceDiscoveryType: s.ServiceDiscoveryType,
+		DisableIPv6:          true, // for github action compatibility
 	}
 	s.createSecretsForPartialTLSStack(ctx, f, mb)
 	s.createVirtualNodeResourcesForPartialTLSStack(ctx, f, mb)
@@ -102,6 +104,7 @@ func (s *TLSStack) DeployTLSValidationStack(ctx context.Context, f *framework.Fr
 	mb := &manifest.ManifestBuilder{
 		Namespace:            s.namespace.Name,
 		ServiceDiscoveryType: s.ServiceDiscoveryType,
+		DisableIPv6:          true,
 	}
 	s.createSecretsForTLSValidationStack(ctx, f, mb)
 	s.createVirtualNodeResourcesForTLSValidationStack(ctx, f, mb)

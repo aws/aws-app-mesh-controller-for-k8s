@@ -51,7 +51,7 @@ var _ = Describe("VirtualGateway", func() {
 		}
 	})
 
-	Context("Virtual Gateway scenaries", func() {
+	Context("Virtual Gateway scenarios", func() {
 		var meshTest mesh.MeshTest
 		var vgTest virtualgateway.VirtualGatewayTest
 
@@ -70,7 +70,7 @@ var _ = Describe("VirtualGateway", func() {
 			meshTest.Cleanup(ctx, f)
 		})
 
-		It("Virtual Gateway Create Scenaries", func() {
+		It("Virtual Gateway Create Scenarios", func() {
 
 			meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
 			mesh := &appmesh.Mesh{
@@ -197,7 +197,7 @@ var _ = Describe("VirtualGateway", func() {
 
 		})
 
-		It("Virtual Gateway Update Scenaries", func() {
+		It("Virtual Gateway Update Scenarios", func() {
 
 			meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
 			mesh := &appmesh.Mesh{
@@ -298,7 +298,7 @@ var _ = Describe("VirtualGateway", func() {
 
 		})
 
-		It("Virtual Gateway Delete Scenaries", func() {
+		It("Virtual Gateway Delete Scenarios", func() {
 
 			meshName := fmt.Sprintf("%s-%s", f.Options.ClusterName, utils.RandomDNS1123Label(6))
 			mesh := &appmesh.Mesh{
