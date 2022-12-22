@@ -1,0 +1,70 @@
+name: "Push Image"
+description: "Deploys the controller image into a given region"
+
+inputs:
+  src_host:
+    description: "URL of the source ECR repository to pull images from"
+    required: true
+  src_image_name:
+    description: "Name of the source image"
+    default: "amazon/appmesh-controller"
+    required: false
+  image_tag:
+    description: "Root tag of the image to pull and push"
+    required: true
+  region:
+    description: "AWS region to push images to"
+    required: true
+  dst_host:
+    description: "URL of the target ECR repository to push images to"
+    required: true
+  dst_image_name:
+    description: "Name of the destination image"
+    default: "amazon/appmesh-controller"
+    required: false
+  role:
+    description: "IAM role to assume to perform the deploys"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS Credentials For Region
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-region: "${{ inputs.region }}"
+        role-to-assume: "${{ inputs.role }}"
+        role-session-name: RegionalImageDeploy
+      env:
+        AWS_DEFAULT_REGION: ""
+        AWS_REGION: ""
+        AWS_ACCESS_KEY_ID: ""
+        AWS_SECRET_ACCESS_KEY: ""
+        AWS_SESSION_TOKEN: ""
+
+    - name: Push Images To Region
+      shell: bash
+      env:
+        SRC: "${{ inputs.src_host }}/${{ inputs.src_image_name }}:${{ inputs.image_tag }}"
+        DST: "${{ inputs.dst_host }}/${{ inputs.dst_image_name }}:${{ inputs.image_tag }}"
+      run: |
+        aws ecr get-login-password --region "${{ inputs.region }}" | \
+          docker login --username AWS --password-stdin "${{ inputs.src_host }}"
+        if [[ "${{ inputs.dst_host }}" =~ "public.ecr.aws" ]]; then
+          aws ecr-public get-login-password --region "us-east-1" | \
+            docker login --username AWS --password-stdin "public.ecr.aws"
+        else  
+          aws ecr get-login-password --region "${{ inputs.region }}" | \
+            docker login --username AWS --password-stdin "${{ inputs.dst_host }}"
+        fi
+        
+        docker pull "${SRC}-linux_amd64" 
+        docker tag "${SRC}-linux_amd64" "${DST}-linux_amd64"
+        docker push "${DST}-linux_amd64"
+        
+        docker pull "${SRC}-linux_arm64" 
+        docker tag "${SRC}-linux_arm64" "${DST}-linux_arm64"
+        docker push "${DST}-linux_arm64"
+        
+        docker manifest create "$DST" "${DST}-linux_amd64" "${DST}-linux_arm64"
+        docker manifest push "$DST"
