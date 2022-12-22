@@ -10,13 +10,6 @@ permissions:
   id-token: write
   contents: read
 
-env:
-  IMAGE_HOST: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
-  IMAGE: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller"
-  IMAGE_TAG: "${{ github.event.inputs.tag }}"
-  IMAGE_TAG_AMD: "${{ github.event.inputs.tag }}-linux_amd64"
-  IMAGE_TAG_ARM: "${{ github.event.inputs.tag }}-linux_arm64"
-
 jobs:
   integration-test:
     name: Integration Test
@@ -54,10 +47,16 @@ jobs:
           role-session-name: ImagePusher
 
       - name: Build Images
+        env:
+          IMAGE_HOST: "${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          IMAGE: "${{ secrets.CI_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller"
+          IMAGE_TAG: "${{ github.event.inputs.tag }}"
+          IMAGE_TAG_AMD: "${{ github.event.inputs.tag }}-linux_amd64"
+          IMAGE_TAG_ARM: "${{ github.event.inputs.tag }}-linux_arm64"
         run: |
           aws ecr get-login-password --region us-west-2 | \
             docker login --username AWS --password-stdin $IMAGE_HOST
-          # Note: right now, this pushes the amd image under the default. This
-          # behavior should be changed to supporting multiarch shortly.
-          docker buildx build --platform linux/amd64 -t "${IMAGE}:${IMAGE_TAG}" . --push
-          docker buildx build --platform linux/arm64 -t "${IMAGE}:${IMAGE_TAG_ARM}" . --push
+          docker buildx build --platform linux/amd64 -t "$IMAGE:$IMAGE_TAG_AMD" . --push
+          docker buildx build --platform linux/arm64 -t "$IMAGE:$IMAGE_TAG_ARM" . --push
+          docker manifest create "$IMAGE:$IMAGE_TAG" "$IMAGE:$IMAGE_TAG_AMD" "$IMAGE:$IMAGE_TAG_ARM"
+          docker manifest push "$IMAGE:$IMAGE_TAG"

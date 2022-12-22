@@ -1,0 +1,53 @@
+name: "Push Image"
+description: "Deploys the controller image into a given region"
+
+inputs:
+  source_image:
+    description: "Name of the source image to pull and deploy"
+    required: true
+  image_tag:
+    description: "Root tag of the image to pull and push"
+    required: true
+  region:
+    description: "AWS region to push images to"
+    required: true
+  repo_host:
+    description: "URL of the target ECR repository to push images to"
+    required: true
+  role:
+    description: "IAM role to assume to perform the deploys"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS Credentials For Region
+      uses: aws-actions/configure-aws-credentials@v1-node16
+      with:
+        aws-region: "${{ inputs.region }}"
+        role-to-assume: "${{ inputs.role }}"
+        role-session-name: RegionalImageDeploy
+      env:
+        AWS_DEFAULT_REGION: ""
+        AWS_REGION: ""
+        AWS_ACCESS_KEY_ID: ""
+        AWS_SECRET_ACCESS_KEY: ""
+        AWS_SESSION_TOKEN: ""
+
+    - name: Push Images To Region
+      shell: bash
+      env:
+        SRC_IMAGE: "${{ inputs.source_image }}"
+        DST_IMAGE: "${{ inputs.repo_host }}/amazon/appmesh-controller"
+        TAG: "${{ inputs.image_tag }}"
+        AMD_TAG: "${{ inputs.image_tag }}-linux_amd64"
+        ARM_TAG: "${{ inputs.image_tag }}-linux_arm64"
+      run: |
+        aws ecr get-login-password --region "${{ inputs.region }}" | \
+          docker login --username AWS --password-stdin "${{ inputs.repo_host }}"
+        docker tag "$SRC_IMAGE:$AMD_TAG" "$DST_IMAGE:$AMD_TAG"
+        docker tag "$SRC_IMAGE:ARM_TAG" "$DST_IMAGE:ARM_TAG"
+        docker push "$DST_IMAGE:$AMD_TAG"
+        docker push "$DST_IMAGE:ARM_TAG"
+        docker manifest create "$DST_IMAGE:TAG" "$DST_IMAGE:$AMD_TAG" "$DST_IMAGE:ARM_TAG"
+        docker manifest push "$DST_IMAGE:TAG"
