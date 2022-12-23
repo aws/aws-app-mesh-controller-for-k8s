@@ -42,6 +42,9 @@ type virtualGatwayEnvoyConfig struct {
 	useDualStackEndpoint       bool
 	enableAdminAccessIPv6      bool
 	useFipsEndpoint            bool
+	awsAccessKeyId             string
+	awsSecretAccessKey         string
+	awsSessionToken            string
 }
 
 // newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
@@ -149,6 +152,9 @@ func (m *virtualGatewayEnvoyConfig) buildTemplateVariables(pod *corev1.Pod) Envo
 		UseDualStackEndpoint:     useDualStackEndpoint,
 		EnableAdminAccessForIpv6: m.mutatorConfig.enableAdminAccessIPv6,
 		UseFipsEndpoint:          useFipsEndpoint,
+		AwsAccessKeyId:           m.mutatorConfig.awsAccessKeyId,
+		AwsSecretAccessKey:       m.mutatorConfig.awsSecretAccessKey,
+		AwsSessionToken:          m.mutatorConfig.awsSessionToken,
 	}
 }
 

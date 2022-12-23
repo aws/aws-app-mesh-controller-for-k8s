@@ -60,5 +60,23 @@ ginkgo -v -r test/integration/virtualnode/ -- --cluster-kubeconfig=/Users/xxxx/.
 In case of failures, refer to [Troubleshooting](https://github.com/aws/aws-app-mesh-controller-for-k8s/blob/master/docs/guide/troubleshooting.md) guide.   
 
 
+### integration test suite with kind
 
+There is a test runner script, `scripts/test-with-kind.sh`, that can be used to run
+an isolated suite of tests in a local kubernetes cluster. This sets up a local test
+kubernetes cluster using kinD, which is able to run tests in isolation and without
+a EKS cluster.
 
+This tool is mostly for integration testing, but can be used on any linux machine. Refer
+to the script documentation for [execution and environment details](https://github.com/aws/aws-app-mesh-controller-for-k8s/blob/master/scripts/test-with-kind.sh).
+
+**Requirements:**
+
+- The suite has only been tested on linux. It's possible that it could be made work on macOS, but
+  it's not officially supported or verified.
+
+- The test suite has several local tools that must be present for the suite to run. The 
+  best reference is the [integration test setup for github](https://github.com/aws/aws-app-mesh-controller-for-k8s/blob/master/.github/actions/integration-test/action.yml).
+
+- There must be environment credentials - `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` -
+  for a valid role with permissions to `AWSCloudMapFullAccess`, `AWSAppMeshFullAccess`, and `AWSAppMeshEnvoyAccess`.

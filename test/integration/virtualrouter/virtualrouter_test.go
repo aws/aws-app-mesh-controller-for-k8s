@@ -54,7 +54,7 @@ var _ = Describe("VirtualRouter", func() {
 		}
 	})
 
-	Context("Virtual Router scenaries", func() {
+	Context("Virtual Router scenarios", func() {
 		var meshTest mesh.MeshTest
 		var vnTest virtualnode.VirtualNodeTest
 		var vrTest virtualrouter.VirtualRouterTest

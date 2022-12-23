@@ -81,6 +81,7 @@ func (s *TimeoutStack) DeployTimeoutStack(ctx context.Context, f *framework.Fram
 	mb := &manifest.ManifestBuilder{
 		Namespace:            s.namespace.Name,
 		ServiceDiscoveryType: s.ServiceDiscoveryType,
+		DisableIPv6:          true, // for github action compatibility
 	}
 	s.createVirtualNodeResourcesForTimeoutStack(ctx, f, mb)
 	s.createServicesForTimeoutStack(ctx, f)

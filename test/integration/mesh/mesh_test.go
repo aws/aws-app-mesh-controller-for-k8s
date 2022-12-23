@@ -45,7 +45,7 @@ var _ = Describe("Mesh", func() {
 		}
 	})
 
-	Context("Mesh create scenaries", func() {
+	Context("Mesh create scenarios", func() {
 		var meshTest mesh.MeshTest
 		meshTest = mesh.MeshTest{
 			Meshes: make(map[string]*appmesh.Mesh),
@@ -170,7 +170,7 @@ var _ = Describe("Mesh", func() {
 		})
 	})
 
-	Context("Mesh update scenaries", func() {
+	Context("Mesh update scenarios", func() {
 		var meshTest mesh.MeshTest
 		meshTest = mesh.MeshTest{
 			Meshes: make(map[string]*appmesh.Mesh),

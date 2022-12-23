@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:experimental
 
 # Build the controller binary
-FROM --platform=${TARGETPLATFORM} golang:1.17 as builder
+FROM --platform=${BUILDPLATFORM} golang:1.17 as builder
 
 WORKDIR /workspace
 
@@ -15,7 +15,13 @@ ENV GOPROXY=${GOPROXY}
 
 RUN go mod download
 
-COPY . ./
+COPY ./main.go ./ATTRIBUTION.txt ./
+COPY .git/ ./.git/
+COPY pkg/ ./pkg/
+COPY apis/ ./apis/
+COPY controllers/ ./controllers/
+COPY mocks/ ./mocks/
+COPY webhooks/ ./webhooks/
 
 ARG TARGETOS
 ARG TARGETARCH

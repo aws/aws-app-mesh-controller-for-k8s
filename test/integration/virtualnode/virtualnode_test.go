@@ -991,6 +991,7 @@ var _ = Describe("VirtualNode", func() {
 
 			mb = &manifest.ManifestBuilder{
 				ServiceDiscoveryType: manifest.CloudMapServiceDiscovery,
+				DisableIPv6:          true, // for github action compatibility
 			}
 
 			By("Create a namespace and add labels", func() {
