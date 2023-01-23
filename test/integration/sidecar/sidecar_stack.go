@@ -3,6 +3,7 @@ package sidecar
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
 	"time"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
@@ -219,6 +220,9 @@ func (s *SidecarStack) createFrontendResources(ctx context.Context, f *framework
 						Labels: map[string]string{
 							"app": "front",
 						},
+						Annotations: map[string]string{
+							inject.AppMeshIPV6Annotation: "disabled", // for github action compatibility
+						},
 					},
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{
@@ -349,6 +353,9 @@ func (s *SidecarStack) createBackendResources(ctx context.Context, f *framework.
 						Labels: map[string]string{
 							"app":     "color",
 							"version": "blue",
+						},
+						Annotations: map[string]string{
+							inject.AppMeshIPV6Annotation: "disabled",
 						},
 					},
 					Spec: corev1.PodSpec{

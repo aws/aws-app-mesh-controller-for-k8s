@@ -1,6 +1,6 @@
 # App Mesh EKS Walkthroughs
 
-* [howto-k8s-alb](https://github.com/aws/aws-app-mesh-examples/tree/main/walkthroughs/howto-k8s-alb): This example shows how to use ALB Ingress Controller with targets registered as virtual-nodes under App Mesh.
+* [howto-k8s-alb](https://github.com/aws/aws-app-mesh-examples/tree/main/walkthroughs/howto-k8s-alb): This example shows how to use AWS Load Balancer Controller with targets registered as virtual-nodes under App Mesh.
 * [howto-k8s-cloudmap](https://github.com/aws/aws-app-mesh-examples/tree/main/walkthroughs/howto-k8s-cloudmap): This example shows how Kubernetes deployments can use AWS CloudMap for service-discovery when using App Mesh.
 * [howto-k8s-fargate](https://github.com/aws/aws-app-mesh-examples/tree/main/walkthroughs/howto-k8s-fargate): This example shows how to use AppMesh with EKS on Fargate.
 * [howto-k8s-grpc](https://github.com/aws/aws-app-mesh-examples/tree/main/walkthroughs/howto-k8s-grpc):This example shows how to manage gRPC routes in App Mesh using Kubernetes deployments.

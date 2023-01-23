@@ -51,6 +51,9 @@ type EnvoyTemplateVariables struct {
 	UseDualStackEndpoint     string
 	WaitUntilProxyReady      bool
 	UseFipsEndpoint          string
+	AwsAccessKeyId           string
+	AwsSecretAccessKey       string
+	AwsSessionToken          string
 }
 
 func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vname string) error {
@@ -59,6 +62,18 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 	// 2) we don't allow overriding controller managed env with pod annotations
 	env["APPMESH_VIRTUAL_NODE_NAME"] = vname
 	env["AWS_REGION"] = vars.AWSRegion
+
+	// For usage outside traditional EC2 / Fargate IAM based profiles, this is needed to
+	// propagate permissions to envoy. This is a rare use-case that's mostly just for testing.
+	if len(vars.AwsAccessKeyId) > 0 {
+		env["AWS_ACCESS_KEY_ID"] = vars.AwsAccessKeyId
+	}
+	if len(vars.AwsSecretAccessKey) > 0 {
+		env["AWS_SECRET_ACCESS_KEY"] = vars.AwsSecretAccessKey
+	}
+	if len(vars.AwsSessionToken) > 0 {
+		env["AWS_SESSION_TOKEN"] = vars.AwsSessionToken
+	}
 
 	env["ENVOY_ADMIN_ACCESS_ENABLE_IPV6"] = strconv.FormatBool(vars.EnableAdminAccessForIpv6)
 

@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -17,6 +18,11 @@ type ManifestBuilder struct {
 
 	// required when serviceDiscoveryType == CloudMapServiceDiscovery
 	CloudMapNamespace string
+
+	// If set, will not enable ipv6 on any of the pods. This is needed to handle
+	// testing on github actions, where ipv6 is not supported -
+	// https://github.com/actions/runner-images/issues/668.
+	DisableIPv6 bool
 }
 
 type ContainerInfo struct {
@@ -72,7 +78,7 @@ func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, c
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      labels,
-					Annotations: annotations,
+					Annotations: b.createDeploymentAnnotations(annotations),
 				},
 				Spec: corev1.PodSpec{
 					Containers: containers,
@@ -82,6 +88,17 @@ func (b *ManifestBuilder) BuildDeployment(instanceName string, replicas int32, c
 		},
 	}
 	return dp
+}
+
+func (b *ManifestBuilder) createDeploymentAnnotations(annotations map[string]string) map[string]string {
+	deploymentAnnotations := map[string]string{}
+	if b.DisableIPv6 {
+		deploymentAnnotations[inject.AppMeshIPV6Annotation] = "disabled"
+	}
+	for k, v := range annotations {
+		deploymentAnnotations[k] = v
+	}
+	return deploymentAnnotations
 }
 
 func (b *ManifestBuilder) BuildPodGroup(containers []corev1.Container, podGroupName string, podCount int) PodGroupInfo {
@@ -103,14 +120,23 @@ func (b *ManifestBuilder) BuildPod(containers []corev1.Container, labels map[str
 	name := utils.RandomDNS1123LabelWithPrefix("pod")
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: b.Namespace,
-			Name:      name,
-			Labels:    labels,
+			Namespace:   b.Namespace,
+			Name:        name,
+			Labels:      labels,
+			Annotations: b.createPodAnnotations(),
 		},
 		Spec: corev1.PodSpec{
 			Containers: containers,
 		},
 	}
+}
+
+func (b *ManifestBuilder) createPodAnnotations() map[string]string {
+	deploymentAnnotations := map[string]string{}
+	if b.DisableIPv6 {
+		deploymentAnnotations[inject.AppMeshIPV6Annotation] = "disabled"
+	}
+	return deploymentAnnotations
 }
 
 func (b *ManifestBuilder) BuildServiceWithSelector(instanceName string, containerPort int32, targetPort int) *corev1.Service {

@@ -33,6 +33,10 @@ const (
 	flagWaitUntilProxyReady        = "wait-until-proxy-ready"
 	flagFipsEndpoint               = "fips-endpoint"
 
+	flagEnvoyAwsAccessKeyId     = "envoy-aws-access-key-id"
+	flagEnvoyAwsSecretAccessKey = "envoy-aws-secret-access-key"
+	flagEnvoyAwsSessionToken    = "envoy-aws-session-token"
+
 	flagInitImage  = "init-image"
 	flagIgnoredIPs = "ignored-ips"
 
@@ -90,6 +94,10 @@ type Config struct {
 	EnvoyAdminAccessEnableIPv6 bool
 	WaitUntilProxyReady        bool
 	FipsEndpoint               bool
+
+	EnvoyAwsAccessKeyId     string
+	EnvoyAwsSecretAccessKey string
+	EnvoyAwsSessionToken    string
 
 	// Init container settings
 	InitImage  string
@@ -210,6 +218,12 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&cfg.WaitUntilProxyReady, flagWaitUntilProxyReady, false,
 		"Enable pod postStart hook to delay application startup until proxy is ready to accept traffic")
 	fs.BoolVar(&cfg.FipsEndpoint, flagFipsEndpoint, false, "Use Fips Endpoint")
+	fs.StringVar(&cfg.EnvoyAwsAccessKeyId, flagEnvoyAwsAccessKeyId, "",
+		"Access key for envoy container (for integration testing)")
+	fs.StringVar(&cfg.EnvoyAwsSecretAccessKey, flagEnvoyAwsSecretAccessKey, "",
+		"Secret access key for envoy container (for integration testing)")
+	fs.StringVar(&cfg.EnvoyAwsSessionToken, flagEnvoyAwsSessionToken, "",
+		"Session token for envoy container (for integration testing)")
 }
 
 func (cfg *Config) BindEnv() error {
