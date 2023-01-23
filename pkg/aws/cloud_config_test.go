@@ -72,3 +72,61 @@ func TestCloudConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAwsDualStackEndpoint(t *testing.T) {
+	c := CloudConfig{
+		UseAwsDualStackEndpoint: false,
+	}
+	var tests = []struct {
+		name                    string
+		useAwsDualStackEndpoint bool
+		want                    int
+	}{
+		{
+			name:                    "enabling Aws Service DualStackEndpoint",
+			useAwsDualStackEndpoint: true,
+			want:                    1,
+		},
+		{
+			name:                    "disabling Aws Service DualStackEndpoint",
+			useAwsDualStackEndpoint: false,
+			want:                    0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c.UseAwsDualStackEndpoint = tt.useAwsDualStackEndpoint
+			got := c.GetAwsDualStackEndpoint()
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestGetAwsFIPSEndpoint(t *testing.T) {
+	c := CloudConfig{
+		UseAwsFIPSEndpoint: false,
+	}
+	var tests = []struct {
+		name               string
+		useAwsFIPSEndpoint bool
+		want               int
+	}{
+		{
+			name:               "enabling Aws Service FipsEndpoint",
+			useAwsFIPSEndpoint: true,
+			want:               1,
+		},
+		{
+			name:               "disabling Aws Service FipsEndpoint",
+			useAwsFIPSEndpoint: false,
+			want:               0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c.UseAwsFIPSEndpoint = tt.useAwsFIPSEndpoint
+			got := c.GetAwsFIPSEndpoint()
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
