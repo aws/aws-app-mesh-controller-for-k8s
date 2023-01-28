@@ -5,6 +5,7 @@ import (
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
@@ -144,7 +145,7 @@ func Test_enqueueRequestsForVirtualGatewayEvents_Update(t *testing.T) {
 			queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 			h := &enqueueRequestsForVirtualGatewayEvents{
 				k8sClient: k8sClient,
-				log:       &log.NullLogger{},
+				log:       logr.New(&log.NullLogSink{}),
 			}
 
 			for _, gr := range tt.env.gatewayRoutes {
@@ -315,7 +316,7 @@ func Test_enqueueRequestsForVirtualGatewayEvents_enqueueGatewayRoutesForVirtualG
 			queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 			h := &enqueueRequestsForVirtualGatewayEvents{
 				k8sClient: k8sClient,
-				log:       &log.NullLogger{},
+				log:       logr.New(&log.NullLogSink{}),
 			}
 
 			for _, gr := range tt.env.gatewayRoutes {

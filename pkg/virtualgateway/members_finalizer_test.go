@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/equality"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
@@ -74,7 +75,7 @@ func Test_pendingMembersFinalizer_buildPendingMembersEventMessage(t *testing.T) 
 			m := &pendingMembersFinalizer{
 				k8sClient:     k8sClient,
 				eventRecorder: eventRecorder,
-				log:           &log.NullLogger{},
+				log:           logr.New(&log.NullLogSink{}),
 			}
 			got := m.buildPendingMembersEventMessage(ctx, tt.args.grMembers)
 			assert.Equal(t, tt.want, got)
@@ -190,7 +191,7 @@ func Test_pendingMembersFinalizer_findGatewayRouteMembers(t *testing.T) {
 			m := &pendingMembersFinalizer{
 				k8sClient:        k8sClient,
 				eventRecorder:    eventRecorder,
-				log:              &log.NullLogger{},
+				log:              logr.New(&log.NullLogSink{}),
 				evaluateInterval: pendingMembersFinalizerEvaluateInterval,
 			}
 
@@ -274,7 +275,7 @@ func Test_pendingMembersFinalizer_Finalize(t *testing.T) {
 			m := &pendingMembersFinalizer{
 				k8sClient:        k8sClient,
 				eventRecorder:    eventRecorder,
-				log:              &log.NullLogger{},
+				log:              logr.New(&log.NullLogSink{}),
 				evaluateInterval: pendingMembersFinalizerEvaluateInterval,
 			}
 			for _, gr := range tt.env.gatewayRoutes {

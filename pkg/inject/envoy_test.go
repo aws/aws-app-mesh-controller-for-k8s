@@ -238,14 +238,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -381,14 +381,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -523,14 +523,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -705,14 +705,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -859,14 +859,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
 									}},
@@ -1010,14 +1010,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -1157,14 +1157,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -1315,14 +1315,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -1498,14 +1498,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -1663,14 +1663,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -1806,14 +1806,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -1964,14 +1964,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -2129,14 +2129,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -2329,14 +2329,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
 									}},
@@ -2487,14 +2487,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -2649,14 +2649,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -2822,14 +2822,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Lifecycle: &corev1.Lifecycle{
 								PostStart: nil,
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -2967,7 +2967,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 								},
 							},
 							Lifecycle: &corev1.Lifecycle{
-								PostStart: &corev1.Handler{
+								PostStart: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "if [[ $(/usr/bin/envoy --version) =~ ([0-9]+)\\.([0-9]+)\\.([0-9]+)-appmesh\\.([0-9]+) && " +
 											"${BASH_REMATCH[1]} -ge 2 || (${BASH_REMATCH[1]} -ge 1 && ${BASH_REMATCH[2]} -gt 22) || (${BASH_REMATCH[1]} -ge 1 && " +
@@ -2977,14 +2977,14 @@ func Test_envoyMutator_mutate(t *testing.T) {
 											"is not supported in Envoy version < 1.22.2.1'; fi",
 									}},
 								},
-								PreStop: &corev1.Handler{
+								PreStop: &corev1.LifecycleHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "sleep 20",
 									}},
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",

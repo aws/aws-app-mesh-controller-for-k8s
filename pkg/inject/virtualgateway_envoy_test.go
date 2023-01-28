@@ -168,7 +168,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					Name:  "envoy",
 					Image: "envoy:v2",
 					ReadinessProbe: &corev1.Probe{
-						Handler: corev1.Handler{
+						ProbeHandler: corev1.ProbeHandler{
 
 							Exec: &corev1.ExecAction{Command: []string{
 								"sh", "-c", "curl -s http://localhost:8810/server_info | grep state | grep -q LIVE",
@@ -199,7 +199,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					Name:  "envoy",
 					Image: "envoy:v2",
 					ReadinessProbe: &corev1.Probe{
-						Handler: corev1.Handler{
+						ProbeHandler: corev1.ProbeHandler{
 
 							Exec: &corev1.ExecAction{Command: []string{
 								"sh", "-c", "curl -s http://localhost:8810/server_info | grep state | grep -q LIVE",
@@ -227,7 +227,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 					Name:  "envoy",
 					Image: "envoy:v2",
 					ReadinessProbe: &corev1.Probe{
-						Handler: corev1.Handler{
+						ProbeHandler: corev1.ProbeHandler{
 
 							Exec: &corev1.ExecAction{Command: []string{
 								"sh", "-c", "curl -s http://localhost:8810/server_info | grep state | grep -q LIVE",
@@ -372,7 +372,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -488,7 +488,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -609,7 +609,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -726,7 +726,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -843,7 +843,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -960,7 +960,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -1088,7 +1088,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -1247,7 +1247,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -1386,7 +1386,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -1520,7 +1520,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:9901/server_info | grep state | grep -q LIVE",
@@ -1633,7 +1633,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:8810/server_info | grep state | grep -q LIVE",
@@ -1752,7 +1752,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:8810/server_info | grep state | grep -q LIVE",
 									}},
@@ -1886,7 +1886,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:8810/server_info | grep state | grep -q LIVE",
@@ -2005,7 +2005,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 									Exec: &corev1.ExecAction{Command: []string{
 										"sh", "-c", "curl -s http://localhost:8810/server_info | grep state | grep -q LIVE",
 									}},
