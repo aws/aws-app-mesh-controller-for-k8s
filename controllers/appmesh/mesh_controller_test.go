@@ -6,6 +6,7 @@ import (
 	mock_mesh "github.com/aws/aws-app-mesh-controller-for-k8s/mocks/aws-app-mesh-controller-for-k8s/pkg/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -75,7 +76,7 @@ func Test_meshReconciler_reconcile(t *testing.T) {
 			err := k8sClient.Create(ctx, tt.args.ms.DeepCopy())
 			assert.NoError(t, err)
 
-			finalizerManager := k8s.NewDefaultFinalizerManager(k8sClient, &log.NullLogger{})
+			finalizerManager := k8s.NewDefaultFinalizerManager(k8sClient, logr.New(&log.NullLogSink{}))
 
 			recorder := record.NewFakeRecorder(3)
 
@@ -83,7 +84,7 @@ func Test_meshReconciler_reconcile(t *testing.T) {
 				k8sClient:        k8sClient,
 				finalizerManager: finalizerManager,
 				meshResManager:   meshResManager,
-				log:              log.NullLogger{},
+				log:              logr.New(&log.NullLogSink{}),
 				recorder:         recorder,
 			}
 

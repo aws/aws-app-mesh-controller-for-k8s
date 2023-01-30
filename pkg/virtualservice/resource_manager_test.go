@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-sdk-go/aws"
 	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -118,7 +119,7 @@ func Test_defaultResourceManager_updateCRDVirtualService(t *testing.T) {
 			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
 			m := &defaultResourceManager{
 				k8sClient: k8sClient,
-				log:       log.NullLogger{},
+				log:       logr.New(&log.NullLogSink{}),
 			}
 
 			err := k8sClient.Create(ctx, tt.args.vs.DeepCopy())
@@ -187,7 +188,7 @@ func Test_defaultResourceManager_isSDKVirtualServiceControlledByCRDVirtualServic
 			ctx := context.Background()
 			m := &defaultResourceManager{
 				accountID: tt.fields.accountID,
-				log:       &log.NullLogger{},
+				log:       logr.New(&log.NullLogSink{}),
 			}
 			got := m.isSDKVirtualServiceControlledByCRDVirtualService(ctx, tt.args.sdkVS, tt.args.vs)
 			assert.Equal(t, tt.want, got)
@@ -241,7 +242,7 @@ func Test_defaultResourceManager_isSDKVirtualServiceOwnedByCRDVirtualService(t *
 			ctx := context.Background()
 			m := &defaultResourceManager{
 				accountID: tt.fields.accountID,
-				log:       &log.NullLogger{},
+				log:       logr.New(&log.NullLogSink{}),
 			}
 			got := m.isSDKVirtualServiceControlledByCRDVirtualService(ctx, tt.args.sdkVS, tt.args.vs)
 			assert.Equal(t, tt.want, got)
@@ -530,7 +531,7 @@ func Test_defaultResourceManager_findMeshDependency(t *testing.T) {
 
 			m := &defaultResourceManager{
 				referencesResolver: resolver,
-				log:                log.NullLogger{},
+				log:                logr.New(&log.NullLogSink{}),
 			}
 
 			if tt.fields.ResolveMeshReference != nil {
@@ -604,7 +605,7 @@ func Test_defaultResourceManager_validateMeshDependency(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			m := &defaultResourceManager{
-				log: log.NullLogger{},
+				log: logr.New(&log.NullLogSink{}),
 			}
 
 			err := m.validateMeshDependencies(ctx, tt.args.mesh)
@@ -710,7 +711,7 @@ func Test_defaultResourceManager_findVirtualNodeDependencies(t *testing.T) {
 
 			m := &defaultResourceManager{
 				referencesResolver: resolver,
-				log:                log.NullLogger{},
+				log:                logr.New(&log.NullLogSink{}),
 			}
 
 			if tt.fields.ResolveVirtualNodeReference != nil {
@@ -865,7 +866,7 @@ func Test_defaultResourceManager_findVirtualRouterDependencies(t *testing.T) {
 
 			m := &defaultResourceManager{
 				referencesResolver: resolver,
-				log:                log.NullLogger{},
+				log:                logr.New(&log.NullLogSink{}),
 			}
 
 			if tt.fields.ResolveVirtualRouterReference != nil {

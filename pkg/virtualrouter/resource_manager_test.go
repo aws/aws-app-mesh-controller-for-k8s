@@ -2,6 +2,7 @@ package virtualrouter
 
 import (
 	"context"
+	"github.com/go-logr/logr"
 	"testing"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
@@ -203,7 +204,7 @@ func Test_defaultResourceManager_updateCRDVirtualRouter(t *testing.T) {
 			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
 			m := &defaultResourceManager{
 				k8sClient: k8sClient,
-				log:       log.NullLogger{},
+				log:       logr.New(&log.NullLogSink{}),
 			}
 
 			err := k8sClient.Create(ctx, tt.args.vr.DeepCopy())
@@ -272,7 +273,7 @@ func Test_defaultResourceManager_isSDKVirtualRouterControlledByCRDVirtualRouter(
 			ctx := context.Background()
 			m := &defaultResourceManager{
 				accountID: tt.fields.accountID,
-				log:       &log.NullLogger{},
+				log:       logr.New(&log.NullLogSink{}),
 			}
 			got := m.isSDKVirtualRouterControlledByCRDVirtualRouter(ctx, tt.args.sdkVR, tt.args.vr)
 			assert.Equal(t, tt.want, got)
@@ -326,7 +327,7 @@ func Test_defaultResourceManager_isSDKVirtualRouterOwnedByCRDVirtualRouter(t *te
 			ctx := context.Background()
 			m := &defaultResourceManager{
 				accountID: tt.fields.accountID,
-				log:       &log.NullLogger{},
+				log:       logr.New(&log.NullLogSink{}),
 			}
 			got := m.isSDKVirtualRouterOwnedByCRDVirtualRouter(ctx, tt.args.sdkVR, tt.args.vr)
 			assert.Equal(t, tt.want, got)
@@ -514,7 +515,7 @@ func Test_defaultResourceManager_findMeshDependency(t *testing.T) {
 
 			m := &defaultResourceManager{
 				referencesResolver: resolver,
-				log:                log.NullLogger{},
+				log:                logr.New(&log.NullLogSink{}),
 			}
 
 			if tt.fields.ResolveMeshReference != nil {
@@ -588,7 +589,7 @@ func Test_defaultResourceManager_validateMeshDependency(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			m := &defaultResourceManager{
-				log: log.NullLogger{},
+				log: logr.New(&log.NullLogSink{}),
 			}
 
 			err := m.validateMeshDependencies(ctx, tt.args.mesh)
@@ -746,7 +747,7 @@ func Test_defaultResourceManager_findVirtualNodeDependencies(t *testing.T) {
 
 			m := &defaultResourceManager{
 				referencesResolver: resolver,
-				log:                log.NullLogger{},
+				log:                logr.New(&log.NullLogSink{}),
 			}
 
 			if tt.fields.ResolveVirtualNodeReference != nil {

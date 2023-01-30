@@ -205,7 +205,7 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (core
 		},
 		Lifecycle: &corev1.Lifecycle{
 			PostStart: nil,
-			PreStop: &corev1.Handler{
+			PreStop: &corev1.LifecycleHandler{
 				Exec: &corev1.ExecAction{Command: []string{
 					"sh", "-c", fmt.Sprintf("sleep %s", vars.PreStopDelay),
 				}},
@@ -214,7 +214,7 @@ func buildEnvoySidecar(vars EnvoyTemplateVariables, env map[string]string) (core
 	}
 
 	if vars.WaitUntilProxyReady {
-		envoy.Lifecycle.PostStart = &corev1.Handler{
+		envoy.Lifecycle.PostStart = &corev1.LifecycleHandler{
 			Exec: &corev1.ExecAction{Command: []string{
 				// use bash regex and rematch to parse and check envoy version is >= 1.22.2.1
 				"sh", "-c", fmt.Sprintf("if [[ $(/usr/bin/envoy --version) =~ ([0-9]+)\\.([0-9]+)\\.([0-9]+)-appmesh\\.([0-9]+) && "+
@@ -260,7 +260,7 @@ func getEnvoyEnv(env map[string]string) []corev1.EnvVar {
 func envoyReadinessProbe(initialDelaySeconds int32, periodSeconds int32, adminAccessPort string) *corev1.Probe {
 	envoyReadinessCommand := "curl -s http://localhost:" + adminAccessPort + "/server_info | grep state | grep -q LIVE"
 	return &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 
 			// server_info returns the following struct:
 			// {

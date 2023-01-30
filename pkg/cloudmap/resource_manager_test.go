@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -90,7 +91,7 @@ func Test_defaultResourceManager_updateCRDVirtualNode(t *testing.T) {
 			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
 			m := &defaultResourceManager{
 				k8sClient: k8sClient,
-				log:       log.NullLogger{},
+				log:       logr.New(&log.NullLogSink{}),
 			}
 
 			err := k8sClient.Create(ctx, tt.args.vn.DeepCopy())
@@ -159,7 +160,7 @@ func Test_defaultResourceManager_isCloudMapServiceCreated(t *testing.T) {
 			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
 			m := &defaultResourceManager{
 				k8sClient: k8sClient,
-				log:       log.NullLogger{},
+				log:       logr.New(&log.NullLogSink{}),
 			}
 
 			err := k8sClient.Create(ctx, tt.args.vn.DeepCopy())
@@ -256,7 +257,7 @@ func Test_defaultResourceManager_reconcile_arePodsReconciled(t *testing.T) {
 
 			m := &defaultResourceManager{
 				k8sClient:                   k8sClient,
-				log:                         log.NullLogger{},
+				log:                         logr.New(&log.NullLogSink{}),
 				referencesResolver:          referencesResolver,
 				namespaceSummaryCache:       cache.NewLRUExpireCache(1),
 				serviceSummaryCache:         cache.NewLRUExpireCache(1),
