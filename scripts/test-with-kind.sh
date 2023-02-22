@@ -87,7 +87,7 @@ ENVOY_LATEST_TAG="v1.25.1.0-prod"
 ENVOY_1_22_TAG="v1.22.2.0-prod"
 
 PROXY_ROUTE_IMAGE="$IMAGE_HOST/aws-appmesh-proxy-route-manager"
-PROXY_ROUTE_TAG="v6-prod"
+PROXY_ROUTE_TAG="v7-prod"
 
 function install_crds {
     echo "installing CRDs ... "
