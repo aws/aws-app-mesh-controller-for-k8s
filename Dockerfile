@@ -35,7 +35,7 @@ RUN GIT_VERSION=$(git describe --tags --dirty --always) && \
     -ldflags="-X ${VERSION_PKG}.GitVersion=${GIT_VERSION} -X ${VERSION_PKG}.GitCommit=${GIT_COMMIT} -X ${VERSION_PKG}.BuildDate=${BUILD_DATE}" -a -o controller main.go
 
 # Build the container image
-FROM public.ecr.aws/eks-distro-build-tooling/eks-distro-minimal-base:2021-10-19-1634675452
+FROM public.ecr.aws/eks-distro-build-tooling/eks-distro-minimal-base:latest-al2
 
 WORKDIR /
 COPY --from=builder /workspace/controller .
