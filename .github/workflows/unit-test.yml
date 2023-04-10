@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     name: unit-test
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
     - name: setup go 1.17
       uses: actions/setup-go@v3
