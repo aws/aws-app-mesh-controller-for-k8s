@@ -105,7 +105,7 @@ require (
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
-	github.com/opencontainers/runc v1.1.2 // indirect
+	github.com/opencontainers/runc v1.1.5 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
@@ -160,6 +160,6 @@ require (
 replace (
 	github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
 	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
-	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
+	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.5
 	golang.org/x/sys => golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40
 )
