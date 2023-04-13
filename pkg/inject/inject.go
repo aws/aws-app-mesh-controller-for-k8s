@@ -168,10 +168,6 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				xRayLogLevel:          m.config.XrayLogLevel,
 				xRayConfigRoleArn:     m.config.XrayConfigRoleArn,
 			}, m.config.EnableXrayTracing),
-			newJaegerMutator(jaegerMutatorConfig{
-				jaegerAddress: m.config.JaegerAddress,
-				jaegerPort:    m.config.JaegerPort,
-			}, m.config.EnableJaegerTracing),
 			newCloudMapHealthyReadinessGate(vn),
 			newIAMForServiceAccountsMutator(m.config.EnableIAMForServiceAccounts),
 			newECRSecretMutator(m.config.EnableECRSecret),
@@ -224,10 +220,6 @@ func (m *SidecarInjector) injectAppMeshPatches(ms *appmesh.Mesh, vn *appmesh.Vir
 				xRayLogLevel:          m.config.XrayLogLevel,
 				xRayConfigRoleArn:     m.config.XrayConfigRoleArn,
 			}, m.config.EnableXrayTracing),
-			newJaegerMutator(jaegerMutatorConfig{
-				jaegerAddress: m.config.JaegerAddress,
-				jaegerPort:    m.config.JaegerPort,
-			}, m.config.EnableJaegerTracing),
 		}
 	}
 
