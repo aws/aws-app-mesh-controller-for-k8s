@@ -169,7 +169,7 @@ func (m *defaultManager) checkVirtualNodeBackends(ctx context.Context, ms *appme
 		return err
 	}
 
-	less := func(a, b appmeshsdk.Backend) bool {
+	less := func(a, b *appmeshsdk.Backend) bool {
 		return *a.VirtualService.VirtualServiceName < *b.VirtualService.VirtualServiceName
 	}
 	if cmp.Equal(desiredSDKVNSpec.Backends, resp.VirtualNode.Spec.Backends, cmpopts.SortSlices(less)) {
