@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap"
 	appsv1 "k8s.io/api/apps/v1"
