@@ -240,6 +240,10 @@ func (m *defaultManager) checkVirtualNodeInCloudMapWithExpectedRegistrations(ctx
 		return err
 	}
 
+	if nsSummary == nil {
+		return fmt.Errorf("failed to find namespace '%s'", cloudMapConfig.NamespaceName)
+	}
+
 	//Get ServiceInfo from CloudMap
 	listServicesInput := &servicediscovery.ListServicesInput{
 		Filters: []*servicediscovery.ServiceFilter{
@@ -262,6 +266,10 @@ func (m *defaultManager) checkVirtualNodeInCloudMapWithExpectedRegistrations(ctx
 		},
 	); err != nil {
 		return err
+	}
+
+	if sdkSVCSummary == nil {
+		return fmt.Errorf("failed to find service summary for '%s'", cloudMapConfig.ServiceName)
 	}
 
 	listInstancesInput := &servicediscovery.ListInstancesInput{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	appmeshk8s "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/servicediscovery"
 	. "github.com/onsi/ginkgo"
@@ -13,20 +14,19 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	"sync"
 	"time"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/utils"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/mesh"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/virtualnode"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -974,15 +974,51 @@ var _ = Describe("VirtualNode", func() {
 					Vpc:  aws.String(f.Options.AWSVPCID),
 				})
 				Expect(err).NotTo(HaveOccurred())
-				f.Logger.Info("created cloudMap namespace",
+				f.Logger.Info("initiated creation of cloudMap namespace",
 					zap.String("namespace", cmNamespace),
 					zap.String("operationID", aws.StringValue(resp.OperationId)),
 				)
 				vnTest.CloudMapNameSpace = cmNamespace
-			})
 
-			//Allow CloudMap Namespace to sync
-			time.Sleep(30 * time.Second)
+				deadline := time.Now().Add(120 * time.Second)
+				for {
+					operationResp, err := f.CloudMapClient.GetOperationWithContext(ctx, &servicediscovery.GetOperationInput{
+						OperationId: resp.OperationId,
+					})
+					Expect(err).NotTo(HaveOccurred())
+
+					if *operationResp.Operation.Status == "SUCCESS" {
+						nsResp, err := f.CloudMapClient.GetNamespaceWithContext(ctx, &servicediscovery.GetNamespaceInput{
+							Id: operationResp.Operation.Targets["NAMESPACE"],
+						})
+						Expect(err).NotTo(HaveOccurred())
+						f.Logger.Info("created cloudMap namespace",
+							zap.Any("namespace", nsResp.Namespace),
+							zap.String("operationID", aws.StringValue(resp.OperationId)),
+						)
+						break
+					}
+
+					if *operationResp.Operation.Status == "FAIL" {
+						err := fmt.Errorf("failure creating namespace: %s - %s",
+							*operationResp.Operation.ErrorCode,
+							*operationResp.Operation.ErrorMessage)
+						Expect(err).NotTo(HaveOccurred())
+						break
+					}
+
+					now := time.Now()
+					if now.After(deadline) {
+						err := fmt.Errorf("reached wait limit for namespace initialization: terminating. This may require manual cleanup")
+						Expect(err).NotTo(HaveOccurred())
+						break
+					}
+
+					f.Logger.Debug("CloudMap namespacing pending")
+					time.Sleep(3 * time.Second)
+				}
+
+			})
 
 			vnBuilder = &manifest.VNBuilder{
 				ServiceDiscoveryType: manifest.CloudMapServiceDiscovery,
