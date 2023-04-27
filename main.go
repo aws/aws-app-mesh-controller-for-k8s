@@ -154,7 +154,7 @@ func main() {
 		Port:                       9443,
 		LeaderElection:             enableLeaderElection,
 		LeaderElectionID:           "appmesh-controller-leader-election",
-		LeaderElectionResourceLock: resourcelock.ConfigMapsResourceLock,
+		LeaderElectionResourceLock: resourcelock.ConfigMapsLeasesResourceLock,
 		HealthProbeBindAddress:     healthProbeBindAddress,
 	})
 
