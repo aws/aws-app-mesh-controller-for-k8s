@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:experimental
 
 # Build the controller binary
-FROM --platform=${BUILDPLATFORM} golang:1.17 as builder
+FROM --platform=${BUILDPLATFORM} golang:1.20 as builder
 
 WORKDIR /workspace
 
