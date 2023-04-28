@@ -160,7 +160,7 @@ function run_integration_tests {
     kubectl get pod -n appmesh-system
 
     echo -n "running integration test type $__test ... "
-    ginkgo --flakeAttempts=2 -vv -r $__test_dir -- \
+    ginkgo --flakeAttempts=2 -v -r $__test_dir -- \
       --cluster-kubeconfig="$KUBECONFIG" \
       --cluster-name="$CLUSTER_NAME" \
       --aws-region="$AWS_REGION" \

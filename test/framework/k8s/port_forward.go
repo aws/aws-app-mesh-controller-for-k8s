@@ -3,7 +3,7 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"

@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/integration/tls"
-	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/ginkgo"
 )
 
 var _ = Describe("tls feature test", func() {
