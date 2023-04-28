@@ -7,7 +7,7 @@ import (
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/e2e/fishapp"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/manifest"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 )
 
 var _ = Describe("test dynamically generated symmetrical mesh", func() {

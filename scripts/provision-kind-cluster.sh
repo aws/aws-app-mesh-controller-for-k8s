@@ -84,3 +84,4 @@ done
 echo "ok."
 
 echo "$cluster_name" > $TMP_DIR/clustername
+
