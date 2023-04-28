@@ -18,14 +18,16 @@ check_is_installed kind "You can install kind with the helper scripts/install-ki
 OVERRIDE_PATH=0
 KIND_CONFIG_FILE="$SCRIPTS_DIR/kind-two-node-cluster.yaml"
 
+K8_1_26="kindest/node:v1.26.3@sha256:94eb63275ad6305210041cdb5aca87c8562cc50fa152dbec3fef8c58479db4ff"
+K8_1_25="kindest/node:v1.25.8@sha256:b5ce984f5651f44457edf263c1fe93459df8d5d63db7f108ccf5ea4b8d4d9820"
+K8_1_24="kindest/node:v1.24.12@sha256:0bdca26bd7fe65c823640b14253ea7bac4baad9336b332c94850f84d8102f873"
+K8_1_23="kindest/node:v1.23.17@sha256:f935044f60483d33648d8c13decd79557cf3e916363a3c9ba7e82332cb249cba"
+K8_1_22="kindest/node:v1.22.17@sha256:ed0f6a1cd1dcc0ff8b66257b3867e4c9e6a54adeb9ca31005f62638ad555315c"
+K8_1_21="kindest/node:v1.21.14@sha256:75047f07ef306beff928fdc1f171a8b81fae1628f7515bdabc4fc9c31b698d6b"
+K8_1_20="kindest/node:v1.20.15@sha256:cceb1bfeb9fe7c65e344a6372ef6ef4a349d6d7aefba621b822f44cff0070cfd"
 K8_1_19="kindest/node:v1.19.4@sha256:796d09e217d93bed01ecf8502633e48fd806fe42f9d02fdd468b81cd4e3bd40b"
-K8_1_18="kindest/node:v1.18.4@sha256:9ddbe5ba7dad96e83aec914feae9105ac1cffeb6ebd0d5aa42e820defe840fd4"
-K8_1_17="kindest/node:v1.17.5@sha256:ab3f9e6ec5ad8840eeb1f76c89bb7948c77bbf76bcebe1a8b59790b8ae9a283a"
-K8_1_16="kindest/node:v1.16.9@sha256:7175872357bc85847ec4b1aba46ed1d12fa054c83ac7a8a11f5c268957fd5765"
-K8_1_15="kindest/node:v1.15.11@sha256:6cc31f3533deb138792db2c7d1ffc36f7456a06f1db5556ad3b6927641016f50"
-K8_1_14="kindest/node:v1.14.10@sha256:6cd43ff41ae9f02bb46c8f455d5323819aec858b99534a290517ebc181b443c6"
 
-K8_VERSION="$K8_1_16"
+K8_VERSION="$K8_1_23"
 
 USAGE="
 Usage:
