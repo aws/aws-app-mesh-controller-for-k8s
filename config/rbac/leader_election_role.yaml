@@ -4,28 +4,44 @@ kind: Role
 metadata:
   name: leader-election-role
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - list
-  - watch
-  - create
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  resourceNames:
-  - appmesh-controller-leader-election
-  verbs:
-  - get
-  - update
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - list
+      - watch
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    resourceNames:
+      - appmesh-controller-leader-election
+    verbs:
+      - get
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+      - apiGroups:
+          - "coordination.k8s.io"
+        resources:
+          - leases
+        verbs:
+          - create
+      - apiGroups:
+          - "coordination.k8s.io"
+        resources:
+          - leases
+        resourceNames:
+          - appmesh-controller-leader-election
+        verbs:
+          - get
+          - update
+          - patch
