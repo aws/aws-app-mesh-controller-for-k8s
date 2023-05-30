@@ -12,9 +12,25 @@ permissions:
 
 jobs:
 
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          ref: refs/tags/${{ github.event.inputs.tag }}
+      - name: Run integration test action
+        uses: ./.github/actions/integration-test
+        with:
+          aws_role: "${{ secrets.BETA_TEST_AWS_ROLE }}"
+          vpc_id: "${{ secrets.INTEG_TEST_VPC }}"
+          account_id: "${{ secrets.BETA_AWS_ACCOUNT }}"
+
   push-images:
     name: Build And Push Images
     runs-on: ubuntu-22.04
+    needs: [ integration-test ]
     steps:
       - name: Clean
         run: |
@@ -33,15 +49,11 @@ jobs:
 
       - name: Build Images
         env:
-          IMAGE_HOST: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
-          IMAGE: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller"
-          IMAGE_TAG: "${{ github.event.inputs.tag }}"
-          IMAGE_TAG_AMD: "${{ github.event.inputs.tag }}-linux_amd64"
-          IMAGE_TAG_ARM: "${{ github.event.inputs.tag }}-linux_arm64"
+          IMAGE: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}"
         run: |
           aws ecr get-login-password --region us-west-2 | \
-            docker login --username AWS --password-stdin $IMAGE_HOST
-          docker buildx build --platform linux/amd64 -t "$IMAGE:$IMAGE_TAG_AMD" . --push
-          docker buildx build --platform linux/arm64 -t "$IMAGE:$IMAGE_TAG_ARM" . --push
-          docker manifest create "$IMAGE:$IMAGE_TAG" "$IMAGE:$IMAGE_TAG_AMD" "$IMAGE:$IMAGE_TAG_ARM"
-          docker manifest push "$IMAGE:$IMAGE_TAG"
+            docker login --username AWS --password-stdin "${IMAGE}"
+          docker buildx build --platform linux/amd64 -t "${IMAGE}-linux_amd64" . --push
+          docker buildx build --platform linux/arm64 -t "${IMAGE}-linux_arm64" . --push
+          docker manifest create "${IMAGE}" "${IMAGE}-linux_amd64" "${IMAGE}-linux_arm64"
+          docker manifest push "${IMAGE}"

@@ -33,7 +33,7 @@ jobs:
           SRC: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com/amazon/appmesh-controller:${{ github.event.inputs.tag }}"
         run: |
           aws ecr get-login-password --region "us-west-2" | \
-            docker login --username AWS --password-stdin "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+            docker login --username AWS --password-stdin "${SRC}"
           docker pull "${SRC}-linux_amd64" 
           docker pull "${SRC}-linux_arm64" 
 
