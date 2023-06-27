@@ -333,8 +333,8 @@ func Convert_CRD_GRPCRouteMatch_To_SDK_GrpcRouteMatch(crdObj *appmesh.GRPCRouteM
 	sdkObj.Metadata = sdkMetadataList
 	sdkObj.MethodName = crdObj.MethodName
 	sdkObj.ServiceName = crdObj.ServiceName
+	sdkObj.Port = crdObj.Port
 	return nil
-
 }
 
 func Convert_CRD_GRPCRouteAction_To_SDK_GrpcRouteAction(crdObj *appmesh.GRPCRouteAction,

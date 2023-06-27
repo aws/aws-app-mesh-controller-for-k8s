@@ -1453,8 +1453,8 @@ func TestConvert_CRD_GRPCRouteMatch_To_SDK_GrpcRouteMatch(t *testing.T) {
 					},
 					MethodName:  aws.String("stream"),
 					ServiceName: aws.String("foo.foodomain.local"),
+					Port:        aws.Int64(9090),
 				},
-
 				sdkObj: &appmeshsdk.GrpcRouteMatch{},
 				scope:  nil,
 			},
@@ -1491,6 +1491,7 @@ func TestConvert_CRD_GRPCRouteMatch_To_SDK_GrpcRouteMatch(t *testing.T) {
 				},
 				MethodName:  aws.String("stream"),
 				ServiceName: aws.String("foo.foodomain.local"),
+				Port:        aws.Int64(9090),
 			},
 		},
 		{
