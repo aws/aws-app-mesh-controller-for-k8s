@@ -193,8 +193,8 @@ func validateHTTPRouteRewrite(rewrite *appmesh.HTTPGatewayRouteRewrite, match ap
 		return errors.New("Both prefix and path for rewrites cannot be specified. Only 1 allowed")
 	}
 	if rewrite.Prefix != nil {
-		if match.Prefix != nil && (!strings.HasSuffix(*match.Prefix, "/") || !strings.HasPrefix(*match.Prefix, "/")) {
-			return errors.New("Prefix to be matched on must start and end with '/'")
+		if match.Prefix != nil && !strings.HasPrefix(*match.Prefix, "/") {
+			return errors.New("Prefix to be matched on must start with '/'")
 		}
 		return validatePrefixRewrite(rewrite.Prefix)
 	}
