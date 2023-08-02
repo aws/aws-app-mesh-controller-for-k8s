@@ -341,18 +341,6 @@ func Test_gatewayRouteValidator_validateHTTPRouteRewrite(t *testing.T) {
 			wantErr: errors.New("Both prefix and path for rewrites cannot be specified. Only 1 allowed"),
 		},
 		{
-			name: "Incorrect Prefix Match format",
-			match: appmesh.HTTPGatewayRouteMatch{
-				Prefix: aws.String("/red"),
-			},
-			rewrite: appmesh.HTTPGatewayRouteRewrite{
-				Prefix: &appmesh.GatewayRoutePrefixRewrite{
-					Value: aws.String("/test/"),
-				},
-			},
-			wantErr: errors.New("Prefix to be matched on must start and end with '/'"),
-		},
-		{
 			name: "Incorrect Prefix Rewrite format",
 			match: appmesh.HTTPGatewayRouteMatch{
 				Prefix: aws.String("/red/"),
@@ -374,7 +362,7 @@ func Test_gatewayRouteValidator_validateHTTPRouteRewrite(t *testing.T) {
 					Value: aws.String("/test/"),
 				},
 			},
-			wantErr: errors.New("Prefix to be matched on must start and end with '/'"),
+			wantErr: errors.New("Prefix to be matched on must start with '/'"),
 		},
 		{
 			name: "Incorrect Prefix Rewrite format - case2",
