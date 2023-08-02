@@ -362,7 +362,7 @@ func Test_gatewayRouteValidator_validateHTTPRouteRewrite(t *testing.T) {
 					Value: aws.String("/test/"),
 				},
 			},
-			wantErr: errors.New("Prefix to be matched on must start and end with '/'"),
+			wantErr: errors.New("Prefix to be matched on must start with '/'"),
 		},
 		{
 			name: "Incorrect Prefix Rewrite format - case2",
