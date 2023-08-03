@@ -127,3 +127,21 @@ jobs:
           image_tag: "${{ github.event.inputs.tag }}"
           region: "il-central-1"
           role: "${{ secrets.PROD_TLV_AWS_ROLE }}"
+
+      - name: Deploy Images to PDT
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "${{ secrets.PROD_PDT_AWS_ACCOUNT }}.dkr.ecr.us-gov-west-1.amazonaws.com"
+          image_tag: "${{ github.event.inputs.tag }}"
+          region: "us-gov-west-1"
+          role: "${{ secrets.PROD_PDT_AWS_ROLE }}"
+
+      - name: Deploy Images to OSU
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "${{ secrets.PROD_OSU_AWS_ACCOUNT }}.dkr.ecr.us-gov-east-1.amazonaws.com"
+          image_tag: "${{ github.event.inputs.tag }}"
+          region: "us-gov-east-1"
+          role: "${{ secrets.PROD_OSU_AWS_ROLE }}"
