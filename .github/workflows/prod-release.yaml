@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'The tag for this release (must already be pushed).'
+        description: "The tag for this release (must already be pushed)."
         required: true
 
 permissions:
@@ -35,7 +35,7 @@ jobs:
           aws ecr get-login-password --region "us-west-2" | \
             docker login --username AWS --password-stdin "${SRC}"
           docker pull "${SRC}-linux_amd64" 
-          docker pull "${SRC}-linux_arm64" 
+          docker pull "${SRC}-linux_arm64"
 
       - name: Deploy Images To ECR Public
         uses: ./.github/actions/push-image
@@ -118,3 +118,12 @@ jobs:
           image_tag: "${{ github.event.inputs.tag }}"
           region: "cn-northwest-1"
           role: "${{ secrets.PROD_ZHY_AWS_ROLE }}"
+
+      - name: Deploy Images to TLV
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "${{ secrets.PROD_TLV_AWS_ACCOUNT }}.dkr.ecr.il-central-1.amazonaws.com"
+          image_tag: "${{ github.event.inputs.tag }}"
+          region: "il-central-1"
+          role: "${{ secrets.PROD_TLV_AWS_ROLE }}"
