@@ -150,7 +150,7 @@ type TCPRouteAction struct {
 // TCPRoute refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_TcpRoute.html
 type TCPRoute struct {
 	// An object that represents the criteria for determining a request match.
-	Match TCPRouteMatch `json:"match"`
+	Match *TCPRouteMatch `json:"match,omitempty"`
 	// The action to take if a match is determined.
 	Action TCPRouteAction `json:"action"`
 	// An object that represents a tcp timeout.
