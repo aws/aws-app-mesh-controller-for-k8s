@@ -691,7 +691,6 @@ func Test_BuildSDKRouteSpec(t *testing.T) {
 							},
 						},
 					},
-					Match: &appmeshsdk.TcpRouteMatch{},
 				},
 			},
 		},

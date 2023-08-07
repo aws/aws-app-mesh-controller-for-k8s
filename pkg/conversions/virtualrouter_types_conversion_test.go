@@ -1139,7 +1139,7 @@ func TestConvert_CRD_TCPRoute_To_SDK_TcpRoute(t *testing.T) {
 			name: "normal case",
 			args: args{
 				crdObj: &appmesh.TCPRoute{
-					Match: appmesh.TCPRouteMatch{
+					Match: &appmesh.TCPRouteMatch{
 						Port: aws.Int64(8080),
 					},
 					Action: appmesh.TCPRouteAction{
@@ -2471,7 +2471,7 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 								},
 							},
 						},
-						Match: appmesh.TCPRouteMatch{
+						Match: &appmesh.TCPRouteMatch{
 							Port: aws.Int64(8080),
 						},
 					},
@@ -2976,7 +2976,6 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 							},
 						},
 					},
-					Match: &appmeshsdk.TcpRouteMatch{},
 				},
 				Priority: nil,
 			},
@@ -3276,7 +3275,6 @@ func TestConvert_CRD_Route_To_SDK_RouteSpec(t *testing.T) {
 							},
 						},
 					},
-					Match: &appmeshsdk.TcpRouteMatch{},
 				},
 				Priority: aws.Int64(400),
 			},

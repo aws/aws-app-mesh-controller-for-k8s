@@ -255,11 +255,14 @@ func Convert_CRD_TCPRouteMatch_To_SDK_TCPRouteMatch(crdObj *appmesh.TCPRouteMatc
 func Convert_CRD_TCPRoute_To_SDK_TcpRoute(crdObj *appmesh.TCPRoute,
 	sdkObj *appmeshsdk.TcpRoute, scope conversion.Scope) error {
 
-	sdkObj.Match = &appmeshsdk.TcpRouteMatch{}
-	if err := Convert_CRD_TCPRouteMatch_To_SDK_TCPRouteMatch(&crdObj.Match, sdkObj.Match, scope); err != nil {
-		return err
+	if crdObj.Match != nil {
+		sdkObj.Match = &appmeshsdk.TcpRouteMatch{}
+		if err := Convert_CRD_TCPRouteMatch_To_SDK_TCPRouteMatch(crdObj.Match, sdkObj.Match, scope); err != nil {
+			return err
+		}
+	} else {
+		sdkObj.Match = nil
 	}
-
 	sdkObj.Action = &appmeshsdk.TcpRouteAction{}
 	if err := Convert_CRD_TCPRouteAction_To_SDK_TcpRouteAction(&crdObj.Action, sdkObj.Action, scope); err != nil {
 		return err
