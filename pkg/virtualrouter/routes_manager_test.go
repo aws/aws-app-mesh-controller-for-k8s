@@ -694,6 +694,72 @@ func Test_BuildSDKRouteSpec(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "TCP route with Match",
+			args: args{
+				vr: &appmesh.VirtualRouter{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: "my-ns",
+					},
+				},
+				route: appmesh.Route{
+					TCPRoute: &appmesh.TCPRoute{
+						Action: appmesh.TCPRouteAction{
+							WeightedTargets: []appmesh.WeightedTarget{
+								{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
+										Namespace: aws.String("ns-1"),
+										Name:      "vn-1",
+									},
+									Weight: int64(100),
+								},
+								{
+									VirtualNodeRef: &appmesh.VirtualNodeReference{
+										Namespace: aws.String("ns-2"),
+										Name:      "vn-2",
+									},
+									Weight: int64(90),
+								},
+							},
+						},
+						Match: &appmesh.TCPRouteMatch{
+							Port: aws.Int64(8080),
+						},
+					},
+				},
+				vnByKey: map[types.NamespacedName]*appmesh.VirtualNode{
+					types.NamespacedName{Namespace: "ns-1", Name: "vn-1"}: {
+						Spec: appmesh.VirtualNodeSpec{
+							AWSName: aws.String("vn-1_ns-1"),
+						},
+					},
+					types.NamespacedName{Namespace: "ns-2", Name: "vn-2"}: {
+						Spec: appmesh.VirtualNodeSpec{
+							AWSName: aws.String("vn-2_ns-2"),
+						},
+					},
+				},
+			},
+			want: &appmeshsdk.RouteSpec{
+				TcpRoute: &appmeshsdk.TcpRoute{
+					Action: &appmeshsdk.TcpRouteAction{
+						WeightedTargets: []*appmeshsdk.WeightedTarget{
+							{
+								VirtualNode: aws.String("vn-1_ns-1"),
+								Weight:      aws.Int64(100),
+							},
+							{
+								VirtualNode: aws.String("vn-2_ns-2"),
+								Weight:      aws.Int64(90),
+							},
+						},
+					},
+					Match: &appmeshsdk.TcpRouteMatch{
+						Port: aws.Int64(8080),
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

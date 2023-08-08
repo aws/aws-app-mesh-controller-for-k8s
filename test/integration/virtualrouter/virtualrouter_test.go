@@ -173,6 +173,47 @@ var _ = Describe("VirtualRouter", func() {
 
 			})
 
+			tcpRouteCfgsWithMatch := []manifest.TcpRouteToWeightedVirtualNodes{{
+				WeightedTargets: weightedTargets,
+				Match:           vrBuilder.BuildTcpRouteMatch(aws.Int64(8080)),
+			},
+			}
+			tcpRoutes := vrBuilder.TcpBuildRoutes(tcpRouteCfgsWithMatch)
+			vrBuilder.Listeners = []appmesh.VirtualRouterListener{vrBuilder.BuildVirtualRouterListener("tcp", 8080)}
+			vrName = fmt.Sprintf("vr-%s", utils.RandomDNS1123Label(8))
+			vr = vrBuilder.BuildVirtualRouter(vrName, tcpRoutes)
+
+			By("Creating a virtual router resource with TCP listener and Port Match in k8s", func() {
+				err := vrTest.Create(ctx, f, vr)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Validating the virtual router with TCP listener and Port Match in AWS", func() {
+				err := vrTest.CheckInAWS(ctx, f, mesh, vr)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
+			tcpRouteCfgsWithoutMatch := []manifest.TcpRouteToWeightedVirtualNodes{{
+				WeightedTargets: weightedTargets,
+			},
+			}
+			tcpRoutes = vrBuilder.TcpBuildRoutes(tcpRouteCfgsWithoutMatch)
+			vrBuilder.Listeners = []appmesh.VirtualRouterListener{vrBuilder.BuildVirtualRouterListener("tcp", 8080)}
+			vrName = fmt.Sprintf("vr-%s", utils.RandomDNS1123Label(8))
+			vr = vrBuilder.BuildVirtualRouter(vrName, tcpRoutes)
+
+			By("Creating a virtual router resource with TCP listener and Port Match in k8s", func() {
+				err := vrTest.Create(ctx, f, vr)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Validating the virtual router with TCP listener and Port Match in AWS", func() {
+				err := vrTest.CheckInAWS(ctx, f, mesh, vr)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+
 			routes = vrBuilder.BuildRoutes(routeCfgs)
 			vrBuilder.Listeners = []appmesh.VirtualRouterListener{vrBuilder.BuildVirtualRouterListener("http", 8080)}
 			vrName = fmt.Sprintf("vr-%s", utils.RandomDNS1123Label(8))
@@ -355,6 +396,79 @@ var _ = Describe("VirtualRouter", func() {
 				}}
 
 				routes := vrBuilder.BuildRoutes(routeCfgs)
+				vrTest.VirtualRouters[vr.Name].Spec.Routes = routes
+
+				err := vrTest.Update(ctx, f, vrTest.VirtualRouters[vr.Name], oldVR)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vrTest.CheckInAWS(ctx, f, mesh, vrTest.VirtualRouters[vr.Name])
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			tcpRouteCfgsWithMatch := []manifest.TcpRouteToWeightedVirtualNodes{{
+				WeightedTargets: weightedTargets,
+				Match:           vrBuilder.BuildTcpRouteMatch(aws.Int64(8080)),
+			},
+			}
+			tcpRoutes := vrBuilder.TcpBuildRoutes(tcpRouteCfgsWithMatch)
+			vrBuilder.Listeners = []appmesh.VirtualRouterListener{vrBuilder.BuildVirtualRouterListener("tcp", 8080)}
+			vrName = fmt.Sprintf("vr-%s", utils.RandomDNS1123Label(8))
+			vr = vrBuilder.BuildVirtualRouter(vrName, tcpRoutes)
+
+			By("Creating a virtual router resource with TCP listener and Port Match in k8s", func() {
+				err := vrTest.Create(ctx, f, vr)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Validating the virtual router with TCP listener and Port Match in AWS", func() {
+				err := vrTest.CheckInAWS(ctx, f, mesh, vr)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+			By("Update the virtual router to not have Match and validating", func() {
+				oldVR := vrTest.VirtualRouters[vr.Name].DeepCopy()
+
+				tcpRouteCfgs := []manifest.TcpRouteToWeightedVirtualNodes{{
+					WeightedTargets: weightedTargets,
+				}}
+
+				routes := vrBuilder.TcpBuildRoutes(tcpRouteCfgs)
+				vrTest.VirtualRouters[vr.Name].Spec.Routes = routes
+
+				err := vrTest.Update(ctx, f, vrTest.VirtualRouters[vr.Name], oldVR)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = vrTest.CheckInAWS(ctx, f, mesh, vrTest.VirtualRouters[vr.Name])
+				Expect(err).NotTo(HaveOccurred())
+			})
+			tcpRouteCfgsWithoutMatch := []manifest.TcpRouteToWeightedVirtualNodes{{
+				WeightedTargets: weightedTargets,
+			},
+			}
+			tcpRoutes = vrBuilder.TcpBuildRoutes(tcpRouteCfgsWithoutMatch)
+			vrBuilder.Listeners = []appmesh.VirtualRouterListener{vrBuilder.BuildVirtualRouterListener("tcp", 8080)}
+			vrName = fmt.Sprintf("vr-%s", utils.RandomDNS1123Label(8))
+			vr = vrBuilder.BuildVirtualRouter(vrName, tcpRoutes)
+
+			By("Creating a virtual router resource with TCP listener and Port Match in k8s", func() {
+				err := vrTest.Create(ctx, f, vr)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Validating the virtual router with TCP listener and Port Match in AWS", func() {
+				err := vrTest.CheckInAWS(ctx, f, mesh, vr)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+			By("Update the virtual router to have Match and validating", func() {
+				oldVR := vrTest.VirtualRouters[vr.Name].DeepCopy()
+
+				tcpRouteCfgs := []manifest.TcpRouteToWeightedVirtualNodes{{
+					WeightedTargets: weightedTargets,
+					Match:           vrBuilder.BuildTcpRouteMatch(aws.Int64(8080)),
+				}}
+
+				routes := vrBuilder.TcpBuildRoutes(tcpRouteCfgs)
 				vrTest.VirtualRouters[vr.Name].Spec.Routes = routes
 
 				err := vrTest.Update(ctx, f, vrTest.VirtualRouters[vr.Name], oldVR)
