@@ -144,7 +144,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 							Value: "test_val",
 						},
 						{
-							Name:  "APPMESH_VIRTUAL_NODE_NAME",
+							Name:  "APPMESH_RESOURCE_ARN",
 							Value: "incorrect_node_name",
 						},
 						{
@@ -326,7 +326,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -442,7 +442,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -563,7 +563,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -664,7 +664,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "test_val",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -781,7 +781,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "test_val",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -898,7 +898,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "test_val",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -1030,7 +1030,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -1189,7 +1189,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -1324,7 +1324,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -1462,7 +1462,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -1587,7 +1587,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -1706,7 +1706,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "/run/spire/sockets/agent.sock",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -1840,7 +1840,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -1959,7 +1959,7 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "/run/spire/sockets/agent.sock",
 								},
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{

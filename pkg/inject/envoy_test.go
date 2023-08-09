@@ -76,7 +76,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 			Namespace: "my-ns",
 			Name:      "my-pod",
 			Annotations: map[string]string{
-				"appmesh.k8s.aws/sidecarEnv": "DD_ENV=prod, APPMESH_VIRTUAL_NODE_NAME=random_val",
+				"appmesh.k8s.aws/sidecarEnv": "DD_ENV=prod, APPMESH_RESOURCE_ARN=random_val",
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -259,7 +259,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -402,7 +402,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -544,7 +544,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -726,7 +726,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -879,7 +879,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -1031,7 +1031,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -1178,7 +1178,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -1336,7 +1336,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -1519,7 +1519,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -1684,7 +1684,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -1827,7 +1827,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -1985,7 +1985,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -2150,7 +2150,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -2349,7 +2349,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -2508,7 +2508,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -2670,7 +2670,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -2798,7 +2798,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 					Namespace: "my-ns",
 					Name:      "my-pod",
 					Annotations: map[string]string{
-						"appmesh.k8s.aws/sidecarEnv": "DD_ENV=prod, APPMESH_VIRTUAL_NODE_NAME=random_val",
+						"appmesh.k8s.aws/sidecarEnv": "DD_ENV=prod, APPMESH_RESOURCE_ARN=random_val",
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -2843,7 +2843,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{
@@ -2998,7 +2998,7 @@ func Test_envoyMutator_mutate(t *testing.T) {
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Name:  "APPMESH_RESOURCE_ARN",
 									Value: "mesh/my-mesh/virtualNode/my-vn_my-ns",
 								},
 								{

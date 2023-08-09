@@ -60,7 +60,7 @@ func updateEnvMapForEnvoy(vars EnvoyTemplateVariables, env map[string]string, vn
 	// add all the controller managed env to the map so
 	// 1) we remove duplicates
 	// 2) we don't allow overriding controller managed env with pod annotations
-	env["APPMESH_VIRTUAL_NODE_NAME"] = vname
+	env["APPMESH_RESOURCE_ARN"] = vname
 	env["AWS_REGION"] = vars.AWSRegion
 
 	// For usage outside traditional EC2 / Fargate IAM based profiles, this is needed to
