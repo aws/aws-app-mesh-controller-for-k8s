@@ -148,6 +148,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 							Value: "incorrect_node_name",
 						},
 						{
+							Name:  "APPMESH_VIRTUAL_NODE_NAME",
+							Value: "incorrect_node_name",
+						},
+						{
 							Name:  "APPMESH_PREVIEW",
 							Value: "1",
 						},
@@ -330,6 +334,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
 								},
@@ -443,6 +451,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 								{
 									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -567,6 +579,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
 								},
@@ -665,6 +681,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 								{
 									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -785,6 +805,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
 								},
@@ -899,6 +923,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 								{
 									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -1031,6 +1059,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 								{
 									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -1193,6 +1225,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
 								},
@@ -1325,6 +1361,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 								{
 									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -1466,6 +1506,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
 								},
@@ -1591,6 +1635,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
 								},
@@ -1707,6 +1755,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 								{
 									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
@@ -1844,6 +1896,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_PREVIEW",
 									Value: "0",
 								},
@@ -1960,6 +2016,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								},
 								{
 									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
+									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
