@@ -144,6 +144,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 							Value: "test_val",
 						},
 						{
+							Name:  "APPMESH_RESOURCE_ARN",
+							Value: "incorrect_node_name",
+						},
+						{
 							Name:  "APPMESH_VIRTUAL_NODE_NAME",
 							Value: "incorrect_node_name",
 						},
@@ -326,6 +330,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
@@ -440,6 +448,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
+								},
+								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
@@ -563,6 +575,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
@@ -662,6 +678,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "TEST_ENV",
 									Value: "test_val",
+								},
+								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
@@ -781,6 +801,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "test_val",
 								},
 								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
@@ -896,6 +920,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "TEST_ENV",
 									Value: "test_val",
+								},
+								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
@@ -1028,6 +1056,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
+								},
+								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
@@ -1189,6 +1221,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
@@ -1322,6 +1358,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "AWS_REGION",
 									Value: "us-west-2",
+								},
+								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
@@ -1462,6 +1502,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
@@ -1587,6 +1631,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
@@ -1704,6 +1752,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "APPMESH_SDS_SOCKET_PATH",
 									Value: "/run/spire/sockets/agent.sock",
+								},
+								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
@@ -1840,6 +1892,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 									Value: "us-west-2",
 								},
 								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
+								},
+								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
 									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
@@ -1957,6 +2013,10 @@ func Test_virtualGatewayEnvoyMutator_mutate(t *testing.T) {
 								{
 									Name:  "APPMESH_SDS_SOCKET_PATH",
 									Value: "/run/spire/sockets/agent.sock",
+								},
+								{
+									Name:  "APPMESH_RESOURCE_ARN",
+									Value: "mesh/my-mesh/virtualGateway/my-vg_my-ns",
 								},
 								{
 									Name:  "APPMESH_VIRTUAL_NODE_NAME",
