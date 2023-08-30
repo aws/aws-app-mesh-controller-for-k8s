@@ -97,11 +97,11 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 	if err != nil {
 		return err
 	}
-
-	for k, v := range customEnvJson {
-		customEnv[k] = v
+	if customEnvJson != nil {
+		for k, v := range customEnvJson {
+			customEnv[k] = v
+		}
 	}
-
 	container, err := buildEnvoySidecar(variables, customEnv)
 	if err != nil {
 		return err
@@ -259,19 +259,18 @@ func (m *envoyMutator) getCustomEnv(pod *corev1.Pod) (map[string]string, error) 
 	return customEnv, nil
 }
 
-type customEnvJsonType []map[string]string
+type customEnvJsonType map[string]string
 
 func (c *customEnvJsonType) UnmarshalJSON(data []byte) error {
 	var temp []map[string]interface{}
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
-	*c = make(customEnvJsonType, 1)
-	(*c)[0] = make(map[string]string)
+	*c = make(customEnvJsonType)
 	for _, item := range temp {
 		for key, value := range item {
 			if strValue, isString := value.(string); isString {
-				(*c)[0][key] = strValue
+				(*c)[key] = strValue
 			} else {
 				return errors.Errorf("nested json isn't supported with this annotation %s, expected format: %s", AppMeshEnvJsonAnnotation, `[{"DD_ENV":"prod","TEST_ENV":"env_val"}]`)
 			}
@@ -292,10 +291,7 @@ func (m *envoyMutator) getCustomEnvJson(pod *corev1.Pod) (map[string]string, err
 			return nil, err
 		}
 	}
-	if len(customEnvJson) > 0 {
-		return customEnvJson[0], nil
-	}
-	return map[string]string{}, nil
+	return customEnvJson, nil
 }
 
 func (m *envoyMutator) mutateVolumeMounts(pod *corev1.Pod, envoyContainer *corev1.Container, volumeMounts map[string]string) {

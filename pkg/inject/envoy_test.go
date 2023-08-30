@@ -3546,7 +3546,7 @@ func Test_envoyMutator_getCustomEnvJson(t *testing.T) {
 					},
 				},
 			},
-			want:    map[string]string{},
+			want:    nil,
 			wantErr: nil,
 		},
 		{
@@ -3574,6 +3574,19 @@ func Test_envoyMutator_getCustomEnvJson(t *testing.T) {
 				},
 			},
 			wantErr: errors.New("nested json isn't supported with this annotation appmesh.k8s.aws/sidecarEnvJson, expected format: [{\"DD_ENV\":\"prod\",\"TEST_ENV\":\"env_val\"}]"),
+		},
+		{
+			name: "pods with no_input appmesh.k8s.aws/sidecarEnvJson annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/sidecarEnvJson": ``,
+						},
+					},
+				},
+			},
+			wantErr: errors.New("malformed annotation appmesh.k8s.aws/sidecarEnvJson, expected format: [{\"DD_ENV\":\"prod\",\"TEST_ENV\":\"env_val\"}]"),
 		},
 	}
 	for _, tt := range tests {
