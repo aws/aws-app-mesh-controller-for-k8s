@@ -4323,6 +4323,20 @@ TCPRouteAction
 </tr>
 <tr>
 <td>
+<code>match</code></br>
+<em>
+<a href="#appmesh.k8s.aws/v1beta2.TcpRouteMatch">
+TcpRouteMatch
+</a>
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>An object that represents the criteria for determining a request match.</p>
+</td>
+</tr>
+<tr>
+<td>
 <code>timeout</code></br>
 <em>
 <a href="#appmesh.k8s.aws/v1beta2.TCPTimeout">
@@ -4365,6 +4379,36 @@ TCPTimeout
 </td>
 <td>
 <p>An object that represents the targets that traffic is routed to when a request matches the route.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="appmesh.k8s.aws/v1beta2.TcpRouteMatch">TcpRouteMatch
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#appmesh.k8s.aws/v1beta2.TCPRoute">TCPRoute</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>port</code></br>
+<em>
+int64
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>The port number to match on.</p>
 </td>
 </tr>
 </tbody>
