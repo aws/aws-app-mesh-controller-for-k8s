@@ -259,34 +259,21 @@ func (m *envoyMutator) getCustomEnv(pod *corev1.Pod) (map[string]string, error) 
 	return customEnv, nil
 }
 
-type customEnvJsonType map[string]string
-
-func (c *customEnvJsonType) UnmarshalJSON(data []byte) error {
+func (m *envoyMutator) getCustomEnvJson(pod *corev1.Pod) (map[string]string, error) {
 	var temp []map[string]interface{}
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-	*c = make(customEnvJsonType)
-	for _, item := range temp {
-		for key, value := range item {
-			if strValue, isString := value.(string); isString {
-				(*c)[key] = strValue
-			} else {
-				return errors.Errorf("nested json isn't supported with this annotation %s, expected format: %s", AppMeshEnvJsonAnnotation, `[{"DD_ENV":"prod","TEST_ENV":"env_val"}]`)
+	customEnvJson := make(map[string]string)
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshEnvJsonAnnotation]; ok {
+		err := json.Unmarshal([]byte(v), &temp)
+		for _, item := range temp {
+			for key, value := range item {
+				if strValue, isString := value.(string); isString {
+					customEnvJson[key] = strValue
+				} else {
+					return nil, errors.Errorf("nested json isn't supported with this annotation %s, expected format: %s", AppMeshEnvJsonAnnotation, `[{"DD_ENV":"prod","TEST_ENV":"env_val"}]`)
+				}
 			}
 		}
-	}
-	return nil
-}
-
-func (m *envoyMutator) getCustomEnvJson(pod *corev1.Pod) (map[string]string, error) {
-	var customEnvJson customEnvJsonType
-	if v, ok := pod.ObjectMeta.Annotations[AppMeshEnvJsonAnnotation]; ok {
-		err := json.Unmarshal([]byte(v), &customEnvJson)
 		if err != nil {
-			if strings.Contains(err.Error(), "nested json") {
-				return nil, err
-			}
 			err = errors.Errorf("malformed annotation %s, expected format: %s", AppMeshEnvJsonAnnotation, `[{"DD_ENV":"prod","TEST_ENV":"env_val"}]`)
 			return nil, err
 		}

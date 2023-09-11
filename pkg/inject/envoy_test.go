@@ -3526,7 +3526,7 @@ func Test_envoyMutator_getCustomEnvJson(t *testing.T) {
 				pod: &corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							"appmesh.k8s.aws/sidecarEnvJson": `[{"DD_ENV":"prod","TEST_ENV":"env_val"}]`,
+							"appmesh.k8s.aws/sidecarEnvJson": `[{"DD_ENV":"prod","TEST_ENV":"env_val"},{"PROD_ENV":"prod_env"}]`,
 						},
 					},
 				},
@@ -3534,6 +3534,7 @@ func Test_envoyMutator_getCustomEnvJson(t *testing.T) {
 			want: map[string]string{
 				"DD_ENV":   "prod",
 				"TEST_ENV": "env_val",
+				"PROD_ENV": "prod_env",
 			},
 			wantErr: nil,
 		},
@@ -3546,7 +3547,7 @@ func Test_envoyMutator_getCustomEnvJson(t *testing.T) {
 					},
 				},
 			},
-			want:    nil,
+			want:    map[string]string{},
 			wantErr: nil,
 		},
 		{
