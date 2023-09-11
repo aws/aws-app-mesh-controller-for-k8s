@@ -2,6 +2,7 @@ package inject
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/json"
 	"strconv"
 	"strings"
 
@@ -92,6 +93,15 @@ func (m *envoyMutator) mutate(pod *corev1.Pod) error {
 		return err
 	}
 
+	customEnvJson, err := m.getCustomEnvJson(pod)
+	if err != nil {
+		return err
+	}
+	if customEnvJson != nil {
+		for k, v := range customEnvJson {
+			customEnv[k] = v
+		}
+	}
 	container, err := buildEnvoySidecar(variables, customEnv)
 	if err != nil {
 		return err
@@ -247,6 +257,28 @@ func (m *envoyMutator) getCustomEnv(pod *corev1.Pod) (map[string]string, error) 
 		}
 	}
 	return customEnv, nil
+}
+
+func (m *envoyMutator) getCustomEnvJson(pod *corev1.Pod) (map[string]string, error) {
+	var temp []map[string]interface{}
+	customEnvJson := make(map[string]string)
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshEnvJsonAnnotation]; ok {
+		err := json.Unmarshal([]byte(v), &temp)
+		for _, item := range temp {
+			for key, value := range item {
+				if strValue, isString := value.(string); isString {
+					customEnvJson[key] = strValue
+				} else {
+					return nil, errors.Errorf("nested json isn't supported with this annotation %s, expected format: %s", AppMeshEnvJsonAnnotation, `[{"DD_ENV":"prod","TEST_ENV":"env_val"}]`)
+				}
+			}
+		}
+		if err != nil {
+			err = errors.Errorf("malformed annotation %s, expected format: %s", AppMeshEnvJsonAnnotation, `[{"DD_ENV":"prod","TEST_ENV":"env_val"}]`)
+			return nil, err
+		}
+	}
+	return customEnvJson, nil
 }
 
 func (m *envoyMutator) mutateVolumeMounts(pod *corev1.Pod, envoyContainer *corev1.Container, volumeMounts map[string]string) {

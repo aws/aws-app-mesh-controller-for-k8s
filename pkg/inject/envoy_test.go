@@ -3510,6 +3510,99 @@ func Test_envoyMutator_getCustomEnv(t *testing.T) {
 		})
 	}
 }
+func Test_envoyMutator_getCustomEnvJson(t *testing.T) {
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string]string
+		wantErr error
+	}{
+		{
+			name: "pods with valid appmesh.k8s.aws/sidecarEnvJson annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/sidecarEnvJson": `[{"DD_ENV":"prod","TEST_ENV":"env_val"},{"PROD_ENV":"prod_env"}]`,
+						},
+					},
+				},
+			},
+			want: map[string]string{
+				"DD_ENV":   "prod",
+				"TEST_ENV": "env_val",
+				"PROD_ENV": "prod_env",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "pods with no appmesh.k8s.aws/sidecarEnvJson annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{},
+					},
+				},
+			},
+			want:    map[string]string{},
+			wantErr: nil,
+		},
+		{
+			name: "pods with invalid appmesh.k8s.aws/sidecarEnvJson annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/sidecarEnvJson": `[{"DD_ENV":"{PROD_ENV: "prod"}","TEST_ENV":"env_val"}]`,
+						},
+					},
+				},
+			},
+			wantErr: errors.New("malformed annotation appmesh.k8s.aws/sidecarEnvJson, expected format: [{\"DD_ENV\":\"prod\",\"TEST_ENV\":\"env_val\"}]"),
+		},
+		{
+			name: "pods with Nested Json appmesh.k8s.aws/sidecarEnvJson annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/sidecarEnvJson": `[{"DD_ENV":{"PROD_ENV": "prod"},"TEST_ENV":"env_val"}]`,
+						},
+					},
+				},
+			},
+			wantErr: errors.New("nested json isn't supported with this annotation appmesh.k8s.aws/sidecarEnvJson, expected format: [{\"DD_ENV\":\"prod\",\"TEST_ENV\":\"env_val\"}]"),
+		},
+		{
+			name: "pods with no_input appmesh.k8s.aws/sidecarEnvJson annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/sidecarEnvJson": ``,
+						},
+					},
+				},
+			},
+			wantErr: errors.New("malformed annotation appmesh.k8s.aws/sidecarEnvJson, expected format: [{\"DD_ENV\":\"prod\",\"TEST_ENV\":\"env_val\"}]"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &envoyMutator{}
+			got, err := m.getCustomEnvJson(tt.args.pod)
+			if tt.wantErr != nil {
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, got, tt.want)
+			}
+		})
+	}
+}
 
 func Test_envoyMutator_getAugmentedMeshName(t *testing.T) {
 	type fields struct {
