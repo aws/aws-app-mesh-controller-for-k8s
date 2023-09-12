@@ -56,6 +56,14 @@ const (
 	//
 	AppMeshEnvAnnotation = "appmesh.k8s.aws/sidecarEnv"
 
+	// AppMeshEnvJsonAnnotation which is similar AppMeshEnvAnnotation, but it is used to specify the list Jsons of environment variables that need to be programmed on Envoy sidecars
+	// Here's how a sample annotations will be like
+	//
+	//        e.g. appmesh.k8s.aws/sidecarEnvJson: '[{"DD_ENV":"prod","TEST_ENV":"env_val"}]'
+	//        e.g. appmesh.k8s.aws/sidecarEnvJson: '[{"DD_ENV":"prod"}]'
+	//
+	AppMeshEnvJsonAnnotation = "appmesh.k8s.aws/sidecarEnvJson"
+
 	// === begin xray daemon annotations ===
 
 	// AppMeshXrayAgentConfigAnnotation specifies the mount path for the Xray daemon's configuration file.
