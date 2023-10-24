@@ -430,3 +430,5 @@ Parameter | Description | Default
 `env` |  environment variables to be injected into the appmesh-controller pod | `{}`
 `livenessProbe` | Liveness probe settings for the controller | (see `values.yaml`)
 `podDisruptionBudget` | PodDisruptionBudget | `{}`
+`extraVolumes` | Extra volumes for the controller pod | `[]`
+`extraVolumeMounts` | Extra volume mounts for the controller pod | `[]`

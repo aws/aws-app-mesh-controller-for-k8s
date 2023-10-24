@@ -36,6 +36,9 @@ spec:
         secret:
           defaultMode: 420
           secretName: {{ template "appmesh-controller.fullname" . }}-webhook-server-cert
+      {{- with .Values.extraVolumes }}
+{{ toYaml . | nindent 6 }}
+      {{- end }}
       containers:
       - name: controller
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -51,6 +54,9 @@ spec:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
           readOnly: true
+        {{- with .Values.extraVolumeMounts }}
+{{ toYaml . | nindent 8 }}
+        {{- end }}
         command:
         - /controller
         args:
