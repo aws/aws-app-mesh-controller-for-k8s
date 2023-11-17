@@ -163,4 +163,5 @@ replace (
 	github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
 	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.5
+	golang.org/x/sys => golang.org/x/sys v0.0.0-20220412211240-33da011f77ad
 )
