@@ -91,6 +91,10 @@ helm upgrade -i appmesh-controller eks/appmesh-controller \
 The [configuration](#configuration) section lists the parameters that can be configured during installation.
 
 **Note**
+If you want to start the controller in the EKS private cluster, enable the app mesh and service discovery VPC endpoints to the linked private subnet first. Also accountId is a required field now as `--set accountId=$AWS_ACCOUNT_ID`.   
+More troubleshooting please see: https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html (ECR VPC endpoint doc says ECR VPC endpoint [does not support public repo](https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html). It's outdated information.)
+
+**Note**
 Make sure that the Envoy proxies have the following IAM policies attached for the Envoy to authenticate with AWS App Mesh and fetch it's configuration
 - https://raw.githubusercontent.com/aws/aws-app-mesh-controller-for-k8s/master/config/iam/envoy-iam-policy.json
 
