@@ -28,8 +28,12 @@ import (
 const (
 	//If you're not able to access below images, try to build them based on the app code under "timeout_app"
 	//directory and push it to any accessible ECR repo and update the below values
-	defaultFrontEndImage = "public.ecr.aws/e6v3k1j4/appmesh-test-feapp:v1"
-	defaultBackEndImage  = "public.ecr.aws/e6v3k1j4/appmesh-test-beapp:v1"
+
+	// From https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/master/test/integration/test_app/frontend
+	defaultFrontEndImage = "public.ecr.aws/e4i4k4a4/appmesh-k8s-test:testapp-frontend"
+
+	// From https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/master/test/integration/test_app/backend
+	defaultBackEndImage = "public.ecr.aws/e4i4k4a4/appmesh-k8s-test:testapp-backend"
 
 	timeoutTest      = "timeout-e2e"
 	AppContainerPort = 8080

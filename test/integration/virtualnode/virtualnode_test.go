@@ -3,6 +3,9 @@ package virtualnode_test
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	appmeshk8s "github.com/aws/aws-app-mesh-controller-for-k8s/pkg/k8s"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework/k8s"
 	"github.com/aws/aws-sdk-go/aws"
@@ -15,8 +18,6 @@ import (
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-	"sync"
-	"time"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/algorithm"
@@ -31,7 +32,8 @@ import (
 )
 
 const (
-	defaultAppImage  = "public.ecr.aws/e6v3k1j4/colorteller:v1"
+	// From https://github.com/aws/aws-app-mesh-examples/tree/main/examples/apps/colorapp/src/colorteller
+	defaultAppImage  = "public.ecr.aws/e4i4k4a4/appmesh-k8s-test:colorteller"
 	AppContainerPort = 8080
 )
 
