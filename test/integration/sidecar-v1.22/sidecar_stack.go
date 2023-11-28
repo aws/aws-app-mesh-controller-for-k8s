@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	// From https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/master/test/integration/test_app/sidecar-backend
 	defaultImage = "public.ecr.aws/e4i4k4a4/appmesh-k8s-test:color-be-app"
 )
 

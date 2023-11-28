@@ -23,8 +23,11 @@ import (
 )
 
 const (
+	// From https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/master/test/integration/test_app/sidecar-frontend
 	defaultFrontendImage = "public.ecr.aws/e4i4k4a4/appmesh-k8s-test:color-fe-app"
-	defaultBackendImage  = "public.ecr.aws/e4i4k4a4/appmesh-k8s-test:color-be-app"
+
+	// From https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/master/test/integration/test_app/sidecar-backend
+	defaultBackendImage = "public.ecr.aws/e4i4k4a4/appmesh-k8s-test:color-be-app"
 )
 
 type SidecarStack struct {
