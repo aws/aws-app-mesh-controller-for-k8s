@@ -37,6 +37,97 @@ jobs:
           docker pull "${SRC}-linux_amd64" 
           docker pull "${SRC}-linux_arm64"
 
+      - name: Deploy Images To ECR Public
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "public.ecr.aws"
+          image_tag: "${{ github.event.inputs.tag }}"
+          dst_image_name: "appmesh/appmesh-controller"
+          region: "us-west-2"
+          role: "${{ secrets.PROD_AWS_ROLE }}"
+
+      - name: Deploy Images to PDX
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "${{ secrets.PROD_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          image_tag: "${{ github.event.inputs.tag }}"
+          region: "us-west-2"
+          role: "${{ secrets.PROD_AWS_ROLE }}"
+
+      - name: Deploy Images to BAH
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "${{ secrets.PROD_BAH_AWS_ACCOUNT }}.dkr.ecr.me-south-1.amazonaws.com"
+          image_tag: "${{ github.event.inputs.tag }}"
+          region: "me-south-1"
+          role: "${{ secrets.PROD_BAH_AWS_ROLE }}"
+
+      - name: Deploy Images to CPT
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "${{ secrets.PROD_CPT_AWS_ACCOUNT }}.dkr.ecr.af-south-1.amazonaws.com"
+          image_tag: "${{ github.event.inputs.tag }}"
+          region: "af-south-1"
+          role: "${{ secrets.PROD_CPT_AWS_ROLE }}"
+
+      - name: Deploy Images to HKG
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "${{ secrets.PROD_HKG_AWS_ACCOUNT }}.dkr.ecr.ap-east-1.amazonaws.com"
+          image_tag: "${{ github.event.inputs.tag }}"
+          region: "ap-east-1"
+          role: "${{ secrets.PROD_HKG_AWS_ROLE }}"
+
+      - name: Deploy Images to MXP
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "${{ secrets.PROD_MXP_AWS_ACCOUNT }}.dkr.ecr.eu-south-1.amazonaws.com"
+          image_tag: "${{ github.event.inputs.tag }}"
+          region: "eu-south-1"
+          role: "${{ secrets.PROD_MXP_AWS_ROLE }}"
+
+      - name: Deploy Images to CGK
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "${{ secrets.PROD_CGK_AWS_ACCOUNT }}.dkr.ecr.ap-southeast-3.amazonaws.com"
+          image_tag: "${{ github.event.inputs.tag }}"
+          region: "ap-southeast-3"
+          role: "${{ secrets.PROD_CGK_AWS_ROLE }}"
+
+      - name: Deploy Images to BJS
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "${{ secrets.PROD_BJS_AWS_ACCOUNT }}.dkr.ecr.cn-north-1.amazonaws.com.cn"
+          image_tag: "${{ github.event.inputs.tag }}"
+          region: "cn-north-1"
+          role: "${{ secrets.PROD_BJS_AWS_ROLE }}"
+
+      - name: Deploy Images to ZHY
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "${{ secrets.PROD_ZHY_AWS_ACCOUNT }}.dkr.ecr.cn-northwest-1.amazonaws.com.cn"
+          image_tag: "${{ github.event.inputs.tag }}"
+          region: "cn-northwest-1"
+          role: "${{ secrets.PROD_ZHY_AWS_ROLE }}"
+
+      - name: Deploy Images to TLV
+        uses: ./.github/actions/push-image
+        with:
+          src_host: "${{ secrets.BETA_AWS_ACCOUNT }}.dkr.ecr.us-west-2.amazonaws.com"
+          dst_host: "${{ secrets.PROD_TLV_AWS_ACCOUNT }}.dkr.ecr.il-central-1.amazonaws.com"
+          image_tag: "${{ github.event.inputs.tag }}"
+          region: "il-central-1"
+          role: "${{ secrets.PROD_TLV_AWS_ROLE }}"
+
       - name: Deploy Images to PDT
         uses: ./.github/actions/push-image
         with:

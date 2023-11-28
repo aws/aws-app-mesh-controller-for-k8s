@@ -3,8 +3,9 @@ package sidecar
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
 	"time"
+
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/test/framework"
@@ -22,8 +23,11 @@ import (
 )
 
 const (
-	defaultFrontendImage = "public.ecr.aws/b7m0w2t6/color-fe-app:2.0.3"
-	defaultBackendImage  = "public.ecr.aws/b7m0w2t6/color-be-app:2.0.2"
+	// From https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/master/test/integration/test_app/sidecar-frontend
+	defaultFrontendImage = "public.ecr.aws/e4i4k4a4/appmesh-k8s-test:color-fe-app"
+
+	// From https://github.com/aws/aws-app-mesh-controller-for-k8s/tree/master/test/integration/test_app/sidecar-backend
+	defaultBackendImage = "public.ecr.aws/e4i4k4a4/appmesh-k8s-test:color-be-app"
 )
 
 type SidecarStack struct {

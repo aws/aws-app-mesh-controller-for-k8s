@@ -42,21 +42,22 @@ const (
 	connectivityCheckUniformDistributionSL = 0.001 // Significance level that traffic to targets are uniform distributed.
 	AppContainerPort                       = 9080
 	HttpProxyContainerPort                 = 8899
-	defaultAppImage                        = "public.ecr.aws/e6v3k1j4/colorteller:v1"
-	defaultHTTPProxyImage                  = "abhinavsingh/proxy.py:latest"
-	caCertScript                           = "certs/ca_certs.sh"
-	nodeCertScript                         = "certs/node_certs.sh"
-	genericNodeCertCfgFile                 = "certs/node_cert.cfg"
-	certsBasePath                          = "certs/"
-	certsCfgFileSuffix                     = "_cert.cfg"
-	certChainSuffix                        = "_cert_chain.pem"
-	certKeySuffix                          = "_key.pem"
-	caCertFile                             = "ca_cert.pem"
-	envoyCACertPath                        = "/certs/ca_cert.pem"
-	certCleanupScript                      = "certs/cleanup.sh"
-	sdsDeployScript                        = "certs/sds_provider.sh"
-	registerAgentIdentity                  = "certs/register_agent_entry.sh"
-	registerWorkloadIdentity               = "certs/register_workload_entry.sh"
+	// From https://github.com/aws/aws-app-mesh-examples/tree/main/examples/apps/colorapp/src/colorteller
+	defaultAppImage          = "public.ecr.aws/e4i4k4a4/appmesh-k8s-test:colorteller"
+	defaultHTTPProxyImage    = "abhinavsingh/proxy.py:latest"
+	caCertScript             = "certs/ca_certs.sh"
+	nodeCertScript           = "certs/node_certs.sh"
+	genericNodeCertCfgFile   = "certs/node_cert.cfg"
+	certsBasePath            = "certs/"
+	certsCfgFileSuffix       = "_cert.cfg"
+	certChainSuffix          = "_cert_chain.pem"
+	certKeySuffix            = "_key.pem"
+	caCertFile               = "ca_cert.pem"
+	envoyCACertPath          = "/certs/ca_cert.pem"
+	certCleanupScript        = "certs/cleanup.sh"
+	sdsDeployScript          = "certs/sds_provider.sh"
+	registerAgentIdentity    = "certs/register_agent_entry.sh"
+	registerWorkloadIdentity = "certs/register_workload_entry.sh"
 )
 
 var (

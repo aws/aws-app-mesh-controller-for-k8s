@@ -45,7 +45,8 @@ const (
 	connectivityCheckUniformDistributionSL = 0.001 // Significance level that traffic to targets are uniform distributed.
 	AppContainerPort                       = 9080
 	HttpProxyContainerPort                 = 8899
-	//defaultAppImage                        = "public.ecr.aws/e6v3k1j4/colorteller:v1"
+	// From https://github.com/aws/aws-app-mesh-examples/tree/main/examples/apps/colorapp/src/colorteller
+	//defaultAppImage                        = "public.ecr.aws/e4i4k4a4/appmesh-k8s-test:colorteller"
 	defaultAppImage          = "python:3.9"
 	defaultHTTPProxyImage    = "abhinavsingh/proxy.py:latest"
 	caCertScript             = "certs/ca_certs.sh"
