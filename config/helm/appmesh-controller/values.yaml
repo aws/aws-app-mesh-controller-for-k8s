@@ -162,3 +162,20 @@ livenessProbe:
     scheme: HTTP
   initialDelaySeconds: 30
   timeoutSeconds: 10
+
+# extraVolumeMounts are the additional volume mounts. This enables setting up IRSA on non-EKS Kubernetes cluster
+extraVolumeMounts:
+  # - name: aws-iam-token
+  #   mountPath: /var/run/secrets/eks.amazonaws.com/serviceaccount
+  #   readOnly: true
+
+# extraVolumes for the extraVolumeMounts. Useful to mount a projected service account token for example.
+extraVolumes:
+  # - name: aws-iam-token
+  #   projected:
+  #     defaultMode: 420
+  #     sources:
+  #     - serviceAccountToken:
+  #         audience: sts.amazonaws.com
+  #         expirationSeconds: 86400
+  #         path: token
