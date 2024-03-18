@@ -1,6 +1,6 @@
 module feapp
 
-go 1.20
+go 1.22
 
 require (
 	k8s.io/apimachinery v0.25.2
