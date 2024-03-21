@@ -24,6 +24,8 @@ import (
 type routesManager interface {
 	// create will create routes on AppMesh virtualRouter to match k8s virtualRouter spec.
 	create(ctx context.Context, ms *appmesh.Mesh, vr *appmesh.VirtualRouter, vnByRefHash map[types.NamespacedName]*appmesh.VirtualNode) (map[string]*appmeshsdk.RouteData, error)
+	// remove will remove old routes on AppMesh virtualRouter to match k8s virtualRouter spec.
+	remove(ctx context.Context, ms *appmesh.Mesh, sdkVR *appmeshsdk.VirtualRouterData, vr *appmesh.VirtualRouter) error
 	// update will update routes on AppMesh virtualRouter to match k8s virtualRouter spec.
 	update(ctx context.Context, ms *appmesh.Mesh, vr *appmesh.VirtualRouter, vnByRefHash map[types.NamespacedName]*appmesh.VirtualNode) (map[string]*appmeshsdk.RouteData, error)
 	// cleanup will cleanup routes on AppMesh virtualRouter
@@ -45,6 +47,28 @@ type defaultRoutesManager struct {
 
 func (m *defaultRoutesManager) create(ctx context.Context, ms *appmesh.Mesh, vr *appmesh.VirtualRouter, vnByKey map[types.NamespacedName]*appmesh.VirtualNode) (map[string]*appmeshsdk.RouteData, error) {
 	return m.reconcile(ctx, ms, vr, vnByKey, vr.Spec.Routes, nil)
+}
+
+func (m *defaultRoutesManager) remove(ctx context.Context, ms *appmesh.Mesh, sdkVR *appmeshsdk.VirtualRouterData, vr *appmesh.VirtualRouter) error {
+	sdkRouteRefs, err := m.listSDKRouteRefs(ctx, ms, vr)
+	if err != nil {
+		return err
+	}
+	// Only reconcile routes which need to be removed before we remove the corresponding listener
+	taintedRefs := taintedSDKRouteRefs(vr.Spec.Routes, sdkVR, sdkRouteRefs)
+	for _, sdkRouteRef := range taintedRefs {
+		sdkRoute, err := m.findSDKRoute(ctx, sdkRouteRef)
+		if err != nil {
+			return err
+		}
+		if sdkRoute == nil {
+			return errors.Errorf("route not found: %v", aws.StringValue(sdkRouteRef.RouteName))
+		}
+		if err = m.deleteSDKRoute(ctx, sdkRoute); err != nil {
+			return err
+		}
+	}
+	return err
 }
 
 func (m *defaultRoutesManager) update(ctx context.Context, ms *appmesh.Mesh, vr *appmesh.VirtualRouter, vnByKey map[types.NamespacedName]*appmesh.VirtualNode) (map[string]*appmeshsdk.RouteData, error) {
@@ -247,6 +271,45 @@ func matchRoutesAgainstSDKRouteRefs(routes []appmesh.Route, sdkRouteRefs []*appm
 	}
 
 	return matchedRouteAndSDKRouteRef, unmatchedRoutes, unmatchedSDKRouteRefs
+}
+
+// taintedSDKRouteRefs returns the routes which need to be deleted before the corresponding listener can be updated or deleted.
+// This includes both routes which are no longer defined by the CRD and routes where the protocol has changed but not the port.
+func taintedSDKRouteRefs(routes []appmesh.Route, sdkVR *appmeshsdk.VirtualRouterData, sdkRouteRefs []*appmeshsdk.RouteRef) []*appmeshsdk.RouteRef {
+	routeByName := make(map[string]appmesh.Route, len(routes))
+	sdkRouteRefByName := make(map[string]*appmeshsdk.RouteRef, len(sdkRouteRefs))
+	sdkListenerByPort := make(map[int64]appmesh.PortProtocol, len(sdkVR.Spec.Listeners))
+	for _, route := range routes {
+		routeByName[route.Name] = route
+	}
+	for _, sdkRouteRef := range sdkRouteRefs {
+		sdkRouteRefByName[aws.StringValue(sdkRouteRef.RouteName)] = sdkRouteRef
+	}
+	for _, sdkListener := range sdkVR.Spec.Listeners {
+		sdkListenerByPort[aws.Int64Value(sdkListener.PortMapping.Port)] = appmesh.PortProtocol(aws.StringValue(sdkListener.PortMapping.Protocol))
+	}
+	routeNameSet := sets.StringKeySet(routeByName)
+	sdkRouteRefNameSet := sets.StringKeySet(sdkRouteRefByName)
+	unmatchedSDKRouteRefNameSet := sdkRouteRefNameSet.Difference(routeNameSet)
+
+	for _, route := range routes {
+		if route.TCPRoute != nil && route.TCPRoute.Match != nil && sdkListenerByPort[aws.Int64Value(route.TCPRoute.Match.Port)] != appmesh.PortProtocolTCP {
+			unmatchedSDKRouteRefNameSet.Insert(route.Name)
+		} else if route.GRPCRoute != nil && sdkListenerByPort[aws.Int64Value(route.GRPCRoute.Match.Port)] != appmesh.PortProtocolGRPC {
+			unmatchedSDKRouteRefNameSet.Insert(route.Name)
+		} else if route.HTTP2Route != nil && sdkListenerByPort[aws.Int64Value(route.HTTP2Route.Match.Port)] != appmesh.PortProtocolHTTP2 {
+			unmatchedSDKRouteRefNameSet.Insert(route.Name)
+		} else if route.HTTPRoute != nil && sdkListenerByPort[aws.Int64Value(route.HTTPRoute.Match.Port)] != appmesh.PortProtocolHTTP {
+			unmatchedSDKRouteRefNameSet.Insert(route.Name)
+		}
+	}
+
+	unmatchedSDKRouteRefs := make([]*appmeshsdk.RouteRef, 0, len(unmatchedSDKRouteRefNameSet))
+	for _, name := range unmatchedSDKRouteRefNameSet.List() {
+		unmatchedSDKRouteRefs = append(unmatchedSDKRouteRefs, sdkRouteRefByName[name])
+	}
+
+	return unmatchedSDKRouteRefs
 }
 
 func BuildSDKRouteSpec(vr *appmesh.VirtualRouter, route appmesh.Route, vnByKey map[types.NamespacedName]*appmesh.VirtualNode) (*appmeshsdk.RouteSpec, error) {

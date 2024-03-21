@@ -86,6 +86,10 @@ func (m *defaultResourceManager) Reconcile(ctx context.Context, vr *appmesh.Virt
 			return err
 		}
 	} else {
+		err = m.routesManager.remove(ctx, ms, sdkVR, vr)
+		if err != nil {
+			return err
+		}
 		sdkVR, err = m.updateSDKVirtualRouter(ctx, sdkVR, vr)
 		if err != nil {
 			return err
