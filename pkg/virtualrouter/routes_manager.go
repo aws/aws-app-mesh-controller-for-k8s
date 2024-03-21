@@ -290,9 +290,11 @@ func taintedSDKRouteRefs(routes []appmesh.Route, sdkVR *appmeshsdk.VirtualRouter
 	}
 	routeNameSet := sets.StringKeySet(routeByName)
 	sdkRouteRefNameSet := sets.StringKeySet(sdkRouteRefByName)
+	matchedNameSet := routeNameSet.Intersection(sdkRouteRefNameSet)
 	unmatchedSDKRouteRefNameSet := sdkRouteRefNameSet.Difference(routeNameSet)
 
-	for _, route := range routes {
+	for _, name := range matchedNameSet.List() {
+		route := routeByName[name]
 		if route.TCPRoute != nil && route.TCPRoute.Match != nil && sdkListenerByPort[aws.Int64Value(route.TCPRoute.Match.Port)] != appmesh.PortProtocolTCP {
 			unmatchedSDKRouteRefNameSet.Insert(route.Name)
 		} else if route.GRPCRoute != nil && sdkListenerByPort[aws.Int64Value(route.GRPCRoute.Match.Port)] != appmesh.PortProtocolGRPC {
