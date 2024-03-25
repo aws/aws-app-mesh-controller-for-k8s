@@ -247,6 +247,8 @@ type GRPCRoute struct {
 // Route refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_RouteSpec.html
 type Route struct {
 	// Route's name
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
 	Name string `json:"name"`
 	// An object that represents the specification of a gRPC route.
 	// +optional
