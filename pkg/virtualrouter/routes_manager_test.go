@@ -1066,22 +1066,15 @@ func Test_defaultRoutesManager_remove(t *testing.T) {
 	}
 	tests := []struct {
 		name             string
-		sdkRoutes        []*appmeshsdk.RouteData
+		sdkRouteRefs     []*appmeshsdk.RouteRef
 		args             args
 		wantDeleteRoutes []*appmeshsdk.DeleteRouteInput
 	}{
 		{
-			name: "preserve existing unchanged routes",
-			sdkRoutes: []*appmeshsdk.RouteData{
+			name: "preserve existing matching routes",
+			sdkRouteRefs: []*appmeshsdk.RouteRef{
 				{
 					RouteName: aws.String("route-1"),
-					Spec: &appmeshsdk.RouteSpec{
-						TcpRoute: &appmeshsdk.TcpRoute{
-							Match: &appmeshsdk.TcpRouteMatch{
-								Port: aws.Int64(8000),
-							},
-						},
-					},
 				},
 			},
 			args: args{
@@ -1116,22 +1109,13 @@ func Test_defaultRoutesManager_remove(t *testing.T) {
 			wantDeleteRoutes: []*appmeshsdk.DeleteRouteInput{},
 		},
 		{
-			name: "tainted routes are removed",
-			sdkRoutes: []*appmeshsdk.RouteData{
+			name: "routes with changes are removed",
+			sdkRouteRefs: []*appmeshsdk.RouteRef{
 				{
 					RouteName: aws.String("route-1"),
-					Metadata: &appmeshsdk.ResourceMetadata{
-						MeshOwner: aws.String("111111111111"),
-					},
-					MeshName:          aws.String("mesh-1"),
-					VirtualRouterName: aws.String("virtual-router-1"),
-					Spec: &appmeshsdk.RouteSpec{
-						TcpRoute: &appmeshsdk.TcpRoute{
-							Match: &appmeshsdk.TcpRouteMatch{
-								Port: aws.Int64(8000),
-							},
-						},
-					},
+				},
+				{
+					RouteName: aws.String("route-2"),
 				},
 			},
 			args: args{
@@ -1143,6 +1127,12 @@ func Test_defaultRoutesManager_remove(t *testing.T) {
 								PortMapping: &appmeshsdk.PortMapping{
 									Port:     aws.Int64(8000),
 									Protocol: aws.String("tcp"),
+								},
+							},
+							{
+								PortMapping: &appmeshsdk.PortMapping{
+									Port:     aws.Int64(9000),
+									Protocol: aws.String("http"),
 								},
 							},
 						},
@@ -1159,16 +1149,24 @@ func Test_defaultRoutesManager_remove(t *testing.T) {
 									},
 								},
 							},
+							{
+								Name: "route-2",
+								HTTPRoute: &appmesh.HTTPRoute{
+									Match: appmesh.HTTPRouteMatch{
+										Port: aws.Int64(8080),
+									},
+								},
+							},
 						},
 					},
 				},
 			},
 			wantDeleteRoutes: []*appmeshsdk.DeleteRouteInput{
 				{
-					MeshName:          aws.String("mesh-1"),
-					MeshOwner:         aws.String("111111111111"),
-					RouteName:         aws.String("route-1"),
-					VirtualRouterName: aws.String("virtual-router-1"),
+					RouteName: aws.String("route-1"),
+				},
+				{
+					RouteName: aws.String("route-2"),
 				},
 			},
 		},
@@ -1176,7 +1174,7 @@ func Test_defaultRoutesManager_remove(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := &fakeAppMesh{
-				existingRoutes: tt.sdkRoutes,
+				existingRouteRefs: tt.sdkRouteRefs,
 			}
 			m := &defaultRoutesManager{
 				appMeshSDK: f,
@@ -1194,46 +1192,26 @@ func Test_defaultRoutesManager_remove(t *testing.T) {
 type fakeAppMesh struct {
 	services.AppMesh
 
-	existingRoutes []*appmeshsdk.RouteData
-	deletedRoutes  []*appmeshsdk.DeleteRouteInput
+	existingRouteRefs []*appmeshsdk.RouteRef
+	deletedRoutes     []*appmeshsdk.DeleteRouteInput
 }
 
 func (f *fakeAppMesh) ListRoutesPagesWithContext(_ aws.Context, _ *appmeshsdk.ListRoutesInput, callback func(*appmeshsdk.ListRoutesOutput, bool) bool, _ ...request.Option) error {
-	if len(f.existingRoutes) > 0 {
-		routes := make([]*appmeshsdk.RouteRef, len(f.existingRoutes))
-		for i, route := range f.existingRoutes {
-			routes[i] = &appmeshsdk.RouteRef{
-				RouteName: route.RouteName,
-			}
-		}
+	if len(f.existingRouteRefs) > 0 {
 		callback(&appmeshsdk.ListRoutesOutput{
-			Routes: routes,
+			Routes: f.existingRouteRefs,
 		}, false)
 	}
 	return nil
 }
 
-func (f *fakeAppMesh) DescribeRouteWithContext(_ aws.Context, params *appmeshsdk.DescribeRouteInput, _ ...request.Option) (*appmeshsdk.DescribeRouteOutput, error) {
-	for _, route := range f.existingRoutes {
-		if aws.StringValue(route.RouteName) != aws.StringValue(params.RouteName) {
-			continue
-		}
-		return &appmeshsdk.DescribeRouteOutput{
-			Route: route,
-		}, nil
-	}
-	return nil, fmt.Errorf("not found")
-}
-
 func (f *fakeAppMesh) DeleteRouteWithContext(_ aws.Context, params *appmeshsdk.DeleteRouteInput, _ ...request.Option) (*appmeshsdk.DeleteRouteOutput, error) {
 	f.deletedRoutes = append(f.deletedRoutes, params)
-	for _, route := range f.existingRoutes {
-		if aws.StringValue(route.RouteName) != aws.StringValue(params.RouteName) {
+	for _, ref := range f.existingRouteRefs {
+		if aws.StringValue(ref.RouteName) != aws.StringValue(params.RouteName) {
 			continue
 		}
-		return &appmeshsdk.DeleteRouteOutput{
-			Route: route,
-		}, nil
+		return &appmeshsdk.DeleteRouteOutput{}, nil
 	}
 	return nil, fmt.Errorf("not found")
 }

@@ -57,14 +57,7 @@ func (m *defaultRoutesManager) remove(ctx context.Context, ms *appmesh.Mesh, sdk
 	// Only reconcile routes which need to be removed before we remove the corresponding listener
 	taintedRefs := taintedSDKRouteRefs(vr.Spec.Routes, sdkVR, sdkRouteRefs)
 	for _, sdkRouteRef := range taintedRefs {
-		sdkRoute, err := m.findSDKRoute(ctx, sdkRouteRef)
-		if err != nil {
-			return err
-		}
-		if sdkRoute == nil {
-			return errors.Errorf("route not found: %v", aws.StringValue(sdkRouteRef.RouteName))
-		}
-		if err = m.deleteSDKRoute(ctx, sdkRoute); err != nil {
+		if err = m.deleteSDKRouteByRef(ctx, sdkRouteRef); err != nil {
 			return err
 		}
 	}
@@ -225,6 +218,23 @@ func (m *defaultRoutesManager) deleteSDKRoute(ctx context.Context, sdkRoute *app
 		RouteName:         sdkRoute.RouteName,
 	})
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *defaultRoutesManager) deleteSDKRouteByRef(ctx context.Context, sdkRouteRef *appmeshsdk.RouteRef) error {
+	_, err := m.appMeshSDK.DeleteRouteWithContext(ctx, &appmeshsdk.DeleteRouteInput{
+		MeshName:          sdkRouteRef.MeshName,
+		MeshOwner:         sdkRouteRef.MeshOwner,
+		VirtualRouterName: sdkRouteRef.VirtualRouterName,
+		RouteName:         sdkRouteRef.RouteName,
+	})
+	if err != nil {
+		var awsErr awserr.Error
+		if ok := errors.As(err, &awsErr); ok && awsErr.Code() == "NotFoundException" {
+			return nil
+		}
 		return err
 	}
 	return nil
