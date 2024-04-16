@@ -295,13 +295,13 @@ func taintedSDKRouteRefs(routes []appmesh.Route, sdkVR *appmeshsdk.VirtualRouter
 
 	for _, name := range matchedNameSet.List() {
 		route := routeByName[name]
-		if route.TCPRoute != nil && route.TCPRoute.Match != nil && sdkListenerByPort[aws.Int64Value(route.TCPRoute.Match.Port)] != appmesh.PortProtocolTCP {
+		if route.TCPRoute != nil && route.TCPRoute.Match != nil && route.TCPRoute.Match.Port != nil && sdkListenerByPort[aws.Int64Value(route.TCPRoute.Match.Port)] != appmesh.PortProtocolTCP {
 			unmatchedSDKRouteRefNameSet.Insert(route.Name)
-		} else if route.GRPCRoute != nil && sdkListenerByPort[aws.Int64Value(route.GRPCRoute.Match.Port)] != appmesh.PortProtocolGRPC {
+		} else if route.GRPCRoute != nil && route.GRPCRoute.Match.Port != nil && sdkListenerByPort[aws.Int64Value(route.GRPCRoute.Match.Port)] != appmesh.PortProtocolGRPC {
 			unmatchedSDKRouteRefNameSet.Insert(route.Name)
-		} else if route.HTTP2Route != nil && sdkListenerByPort[aws.Int64Value(route.HTTP2Route.Match.Port)] != appmesh.PortProtocolHTTP2 {
+		} else if route.HTTP2Route != nil && route.HTTP2Route.Match.Port != nil && sdkListenerByPort[aws.Int64Value(route.HTTP2Route.Match.Port)] != appmesh.PortProtocolHTTP2 {
 			unmatchedSDKRouteRefNameSet.Insert(route.Name)
-		} else if route.HTTPRoute != nil && sdkListenerByPort[aws.Int64Value(route.HTTPRoute.Match.Port)] != appmesh.PortProtocolHTTP {
+		} else if route.HTTPRoute != nil && route.HTTPRoute.Match.Port != nil && sdkListenerByPort[aws.Int64Value(route.HTTPRoute.Match.Port)] != appmesh.PortProtocolHTTP {
 			unmatchedSDKRouteRefNameSet.Insert(route.Name)
 		}
 	}
