@@ -9,7 +9,7 @@ IMAGE ?= $(REPO):$(VERSION)
 PREVIEW=false
 ENABLE_BACKEND_GROUPS?=false
 WAIT_PROXY_READY=false
-SIDECAR_IMAGE_TAG=v1.27.3.0-prod
+SIDECAR_IMAGE_TAG=v1.29.4.0-prod
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1"
