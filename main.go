@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"github.com/aws/aws-sdk-go/service/eks"
 	"os"
 	"strconv"
@@ -42,6 +43,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	k8sapiflag "k8s.io/component-base/cli/flag"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -73,6 +75,11 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+type tlsConfig struct {
+	minVersion   string
+	cipherSuites []string
+}
+
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
@@ -89,6 +96,7 @@ func main() {
 	var listPageLimit int64
 	var healthProbePort int
 	var ipFamily string
+	var tlsOpt tlsConfig
 	awsCloudConfig := aws.CloudConfig{ThrottleConfig: throttle.NewDefaultServiceOperationsThrottleConfig()}
 	injectConfig := inject.Config{}
 	cloudMapConfig := cloudmap.Config{}
@@ -105,6 +113,8 @@ func main() {
 		"The page size limiting the number of response for list operation to API Server")
 	fs.IntVar(&healthProbePort, flagHealthProbePort, defaultHealthProbePort,
 		"The port the health probes binds to.")
+	fs.StringVar(&tlsOpt.minVersion, "tls-min-version", "VersionTLS12", "Minimum TLS version supported. Value must match version names from https://golang.org/pkg/crypto/tls/#pkg-constants.")
+	fs.StringSliceVar(&tlsOpt.cipherSuites, "tls-cipher-suites", nil, "Comma-separated list of cipher suites for the server. Values are from tls package constants (https://golang.org/pkg/crypto/tls/#pkg-constants). If omitted, the default Go cipher suites will be used")
 
 	awsCloudConfig.BindFlags(fs)
 	injectConfig.BindFlags(fs)
@@ -147,6 +157,10 @@ func main() {
 
 	k8sVersion := k8s.ServerVersion(clientSet.Discovery())
 
+	optionsTlSOptsFuncs := []func(*tls.Config){
+		func(config *tls.Config) { tlsConfigSetting(config, tlsOpt) },
+	}
+
 	mgr, err := ctrl.NewManager(kubeConfig, ctrl.Options{
 		Scheme:                     scheme,
 		SyncPeriod:                 &syncPeriod,
@@ -156,6 +170,7 @@ func main() {
 		LeaderElectionID:           "appmesh-controller-leader-election",
 		LeaderElectionResourceLock: resourcelock.ConfigMapsLeasesResourceLock,
 		HealthProbeBindAddress:     healthProbeBindAddress,
+		TLSOpts:                    optionsTlSOptsFuncs,
 	})
 
 	customController := k8s.NewCustomController(
@@ -307,4 +322,23 @@ func main() {
 		setupLog.Error(err, "problem running controller")
 		os.Exit(1)
 	}
+}
+
+// This function get the option from command argument (tlsConfig), check the validity through k8sapiflag
+// and set the config for webhook server.
+// refer to https://pkg.go.dev/k8s.io/component-base/cli/flag
+func tlsConfigSetting(cfg *tls.Config, tlsOpt tlsConfig) {
+	// TLSVersion helper function returns the TLS Version ID for the version name passed.
+	tlsVersion, err := k8sapiflag.TLSVersion(tlsOpt.minVersion)
+	if err != nil {
+		setupLog.Error(err, "TLS version invalid")
+	}
+	cfg.MinVersion = tlsVersion
+
+	// TLSCipherSuites helper function returns a list of cipher suite IDs from the cipher suite names passed.
+	cipherSuiteIDs, err := k8sapiflag.TLSCipherSuites(tlsOpt.cipherSuites)
+	if err != nil {
+		setupLog.Error(err, "Failed to convert TLS cipher suite name to ID")
+	}
+	cfg.CipherSuites = cipherSuiteIDs
 }

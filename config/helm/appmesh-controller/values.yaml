@@ -144,6 +144,10 @@ enableCertManager: false
 podDisruptionBudget: {}
 #  minAvailable: 1
 
+# TLS setting for appmesh-controller
+tlsMinVersion: ""
+tlsCipherSuite: ""
+
 # Environment variables to set in appmesh-controller pod
 env: {}
 
