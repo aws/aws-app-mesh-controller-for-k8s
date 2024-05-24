@@ -19,10 +19,11 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"github.com/aws/aws-sdk-go/service/eks"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/aws/aws-sdk-go/service/eks"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/throttle"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/cloudmap"
@@ -332,6 +333,7 @@ func tlsConfigSetting(cfg *tls.Config, tlsOpt tlsConfig) {
 	tlsVersion, err := k8sapiflag.TLSVersion(tlsOpt.minVersion)
 	if err != nil {
 		setupLog.Error(err, "TLS version invalid")
+		os.Exit(1)
 	}
 	cfg.MinVersion = tlsVersion
 
@@ -339,6 +341,7 @@ func tlsConfigSetting(cfg *tls.Config, tlsOpt tlsConfig) {
 	cipherSuiteIDs, err := k8sapiflag.TLSCipherSuites(tlsOpt.cipherSuites)
 	if err != nil {
 		setupLog.Error(err, "Failed to convert TLS cipher suite name to ID")
+		os.Exit(1)
 	}
 	cfg.CipherSuites = cipherSuiteIDs
 }
