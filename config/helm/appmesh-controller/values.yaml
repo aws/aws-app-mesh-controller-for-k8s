@@ -147,6 +147,10 @@ podDisruptionBudget: {}
 # Environment variables to set in appmesh-controller pod
 env: {}
 
+# TLS setting for appmesh-controller
+tlsMinVersion: VersionTLS12
+tlsCipherSuite: []
+
 #Example
 #env:
 #    http_proxy: http://proxyserver:3128

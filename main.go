@@ -18,7 +18,7 @@ package main
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/service/eks"
+	"crypto/tls"
 	"os"
 	"strconv"
 	"time"
@@ -30,6 +30,7 @@ import (
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualrouter"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/virtualservice"
 	sdkgoaws "github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/spf13/pflag"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/conversions"
@@ -42,6 +43,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	k8sapiflag "k8s.io/component-base/cli/flag"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -72,6 +74,11 @@ var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
+
+type tlsConfig struct {
+	minVersion   string
+	cipherSuites []string
+}
 
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
@@ -147,6 +154,33 @@ func main() {
 
 	k8sVersion := k8s.ServerVersion(clientSet.Discovery())
 
+	optionsTlSOptsFuncs := []func(*tls.Config){}
+
+	setupLog.Info("TlsVersion", "TLSVersion", injectConfig.TlsMinVersion)
+	setupLog.Info("TlsCipherSuite", "TlsCipherSuite", injectConfig.TlsCipherSuite)
+
+	// This function get the option from command argument (tlsConfig), check the validity through k8sapiflag
+	// and set the config for webhook server.
+	// refer to https://pkg.go.dev/k8s.io/component-base/cli/flag
+	tlsOption := func(cfg *tls.Config) {
+		tlsVersion, err := k8sapiflag.TLSVersion(injectConfig.TlsMinVersion)
+		if err != nil {
+			setupLog.Error(err, "TLS version invalid")
+			os.Exit(1)
+		}
+		cfg.MinVersion = tlsVersion
+
+		// TLSCipherSuites helper function returns a list of cipher suite IDs from the cipher suite names passed.
+		cipherSuiteIDs, err := k8sapiflag.TLSCipherSuites(injectConfig.TlsCipherSuite)
+		if err != nil {
+			setupLog.Error(err, "Failed to convert TLS cipher suite name to ID")
+			os.Exit(1)
+		}
+		cfg.CipherSuites = cipherSuiteIDs
+	}
+
+	optionsTlSOptsFuncs = append(optionsTlSOptsFuncs, tlsOption)
+
 	mgr, err := ctrl.NewManager(kubeConfig, ctrl.Options{
 		Scheme:                     scheme,
 		SyncPeriod:                 &syncPeriod,
@@ -156,6 +190,7 @@ func main() {
 		LeaderElectionID:           "appmesh-controller-leader-election",
 		LeaderElectionResourceLock: resourcelock.ConfigMapsLeasesResourceLock,
 		HealthProbeBindAddress:     healthProbeBindAddress,
+		TLSOpts:                    optionsTlSOptsFuncs,
 	})
 
 	customController := k8s.NewCustomController(
