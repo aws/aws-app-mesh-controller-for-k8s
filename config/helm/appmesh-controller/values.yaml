@@ -149,7 +149,7 @@ env: {}
 
 # TLS setting for appmesh-controller
 tlsMinVersion: VersionTLS12
-tlsCipherSuite: []
+tlsCipherSuite:
 
 #Example
 #env:
