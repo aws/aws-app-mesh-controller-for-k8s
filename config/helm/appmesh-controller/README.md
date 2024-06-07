@@ -451,3 +451,4 @@ Parameter | Description | Default
 `podDisruptionBudget` | PodDisruptionBudget | `{}`
 `tlsMinVersion` | Minimum TLS version for the controller webhook server as shown in [here](https://github.com/kubernetes/component-base/blob/master/cli/flag/ciphersuites_flag.go#L114) | `VersionTLS12`
 `tlsCipherSuite` | Comma delimited TLS cipher suites for the controller webhook server as shown [here](https://pkg.go.dev/crypto/tls#pkg-constants) | None
+`topologySpreadConstraints` | Topology Spread Constraints for pod assignment | `{}`
