@@ -943,6 +943,8 @@ spec:
                       type: object
                     name:
                       description: Route's name
+                      maxLength: 255
+                      minLength: 1
                       type: string
                     priority:
                       description: The priority for the route.
