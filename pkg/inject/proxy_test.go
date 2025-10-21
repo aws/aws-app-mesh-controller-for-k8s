@@ -497,6 +497,54 @@ func Test_proxyMutator_getEgressIgnoredPorts(t *testing.T) {
 	}
 }
 
+func Test_proxyMutator_getEgressIgnoredIPs(t *testing.T) {
+	type args struct {
+		pod *corev1.Pod
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "get EgressIgnoredIPs from annotation",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"appmesh.k8s.aws/egressIgnoredIPs": "192.168.0.1,192.168.0.2",
+						},
+					},
+				},
+			},
+			want: "192.168.0.1,192.168.0.2",
+		},
+		{
+			name: "get EgressIgnoredIPs by default",
+			args: args{
+				pod: &corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{},
+					},
+				},
+			},
+			want: "192.168.0.1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &proxyMutator{
+				mutatorConfig: proxyMutatorConfig{
+					egressIgnoredIPs: "192.168.0.1",
+				},
+			}
+			got := m.getEgressIgnoredIPs(tt.args.pod)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_proxyMutator_isAppMeshCNIEnabled(t *testing.T) {
 	type args struct {
 		pod *corev1.Pod
