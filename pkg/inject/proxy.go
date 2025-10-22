@@ -64,10 +64,11 @@ type proxyConfig struct {
 func (m *proxyMutator) buildProxyConfig(pod *corev1.Pod) proxyConfig {
 	appPorts := m.getAppPorts(pod)
 	egressIgnoredPorts := m.getEgressIgnoredPorts(pod)
+	egressIgnoredIPs := m.getEgressIgnoredIPs(pod)
 	enableIPV6 := m.isIPV6Enabled(pod)
 	return proxyConfig{
 		appPorts:           appPorts,
-		egressIgnoredIPs:   m.mutatorConfig.egressIgnoredIPs,
+		egressIgnoredIPs:   egressIgnoredIPs,
 		egressIgnoredPorts: egressIgnoredPorts,
 		proxyEgressPort:    defaultProxyEgressPort,
 		proxyIngressPort:   defaultProxyIngressPort,
@@ -98,6 +99,14 @@ func (m *proxyMutator) getEgressIgnoredPorts(pod *corev1.Pod) string {
 		egressIgnoredPorts = v
 	}
 	return egressIgnoredPorts
+}
+
+func (m *proxyMutator) getEgressIgnoredIPs(pod *corev1.Pod) string {
+	if v, ok := pod.ObjectMeta.Annotations[AppMeshEgressIgnoredIPsAnnotation]; ok {
+		return v
+	}
+
+	return m.mutatorConfig.egressIgnoredIPs
 }
 
 func (m *proxyMutator) isAppMeshCNIEnabled(pod *corev1.Pod) bool {
