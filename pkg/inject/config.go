@@ -59,6 +59,9 @@ const (
 	flagXRayImage            = "xray-image"
 
 	flagClusterName = "cluster-name"
+
+	flagTlsMinVersion  = "tls-min-version"
+	flagTlsCipherSuite = "tls-cipher-suite"
 )
 
 type Config struct {
@@ -123,6 +126,10 @@ type Config struct {
 	XRayImage            string
 
 	ClusterName string
+
+	// TLS settings
+	TlsMinVersion  string
+	TlsCipherSuite []string
 }
 
 // MultipleTracer checks if more than one tracer is configured.
@@ -147,7 +154,7 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&cfg.EnableBackendGroups, flagEnableBackendGroups, false, "If enabled, experimental Backend Groups feature will be enabled.")
 	fs.StringVar(&cfg.SidecarImageRepository, flagSidecarImageRepository, "public.ecr.aws/appmesh/aws-appmesh-envoy",
 		"Envoy sidecar container image repository.")
-	fs.StringVar(&cfg.SidecarImageTag, flagSidecarImageTag, "v1.27.3.0-prod", "Envoy sidecar container image tag.")
+	fs.StringVar(&cfg.SidecarImageTag, flagSidecarImageTag, "v1.29.12.3-prod", "Envoy sidecar container image tag.")
 	fs.StringVar(&cfg.SidecarCpuRequests, flagSidecarCpuRequests, "10m",
 		"Sidecar CPU resources requests.")
 	fs.StringVar(&cfg.SidecarMemoryRequests, flagSidecarMemoryRequests, "32Mi",
@@ -224,6 +231,11 @@ func (cfg *Config) BindFlags(fs *pflag.FlagSet) {
 		"Secret access key for envoy container (for integration testing)")
 	fs.StringVar(&cfg.EnvoyAwsSessionToken, flagEnvoyAwsSessionToken, "",
 		"Session token for envoy container (for integration testing)")
+	fs.StringVar(&cfg.TlsMinVersion, flagTlsMinVersion, "VersionTLS12",
+		"Minimum TLS version supported. Value must match version names from https://golang.org/pkg/crypto/tls/#pkg-constants.")
+	fs.StringSliceVar(&cfg.TlsCipherSuite, flagTlsCipherSuite, nil,
+		"Comma-separated list of cipher suites for the server. Values are from tls package constants (https://golang.org/pkg/crypto/tls/#pkg-constants). If omitted, the default Go cipher suites will be used")
+
 }
 
 func (cfg *Config) BindEnv() error {

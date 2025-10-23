@@ -1,11 +1,16 @@
 package virtualrouter
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
+	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/aws/services"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	appmeshsdk "github.com/aws/aws-sdk-go/service/appmesh"
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -772,4 +777,441 @@ func Test_BuildSDKRouteSpec(t *testing.T) {
 			}
 		})
 	}
+}
+
+// taintedSDKRouteRefs returns the routes which need to be deleted before the corresponding listener can be updated or deleted.
+// This includes both routes which are no longer defined by the CRD and routes where the protocol has changed but not the port.
+func Test_taintedSDKRouteRefs(t *testing.T) {
+	type args struct {
+		routes       []appmesh.Route
+		sdkVR        *appmeshsdk.VirtualRouterData
+		sdkRouteRefs []*appmeshsdk.RouteRef
+	}
+	tests := []struct {
+		name                 string
+		args                 args
+		wantTaintedRouteRefs []*appmeshsdk.RouteRef
+	}{
+		{
+			name: "routes without port mapping do not get removed",
+			args: args{
+				routes: []appmesh.Route{
+					{
+						Name: "route-1",
+					},
+					{
+						Name: "route-2",
+						HTTPRoute: &appmesh.HTTPRoute{
+							Match: appmesh.HTTPRouteMatch{
+								Prefix: aws.String("/"),
+							},
+						},
+					},
+					{
+						Name: "route-3",
+						HTTPRoute: &appmesh.HTTPRoute{
+							Match: appmesh.HTTPRouteMatch{
+								Method: aws.String("POST"),
+							},
+						},
+					},
+					{
+						Name: "route-4",
+						HTTPRoute: &appmesh.HTTPRoute{
+							Match: appmesh.HTTPRouteMatch{
+								Headers: []appmesh.HTTPRouteHeader{
+									{
+										Name: "X-Backend",
+										Match: &appmesh.HeaderMatchMethod{
+											Exact: aws.String("widgets"),
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						Name: "route-5",
+					},
+				},
+				sdkVR: &appmeshsdk.VirtualRouterData{
+					Spec: &appmeshsdk.VirtualRouterSpec{
+						Listeners: []*appmeshsdk.VirtualRouterListener{
+							{
+								PortMapping: &appmeshsdk.PortMapping{
+									Port:     aws.Int64(8080),
+									Protocol: aws.String("HTTP"),
+								},
+							},
+						},
+					},
+				},
+				sdkRouteRefs: []*appmeshsdk.RouteRef{
+					{
+						RouteName: aws.String("route-1"),
+					},
+					{
+						RouteName: aws.String("route-2"),
+					},
+					{
+						RouteName: aws.String("route-3"),
+					},
+					{
+						RouteName: aws.String("route-4"),
+					},
+				},
+			},
+			wantTaintedRouteRefs: []*appmeshsdk.RouteRef{},
+		},
+		{
+			name: "routes removed from CRD are removed",
+			args: args{
+				routes: []appmesh.Route{
+					{
+						Name: "route-1",
+					},
+				},
+				sdkVR: &appmeshsdk.VirtualRouterData{
+					Spec: &appmeshsdk.VirtualRouterSpec{
+						Listeners: []*appmeshsdk.VirtualRouterListener{
+							{
+								PortMapping: &appmeshsdk.PortMapping{
+									Port:     aws.Int64(8080),
+									Protocol: aws.String("HTTP"),
+								},
+							},
+						},
+					},
+				},
+				sdkRouteRefs: []*appmeshsdk.RouteRef{
+					{
+						RouteName: aws.String("route-1"),
+					},
+					{
+						RouteName: aws.String("route-2"),
+					},
+				},
+			},
+			wantTaintedRouteRefs: []*appmeshsdk.RouteRef{
+				{
+					RouteName: aws.String("route-2"),
+				},
+			},
+		},
+		{
+			name: "routes with port change are removed",
+			args: args{
+				routes: []appmesh.Route{
+					{
+						Name: "route-1",
+						HTTP2Route: &appmesh.HTTPRoute{
+							Match: appmesh.HTTPRouteMatch{
+								Port: aws.Int64(9000),
+							},
+						},
+					},
+					{
+						Name: "route-2",
+						HTTPRoute: &appmesh.HTTPRoute{
+							Match: appmesh.HTTPRouteMatch{
+								Port: aws.Int64(4000),
+							},
+						},
+					},
+				},
+				sdkVR: &appmeshsdk.VirtualRouterData{
+					Spec: &appmeshsdk.VirtualRouterSpec{
+						Listeners: []*appmeshsdk.VirtualRouterListener{
+							{
+								PortMapping: &appmeshsdk.PortMapping{
+									Port:     aws.Int64(9000),
+									Protocol: aws.String("http2"),
+								},
+							},
+							{
+								PortMapping: &appmeshsdk.PortMapping{
+									Port:     aws.Int64(5000),
+									Protocol: aws.String("http"),
+								},
+							},
+						},
+					},
+				},
+				sdkRouteRefs: []*appmeshsdk.RouteRef{
+					{
+						RouteName: aws.String("route-1"),
+					},
+					{
+						RouteName: aws.String("route-2"),
+					},
+				},
+			},
+			wantTaintedRouteRefs: []*appmeshsdk.RouteRef{
+				{
+					RouteName: aws.String("route-2"),
+				},
+			},
+		},
+		{
+			name: "routes with protocol changed are removed",
+			args: args{
+				routes: []appmesh.Route{
+					{
+						Name: "route-1",
+						HTTP2Route: &appmesh.HTTPRoute{
+							Match: appmesh.HTTPRouteMatch{
+								Port: aws.Int64(8001),
+							},
+						},
+					},
+					{
+						Name: "route-2",
+						GRPCRoute: &appmesh.GRPCRoute{
+							Match: appmesh.GRPCRouteMatch{
+								Port: aws.Int64(8002),
+							},
+						},
+					},
+					{
+						Name: "route-3",
+						TCPRoute: &appmesh.TCPRoute{
+							Match: &appmesh.TCPRouteMatch{
+								Port: aws.Int64(8003),
+							},
+						},
+					},
+					{
+						Name: "route-4",
+						HTTPRoute: &appmesh.HTTPRoute{
+							Match: appmesh.HTTPRouteMatch{
+								Port: aws.Int64(8004),
+							},
+						},
+					},
+				},
+				sdkVR: &appmeshsdk.VirtualRouterData{
+					Spec: &appmeshsdk.VirtualRouterSpec{
+						Listeners: []*appmeshsdk.VirtualRouterListener{
+							{
+								PortMapping: &appmeshsdk.PortMapping{
+									Port:     aws.Int64(8001),
+									Protocol: aws.String("tcp"),
+								},
+							},
+							{
+								PortMapping: &appmeshsdk.PortMapping{
+									Port:     aws.Int64(8002),
+									Protocol: aws.String("http"),
+								},
+							},
+							{
+								PortMapping: &appmeshsdk.PortMapping{
+									Port:     aws.Int64(8003),
+									Protocol: aws.String("http2"),
+								},
+							},
+							{
+								PortMapping: &appmeshsdk.PortMapping{
+									Port:     aws.Int64(8004),
+									Protocol: aws.String("grpc"),
+								},
+							},
+						},
+					},
+				},
+				sdkRouteRefs: []*appmeshsdk.RouteRef{
+					{
+						RouteName: aws.String("route-1"),
+					},
+					{
+						RouteName: aws.String("route-2"),
+					},
+					{
+						RouteName: aws.String("route-3"),
+					},
+					{
+						RouteName: aws.String("route-4"),
+					},
+				},
+			},
+			wantTaintedRouteRefs: []*appmeshsdk.RouteRef{
+				{
+					RouteName: aws.String("route-1"),
+				},
+				{
+					RouteName: aws.String("route-2"),
+				},
+				{
+					RouteName: aws.String("route-3"),
+				},
+				{
+					RouteName: aws.String("route-4"),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotTaintedRouteRefs := taintedSDKRouteRefs(tt.args.routes, tt.args.sdkVR, tt.args.sdkRouteRefs)
+			assert.Equal(t, tt.wantTaintedRouteRefs, gotTaintedRouteRefs)
+		})
+	}
+}
+
+func Test_defaultRoutesManager_remove(t *testing.T) {
+	type args struct {
+		ms    *appmesh.Mesh
+		sdkVR *appmeshsdk.VirtualRouterData
+		vr    *appmesh.VirtualRouter
+	}
+	tests := []struct {
+		name             string
+		sdkRouteRefs     []*appmeshsdk.RouteRef
+		args             args
+		wantDeleteRoutes []*appmeshsdk.DeleteRouteInput
+	}{
+		{
+			name: "preserve existing matching routes",
+			sdkRouteRefs: []*appmeshsdk.RouteRef{
+				{
+					RouteName: aws.String("route-1"),
+				},
+			},
+			args: args{
+				ms: &appmesh.Mesh{},
+				sdkVR: &appmeshsdk.VirtualRouterData{
+					Spec: &appmeshsdk.VirtualRouterSpec{
+						Listeners: []*appmeshsdk.VirtualRouterListener{
+							{
+								PortMapping: &appmeshsdk.PortMapping{
+									Port:     aws.Int64(8000),
+									Protocol: aws.String("tcp"),
+								},
+							},
+						},
+					},
+				},
+				vr: &appmesh.VirtualRouter{
+					Spec: appmesh.VirtualRouterSpec{
+						Routes: []appmesh.Route{
+							{
+								Name: "route-1",
+								TCPRoute: &appmesh.TCPRoute{
+									Match: &appmesh.TCPRouteMatch{
+										Port: aws.Int64(8000),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDeleteRoutes: []*appmeshsdk.DeleteRouteInput{},
+		},
+		{
+			name: "routes with changes are removed",
+			sdkRouteRefs: []*appmeshsdk.RouteRef{
+				{
+					RouteName: aws.String("route-1"),
+				},
+				{
+					RouteName: aws.String("route-2"),
+				},
+			},
+			args: args{
+				ms: &appmesh.Mesh{},
+				sdkVR: &appmeshsdk.VirtualRouterData{
+					Spec: &appmeshsdk.VirtualRouterSpec{
+						Listeners: []*appmeshsdk.VirtualRouterListener{
+							{
+								PortMapping: &appmeshsdk.PortMapping{
+									Port:     aws.Int64(8000),
+									Protocol: aws.String("tcp"),
+								},
+							},
+							{
+								PortMapping: &appmeshsdk.PortMapping{
+									Port:     aws.Int64(9000),
+									Protocol: aws.String("http"),
+								},
+							},
+						},
+					},
+				},
+				vr: &appmesh.VirtualRouter{
+					Spec: appmesh.VirtualRouterSpec{
+						Routes: []appmesh.Route{
+							{
+								Name: "route-1",
+								HTTPRoute: &appmesh.HTTPRoute{
+									Match: appmesh.HTTPRouteMatch{
+										Port: aws.Int64(8000),
+									},
+								},
+							},
+							{
+								Name: "route-2",
+								HTTPRoute: &appmesh.HTTPRoute{
+									Match: appmesh.HTTPRouteMatch{
+										Port: aws.Int64(8080),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantDeleteRoutes: []*appmeshsdk.DeleteRouteInput{
+				{
+					RouteName: aws.String("route-1"),
+				},
+				{
+					RouteName: aws.String("route-2"),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := &fakeAppMesh{
+				existingRouteRefs: tt.sdkRouteRefs,
+			}
+			m := &defaultRoutesManager{
+				appMeshSDK: f,
+				log:        logr.Discard(),
+			}
+
+			err := m.remove(context.Background(), tt.args.ms, tt.args.sdkVR, tt.args.vr)
+
+			assert.NoError(t, err)
+			assert.ElementsMatch(t, tt.wantDeleteRoutes, f.deletedRoutes)
+		})
+	}
+}
+
+type fakeAppMesh struct {
+	services.AppMesh
+
+	existingRouteRefs []*appmeshsdk.RouteRef
+	deletedRoutes     []*appmeshsdk.DeleteRouteInput
+}
+
+func (f *fakeAppMesh) ListRoutesPagesWithContext(_ aws.Context, _ *appmeshsdk.ListRoutesInput, callback func(*appmeshsdk.ListRoutesOutput, bool) bool, _ ...request.Option) error {
+	if len(f.existingRouteRefs) > 0 {
+		callback(&appmeshsdk.ListRoutesOutput{
+			Routes: f.existingRouteRefs,
+		}, false)
+	}
+	return nil
+}
+
+func (f *fakeAppMesh) DeleteRouteWithContext(_ aws.Context, params *appmeshsdk.DeleteRouteInput, _ ...request.Option) (*appmeshsdk.DeleteRouteOutput, error) {
+	f.deletedRoutes = append(f.deletedRoutes, params)
+	for _, ref := range f.existingRouteRefs {
+		if aws.StringValue(ref.RouteName) != aws.StringValue(params.RouteName) {
+			continue
+		}
+		return &appmeshsdk.DeleteRouteOutput{}, nil
+	}
+	return nil, fmt.Errorf("not found")
 }
