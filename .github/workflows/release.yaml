@@ -7,6 +7,10 @@ env:
   GITHUB_USERNAME: ${{ secrets.EKS_BOT_GITHUB_USERNAME }}
   GITHUB_TOKEN: ${{ secrets.EKS_BOT_GITHUB_TOKEN }}
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
 
   release:
