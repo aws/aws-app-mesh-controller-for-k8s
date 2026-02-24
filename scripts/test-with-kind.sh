@@ -83,7 +83,7 @@ CONTROLLER_TAG="local"
 IMAGE_HOST="840364872350.dkr.ecr.us-west-2.amazonaws.com"
 
 ENVOY_IMAGE="$IMAGE_HOST/aws-appmesh-envoy"
-ENVOY_LATEST_TAG="v1.34.12.0-prod"
+ENVOY_LATEST_TAG="v1.34.12.1-prod"
 ENVOY_1_22_TAG="v1.22.2.0-prod"
 
 PROXY_ROUTE_IMAGE="$IMAGE_HOST/aws-appmesh-proxy-route-manager"
