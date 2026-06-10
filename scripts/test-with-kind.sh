@@ -67,8 +67,10 @@ fi
 K8S_VERSION=${K8S_VERSION:-"1.32"}
 
 # Creates a kind test cluster if none was provided.
+USE_KIND=false
 if [[ -z "$CLUSTER_NAME" || -z "$KUBECONFIG" ]]; then
   echo "No test cluster detected, creating one..."
+  USE_KIND=true
   CLUSTER_NAME="appmesh-test-$(uuidgen | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')"
   TMP_DIR=$ROOT_DIR/build/tmp-$CLUSTER_NAME
   $SCRIPTS_DIR/provision-kind-cluster.sh "${CLUSTER_NAME}" -v "${K8S_VERSION}"
@@ -91,28 +93,44 @@ PROXY_ROUTE_TAG="v7-prod"
 
 function install_crds {
     echo "installing CRDs ... "
-    make install
+    if [[ "$USE_KIND" == "true" ]]; then
+      make install
+    else
+      kubectl apply -f config/crd/bases/
+    fi
     echo "ok."
 }
 
 # Fetches and builds all required images, and loads them into kind. Kind does
 # not inherit the docker registration settings for the host, so preloading
 # the images is necessary to make sure it has the required values.
+# When using an existing EKS cluster, images are pushed to ECR instead.
 function build_and_load_images {
   docker buildx build --platform linux/amd64 --build-arg GOPROXY="$GOPROXY" -t "$CONTROLLER_IMAGE:$CONTROLLER_TAG" . --load
-  kind load docker-image --name "$CLUSTER_NAME" "$CONTROLLER_IMAGE:$CONTROLLER_TAG"
 
   ecr_login "$AWS_REGION" "$IMAGE_HOST"
 
-  local __images=(
-      "$PROXY_ROUTE_IMAGE:$PROXY_ROUTE_TAG"
-      "$ENVOY_IMAGE:$ENVOY_LATEST_TAG"
-      "$ENVOY_IMAGE:$ENVOY_1_22_TAG"
-  )
-  for image in "${__images[@]}"; do
-      docker pull "$image"
-      kind load docker-image --name "$CLUSTER_NAME" "$image"
-  done
+  if [[ "$USE_KIND" == "true" ]]; then
+    kind load docker-image --name "$CLUSTER_NAME" "$CONTROLLER_IMAGE:$CONTROLLER_TAG"
+
+    local __images=(
+        "$PROXY_ROUTE_IMAGE:$PROXY_ROUTE_TAG"
+        "$ENVOY_IMAGE:$ENVOY_LATEST_TAG"
+        "$ENVOY_IMAGE:$ENVOY_1_22_TAG"
+    )
+    for image in "${__images[@]}"; do
+        docker pull "$image"
+        kind load docker-image --name "$CLUSTER_NAME" "$image"
+    done
+  else
+    # For EKS: push controller image to ECR
+    local __ecr_repo="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon/appmesh-controller"
+    ecr_login "$AWS_REGION" "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+    docker tag "$CONTROLLER_IMAGE:$CONTROLLER_TAG" "$__ecr_repo:$CONTROLLER_TAG"
+    docker push "$__ecr_repo:$CONTROLLER_TAG"
+    # Override image for helm to use ECR
+    CONTROLLER_IMAGE="$__ecr_repo"
+  fi
 }
 
 function run_integration_tests {
