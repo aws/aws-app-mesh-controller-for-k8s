@@ -20,21 +20,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-func Test_mutatingHandler_InjectDecoder(t *testing.T) {
-	h := mutatingHandler{
-		decoder: nil,
-	}
-	decoder := &admission.Decoder{}
-	h.InjectDecoder(decoder)
-
-	assert.Equal(t, decoder, h.decoder)
-}
-
 func Test_mutatingHandler_Handle(t *testing.T) {
 	schema := runtime.NewScheme()
 	clientgoscheme.AddToScheme(schema)
 	// k8sDecoder knows k8s objects
-	decoder, _ := admission.NewDecoder(schema)
+	decoder := admission.NewDecoder(schema)
 	patchTypeJSONPatch := admissionv1.PatchTypeJSONPatch
 
 	initialPod := &corev1.Pod{
@@ -70,7 +60,7 @@ func Test_mutatingHandler_Handle(t *testing.T) {
 		mutatorPrototype    func(req admission.Request) (runtime.Object, error)
 		mutatorMutateCreate func(ctx context.Context, obj runtime.Object) (runtime.Object, error)
 		mutatorMutateUpdate func(ctx context.Context, obj runtime.Object, oldObj runtime.Object) (runtime.Object, error)
-		decoder             *admission.Decoder
+		decoder             admission.Decoder
 	}
 	type args struct {
 		req admission.Request
@@ -176,8 +166,9 @@ func Test_mutatingHandler_Handle(t *testing.T) {
 				AdmissionResponse: admissionv1.AdmissionResponse{
 					Allowed: false,
 					Result: &metav1.Status{
-						Code:   http.StatusForbidden,
-						Reason: "oops, some error happened",
+						Code:    http.StatusForbidden,
+						Message: "oops, some error happened",
+						Reason:  metav1.StatusReasonForbidden,
 					},
 				},
 			},
@@ -315,8 +306,9 @@ func Test_mutatingHandler_Handle(t *testing.T) {
 				AdmissionResponse: admissionv1.AdmissionResponse{
 					Allowed: false,
 					Result: &metav1.Status{
-						Code:   http.StatusForbidden,
-						Reason: "oops, some error happened",
+						Code:    http.StatusForbidden,
+						Message: "oops, some error happened",
+						Reason:  metav1.StatusReasonForbidden,
 					},
 				},
 			},

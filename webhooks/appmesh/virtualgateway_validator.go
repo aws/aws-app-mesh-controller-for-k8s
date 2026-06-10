@@ -115,5 +115,5 @@ func (v *virtualGatewayValidator) checkListenerMultipleConnectionPools(ln appmes
 // +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-virtualgateway,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualgateways,verbs=create;update,versions=v1beta2,name=vvirtualgateway.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
 
 func (v *virtualGatewayValidator) SetupWithManager(mgr ctrl.Manager) {
-	mgr.GetWebhookServer().Register(apiPathValidateAppMeshVirtualGateway, webhook.ValidatingWebhookForValidator(v))
+	mgr.GetWebhookServer().Register(apiPathValidateAppMeshVirtualGateway, webhook.ValidatingWebhookForValidator(mgr.GetScheme(), v))
 }

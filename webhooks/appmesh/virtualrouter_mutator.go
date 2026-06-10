@@ -73,5 +73,5 @@ func (m *virtualRouterMutator) designateMeshMembership(ctx context.Context, vr *
 // +kubebuilder:webhook:path=/mutate-appmesh-k8s-aws-v1beta2-virtualrouter,mutating=true,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualrouters,verbs=create;update,versions=v1beta2,name=mvirtualrouter.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
 
 func (m *virtualRouterMutator) SetupWithManager(mgr ctrl.Manager) {
-	mgr.GetWebhookServer().Register(apiPathMutateAppMeshVirtualRouter, webhook.MutatingWebhookForMutator(m))
+	mgr.GetWebhookServer().Register(apiPathMutateAppMeshVirtualRouter, webhook.MutatingWebhookForMutator(mgr.GetScheme(), m))
 }

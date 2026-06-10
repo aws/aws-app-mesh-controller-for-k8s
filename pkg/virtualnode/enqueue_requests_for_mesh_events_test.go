@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/util/workqueue"
+	ctrl "sigs.k8s.io/controller-runtime"
 	testclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -134,8 +135,8 @@ func Test_enqueueRequestsForMeshEvents_Update(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
-			queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
+			queue := workqueue.NewTypedRateLimitingQueue[ctrl.Request](workqueue.DefaultTypedControllerRateLimiter[ctrl.Request]())
 			h := &enqueueRequestsForMeshEvents{
 				k8sClient: k8sClient,
 				log:       logr.New(&log.NullLogSink{}),
@@ -146,12 +147,12 @@ func Test_enqueueRequestsForMeshEvents_Update(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			h.Update(tt.args.e, queue)
+			h.Update(ctx, tt.args.e, queue)
 			var gotRequests []reconcile.Request
 			queueLen := queue.Len()
 			for i := 0; i < queueLen; i++ {
 				item, _ := queue.Get()
-				gotRequests = append(gotRequests, item.(reconcile.Request))
+				gotRequests = append(gotRequests, item)
 			}
 
 			opt := cmpopts.SortSlices(compareReconcileRequest)
@@ -301,8 +302,8 @@ func Test_enqueueRequestsForMeshEvents_enqueueVirtualNodesForMesh(t *testing.T) 
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
-			queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
+			queue := workqueue.NewTypedRateLimitingQueue[ctrl.Request](workqueue.DefaultTypedControllerRateLimiter[ctrl.Request]())
 			h := &enqueueRequestsForMeshEvents{
 				k8sClient: k8sClient,
 				log:       logr.New(&log.NullLogSink{}),
@@ -318,7 +319,7 @@ func Test_enqueueRequestsForMeshEvents_enqueueVirtualNodesForMesh(t *testing.T) 
 			queueLen := queue.Len()
 			for i := 0; i < queueLen; i++ {
 				item, _ := queue.Get()
-				gotRequests = append(gotRequests, item.(reconcile.Request))
+				gotRequests = append(gotRequests, item)
 			}
 
 			opt := cmpopts.SortSlices(compareReconcileRequest)

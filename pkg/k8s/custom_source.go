@@ -6,11 +6,10 @@ import (
 	"sync"
 
 	"k8s.io/client-go/util/workqueue"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
@@ -51,10 +50,9 @@ type NotificationChannel struct {
 	// once ensures the event distribution goroutine will be performed only once
 	once sync.Once
 
-	// stop is to end ongoing goroutine, and close the Create channel
-	stop <-chan struct{}
-
 	Source <-chan GenericEvent
+
+	Handler handler.EventHandler
 
 	// dest is the destination channels of the Pod event handlers
 	dest []chan GenericEvent
@@ -67,36 +65,21 @@ type NotificationChannel struct {
 	destLock sync.Mutex
 }
 
-var _ inject.Stoppable = &NotificationChannel{}
-
-// InjectStopChannel is internal should be called only by the Controller.
-// It is used to inject the stop channel initialized by the ControllerManager.
-func (cs *NotificationChannel) InjectStopChannel(stop <-chan struct{}) error {
-	if cs.stop == nil {
-		cs.stop = stop
-	}
-
-	return nil
-}
-
 func (cs *NotificationChannel) String() string {
 	return fmt.Sprintf("channel source: %p", cs)
 }
 
-// Start implements Source and should only be called by the Controller.
+// Start implements source.Source and should only be called by the Controller.
 func (cs *NotificationChannel) Start(
 	ctx context.Context,
-	handler handler.EventHandler,
-	queue workqueue.RateLimitingInterface,
-	prct ...predicate.Predicate) error {
+	queue workqueue.TypedRateLimitingInterface[ctrl.Request]) error {
 	// Source should have been specified by the user.
 	if cs.Source == nil {
-		return fmt.Errorf("must specify CustomChannle.Source")
+		return fmt.Errorf("must specify NotificationChannel.Source")
 	}
 
-	// stop should have been injected before Start was called
-	if cs.stop == nil {
-		return fmt.Errorf("must call InjectStop on Channel before calling Start")
+	if cs.Handler == nil {
+		return fmt.Errorf("must specify NotificationChannel.Handler")
 	}
 
 	// use default value if DestBufferSize not specified
@@ -106,7 +89,7 @@ func (cs *NotificationChannel) Start(
 
 	cs.once.Do(func() {
 		// Distribute GenericEvents to all EventHandler / Queue pairs Watching this source
-		go cs.syncLoop()
+		go cs.syncLoop(ctx)
 	})
 
 	dst := make(chan GenericEvent, cs.destBufferSize)
@@ -114,11 +97,11 @@ func (cs *NotificationChannel) Start(
 		for evt := range dst {
 			switch evt.EventType {
 			case CREATE:
-				handler.Create(event.CreateEvent{Object: evt.Object}, queue)
+				cs.Handler.Create(ctx, event.CreateEvent{Object: evt.Object}, queue)
 			case DELETE:
-				handler.Delete(event.DeleteEvent{Object: evt.OldObject}, queue)
+				cs.Handler.Delete(ctx, event.DeleteEvent{Object: evt.OldObject}, queue)
 			case UPDATE:
-				handler.Update(event.UpdateEvent{ObjectOld: evt.OldObject, ObjectNew: evt.Object}, queue)
+				cs.Handler.Update(ctx, event.UpdateEvent{ObjectOld: evt.OldObject, ObjectNew: evt.Object}, queue)
 			default:
 				_ = fmt.Errorf("Invalid Type %T", evt.EventType)
 			}
@@ -158,12 +141,12 @@ func (cs *NotificationChannel) distribute(evt GenericEvent) {
 	}
 }
 
-// syncLoop keeps running and it monitors the stop and Source channel
+// syncLoop keeps running and it monitors the context and Source channel
 // If there is an event on Source channel it dispatches it to internal destination buffer
-func (cs *NotificationChannel) syncLoop() {
+func (cs *NotificationChannel) syncLoop(ctx context.Context) {
 	for {
 		select {
-		case <-cs.stop:
+		case <-ctx.Done():
 			cs.doStop()
 			return
 		case evt := <-cs.Source:

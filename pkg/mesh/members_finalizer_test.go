@@ -169,7 +169,7 @@ func Test_pendingMembersFinalizer_buildPendingMembersEventMessage(t *testing.T) 
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			eventRecorder := record.NewFakeRecorder(1)
 			m := &pendingMembersFinalizer{
 				k8sClient:     k8sClient,
@@ -281,7 +281,7 @@ func Test_pendingMembersFinalizer_findGatewayRouteMembers(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			eventRecorder := record.NewFakeRecorder(1)
 			m := &pendingMembersFinalizer{
 				k8sClient:        k8sClient,
@@ -408,7 +408,7 @@ func Test_pendingMembersFinalizer_findVirtualServiceMembers(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			eventRecorder := record.NewFakeRecorder(1)
 			m := &pendingMembersFinalizer{
 				k8sClient:        k8sClient,
@@ -535,7 +535,7 @@ func Test_pendingMembersFinalizer_findVirtualNodeMembers(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			eventRecorder := record.NewFakeRecorder(1)
 			m := &pendingMembersFinalizer{
 				k8sClient:        k8sClient,
@@ -662,7 +662,7 @@ func Test_pendingMembersFinalizer_findVirtualGatewayMembers(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			eventRecorder := record.NewFakeRecorder(1)
 			m := &pendingMembersFinalizer{
 				k8sClient:        k8sClient,
@@ -789,7 +789,7 @@ func Test_pendingMembersFinalizer_findVirtualRouterMembers(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			eventRecorder := record.NewFakeRecorder(1)
 			m := &pendingMembersFinalizer{
 				k8sClient:        k8sClient,
@@ -936,7 +936,7 @@ func Test_pendingMembersFinalizer_Finalize(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			eventRecorder := record.NewFakeRecorder(1)
 			m := &pendingMembersFinalizer{
 				k8sClient:        k8sClient,

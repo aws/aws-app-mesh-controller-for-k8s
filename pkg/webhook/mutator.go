@@ -18,8 +18,11 @@ type Mutator interface {
 }
 
 // MutatingWebhookForMutator creates a new mutating Webhook.
-func MutatingWebhookForMutator(mutator Mutator) *admission.Webhook {
+func MutatingWebhookForMutator(scheme *runtime.Scheme, mutator Mutator) *admission.Webhook {
 	return &admission.Webhook{
-		Handler: &mutatingHandler{mutator: mutator},
+		Handler: &mutatingHandler{
+			mutator: mutator,
+			decoder: admission.NewDecoder(scheme),
+		},
 	}
 }

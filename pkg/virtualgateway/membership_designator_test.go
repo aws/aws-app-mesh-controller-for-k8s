@@ -707,7 +707,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForGatewayRoute(t *testing
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			designator := NewMembershipDesignator(k8sClient)
 
 			for _, vg := range tt.env.virtualGateways {
@@ -1121,7 +1121,7 @@ func Test_virtualGatewayMembershipDesignator_DesignateForPod(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			designator := NewMembershipDesignator(k8sClient)
 
 			for _, ns := range tt.env.namespaces {

@@ -29,7 +29,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 )
@@ -75,8 +74,8 @@ func (r *gatewayRouteReconciler) Reconcile(ctx context.Context, req ctrl.Request
 func (r *gatewayRouteReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appmesh.GatewayRoute{}).
-		Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
-		Watches(&source.Kind{Type: &appmesh.VirtualGateway{}}, r.enqueueRequestsForVirtualGatewayEvents).
+		Watches(&appmesh.Mesh{}, r.enqueueRequestsForMeshEvents).
+		Watches(&appmesh.VirtualGateway{}, r.enqueueRequestsForVirtualGatewayEvents).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
 		Complete(r)
 }

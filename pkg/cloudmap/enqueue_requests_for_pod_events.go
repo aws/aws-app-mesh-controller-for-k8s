@@ -31,12 +31,12 @@ type enqueueRequestsForPodEvents struct {
 }
 
 // Create is called in response to an create event
-func (h *enqueueRequestsForPodEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
-	h.enqueueVirtualNodesForPods(context.Background(), queue, e.Object.(*corev1.Pod))
+func (h *enqueueRequestsForPodEvents) Create(ctx context.Context, e event.CreateEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
+	h.enqueueVirtualNodesForPods(ctx, queue, e.Object.(*corev1.Pod))
 }
 
 // Update is called in response to an update event
-func (h *enqueueRequestsForPodEvents) Update(e event.UpdateEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForPodEvents) Update(ctx context.Context, e event.UpdateEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// cloudmap reconcile depends Virtualnode Pod Selector labels and if there is an update to a Pod
 	// we need to check if there is any change w.r.t VirtualNode it belongs.
 	oldPod := e.ObjectOld.(*corev1.Pod)
@@ -46,10 +46,10 @@ func (h *enqueueRequestsForPodEvents) Update(e event.UpdateEvent, queue workqueu
 
 	if newPod.DeletionTimestamp != nil || ReadyStatusChanged(oldPod, newPod) || labelsChanged {
 		if labelsChanged {
-			h.enqueueVirtualNodesForPods(context.Background(), queue, oldPod)
+			h.enqueueVirtualNodesForPods(ctx, queue, oldPod)
 		}
 
-		h.enqueueVirtualNodesForPods(context.Background(), queue, newPod)
+		h.enqueueVirtualNodesForPods(ctx, queue, newPod)
 	}
 }
 
@@ -58,17 +58,17 @@ func ReadyStatusChanged(pod1 *corev1.Pod, pod2 *corev1.Pod) bool {
 }
 
 // Delete is called in response to a delete event
-func (h *enqueueRequestsForPodEvents) Delete(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
-	h.enqueueVirtualNodesForPods(context.Background(), queue, e.Object.(*corev1.Pod))
+func (h *enqueueRequestsForPodEvents) Delete(ctx context.Context, e event.DeleteEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
+	h.enqueueVirtualNodesForPods(ctx, queue, e.Object.(*corev1.Pod))
 }
 
 // Generic is called in response to an event of an unknown type or a synthetic event triggered as a cron or
 // external trigger request
-func (h *enqueueRequestsForPodEvents) Generic(e event.GenericEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForPodEvents) Generic(ctx context.Context, e event.GenericEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
-func (h *enqueueRequestsForPodEvents) enqueueVirtualNodesForPods(ctx context.Context, queue workqueue.RateLimitingInterface,
+func (h *enqueueRequestsForPodEvents) enqueueVirtualNodesForPods(ctx context.Context, queue workqueue.TypedRateLimitingInterface[ctrl.Request],
 	pod *corev1.Pod) {
 	var listOptions client.ListOptions
 	listOptions.Namespace = pod.Namespace

@@ -28,32 +28,32 @@ type enqueueRequestsForBackendGroupEvents struct {
 }
 
 // Create is called in response to a create event
-func (h *enqueueRequestsForBackendGroupEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForBackendGroupEvents) Create(ctx context.Context, e event.CreateEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	bg := e.Object.(*appmesh.BackendGroup)
-	h.enqueueVirtualNodesForMesh(context.Background(), queue, bg.Spec.MeshRef, bg)
+	h.enqueueVirtualNodesForMesh(ctx, queue, bg.Spec.MeshRef, bg)
 }
 
 // Update is called in response to an update event
-func (h *enqueueRequestsForBackendGroupEvents) Update(e event.UpdateEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForBackendGroupEvents) Update(ctx context.Context, e event.UpdateEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	bgOld := e.ObjectOld.(*appmesh.BackendGroup)
 	bgNew := e.ObjectNew.(*appmesh.BackendGroup)
 	if !reflect.DeepEqual(bgOld.Spec.VirtualServices, bgNew.Spec.VirtualServices) {
-		h.enqueueVirtualNodesForMesh(context.Background(), queue, bgNew.Spec.MeshRef, bgNew)
+		h.enqueueVirtualNodesForMesh(ctx, queue, bgNew.Spec.MeshRef, bgNew)
 	}
 }
 
 // Delete is called in response to a delete event
-func (h *enqueueRequestsForBackendGroupEvents) Delete(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForBackendGroupEvents) Delete(ctx context.Context, e event.DeleteEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
 // Generic is called in response to an event of an unknown type or a synthetic event triggered as a cron or
 // external trigger request
-func (h *enqueueRequestsForBackendGroupEvents) Generic(e event.GenericEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForBackendGroupEvents) Generic(ctx context.Context, e event.GenericEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
-func (h *enqueueRequestsForBackendGroupEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.RateLimitingInterface, meshRef *appmesh.MeshReference, backendGroup *appmesh.BackendGroup) {
+func (h *enqueueRequestsForBackendGroupEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.TypedRateLimitingInterface[ctrl.Request], meshRef *appmesh.MeshReference, backendGroup *appmesh.BackendGroup) {
 	vnList := &appmesh.VirtualNodeList{}
 	if err := h.k8sClient.List(ctx, vnList); err != nil {
 		h.log.Error(err, "failed to enqueue virtualNodes for backend group events", "mesh", meshRef.Name)

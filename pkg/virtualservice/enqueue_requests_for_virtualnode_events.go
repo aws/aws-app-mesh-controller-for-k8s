@@ -28,34 +28,34 @@ type enqueueRequestsForVirtualNodeEvents struct {
 }
 
 // Create is called in response to an create event
-func (h *enqueueRequestsForVirtualNodeEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualNodeEvents) Create(ctx context.Context, e event.CreateEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
 // Update is called in response to an update event
-func (h *enqueueRequestsForVirtualNodeEvents) Update(e event.UpdateEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualNodeEvents) Update(ctx context.Context, e event.UpdateEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// VirtualService reconcile depends on virtualNode is active or not.
 	// so we only need to trigger VirtualService reconcile if virtualNode's active status changed.
 	vnOld := e.ObjectOld.(*appmesh.VirtualNode)
 	vnNew := e.ObjectNew.(*appmesh.VirtualNode)
 
 	if virtualnode.IsVirtualNodeActive(vnOld) != virtualnode.IsVirtualNodeActive(vnNew) {
-		h.enqueueVirtualServicesForVirtualNode(context.Background(), queue, vnNew)
+		h.enqueueVirtualServicesForVirtualNode(ctx, queue, vnNew)
 	}
 }
 
 // Delete is called in response to a delete event
-func (h *enqueueRequestsForVirtualNodeEvents) Delete(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualNodeEvents) Delete(ctx context.Context, e event.DeleteEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
 // Generic is called in response to an event of an unknown type or a synthetic event triggered as a cron or
 // external trigger request
-func (h *enqueueRequestsForVirtualNodeEvents) Generic(e event.GenericEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualNodeEvents) Generic(ctx context.Context, e event.GenericEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
-func (h *enqueueRequestsForVirtualNodeEvents) enqueueVirtualServicesForVirtualNode(ctx context.Context, queue workqueue.RateLimitingInterface, vn *appmesh.VirtualNode) {
+func (h *enqueueRequestsForVirtualNodeEvents) enqueueVirtualServicesForVirtualNode(ctx context.Context, queue workqueue.TypedRateLimitingInterface[ctrl.Request], vn *appmesh.VirtualNode) {
 	vsList := &appmesh.VirtualServiceList{}
 	if err := h.referencesIndexer.Fetch(ctx, vsList, ReferenceKindVirtualNode, k8s.NamespacedName(vn)); err != nil {
 		h.log.Error(err, "failed to enqueue virtualServices for virtualNode events",

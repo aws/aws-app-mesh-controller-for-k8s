@@ -226,7 +226,7 @@ func Test_defaultInstancesHealthProber_filterInstancesBlockedByCMHealthyReadines
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			p := &defaultInstancesHealthProber{
 				k8sClient: k8sClient,
 			}
@@ -446,7 +446,7 @@ func Test_defaultInstancesHealthProber_updateInstanceProbeEntry(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			p := &defaultInstancesHealthProber{
 				k8sClient:          k8sClient,
 				transitionDuration: defaultHealthTransitionDuration,

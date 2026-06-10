@@ -73,5 +73,5 @@ func (m *virtualGatewayMutator) designateMeshMembership(ctx context.Context, vg 
 // +kubebuilder:webhook:path=/mutate-appmesh-k8s-aws-v1beta2-virtualgateway,mutating=true,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualgateways,verbs=create;update,versions=v1beta2,name=mvirtualgateway.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
 
 func (m *virtualGatewayMutator) SetupWithManager(mgr ctrl.Manager) {
-	mgr.GetWebhookServer().Register(apiPathMutateAppMeshVirtualGateway, webhook.MutatingWebhookForMutator(m))
+	mgr.GetWebhookServer().Register(apiPathMutateAppMeshVirtualGateway, webhook.MutatingWebhookForMutator(mgr.GetScheme(), m))
 }
