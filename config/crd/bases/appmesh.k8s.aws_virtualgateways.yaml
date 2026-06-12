@@ -1,11 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.0
   name: virtualgateways.appmesh.k8s.aws
 spec:
   group: appmesh.k8s.aws
@@ -32,25 +30,31 @@ spec:
         description: VirtualGateway is the Schema for the virtualgateways API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
           spec:
-            description: VirtualGatewaySpec defines the desired state of VirtualGateway
+            description: |-
+              VirtualGatewaySpec defines the desired state of VirtualGateway
               refers to https://docs.aws.amazon.com/app-mesh/latest/userguide/virtual_gateways.html
             properties:
               awsName:
-                description: AWSName is the AppMesh VirtualGateway object's name.
-                  If unspecified or empty, it defaults to be "${name}_${namespace}"
-                  of k8s VirtualGateway
+                description: |-
+                  AWSName is the AppMesh VirtualGateway object's name.
+                  If unspecified or empty, it defaults to be "${name}_${namespace}" of k8s VirtualGateway
                 type: string
               backendDefaults:
                 description: A reference to an object that represents the defaults
@@ -100,9 +104,9 @@ spec:
                                 type: object
                             type: object
                           enforce:
-                            description: Whether the policy is enforced. If unspecified,
-                              default settings from AWS API will be applied. Refer
-                              to AWS Docs for default settings.
+                            description: |-
+                              Whether the policy is enforced.
+                              If unspecified, default settings from AWS API will be applied. Refer to AWS Docs for default settings.
                             type: boolean
                           ports:
                             description: The range of ports that the policy is enforced
@@ -189,51 +193,53 @@ spec:
                     type: object
                 type: object
               gatewayRouteSelector:
-                description: GatewayRouteSelector selects GatewayRoutes using labels
-                  to designate GatewayRoute membership. If not specified it selects
-                  all GatewayRoutes in that namespace.
+                description: |-
+                  GatewayRouteSelector selects GatewayRoutes using labels to designate GatewayRoute membership.
+                  If not specified it selects all GatewayRoutes in that namespace.
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
                       The requirements are ANDed.
                     items:
-                      description: A label selector requirement is a selector that
-                        contains values, a key, and an operator that relates the key
-                        and values.
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
                       properties:
                         key:
                           description: key is the label key that the selector applies
                             to.
                           type: string
                         operator:
-                          description: operator represents a key's relationship to
-                            a set of values. Valid operators are In, NotIn, Exists
-                            and DoesNotExist.
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
                           type: string
                         values:
-                          description: values is an array of string values. If the
-                            operator is In or NotIn, the values array must be non-empty.
-                            If the operator is Exists or DoesNotExist, the values
-                            array must be empty. This array is replaced during a strategic
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
                             merge patch.
                           items:
                             type: string
                           type: array
+                          x-kubernetes-list-type: atomic
                       required:
                       - key
                       - operator
                       type: object
                     type: array
+                    x-kubernetes-list-type: atomic
                   matchLabels:
                     additionalProperties:
                       type: string
-                    description: matchLabels is a map of {key,value} pairs. A single
-                      {key,value} in the matchLabels map is equivalent to an element
-                      of matchExpressions, whose key field is "key", the operator
-                      is "In", and the values array contains only "value". The requirements
-                      are ANDed.
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
                     type: object
                 type: object
+                x-kubernetes-map-type: atomic
               listeners:
                 description: The listener that the virtual gateway is expected to
                   receive inbound traffic from
@@ -248,9 +254,9 @@ spec:
                             the virtual gateway listener
                           properties:
                             maxRequests:
-                              description: Represents the maximum number of inflight
-                                requests that an envoy can concurrently support across
-                                all the hosts in the upstream cluster
+                              description: |-
+                                Represents the maximum number of inflight requests that an envoy
+                                can concurrently support across all the hosts in the upstream cluster
                               format: int64
                               minimum: 1
                               type: integer
@@ -262,16 +268,16 @@ spec:
                             the virtual gateway listener
                           properties:
                             maxConnections:
-                              description: Represents the maximum number of outbound
-                                TCP connections the envoy can establish concurrently
-                                with all the hosts in the upstream cluster.
+                              description: |-
+                                Represents the maximum number of outbound TCP connections
+                                the envoy can establish concurrently with all the hosts in the upstream cluster.
                               format: int64
                               minimum: 1
                               type: integer
                             maxPendingRequests:
-                              description: Represents the number of overflowing requests
-                                after max_connections that an envoy will queue to
-                                an upstream cluster.
+                              description: |-
+                                Represents the number of overflowing requests after max_connections
+                                that an envoy will queue to an upstream cluster.
                               format: int64
                               minimum: 1
                               type: integer
@@ -283,9 +289,9 @@ spec:
                             the virtual gateway listener
                           properties:
                             maxRequests:
-                              description: Represents the maximum number of inflight
-                                requests that an envoy can concurrently support across
-                                all the hosts in the upstream cluster
+                              description: |-
+                                Represents the maximum number of inflight requests that an envoy
+                                can concurrently support across all the hosts in the upstream cluster
                               format: int64
                               minimum: 1
                               type: integer
@@ -311,9 +317,9 @@ spec:
                           minimum: 5000
                           type: integer
                         path:
-                          description: The destination path for the health check request.
-                            This value is only used if the specified protocol is http
-                            or http2. For any other protocol, this value is ignored.
+                          description: |-
+                            The destination path for the health check request.
+                            This value is only used if the specified protocol is http or http2. For any other protocol, this value is ignored.
                           type: string
                         port:
                           description: The destination port for the health check request.
@@ -549,10 +555,12 @@ spec:
                     type: object
                 type: object
               meshRef:
-                description: "A reference to k8s Mesh CR that this VirtualGateway
-                  belongs to. The admission controller populates it using Meshes's
-                  selector, and prevents users from setting this field. \n Populated
-                  by the system. Read-only."
+                description: |-
+                  A reference to k8s Mesh CR that this VirtualGateway belongs to.
+                  The admission controller populates it using Meshes's selector, and prevents users from setting this field.
+
+                  Populated by the system.
+                  Read-only.
                 properties:
                   name:
                     description: Name is the name of Mesh CR
@@ -565,98 +573,102 @@ spec:
                 - uid
                 type: object
               namespaceSelector:
-                description: NamespaceSelector selects Namespaces using labels to
-                  designate GatewayRoute membership. This field follows standard label
-                  selector semantics; if present but empty, it selects all namespaces.
+                description: |-
+                  NamespaceSelector selects Namespaces using labels to designate GatewayRoute membership.
+                  This field follows standard label selector semantics; if present but empty, it selects all namespaces.
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
                       The requirements are ANDed.
                     items:
-                      description: A label selector requirement is a selector that
-                        contains values, a key, and an operator that relates the key
-                        and values.
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
                       properties:
                         key:
                           description: key is the label key that the selector applies
                             to.
                           type: string
                         operator:
-                          description: operator represents a key's relationship to
-                            a set of values. Valid operators are In, NotIn, Exists
-                            and DoesNotExist.
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
                           type: string
                         values:
-                          description: values is an array of string values. If the
-                            operator is In or NotIn, the values array must be non-empty.
-                            If the operator is Exists or DoesNotExist, the values
-                            array must be empty. This array is replaced during a strategic
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
                             merge patch.
                           items:
                             type: string
                           type: array
+                          x-kubernetes-list-type: atomic
                       required:
                       - key
                       - operator
                       type: object
                     type: array
+                    x-kubernetes-list-type: atomic
                   matchLabels:
                     additionalProperties:
                       type: string
-                    description: matchLabels is a map of {key,value} pairs. A single
-                      {key,value} in the matchLabels map is equivalent to an element
-                      of matchExpressions, whose key field is "key", the operator
-                      is "In", and the values array contains only "value". The requirements
-                      are ANDed.
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
                     type: object
                 type: object
+                x-kubernetes-map-type: atomic
               podSelector:
                 description: "PodSelector selects Pods using labels to designate VirtualGateway
-                  membership. This field follows standard label selector semantics:
-                  \tif present but empty, it selects all pods within namespace. \tif
-                  absent, it selects no pod."
+                  membership.\nThis field follows standard label selector semantics:\n\tif
+                  present but empty, it selects all pods within namespace.\n\tif absent,
+                  it selects no pod."
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
                       The requirements are ANDed.
                     items:
-                      description: A label selector requirement is a selector that
-                        contains values, a key, and an operator that relates the key
-                        and values.
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
                       properties:
                         key:
                           description: key is the label key that the selector applies
                             to.
                           type: string
                         operator:
-                          description: operator represents a key's relationship to
-                            a set of values. Valid operators are In, NotIn, Exists
-                            and DoesNotExist.
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
                           type: string
                         values:
-                          description: values is an array of string values. If the
-                            operator is In or NotIn, the values array must be non-empty.
-                            If the operator is Exists or DoesNotExist, the values
-                            array must be empty. This array is replaced during a strategic
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
                             merge patch.
                           items:
                             type: string
                           type: array
+                          x-kubernetes-list-type: atomic
                       required:
                       - key
                       - operator
                       type: object
                     type: array
+                    x-kubernetes-list-type: atomic
                   matchLabels:
                     additionalProperties:
                       type: string
-                    description: matchLabels is a map of {key,value} pairs. A single
-                      {key,value} in the matchLabels map is equivalent to an element
-                      of matchExpressions, whose key field is "key", the operator
-                      is "In", and the values array contains only "value". The requirements
-                      are ANDed.
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
                     type: object
                 type: object
+                x-kubernetes-map-type: atomic
             type: object
           status:
             description: VirtualGatewayStatus defines the observed state of VirtualGateway
@@ -703,9 +715,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

@@ -130,7 +130,7 @@ func (v *virtualRouterValidator) checkForDuplicateRouteEntries(vr *appmesh.Virtu
 	return nil
 }
 
-// +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-virtualrouter,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualrouters,verbs=create;update,versions=v1beta2,name=vvirtualrouter.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
+// +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-virtualrouter,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=virtualrouters,verbs=create;update,versions=v1beta2,name=vvirtualrouter.appmesh.k8s.aws,sideEffects=None,admissionReviewVersions=v1,webhookVersions=v1
 
 func (v *virtualRouterValidator) SetupWithManager(mgr ctrl.Manager) {
 	mgr.GetWebhookServer().Register(apiPathValidateAppMeshVirtualRouter, webhook.ValidatingWebhookForValidator(mgr.GetScheme(), v))

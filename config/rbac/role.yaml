@@ -1,9 +1,7 @@
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: controller-role
 rules:
 - apiGroups:
@@ -17,21 +15,7 @@ rules:
   - ""
   resources:
   - namespaces
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
   - nodes
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
   - pods
   verbs:
   - get
@@ -49,125 +33,11 @@ rules:
   - appmesh.k8s.aws
   resources:
   - backendgroups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - appmesh.k8s.aws
-  resources:
-  - backendgroups/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - appmesh.k8s.aws
-  resources:
   - gatewayroutes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - appmesh.k8s.aws
-  resources:
-  - gatewayroutes/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - appmesh.k8s.aws
-  resources:
   - meshes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - appmesh.k8s.aws
-  resources:
-  - meshes/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - appmesh.k8s.aws
-  resources:
   - virtualgateways
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - appmesh.k8s.aws
-  resources:
-  - virtualgateways/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - appmesh.k8s.aws
-  resources:
   - virtualnodes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - appmesh.k8s.aws
-  resources:
-  - virtualnodes/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - appmesh.k8s.aws
-  resources:
   - virtualrouters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - appmesh.k8s.aws
-  resources:
-  - virtualrouters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - appmesh.k8s.aws
-  resources:
   - virtualservices
   verbs:
   - create
@@ -180,6 +50,12 @@ rules:
 - apiGroups:
   - appmesh.k8s.aws
   resources:
+  - backendgroups/status
+  - gatewayroutes/status
+  - meshes/status
+  - virtualgateways/status
+  - virtualnodes/status
+  - virtualrouters/status
   - virtualservices/status
   verbs:
   - get

@@ -1,11 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.0
   name: meshes.appmesh.k8s.aws
 spec:
   group: appmesh.k8s.aws
@@ -30,28 +28,36 @@ spec:
         description: Mesh is the Schema for the meshes API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
           spec:
-            description: MeshSpec defines the desired state of Mesh refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_MeshSpec.html
+            description: |-
+              MeshSpec defines the desired state of Mesh
+              refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_MeshSpec.html
             properties:
               awsName:
-                description: AWSName is the AppMesh Mesh object's name. If unspecified
-                  or empty, it defaults to be "${name}" of k8s Mesh
+                description: |-
+                  AWSName is the AppMesh Mesh object's name.
+                  If unspecified or empty, it defaults to be "${name}" of k8s Mesh
                 type: string
               egressFilter:
-                description: The egress filter rules for the service mesh. If unspecified,
-                  default settings from AWS API will be applied. Refer to AWS Docs
-                  for default settings.
+                description: |-
+                  The egress filter rules for the service mesh.
+                  If unspecified, default settings from AWS API will be applied. Refer to AWS Docs for default settings.
                 properties:
                   type:
                     description: The egress filter type.
@@ -63,8 +69,9 @@ spec:
                 - type
                 type: object
               meshOwner:
-                description: The AWS IAM account ID of the service mesh owner. Required
-                  if the account ID is not your own.
+                description: |-
+                  The AWS IAM account ID of the service mesh owner.
+                  Required if the account ID is not your own.
                 type: string
               meshServiceDiscovery:
                 properties:
@@ -77,51 +84,53 @@ spec:
                 type: object
               namespaceSelector:
                 description: "NamespaceSelector selects Namespaces using labels to
-                  designate mesh membership. This field follows standard label selector
-                  semantics: \tif present but empty, it selects all namespaces. \tif
+                  designate mesh membership.\nThis field follows standard label selector
+                  semantics:\n\tif present but empty, it selects all namespaces.\n\tif
                   absent, it selects no namespace."
                 properties:
                   matchExpressions:
                     description: matchExpressions is a list of label selector requirements.
                       The requirements are ANDed.
                     items:
-                      description: A label selector requirement is a selector that
-                        contains values, a key, and an operator that relates the key
-                        and values.
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
                       properties:
                         key:
                           description: key is the label key that the selector applies
                             to.
                           type: string
                         operator:
-                          description: operator represents a key's relationship to
-                            a set of values. Valid operators are In, NotIn, Exists
-                            and DoesNotExist.
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
                           type: string
                         values:
-                          description: values is an array of string values. If the
-                            operator is In or NotIn, the values array must be non-empty.
-                            If the operator is Exists or DoesNotExist, the values
-                            array must be empty. This array is replaced during a strategic
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
                             merge patch.
                           items:
                             type: string
                           type: array
+                          x-kubernetes-list-type: atomic
                       required:
                       - key
                       - operator
                       type: object
                     type: array
+                    x-kubernetes-list-type: atomic
                   matchLabels:
                     additionalProperties:
                       type: string
-                    description: matchLabels is a map of {key,value} pairs. A single
-                      {key,value} in the matchLabels map is equivalent to an element
-                      of matchExpressions, whose key field is "key", the operator
-                      is "In", and the values array contains only "value". The requirements
-                      are ANDed.
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
                     type: object
                 type: object
+                x-kubernetes-map-type: atomic
             type: object
           status:
             description: MeshStatus defines the observed state of Mesh
@@ -168,9 +177,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

@@ -77,7 +77,7 @@ func (m *meshMutator) defaultingIpPreference(mesh *appmesh.Mesh) error {
 	return nil
 }
 
-// +kubebuilder:webhook:path=/mutate-appmesh-k8s-aws-v1beta2-mesh,mutating=true,failurePolicy=fail,groups=appmesh.k8s.aws,resources=meshes,verbs=create;update,versions=v1beta2,name=mmesh.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
+// +kubebuilder:webhook:path=/mutate-appmesh-k8s-aws-v1beta2-mesh,mutating=true,failurePolicy=fail,groups=appmesh.k8s.aws,resources=meshes,verbs=create;update,versions=v1beta2,name=mmesh.appmesh.k8s.aws,sideEffects=None,admissionReviewVersions=v1,webhookVersions=v1
 
 func (m *meshMutator) SetupWithManager(mgr ctrl.Manager) {
 	mgr.GetWebhookServer().Register(apiPathMutateAppMeshMesh, webhook.MutatingWebhookForMutator(mgr.GetScheme(), m))
