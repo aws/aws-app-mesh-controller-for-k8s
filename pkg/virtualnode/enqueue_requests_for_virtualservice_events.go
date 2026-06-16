@@ -27,27 +27,27 @@ type enqueueRequestsForVirtualServiceEvents struct {
 }
 
 // Create is called in response to a create event
-func (h *enqueueRequestsForVirtualServiceEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
-	h.enqueueVirtualNodesForMesh(context.Background(), queue, e.Object.(*appmesh.VirtualService).Spec.MeshRef, e.Object.(*appmesh.VirtualService))
+func (h *enqueueRequestsForVirtualServiceEvents) Create(ctx context.Context, e event.CreateEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
+	h.enqueueVirtualNodesForMesh(ctx, queue, e.Object.(*appmesh.VirtualService).Spec.MeshRef, e.Object.(*appmesh.VirtualService))
 }
 
 // Update is called in response to an update event
-func (h *enqueueRequestsForVirtualServiceEvents) Update(e event.UpdateEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualServiceEvents) Update(ctx context.Context, e event.UpdateEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
 // Delete is called in response to a delete event
-func (h *enqueueRequestsForVirtualServiceEvents) Delete(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualServiceEvents) Delete(ctx context.Context, e event.DeleteEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
 // Generic is called in response to an event of an unknown type or a synthetic event triggered as a cron or
 // external trigger request
-func (h *enqueueRequestsForVirtualServiceEvents) Generic(e event.GenericEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualServiceEvents) Generic(ctx context.Context, e event.GenericEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
-func (h *enqueueRequestsForVirtualServiceEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.RateLimitingInterface, meshRef *appmesh.MeshReference, vs *appmesh.VirtualService) {
+func (h *enqueueRequestsForVirtualServiceEvents) enqueueVirtualNodesForMesh(ctx context.Context, queue workqueue.TypedRateLimitingInterface[ctrl.Request], meshRef *appmesh.MeshReference, vs *appmesh.VirtualService) {
 	vnList := &appmesh.VirtualNodeList{}
 	if err := h.k8sClient.List(ctx, vnList); err != nil {
 		h.log.Error(err, "failed to enqueue virtualNodes for virtual service events", "mesh", meshRef.Name)

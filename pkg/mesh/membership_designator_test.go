@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	testclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 )
@@ -61,6 +62,7 @@ func Test_meshSelectorDesignator_Designate(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              "mesh-been-deleting",
 			DeletionTimestamp: &now,
+			Finalizers:        []string{"test-finalizer"},
 		},
 		Spec: appmesh.MeshSpec{
 			NamespaceSelector: &metav1.LabelSelector{},
@@ -508,21 +510,20 @@ func Test_meshSelectorDesignator_Designate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).WithObjects(func() []client.Object {
+				var objs []client.Object
+				for _, mesh := range tt.env.meshes {
+					objs = append(objs, mesh.DeepCopy())
+				}
+				for _, ns := range tt.env.namespaces {
+					objs = append(objs, ns.DeepCopy())
+				}
+				return objs
+			}()...).Build()
 			designator := NewMembershipDesignator(k8sClient)
-
-			for _, mesh := range tt.env.meshes {
-				err := k8sClient.Create(ctx, mesh.DeepCopy())
-				assert.NoError(t, err)
-			}
-			for _, ns := range tt.env.namespaces {
-				err := k8sClient.Create(ctx, ns.DeepCopy())
-				assert.NoError(t, err)
-			}
 
 			got, err := designator.Designate(context.Background(), tt.args.obj)
 			if tt.wantErr != nil {

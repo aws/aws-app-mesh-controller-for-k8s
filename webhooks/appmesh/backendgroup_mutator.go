@@ -58,8 +58,8 @@ func (m *backendGroupMutator) designateMeshMembership(ctx context.Context, bg *a
 	return nil
 }
 
-// +kubebuilder:webhook:path=/mutate-appmesh-k8s-aws-v1beta2-backendgroup,mutating=true,failurePolicy=fail,groups=appmesh.k8s.aws,resources=backendgroups,verbs=create;update,versions=v1beta2,name=mbackendgroup.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
+// +kubebuilder:webhook:path=/mutate-appmesh-k8s-aws-v1beta2-backendgroup,mutating=true,failurePolicy=fail,groups=appmesh.k8s.aws,resources=backendgroups,verbs=create;update,versions=v1beta2,name=mbackendgroup.appmesh.k8s.aws,sideEffects=None,admissionReviewVersions=v1,webhookVersions=v1
 
 func (m *backendGroupMutator) SetupWithManager(mgr ctrl.Manager) {
-	mgr.GetWebhookServer().Register(apiPathMutateAppMeshBackendGroup, webhook.MutatingWebhookForMutator(m))
+	mgr.GetWebhookServer().Register(apiPathMutateAppMeshBackendGroup, webhook.MutatingWebhookForMutator(mgr.GetScheme(), m))
 }

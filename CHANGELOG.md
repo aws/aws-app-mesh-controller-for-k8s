@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## v1.4.0
+
+### Summary
+Dependency modernization release. Updates minimum Kubernetes version to 1.31.
+
+### Changes
+* Upgrade controller-runtime v0.14.6 → v0.20.4 and k8s.io/* v0.26.x → v0.32.3 ([#817](https://github.com/aws/aws-app-mesh-controller-for-k8s/pull/817) @joesbigidea)
+* Upgrade Go 1.20 → 1.24
+* Upgrade golang.org/x/crypto v0.21.0 → v0.45.0 (security fix)
+* Upgrade github.com/docker/docker v20.10.24 → v28.5.1 (security fix)
+* Upgrade github.com/sirupsen/logrus v1.9.0 → v1.9.3
+* Upgrade helm.sh/helm/v3 v3.11.3 → v3.14.3
+* Remove replace directives (containerd, docker/distribution, runc)
+* Regenerate CRDs with controller-gen v0.17.2
+* **Breaking:** Minimum supported Kubernetes version is now 1.31
+
 ## v1.3.0
 
 ### Summary

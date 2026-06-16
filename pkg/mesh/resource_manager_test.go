@@ -112,7 +112,7 @@ func Test_defaultResourceManager_updateCRDMesh(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).WithStatusSubresource(&appmesh.Mesh{}).Build()
 
 			m := &defaultResourceManager{
 				k8sClient: k8sClient,

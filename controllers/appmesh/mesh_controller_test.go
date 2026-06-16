@@ -71,7 +71,7 @@ func Test_meshReconciler_reconcile(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 
 			err := k8sClient.Create(ctx, tt.args.ms.DeepCopy())
 			assert.NoError(t, err)

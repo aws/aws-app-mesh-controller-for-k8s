@@ -108,7 +108,7 @@ func (c *CustomController) StartController(stopChanel <-chan struct{}) {
 		ObjectType:       c.converter.ResourceType(),
 		FullResyncPeriod: c.resyncPeriod,
 		RetryOnError:     c.retryOnError,
-		Process: func(obj interface{}) error {
+		Process: func(obj interface{}, isInInitialList bool) error {
 			// from oldest to newest
 			for _, d := range obj.(cache.Deltas) {
 				// Strip down the pod object and keep only the required details

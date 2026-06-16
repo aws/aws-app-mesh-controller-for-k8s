@@ -42,13 +42,15 @@ import (
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	k8sapiflag "k8s.io/component-base/cli/flag"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/gatewayroute"
 	"github.com/aws/aws-app-mesh-controller-for-k8s/pkg/inject"
@@ -182,15 +184,21 @@ func main() {
 	optionsTlSOptsFuncs = append(optionsTlSOptsFuncs, tlsOption)
 
 	mgr, err := ctrl.NewManager(kubeConfig, ctrl.Options{
-		Scheme:                     scheme,
-		SyncPeriod:                 &syncPeriod,
-		MetricsBindAddress:         metricsAddr,
-		Port:                       9443,
+		Scheme: scheme,
+		Cache: cache.Options{
+			SyncPeriod: &syncPeriod,
+		},
+		Metrics: metricsserver.Options{
+			BindAddress: metricsAddr,
+		},
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port:    9443,
+			TLSOpts: optionsTlSOptsFuncs,
+		}),
 		LeaderElection:             enableLeaderElection,
 		LeaderElectionID:           "appmesh-controller-leader-election",
-		LeaderElectionResourceLock: resourcelock.ConfigMapsLeasesResourceLock,
+		LeaderElectionResourceLock: "leases",
 		HealthProbeBindAddress:     healthProbeBindAddress,
-		TLSOpts:                    optionsTlSOptsFuncs,
 	})
 
 	customController := k8s.NewCustomController(

@@ -19,7 +19,7 @@ set -Eo pipefail
 
 SCRIPTS_DIR=$(cd "$(dirname "$0")"; pwd)
 ROOT_DIR="$SCRIPTS_DIR/.."
-CONTROLLER_TOOLS_VERSION="v0.4.0"
+CONTROLLER_TOOLS_VERSION="v0.17.2"
 
 source "$SCRIPTS_DIR/lib/common.sh"
 

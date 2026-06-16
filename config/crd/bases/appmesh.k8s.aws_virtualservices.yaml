@@ -1,11 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.0
   name: virtualservices.appmesh.k8s.aws
 spec:
   group: appmesh.k8s.aws
@@ -32,31 +30,39 @@ spec:
         description: VirtualService is the Schema for the virtualservices API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
           spec:
-            description: VirtualServiceSpec defines the desired state of VirtualService
+            description: |-
+              VirtualServiceSpec defines the desired state of VirtualService
               refers to https://docs.aws.amazon.com/app-mesh/latest/APIReference/API_VirtualServiceSpec.html
             properties:
               awsName:
-                description: AWSName is the AppMesh VirtualService object's name.
-                  If unspecified or empty, it defaults to be "${name}.${namespace}"
-                  of k8s VirtualService
+                description: |-
+                  AWSName is the AppMesh VirtualService object's name.
+                  If unspecified or empty, it defaults to be "${name}.${namespace}" of k8s VirtualService
                 type: string
               meshRef:
-                description: "A reference to k8s Mesh CR that this VirtualService
-                  belongs to. The admission controller populates it using Meshes's
-                  selector, and prevents users from setting this field. \n Populated
-                  by the system. Read-only."
+                description: |-
+                  A reference to k8s Mesh CR that this VirtualService belongs to.
+                  The admission controller populates it using Meshes's selector, and prevents users from setting this field.
+
+                  Populated by the system.
+                  Read-only.
                 properties:
                   name:
                     description: Name is the name of Mesh CR
@@ -89,9 +95,9 @@ spec:
                             description: Name is the name of VirtualNode CR
                             type: string
                           namespace:
-                            description: Namespace is the namespace of VirtualNode
-                              CR. If unspecified, defaults to the referencing object's
-                              namespace
+                            description: |-
+                              Namespace is the namespace of VirtualNode CR.
+                              If unspecified, defaults to the referencing object's namespace
                             type: string
                         required:
                         - name
@@ -114,9 +120,9 @@ spec:
                             description: Name is the name of VirtualRouter CR
                             type: string
                           namespace:
-                            description: Namespace is the namespace of VirtualRouter
-                              CR. If unspecified, defaults to the referencing object's
-                              namespace
+                            description: |-
+                              Namespace is the namespace of VirtualRouter CR.
+                              If unspecified, defaults to the referencing object's namespace
                             type: string
                         required:
                         - name
@@ -169,9 +175,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

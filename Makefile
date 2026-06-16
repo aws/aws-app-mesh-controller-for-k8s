@@ -11,8 +11,8 @@ ENABLE_BACKEND_GROUPS?=false
 WAIT_PROXY_READY=false
 SIDECAR_IMAGE_TAG=v1.34.13.1-prod
 
-# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true,crdVersions=v1"
+# Produce CRDs that work back to Kubernetes 1.31 (no version conversion)
+CRD_OPTIONS ?= "crd:crdVersions=v1"
 
 # app mesh aws-sdk-go override in case we need to build against a custom version
 APPMESH_SDK_OVERRIDE ?= "n"
@@ -131,7 +131,7 @@ ifeq (, $(shell which controller-gen))
 	CONTROLLER_GEN_TMP_DIR=$$(mktemp -d) ;\
 	cd $$CONTROLLER_GEN_TMP_DIR ;\
 	go mod init tmp ;\
-	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1 ;\
+	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.17.2 ;\
 	rm -rf $$CONTROLLER_GEN_TMP_DIR ;\
 	}
 CONTROLLER_GEN=$(GOBIN)/controller-gen

@@ -28,34 +28,34 @@ type enqueueRequestsForVirtualRouterEvents struct {
 }
 
 // Create is called in response to an create event
-func (h *enqueueRequestsForVirtualRouterEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualRouterEvents) Create(ctx context.Context, e event.CreateEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
 // Update is called in response to an update event
-func (h *enqueueRequestsForVirtualRouterEvents) Update(e event.UpdateEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualRouterEvents) Update(ctx context.Context, e event.UpdateEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// VirtualService reconcile depends on virtualRouter is active or not.
 	// so we only need to trigger VirtualService reconcile if virtualRouter's active status changed.
 	vrOld := e.ObjectOld.(*appmesh.VirtualRouter)
 	vrNew := e.ObjectNew.(*appmesh.VirtualRouter)
 
 	if virtualrouter.IsVirtualRouterActive(vrOld) != virtualrouter.IsVirtualRouterActive(vrNew) {
-		h.enqueueVirtualServicesForVirtualRouter(context.Background(), queue, vrNew)
+		h.enqueueVirtualServicesForVirtualRouter(ctx, queue, vrNew)
 	}
 }
 
 // Delete is called in response to a delete event
-func (h *enqueueRequestsForVirtualRouterEvents) Delete(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualRouterEvents) Delete(ctx context.Context, e event.DeleteEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
 // Generic is called in response to an event of an unknown type or a synthetic event triggered as a cron or
 // external trigger request
-func (h *enqueueRequestsForVirtualRouterEvents) Generic(e event.GenericEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualRouterEvents) Generic(ctx context.Context, e event.GenericEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
-func (h *enqueueRequestsForVirtualRouterEvents) enqueueVirtualServicesForVirtualRouter(ctx context.Context, queue workqueue.RateLimitingInterface, vr *appmesh.VirtualRouter) {
+func (h *enqueueRequestsForVirtualRouterEvents) enqueueVirtualServicesForVirtualRouter(ctx context.Context, queue workqueue.TypedRateLimitingInterface[ctrl.Request], vr *appmesh.VirtualRouter) {
 	vsList := &appmesh.VirtualServiceList{}
 	if err := h.referencesIndexer.Fetch(ctx, vsList, ReferenceKindVirtualRouter, k8s.NamespacedName(vr)); err != nil {
 		h.log.Error(err, "failed to enqueue virtualServices for virtualRouter events",

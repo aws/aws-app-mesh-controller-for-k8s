@@ -577,7 +577,7 @@ func TestSidecarInjector_determineSidecarInjectMode(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			m := &SidecarInjector{
 				k8sClient: k8sClient,
 			}

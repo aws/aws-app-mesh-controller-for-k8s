@@ -25,7 +25,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	appmesh "github.com/aws/aws-app-mesh-controller-for-k8s/apis/appmesh/v1beta2"
 )
@@ -80,15 +79,15 @@ func (r *virtualNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if r.enableBackendGroups {
 		return ctrl.NewControllerManagedBy(mgr).
 			For(&appmesh.VirtualNode{}).
-			Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
-			Watches(&source.Kind{Type: &appmesh.BackendGroup{}}, r.enqueueRequestsForBackendGroupEvents).
-			Watches(&source.Kind{Type: &appmesh.VirtualService{}}, r.enqueueRequestsForVirtualServiceEvents).
+			Watches(&appmesh.Mesh{}, r.enqueueRequestsForMeshEvents).
+			Watches(&appmesh.BackendGroup{}, r.enqueueRequestsForBackendGroupEvents).
+			Watches(&appmesh.VirtualService{}, r.enqueueRequestsForVirtualServiceEvents).
 			WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
 			Complete(r)
 	} else {
 		return ctrl.NewControllerManagedBy(mgr).
 			For(&appmesh.VirtualNode{}).
-			Watches(&source.Kind{Type: &appmesh.Mesh{}}, r.enqueueRequestsForMeshEvents).
+			Watches(&appmesh.Mesh{}, r.enqueueRequestsForMeshEvents).
 			WithOptions(controller.Options{MaxConcurrentReconciles: 3}).
 			Complete(r)
 	}

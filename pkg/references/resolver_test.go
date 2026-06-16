@@ -90,7 +90,7 @@ func Test_defaultResolver_ResolveMeshReference(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			r := NewDefaultResolver(k8sClient, logr.New(&log.NullLogSink{}))
 
 			for _, ms := range tt.env.meshes {
@@ -234,7 +234,7 @@ func Test_defaultResolver_ResolveVirtualGatewayReference(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			r := NewDefaultResolver(k8sClient, logr.New(&log.NullLogSink{}))
 
 			for _, ms := range tt.env.virtualGateways {
@@ -347,7 +347,7 @@ func Test_defaultResolver_ResolveVirtualNodeReference(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			r := NewDefaultResolver(k8sClient, logr.New(&log.NullLogSink{}))
 
 			for _, vn := range tt.env.virtualNodes {
@@ -460,7 +460,7 @@ func Test_defaultResolver_ResolveVirtualServiceReference(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			r := NewDefaultResolver(k8sClient, logr.New(&log.NullLogSink{}))
 
 			for _, vs := range tt.env.virtualServices {
@@ -573,7 +573,7 @@ func Test_defaultResolver_ResolveVirtualRouterReference(t *testing.T) {
 			k8sSchema := runtime.NewScheme()
 			clientgoscheme.AddToScheme(k8sSchema)
 			appmesh.AddToScheme(k8sSchema)
-			k8sClient := testclient.NewFakeClientWithScheme(k8sSchema)
+			k8sClient := testclient.NewClientBuilder().WithScheme(k8sSchema).Build()
 			r := NewDefaultResolver(k8sClient, logr.New(&log.NullLogSink{}))
 
 			for _, vr := range tt.env.virtualRouters {

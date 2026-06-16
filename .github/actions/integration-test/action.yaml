@@ -19,10 +19,10 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Go 1.20
+    - name: Install Go 1.24
       uses: actions/setup-go@v3
       with:
-        go-version: '1.20.*'
+        go-version: '1.24.*'
       id: go
 
     - name: Setup Test Tools
@@ -34,10 +34,9 @@ runs:
         curl -sL -o ~/.docker/cli-plugins/docker-buildx "https://github.com/docker/buildx/releases/download/v0.3.0/buildx-v0.3.0.linux-amd64"
         chmod a+x ~/.docker/cli-plugins/docker-buildx
 
-        curl -L -o kubebuilder.tar.gz "https://github.com/kubernetes-sigs/kubebuilder/releases/download/v2.3.1/kubebuilder_2.3.1_linux_amd64.tar.gz"
-        tar xzf kubebuilder.tar.gz
-        sudo mv "kubebuilder_2.3.1_linux_amd64" /usr/local/kubebuilder
-        export PATH=$PATH:/usr/local/kubebuilder/bin
+        curl -L -o kubebuilder "https://github.com/kubernetes-sigs/kubebuilder/releases/download/v4.4.0/kubebuilder_linux_amd64"
+        chmod +x kubebuilder
+        sudo mv kubebuilder /usr/local/bin/
 
         curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
         chmod 700 get_helm.sh
@@ -65,7 +64,7 @@ runs:
     - name: Setup Kind
       uses: engineerd/setup-kind@v0.5.0
       with:
-        version: "v0.17.0"
+        version: "v0.27.0"
         name: "${{ inputs.cluster_name }}"
 
     - name: Run Integration Tests

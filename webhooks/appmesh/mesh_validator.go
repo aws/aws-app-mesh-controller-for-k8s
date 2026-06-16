@@ -83,8 +83,8 @@ func (v *meshValidator) checkIpPreference(mesh *appmesh.Mesh) error {
 	return nil
 }
 
-// +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-mesh,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=meshes,verbs=create;update,versions=v1beta2,name=vmesh.appmesh.k8s.aws,sideEffects=None,webhookVersions=v1beta1
+// +kubebuilder:webhook:path=/validate-appmesh-k8s-aws-v1beta2-mesh,mutating=false,failurePolicy=fail,groups=appmesh.k8s.aws,resources=meshes,verbs=create;update,versions=v1beta2,name=vmesh.appmesh.k8s.aws,sideEffects=None,admissionReviewVersions=v1,webhookVersions=v1
 
 func (v *meshValidator) SetupWithManager(mgr ctrl.Manager) {
-	mgr.GetWebhookServer().Register(apiPathValidateAppMeshMesh, webhook.ValidatingWebhookForValidator(v))
+	mgr.GetWebhookServer().Register(apiPathValidateAppMeshMesh, webhook.ValidatingWebhookForValidator(mgr.GetScheme(), v))
 }

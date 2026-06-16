@@ -64,7 +64,7 @@ if [[ -z "$TEST_SUITES" ]]; then
   TEST_SUITES="$(ls "$INT_TEST_DIR")"
 fi
 
-K8S_VERSION=${K8S_VERSION:-"1.17"}
+K8S_VERSION=${K8S_VERSION:-"1.32"}
 
 # Creates a kind test cluster if none was provided.
 if [[ -z "$CLUSTER_NAME" || -z "$KUBECONFIG" ]]; then

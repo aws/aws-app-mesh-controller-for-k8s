@@ -28,34 +28,34 @@ type enqueueRequestsForVirtualGatewayEvents struct {
 }
 
 // Create is called in response to an create event
-func (h *enqueueRequestsForVirtualGatewayEvents) Create(e event.CreateEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualGatewayEvents) Create(ctx context.Context, e event.CreateEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
 // Update is called in response to an update event
-func (h *enqueueRequestsForVirtualGatewayEvents) Update(e event.UpdateEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualGatewayEvents) Update(ctx context.Context, e event.UpdateEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// gatewayRoute reconcile depends on virtualGateway is active or not.
 	// so we only need to trigger gatewayRoute reconcile if virtualGateway's active status changed.
 	vgOld := e.ObjectOld.(*appmesh.VirtualGateway)
 	vgNew := e.ObjectNew.(*appmesh.VirtualGateway)
 
 	if virtualgateway.IsVirtualGatewayActive(vgOld) != virtualgateway.IsVirtualGatewayActive(vgNew) {
-		h.enqueueGatewayRoutesForVirtualGateway(context.Background(), queue, vgNew)
+		h.enqueueGatewayRoutesForVirtualGateway(ctx, queue, vgNew)
 	}
 }
 
 // Delete is called in response to a delete event
-func (h *enqueueRequestsForVirtualGatewayEvents) Delete(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualGatewayEvents) Delete(ctx context.Context, e event.DeleteEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
 // Generic is called in response to an event of an unknown type or a synthetic event triggered as a cron or
 // external trigger request
-func (h *enqueueRequestsForVirtualGatewayEvents) Generic(e event.GenericEvent, queue workqueue.RateLimitingInterface) {
+func (h *enqueueRequestsForVirtualGatewayEvents) Generic(ctx context.Context, e event.GenericEvent, queue workqueue.TypedRateLimitingInterface[ctrl.Request]) {
 	// no-op
 }
 
-func (h *enqueueRequestsForVirtualGatewayEvents) enqueueGatewayRoutesForVirtualGateway(ctx context.Context, queue workqueue.RateLimitingInterface, vg *appmesh.VirtualGateway) {
+func (h *enqueueRequestsForVirtualGatewayEvents) enqueueGatewayRoutesForVirtualGateway(ctx context.Context, queue workqueue.TypedRateLimitingInterface[ctrl.Request], vg *appmesh.VirtualGateway) {
 	grList := &appmesh.GatewayRouteList{}
 	if err := h.k8sClient.List(ctx, grList); err != nil {
 		h.log.Error(err, "failed to enqueue gatewayRoutes for virtualGateway events",
