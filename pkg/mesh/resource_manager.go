@@ -195,7 +195,7 @@ func (m *defaultResourceManager) updateCRDMesh(ctx context.Context, ms *appmesh.
 }
 
 // isSDKMeshControlledByCRDMesh checks whether an AppMesh mesh is controlled by CRDMesh
-// if it's controlled, CRDMesh update is responsible for update AppMesh mesh.
+// if it's controlled, CRDMesh update is responsible for updating AppMesh mesh.
 func (m *defaultResourceManager) isSDKMeshControlledByCRDMesh(ctx context.Context, sdkMS *appmeshsdk.MeshData, ms *appmesh.Mesh) bool {
 	if aws.StringValue(sdkMS.Metadata.ResourceOwner) != m.accountID {
 		return false
@@ -204,14 +204,14 @@ func (m *defaultResourceManager) isSDKMeshControlledByCRDMesh(ctx context.Contex
 }
 
 // isSDKMeshOwnedByCRDMesh checks whether an AppMesh mesh is owned by CRDMesh.
-// if it's owned, CRDMesh deletion is responsible for delete AppMesh mesh.
+// if it's owned, CRDMesh deletion is responsible for deleting AppMesh mesh.
 func (m *defaultResourceManager) isSDKMeshOwnedByCRDMesh(ctx context.Context, sdkMS *appmeshsdk.MeshData, ms *appmesh.Mesh) bool {
 	if !m.isSDKMeshControlledByCRDMesh(ctx, sdkMS, ms) {
 		return false
 	}
 
-	// TODO: Adding tagging support, so a existing mesh in owner account but not ownership can be support.
-	// currently, mesh controllership == ownership, but it don't have to be so once we add tagging support.
+	// TODO: Adding tagging support, so an existing mesh in owner account but not ownership can be supported.
+	// currently, mesh controllership == ownership, but it doesn't have to be so once we add tagging support.
 	return true
 }
 

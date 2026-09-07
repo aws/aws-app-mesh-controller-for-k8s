@@ -242,7 +242,7 @@ func (m *defaultResourceManager) buildSDKVirtualGatewayTags(ctx context.Context,
 }
 
 // isSDKVirtualGatewayControlledByCRDVirtualGateway checks whether an AppMesh virtualGateway is controlled by CRD virtualGateway
-// if it's controlled, CRD virtualGateway update is responsible for update AppMesh virtualGateway.
+// if it's controlled, CRD virtualGateway update is responsible for updating AppMesh virtualGateway.
 func (m *defaultResourceManager) isSDKVirtualGatewayControlledByCRDVirtualGateway(ctx context.Context, sdkVG *appmeshsdk.VirtualGatewayData, vg *appmesh.VirtualGateway) bool {
 	if aws.StringValue(sdkVG.Metadata.ResourceOwner) != m.accountID {
 		return false
@@ -251,7 +251,7 @@ func (m *defaultResourceManager) isSDKVirtualGatewayControlledByCRDVirtualGatewa
 }
 
 // isSDKVirtualGatewayOwnedByCRDVirtualGateway checks whether an AppMesh virtualGateway is owned by CRD virtualGateway.
-// if it's owned, CRD virtualGateway deletion is responsible for delete AppMesh virtualGateway.
+// if it's owned, CRD virtualGateway deletion is responsible for deleting AppMesh virtualGateway.
 func (m *defaultResourceManager) isSDKVirtualGatewayOwnedByCRDVirtualGateway(ctx context.Context, sdkVG *appmeshsdk.VirtualGatewayData, vg *appmesh.VirtualGateway) bool {
 	if !m.isSDKVirtualGatewayControlledByCRDVirtualGateway(ctx, sdkVG, vg) {
 		return false

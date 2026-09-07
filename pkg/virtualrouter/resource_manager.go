@@ -312,8 +312,8 @@ func (m *defaultResourceManager) isSDKVirtualRouterOwnedByCRDVirtualRouter(ctx c
 		return false
 	}
 
-	// TODO: Adding tagging support, so a existing virtualRouter in owner account but not ownership can be support.
-	// currently, virtualRouter controllership == ownership, but it don't have to be so once we add tagging support.
+	// TODO: Adding tagging support, so an existing virtualRouter in owner account but not ownership can be supported.
+	// currently, virtualRouter controllership == ownership, but it doesn't have to be so once we add tagging support.
 	return true
 }
 

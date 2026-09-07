@@ -42,7 +42,7 @@ const (
 
 	// how long to synchronously wait for instances reconcile operation
 	defaultInstancesReconcileWaitTimeout = 5 * time.Second
-	// how long to requeue a instances reconcile operation
+	// how long to requeue an instances reconcile operation
 	defaultInstancesReconcileRequeueDuration = 10 * time.Second
 	defaultInstancesHealthProbeTimeout       = 30 * time.Minute
 
@@ -140,7 +140,7 @@ func (r *defaultInstancesReconciler) reconcileCustomHealthCheck(ctx context.Cont
 	return nil
 }
 
-// buildInstanceInfoByID build instances info indexed by instanceID
+// buildInstanceInfoByID builds instances info indexed by instanceID
 func (r *defaultInstancesReconciler) buildInstanceInfoByID(ms *appmesh.Mesh, vn *appmesh.VirtualNode,
 	pods []*corev1.Pod, nodeInfoByName map[string]nodeAttributes) map[string]instanceInfo {
 	instanceInfoByID := make(map[string]instanceInfo, len(pods))

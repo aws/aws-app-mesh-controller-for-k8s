@@ -326,8 +326,8 @@ func (m *defaultResourceManager) isSDKVirtualNodeOwnedByCRDVirtualNode(ctx conte
 		return false
 	}
 
-	// TODO: Adding tagging support, so a existing virtualNode in owner account but not ownership can be support.
-	// currently, virtualNode controllership == ownership, but it don't have to be so once we add tagging support.
+	// TODO: Adding tagging support, so an existing virtualNode in owner account but not ownership can be supported.
+	// currently, virtualNode controllership == ownership, but it doesn't have to be so once we add tagging support.
 	return true
 }
 

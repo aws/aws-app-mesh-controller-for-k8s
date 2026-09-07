@@ -47,7 +47,7 @@ type virtualGatwayEnvoyConfig struct {
 	awsSessionToken            string
 }
 
-// newVirtualGatewayEnvoyConfig constructs new newVirtualGatewayEnvoyConfig
+// newVirtualGatewayEnvoyConfig constructs new virtualGatewayEnvoyConfig
 func newVirtualGatewayEnvoyConfig(mutatorConfig virtualGatwayEnvoyConfig, ms *appmesh.Mesh, vg *appmesh.VirtualGateway) *virtualGatewayEnvoyConfig {
 	return &virtualGatewayEnvoyConfig{
 		ms:            ms,
@@ -178,9 +178,9 @@ func (m *virtualGatewayEnvoyConfig) getAugmentedMeshName() string {
 }
 
 const (
-	// when enabled, a virtual gateway image will not be overriden
+	// when enabled, a virtual gateway image will not be overridden
 	gatewayImageSkipOverrideModeEnabled = "enabled"
-	// when disabled, a virtual gateway image will be overriden. This is also the default behavior
+	// when disabled, a virtual gateway image will be overridden. This is also the default behavior
 	gatewayImageSkipOverrideModeDisabled = "disabled"
 )
 
