@@ -27,10 +27,10 @@ const (
 type instancesCache interface {
 	// ListInstances returns all instances associated with cloudMap service.
 	ListInstances(ctx context.Context, serviceID string) (map[string]instanceAttributes, error)
-	// RegisterInstance register an instance into cloudMap service
+	// RegisterInstance registers an instance into cloudMap service
 	// it blocks until registerInstance operation succeeds or fails.
 	RegisterInstance(ctx context.Context, serviceID string, instanceID string, attrs instanceAttributes) error
-	// DeregisterInstance deregister an instance from cloudMap service.
+	// DeregisterInstance deregisters an instance from cloudMap service.
 	// it blocks until deregisterInstance operation succeeds or fails.
 	DeregisterInstance(ctx context.Context, serviceID string, instanceID string) error
 }
@@ -65,7 +65,7 @@ type defaultInstancesCache struct {
 type instancesAttrsCacheItem struct {
 	// the attributes of instances indexed by instance ID.
 	instanceAttrsByID map[string]instanceAttributes
-	// the last time we modified a instance's attributes
+	// the last time we modified an instance's attributes
 	lastUpdatedTimeByID map[string]time.Time
 
 	mutex sync.RWMutex
@@ -198,7 +198,7 @@ func (c *defaultInstancesCache) recordSuccessfulDeregisterInstanceOperation(serv
 	delete(cacheItem.instanceAttrsByID, instanceID)
 }
 
-// cloneInstanceAttributesByID make a copy of instanceAttrsByID.
+// cloneInstanceAttributesByID makes a copy of instanceAttrsByID.
 // we return a copy in ListInstances to avoid race if the map is read concurrently with writes from registerInstance/deregisterInstance.
 func (c *defaultInstancesCache) cloneInstanceAttributesByID(instanceAttrsByID map[string]instanceAttributes) map[string]instanceAttributes {
 	instanceAttrsByIDClone := make(map[string]instanceAttributes, len(instanceAttrsByID))

@@ -14,7 +14,7 @@ const (
 
 // instancesReconcileReactor manages the asynchronous execution for instances reconcile.
 type instancesReconcileReactor interface {
-	// Submit submits a instances reconcile request, it will asynchronously drive cloudMap service's subset to match desiredState.
+	// Submit submits an instances reconcile request, it will asynchronously drive cloudMap service's subset to match desiredState.
 	Submit(ctx context.Context, service serviceSummary, subset serviceSubset, readyInstanceInfoByID map[string]instanceInfo, unreadyInstanceInfoByID map[string]instanceInfo) <-chan error
 }
 

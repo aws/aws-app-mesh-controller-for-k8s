@@ -72,7 +72,7 @@ func (m *pendingMembersFinalizer) Finalize(ctx context.Context, ms *appmesh.Mesh
 	return runtime.NewRequeueAfterError(errors.New("pending members deletion"), m.evaluateInterval)
 }
 
-// findVirtualServiceMembers find the VirtualService members for this mesh.
+// findVirtualServiceMembers finds the VirtualService members for this mesh.
 func (m *pendingMembersFinalizer) findVirtualServiceMembers(ctx context.Context, ms *appmesh.Mesh) ([]*appmesh.VirtualService, error) {
 	vsList := &appmesh.VirtualServiceList{}
 	if err := m.k8sClient.List(ctx, vsList); err != nil {
@@ -89,7 +89,7 @@ func (m *pendingMembersFinalizer) findVirtualServiceMembers(ctx context.Context,
 	return members, nil
 }
 
-// findVirtualRouterMembers find the VirtualRouter members for this mesh.
+// findVirtualRouterMembers finds the VirtualRouter members for this mesh.
 func (m *pendingMembersFinalizer) findVirtualRouterMembers(ctx context.Context, ms *appmesh.Mesh) ([]*appmesh.VirtualRouter, error) {
 	vrList := &appmesh.VirtualRouterList{}
 	if err := m.k8sClient.List(ctx, vrList); err != nil {
@@ -106,7 +106,7 @@ func (m *pendingMembersFinalizer) findVirtualRouterMembers(ctx context.Context, 
 	return members, nil
 }
 
-// findVirtualNodeMembers find the VirtualNode members for this mesh.
+// findVirtualNodeMembers finds the VirtualNode members for this mesh.
 func (m *pendingMembersFinalizer) findVirtualNodeMembers(ctx context.Context, ms *appmesh.Mesh) ([]*appmesh.VirtualNode, error) {
 	vnList := &appmesh.VirtualNodeList{}
 	if err := m.k8sClient.List(ctx, vnList); err != nil {
@@ -123,7 +123,7 @@ func (m *pendingMembersFinalizer) findVirtualNodeMembers(ctx context.Context, ms
 	return members, nil
 }
 
-// findVirtualGatewayMembers find the VirtualGateway members for this mesh.
+// findVirtualGatewayMembers finds the VirtualGateway members for this mesh.
 func (m *pendingMembersFinalizer) findVirtualGatewayMembers(ctx context.Context, ms *appmesh.Mesh) ([]*appmesh.VirtualGateway, error) {
 	vgList := &appmesh.VirtualGatewayList{}
 	if err := m.k8sClient.List(ctx, vgList); err != nil {
@@ -140,7 +140,7 @@ func (m *pendingMembersFinalizer) findVirtualGatewayMembers(ctx context.Context,
 	return members, nil
 }
 
-// findGatewayRouteMembers find the GatewayRoute members for this mesh.
+// findGatewayRouteMembers finds the GatewayRoute members for this mesh.
 func (m *pendingMembersFinalizer) findGatewayRouteMembers(ctx context.Context, ms *appmesh.Mesh) ([]*appmesh.GatewayRoute, error) {
 	grList := &appmesh.GatewayRouteList{}
 	if err := m.k8sClient.List(ctx, grList); err != nil {

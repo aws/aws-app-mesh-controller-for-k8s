@@ -15,7 +15,7 @@ const (
 	attrAWSInitHealthStatus = "AWS_INIT_HEALTH_STATUS"
 )
 
-// newInstancesReconcileTask constructs new instancesReconcileTask for specific subset of cloudMap service.
+// newInstancesReconcileTask constructs new instancesReconcileTask for a specific subset of cloudMap service.
 func newInstancesReconcileTask(cloudMapSDK services.CloudMap, instancesCache instancesCache, log logr.Logger, done chan struct{}) *instancesReconcileTask {
 	return &instancesReconcileTask{
 		cloudMapSDK:    cloudMapSDK,
@@ -29,7 +29,7 @@ func newInstancesReconcileTask(cloudMapSDK services.CloudMap, instancesCache ins
 	}
 }
 
-// instancesReconcileTask representing the work to reconcile instances for specific subset of cloudMap service.
+// instancesReconcileTask represents the work to reconcile instances for a specific subset of cloudMap service.
 // each instancesReconcileTask should be limited to only work for a single service & subset.
 type instancesReconcileTask struct {
 	cloudMapSDK    services.CloudMap

@@ -24,7 +24,7 @@ type serviceSubset interface {
 	Contains(instanceID string, attrs instanceAttributes) bool
 }
 
-// serviceSubsetID represents ID for specific subset within specific cloudMap service
+// serviceSubsetID represents ID for a specific subset within a specific cloudMap service
 type serviceSubsetID struct {
 	serviceID string
 	subsetID  string
