@@ -326,7 +326,7 @@ func (m *defaultResourceManager) buildSDKGatewayRouteTags(ctx context.Context, g
 }
 
 // isSDKGatewayRouteControlledByCRDGatewayRoute checks whether an AppMesh gatewayRoute is controlled by CRD gatewayRoute
-// if it's controlled, CRD gatewayRoute update is responsible for update AppMesh gatewayRoute.
+// if it's controlled, CRD gatewayRoute update is responsible for updating AppMesh gatewayRoute.
 func (m *defaultResourceManager) isSDKGatewayRouteControlledByCRDGatewayRoute(ctx context.Context, sdkGR *appmeshsdk.GatewayRouteData, gr *appmesh.GatewayRoute) bool {
 	if aws.StringValue(sdkGR.Metadata.ResourceOwner) != m.accountID {
 		return false
@@ -335,7 +335,7 @@ func (m *defaultResourceManager) isSDKGatewayRouteControlledByCRDGatewayRoute(ct
 }
 
 // isSDKGatewayRouteOwnedByCRDGatewayRoute checks whether an AppMesh gatewayRoute is owned by CRD gatewayRoute.
-// if it's owned, CRD gatewayRoute deletion is responsible for delete AppMesh gatewayRoute.
+// if it's owned, CRD gatewayRoute deletion is responsible for deleting AppMesh gatewayRoute.
 func (m *defaultResourceManager) isSDKGatewayRouteOwnedByCRDGatewayRoute(ctx context.Context, sdkGR *appmeshsdk.GatewayRouteData, gr *appmesh.GatewayRoute) bool {
 	if !m.isSDKGatewayRouteControlledByCRDGatewayRoute(ctx, sdkGR, gr) {
 		return false

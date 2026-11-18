@@ -325,8 +325,8 @@ func (m *defaultResourceManager) isSDKVirtualServiceOwnedByCRDVirtualService(ctx
 		return false
 	}
 
-	// TODO: Adding tagging support, so a existing virtualService in owner account but not ownership can be support.
-	// currently, virtualService controllership == ownership, but it don't have to be so once we add tagging support.
+	// TODO: Adding tagging support, so an existing virtualService in owner account but not ownership can be supported.
+	// currently, virtualService controllership == ownership, but it doesn't have to be so once we add tagging support.
 	return true
 }
 

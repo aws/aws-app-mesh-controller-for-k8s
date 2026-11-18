@@ -56,7 +56,7 @@ func (m *pendingMembersFinalizer) Finalize(ctx context.Context, vg *appmesh.Virt
 	return runtime.NewRequeueAfterError(errors.New("pending members deletion"), m.evaluateInterval)
 }
 
-// findGatewayRouteMembers find the GatewayRoute members for this virtualGateway.
+// findGatewayRouteMembers finds the GatewayRoute members for this virtualGateway.
 func (m *pendingMembersFinalizer) findGatewayRouteMembers(ctx context.Context, vg *appmesh.VirtualGateway) ([]*appmesh.GatewayRoute, error) {
 	grList := &appmesh.GatewayRouteList{}
 	if err := m.k8sClient.List(ctx, grList); err != nil {
